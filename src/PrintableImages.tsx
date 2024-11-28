@@ -18,7 +18,7 @@ export const PrintableImages = ({ files }: PrintableImagesProps) => {
 
   const printRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
-    preserveAfterPrint: true,
+    documentTitle: "cards",
     contentRef: printRef,
   });
 
