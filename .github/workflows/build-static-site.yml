@@ -26,9 +26,10 @@ jobs:
 
     - name: Upload Artifact
       id: deployment
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-pages-artifact@v3
       with:
-        path: dist
+        path: dist/
+
  deploy:
     environment:
       name: github-pages
