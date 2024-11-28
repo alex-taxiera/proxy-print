@@ -1,0 +1,88 @@
+.printable-images {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.print-container {
+  display: block;
+}
+
+.page {
+  height: 11in;
+  width: 8.5in;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 2.5in);
+  grid-template-rows: repeat(3, 3.5in);
+  page-break-after: always;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.image-container {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2.5in;
+  height: 3.5in;
+}
+
+.image {
+  width: 2.625in;
+  height: 3.625in;
+  object-fit: cover;
+}
+
+.image.loading {
+  opacity: 0;
+}
+
+.dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: white;
+  border-radius: 50%;
+  display: none;
+}
+
+.dot.top-left {
+  top: -2.5px;
+  left: -2.5px;
+}
+
+.dot.top-right {
+  top: -2.5px;
+  right: -2.5px;
+}
+
+.dot.bottom-left {
+  bottom: -2.5px;
+  left: -2.5px;
+}
+
+.dot.bottom-right {
+  bottom: -2.5px;
+  right: -2.5px;
+}
+
+@media print {
+  .dot {
+    display: block;
+  }
+
+  .page-title {
+    display: none;
+  }
+}

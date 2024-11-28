@@ -5,22 +5,22 @@ export type ImageUploaderProps = {
   onChange: (files: File[]) => void;
 }
 
-export function ImageUploader(props: ImageUploaderProps) {
+export function ImageUploader({ onChange }: ImageUploaderProps) {
   const inputOnChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files) {
-        props.onChange(Array.from(files));
+        onChange(Array.from(files));
       }
     },
-    [props]
+    [onChange]
   );
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      props.onChange(acceptedFiles);
+      onChange(acceptedFiles);
     },
-    [props]
+    [onChange]
   );
 
   const { getRootProps, getInputProps, isDragActive, isDragAccept } = useDropzone({ onDrop });
