@@ -20,7 +20,16 @@ function App() {
       <main id="app-main">
         {images.length === 0 ? (
           <>
-            <p>Upload images to get started</p>
+            <p>
+              Upload images to get started.
+            </p>
+            <p>
+            You can download images from your{" "}
+              <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
+                MPC Autofill
+              </a>{" "}
+              project with their &quot;Download Card Images&quot; option.
+            </p>
             <ImageUploader onChange={onFilesChange} />
           </>
         ) : (
