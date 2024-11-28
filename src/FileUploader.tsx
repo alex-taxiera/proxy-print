@@ -23,7 +23,14 @@ export function ImageUploader({ onChange }: ImageUploaderProps) {
     [onChange]
   );
 
-  const { getRootProps, getInputProps, isDragActive, isDragAccept } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive, isDragAccept } = useDropzone({
+    onDrop,
+    accept: {
+      'image/jpg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/bmp': ['.bmp'],
+    }
+  });
 
   const dropzoneStyle: React.CSSProperties = {
     border: '2px dashed #007bff',
