@@ -28,7 +28,11 @@ function App() {
         )}
         <PrintableImages files={images} />
       </main>
-      <footer id="app-footer">Alex Taxiera</footer>
+      <footer id="app-footer">
+        <a href="https://github.com/alex-taxiera/proxy-print">{"<Code />"}</a>
+        &nbsp;by&nbsp;
+        <a href="https://github.com/alex-taxiera">Alex Taxiera</a>
+      </footer>
     </>
   );
 }
