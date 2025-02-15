@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
 import "./App.css";
-import { ImageUploader } from "./FileUploader";
+import { ImageUploader } from "./ImageUploader";
 import { PrintableImages } from "./PrintableImages";
+import { SettingsForm } from "./SettingsForm";
+import { SettingsProvider } from "./SettingsProvider";
 
 function App() {
   const [images, setImages] = useState<File[]>([]);
@@ -17,26 +19,26 @@ function App() {
       <header id="app-header">
         <h1>Proxy Print</h1>
       </header>
-      <main id="app-main">
-        {images.length === 0 ? (
-          <>
-            <p>
-              Upload images to get started.
-            </p>
-            <p>
-            You can download images from your{" "}
-              <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
-                MPC Autofill
-              </a>{" "}
-              project with their &quot;Download Card Images&quot; option.
-            </p>
-            <ImageUploader onChange={onFilesChange} />
-          </>
-        ) : (
-          <button onClick={() => setImages([])}>Clear Images</button>
-        )}
-        <PrintableImages files={images} />
-      </main>
+      <SettingsProvider>
+        <main id="app-main">
+          <ImageUploader onChange={onFilesChange} />
+          {images.length === 0 ? (
+            <>
+              <p>Upload images to get started.</p>
+              <p>
+                You can download images from your{" "}
+                <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
+                  MPC Autofill
+                </a>{" "}
+                project with their &quot;Download Card Images&quot; option.
+              </p>
+            </>
+          ) : (
+            <SettingsForm />
+          )}
+          <PrintableImages files={images} />
+        </main>
+      </SettingsProvider>
       <footer id="app-footer">
         <a href="https://github.com/alex-taxiera/proxy-print">{"<Code />"}</a>
         &nbsp;by&nbsp;
