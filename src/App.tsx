@@ -10,7 +10,7 @@ function App() {
   return (
     <>
       <header id="app-header">
-        <h1>Proxy Print</h1>
+        <h1>Proxy Print Setup</h1>
       </header>
       <SettingsProvider>
         <ImagesProvider>
