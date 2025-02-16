@@ -1,52 +1,64 @@
-import React, { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useCallback, useContext } from "react";
+import { useDropzone } from "react-dropzone";
+import { ImagesContext } from "./ImagesContext";
 
-export type ImageUploaderProps = {
-  onChange: (files: File[]) => void;
-}
+export function ImageUploader() {
+  const { onAdd } = useContext(ImagesContext);
 
-export function ImageUploader({ onChange }: ImageUploaderProps) {
+  const addImages = useCallback((files: File[]) => {
+    onAdd(files.map((file) => ({
+        name: file.name,
+        src: URL.createObjectURL(file),
+      }))
+    );
+  }, [onAdd]);
+
   const inputOnChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files) {
-        onChange(Array.from(files));
+        addImages(Array.from(files));
       }
     },
-    [onChange]
+    [addImages]
   );
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      onChange(acceptedFiles);
+      addImages(acceptedFiles);
     },
-    [onChange]
+    [addImages]
   );
 
-  const { getRootProps, getInputProps, isDragActive, isDragAccept } = useDropzone({
-    onDrop,
-    accept: {
-      'image/jpg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'image/bmp': ['.bmp'],
-    }
-  });
+  const { getRootProps, getInputProps, isDragActive, isDragAccept } =
+    useDropzone({
+      onDrop,
+      accept: {
+        "image/jpg": [".jpg", ".jpeg"],
+        "image/png": [".png"],
+        "image/bmp": [".bmp"],
+      },
+    });
 
   const dropzoneStyle: React.CSSProperties = {
-    border: '2px dashed #007bff',
-    borderRadius: '5px',
-    padding: '20px',
-    textAlign: 'center',
-    transition: 'border .3s ease-in-out',
-    backgroundColor: isDragAccept ? '#f0f8ff' : '#fafafa',
-    cursor: 'pointer',
-    color: 'black'
+    border: "2px dashed #007bff",
+    borderRadius: "5px",
+    padding: "20px",
+    textAlign: "center",
+    transition: "border .3s ease-in-out",
+    backgroundColor: isDragAccept ? "#f0f8ff" : "#fafafa",
+    cursor: "pointer",
+    color: "black",
   };
 
   return (
-    <div {...getRootProps()} style={dropzoneStyle} className={`dropzone ${isDragActive ? 'active' : ''}`}>
+    <div
+      {...getRootProps()}
+      style={dropzoneStyle}
+      className={`dropzone ${isDragActive ? "active" : ""}`}
+    >
       <input {...getInputProps()} onChange={inputOnChange} />
-      Upload Images...
+      Add Images
     </div>
   );
 }

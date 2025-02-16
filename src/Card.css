@@ -1,0 +1,195 @@
+.context-menu {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.context-menu li {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: black;
+}
+
+.context-menu li:hover {
+  background-color: #eee;
+}
+
+.card {
+  position: relative;
+}
+
+.card.empty {
+  border-color: black;
+  border-style: solid;
+  border-width: var(--guide-border-width);
+}
+
+.card:before,
+.card:after {
+  display: var(--guide-display);
+  border-color: black;
+  border-style: solid;
+  border-width: 0px;
+}
+
+/* top row guides */
+.card.first-row:after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  bottom: 100%;
+  left: var(--guide-corner-offset);
+  right: var(--guide-corner-offset);
+  border-left-width: var(--guide-border-width);
+  border-right-width: var(--guide-border-width);
+}
+
+/* bottom row guides */
+.card.last-row:after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  top: 100%;
+  left: var(--guide-corner-offset);
+  right: var(--guide-corner-offset);
+  border-left-width: var(--guide-border-width);
+  border-right-width: var(--guide-border-width);
+}
+
+/* right column guides */
+.card.last-column:before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  left: 100%;
+  top: var(--guide-corner-offset);
+  bottom: var(--guide-corner-offset);
+  border-top-width: var(--guide-border-width);
+  border-bottom-width: var(--guide-border-width);
+}
+
+/* left column guides */
+.card.first-column:before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  right: 100%;
+  top: var(--guide-corner-offset);
+  bottom: var(--guide-corner-offset);
+  border-top-width: var(--guide-border-width);
+  border-bottom-width: var(--guide-border-width);
+}
+
+.image-container {
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: calc(63mm + calc(var(--bleed-edge-width) * 2) + var(--guide-border-width));
+  height: calc(88mm + calc(var(--bleed-edge-width) * 2) + var(--guide-border-width));
+}
+
+.empty:after {
+  content: "";
+  position: absolute;
+  top: var(--guide-corner-offset);
+  left: var(--guide-corner-offset);
+  right: var(--guide-corner-offset);
+  bottom: var(--guide-corner-offset);
+  border-color: black;
+  border-style: solid;
+  border-width: var(--guide-border-width);
+}
+
+.image {
+  width: calc(63mm + 6.2mm);
+  object-fit: cover;
+}
+
+.image.loading {
+  opacity: 0;
+}
+
+.guide {
+  z-index: 2;
+  display: var(--guide-display);
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-color: var(--guide-border-color);
+  border-style: solid;
+  border-width: 0px;
+}
+
+.guide:after {
+  z-index: 2;
+  display: var(--guide-display);
+  content: "";
+  position: absolute;
+  width: calc(var(--bleed-edge-width) - calc(var(--guide-border-width) * 0.5));
+  height: calc(var(--bleed-edge-width) - calc(var(--guide-border-width) * 0.5));
+  border-color: var(--guide-border-color);
+  border-style: solid;
+  border-width: 0px;
+}
+
+.guide.top-left {
+  top: var(--guide-corner-offset);
+  left: var(--guide-corner-offset);
+  border-top-width: var(--guide-border-width);
+  border-left-width: var(--guide-border-width);
+}
+
+.guide.top-left:after {
+  bottom: 100%;
+  right: 100%;
+  border-bottom-width: var(--guide-border-width);
+  border-right-width: var(--guide-border-width);
+}
+
+.guide.top-right {
+  top: var(--guide-corner-offset);
+  right: var(--guide-corner-offset);
+  border-top-width: var(--guide-border-width);
+  border-right-width: var(--guide-border-width);
+}
+
+.guide.top-right:after {
+  bottom: 100%;
+  left: 100%;
+  border-bottom-width: var(--guide-border-width);
+  border-left-width: var(--guide-border-width);
+}
+
+.guide.bottom-left {
+  bottom: var(--guide-corner-offset);
+  left: var(--guide-corner-offset);
+  border-bottom-width: var(--guide-border-width);
+  border-left-width: var(--guide-border-width);
+}
+
+.guide.bottom-left:after {
+  top: 100%;
+  right: 100%;
+  border-top-width: var(--guide-border-width);
+  border-right-width: var(--guide-border-width);
+}
+
+.guide.bottom-right {
+  bottom: var(--guide-corner-offset);
+  right: var(--guide-corner-offset);
+  border-bottom-width: var(--guide-border-width);
+  border-right-width: var(--guide-border-width);
+}
+
+.guide.bottom-right:after {
+  top: 100%;
+  left: 100%;
+  border-top-width: var(--guide-border-width);
+  border-left-width: var(--guide-border-width);
+}

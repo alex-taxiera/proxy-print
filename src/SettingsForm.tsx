@@ -1,41 +1,48 @@
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import { DEFAULT_SETTINGS, SettingsContext, Settings } from "./SettingsContext";
 
+import "./SettingsForm.css";
+
 const getMaxGuideWidth = (settings: Settings) => {
-  switch(settings.bleedEdge) {
-    case '0':
-      return 23;
-    case '1':
-      return 16;
-    case '2':
-      return 8;
-    case '3':
-      return 1;
-    default:
-      return 0;
+  const bleedEdge = Number(settings.bleedEdge)
+
+  if (bleedEdge > 2) {
+    return 1;
   }
-}
+
+  if (bleedEdge > 1) {
+    return 8;
+  }
+
+  if (bleedEdge > 0) {
+    return 16;
+  }
+
+  return 23;
+};
 
 export const SettingsForm = () => {
   const { settings, setSettings } = useContext(SettingsContext);
 
-  const handleChange = (key: keyof typeof settings) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSettings((old) => {
-      const updatedSettings = {
-        ...old,
-        [key]: e.target.value || DEFAULT_SETTINGS[key],
-      }
-      const newMaxGuideWidth = getMaxGuideWidth(updatedSettings)
-      if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
-        updatedSettings.guidesThickness = newMaxGuideWidth.toString()
-      }
-      return updatedSettings
-    });
-  };
+  const handleChange = useCallback(
+    (key: keyof typeof settings, eventKey: "value" | "checked" = "value") =>
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSettings((old) => {
+          const updatedSettings = {
+            ...old,
+            [key]: e.target[eventKey] || DEFAULT_SETTINGS[key],
+          };
+          const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
+          if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
+            updatedSettings.guidesThickness = newMaxGuideWidth.toString();
+          }
+          return updatedSettings;
+        });
+      },
+    [setSettings]
+  );
 
-  const maxGuideWidth = getMaxGuideWidth(settings)
+  const maxGuideWidth = getMaxGuideWidth(settings);
 
   return (
     <form>
@@ -58,7 +65,7 @@ export const SettingsForm = () => {
         />
       </label>
       <label>
-        Number of Columns
+        Columns
         <input
           type="number"
           min="1"
@@ -85,7 +92,7 @@ export const SettingsForm = () => {
         />
       </label>
       <label>
-        Guides Thickness (px)
+        Guides Width (px)
         <input
           type="number"
           min="0"
@@ -94,8 +101,14 @@ export const SettingsForm = () => {
           onChange={handleChange("guidesThickness")}
         />
       </label>
+      <label>
+        Guides at Bleed
+        <input
+          type="checkbox"
+          checked={settings.guidesAtBleedEdge}
+          onChange={handleChange("guidesAtBleedEdge", "checked")}
+        />
+      </label>
     </form>
   );
-
-
-}
+};

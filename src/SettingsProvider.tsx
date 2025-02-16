@@ -42,6 +42,7 @@ export const SettingsProvider = (
       "--guides-display": value.guidesThickness !== '0' ? "block" : "none",
       "--guides-color": value.guidesColor,
       "--guides-thickness": `${value.guidesThickness}px`,
+      "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
       "--page-height": `${value.pageHeight}in`,
       "--page-width": `${value.pageWidth}in`,
       "--grid-columns": value.numberOfColumns,

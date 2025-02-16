@@ -1,34 +1,58 @@
-import { useContext, useEffect, useMemo, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import { useContext, useMemo, useRef } from "react";
+import jsPDF, { type jsPDFOptions } from "jspdf";
+import html2canvas from "html2canvas";
 
-import "./PrintableImages.css";
 import { SettingsContext } from "./SettingsContext";
+import "./PrintableImages.css";
+import { Card } from "./Card";
+import { ImagesContext } from "./ImagesContext";
 
-interface PrintableImagesProps {
-  files: File[];
-}
-
-export const PrintableImages = ({ files }: PrintableImagesProps) => {
+export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
 
-  const images = useMemo(
-    () => files.map((file) => URL.createObjectURL(file)),
-    [files]
-  );
-
-  useEffect(() => {
-    return () => {
-      images.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [images]);
+  const { images, setImages } = useContext(ImagesContext);
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const handlePrint = useReactToPrint({
-    documentTitle: "cards",
-    contentRef,
-    bodyClass: "reee",
-    preserveAfterPrint: true,
-  });
+
+  const handleSave = () => {
+    setTimeout(async () => {
+      console.time("save");
+      if (!contentRef.current) {
+        return;
+      }
+      const pageHeight = Number(settings.pageHeight);
+      const pageWidth = Number(settings.pageWidth);
+
+      const pdfOptions = {
+        orientation: pageWidth > pageHeight ? "l" : "p",
+        unit: "in",
+        format: [pageWidth, pageHeight],
+      } satisfies jsPDFOptions;
+
+      const pdf = new jsPDF(pdfOptions);
+      const pages = contentRef.current.querySelectorAll<HTMLElement>(".page");
+      const canvases = await Promise.all(
+        Array.from(pages).map((page) => html2canvas(page, { scale: 12.5 })) // 12.5 for 1200dpi, 8.33 for 800dpi
+      )
+      const pageImages = canvases.map((canvas) => canvas.toDataURL("image/jpeg"))
+
+      for (let index = 0; index < pages.length; index++) {
+        if (index !== 0) {
+          pdf.addPage(pdfOptions.format, pdfOptions.orientation);
+        }
+        pdf.addImage(pageImages[index], "JPEG", 0, 0, pageWidth, pageHeight);
+      }
+      const pdfOutput = pdf.output("blob");
+
+      const url = URL.createObjectURL(pdfOutput);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cards.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+      console.timeEnd("save");
+    });
+  };
 
   const rowsPerPage = useMemo(() => {
     const pageHeight = parseFloat(settings.pageHeight) * 25.4; // convert in to mm
@@ -53,22 +77,33 @@ export const PrintableImages = ({ files }: PrintableImagesProps) => {
       return [];
     }
 
-    const rows: string[][] = [];
+    const rows: Array<{ name: string; src?: string }>[] = [];
     for (let i = 0; i < images.length; i += cardsPerPage) {
       rows.push(images.slice(i, i + cardsPerPage));
     }
     const paddingItems = rows.at(-1)!.length % cardsPerPage;
     if (paddingItems > 0) {
-      const filler = Array.from({ length: cardsPerPage - paddingItems }).fill(
-        ""
-      ) as string[];
+      const filler = Array.from({ length: cardsPerPage - paddingItems }).fill({
+        name: "empty",
+      }) as (typeof rows)[0];
       rows.at(-1)!.push(...filler);
     }
     return rows;
   }, [images, cardsPerPage]);
 
   if (images.length === 0) {
-    return null;
+    return (
+      <>
+        <p>Upload images to get started.</p>
+        <p>
+          You can download images from your{" "}
+          <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
+            MPC Autofill
+          </a>{" "}
+          project with their &quot;Download Card Images&quot; option.
+        </p>
+      </>
+    );
   }
 
   const getCardClassName = (index: number) => {
@@ -88,33 +123,26 @@ export const PrintableImages = ({ files }: PrintableImagesProps) => {
       className.push("last-row");
     }
     return className.join(" ");
-  }
+  };
 
   return (
     <div className="printable-images" style={cssVars}>
-      <button onClick={() => handlePrint()}>Print</button>
+      <div>{images.length} Total Cards</div>
+      <div className="actions">
+        <button onClick={() => setImages([])}>Remove all cards</button>
+        <button onClick={() => handleSave()}>Save</button>
+      </div>
       <div ref={contentRef} className="print-container">
         {imageMatrix.map((row, pageIndex) => (
           <div className="page" key={pageIndex}>
             <div className="card-grid">
-              {row.map((src, index) => (
-                <div key={index + src} className={getCardClassName(index)}>
-                  <div className="image-container">
-                    {src ? (
-                      <img
-                        src={src}
-                        alt={`img-${pageIndex * cardsPerPage + index + 1}`}
-                        className="image"
-                      />
-                    ) : (
-                      <span className="empty" />
-                    )}
-                  </div>
-                  <div className="guide top-left"></div>
-                  <div className="guide top-right"></div>
-                  <div className="guide bottom-left"></div>
-                  <div className="guide bottom-right"></div>
-                </div>
+              {row.map((image, index) => (
+                <Card
+                  key={index}
+                  index={index + pageIndex * cardsPerPage}
+                  image={image}
+                  className={getCardClassName(index)}
+                />
               ))}
             </div>
           </div>
