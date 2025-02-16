@@ -44,6 +44,7 @@ export const SettingsProvider = (
       "--guides-thickness": `${value.guidesThickness}px`,
       "--page-height": `${value.pageHeight}in`,
       "--page-width": `${value.pageWidth}in`,
+      "--grid-columns": value.numberOfColumns,
     } as React.CSSProperties;
   }, [value]);
 

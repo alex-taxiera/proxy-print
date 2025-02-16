@@ -58,6 +58,15 @@ export const SettingsForm = () => {
         />
       </label>
       <label>
+        Number of Columns
+        <input
+          type="number"
+          min="1"
+          value={settings.numberOfColumns}
+          onChange={handleChange("numberOfColumns")}
+        />
+      </label>
+      <label>
         Bleed Edge (mm)
         <input
           type="number"

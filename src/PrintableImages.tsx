@@ -8,12 +8,9 @@ interface PrintableImagesProps {
   files: File[];
 }
 
-export const PrintableImages = ({
-  files,
-}: PrintableImagesProps) => {
-  const { cssVars } = useContext(SettingsContext);
+export const PrintableImages = ({ files }: PrintableImagesProps) => {
+  const { cssVars, settings } = useContext(SettingsContext);
 
-  console.log('cssVars :', cssVars)
   const images = useMemo(
     () => files.map((file) => URL.createObjectURL(file)),
     [files]
@@ -29,9 +26,27 @@ export const PrintableImages = ({
   const handlePrint = useReactToPrint({
     documentTitle: "cards",
     contentRef,
-    bodyClass: 'reee',
+    bodyClass: "reee",
     preserveAfterPrint: true,
   });
+
+  const rowsPerPage = useMemo(() => {
+    const pageHeight = parseFloat(settings.pageHeight) * 25.4; // convert in to mm
+    const guidesThickness = parseFloat(settings.guidesThickness) * 0.265; // convert px to mm
+    const bleedEdge = parseFloat(settings.bleedEdge); // mm
+    // card height is 88mm + 2 * bleedEdge + guidesThickness
+    const cardHeight = 88 + 2 * bleedEdge + guidesThickness; // inches
+    return Math.floor(pageHeight / cardHeight);
+  }, [settings]);
+
+  const columnsPerPage = useMemo(() => {
+    return parseInt(settings.numberOfColumns);
+  }, [settings]);
+
+  const cardsPerPage = useMemo(
+    () => rowsPerPage * columnsPerPage,
+    [rowsPerPage, columnsPerPage]
+  );
 
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {
@@ -39,19 +54,40 @@ export const PrintableImages = ({
     }
 
     const rows: string[][] = [];
-    for (let i = 0; i < images.length; i += 9) {
-      rows.push(images.slice(i, i + 9));
+    for (let i = 0; i < images.length; i += cardsPerPage) {
+      rows.push(images.slice(i, i + cardsPerPage));
     }
-    const paddingItems = rows.at(-1)!.length % 9;
+    const paddingItems = rows.at(-1)!.length % cardsPerPage;
     if (paddingItems > 0) {
-      const filler = Array.from({ length: 9 - paddingItems }).fill("") as string[];
+      const filler = Array.from({ length: cardsPerPage - paddingItems }).fill(
+        ""
+      ) as string[];
       rows.at(-1)!.push(...filler);
     }
     return rows;
-  }, [images]);
+  }, [images, cardsPerPage]);
 
   if (images.length === 0) {
     return null;
+  }
+
+  const getCardClassName = (index: number) => {
+    const row = Math.floor(index / columnsPerPage);
+    const column = index % columnsPerPage;
+    const className = ["card"];
+    if (column === 0) {
+      className.push("first-column");
+    }
+    if (row === 0) {
+      className.push("first-row");
+    }
+    if (column === columnsPerPage - 1) {
+      className.push("last-column");
+    }
+    if (row === rowsPerPage - 1) {
+      className.push("last-row");
+    }
+    return className.join(" ");
   }
 
   return (
@@ -62,12 +98,12 @@ export const PrintableImages = ({
           <div className="page" key={pageIndex}>
             <div className="card-grid">
               {row.map((src, index) => (
-                <div key={index + src} className="card">
+                <div key={index + src} className={getCardClassName(index)}>
                   <div className="image-container">
                     {src ? (
                       <img
                         src={src}
-                        alt={`img-${pageIndex * 9 + index + 1}`}
+                        alt={`img-${pageIndex * cardsPerPage + index + 1}`}
                         className="image"
                       />
                     ) : (

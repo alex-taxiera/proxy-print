@@ -34,7 +34,7 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, min-content);
+  grid-template-columns: repeat(var(--grid-columns, 3), min-content);
   page-break-after: always;
   justify-content: center;
   align-items: center;
@@ -60,7 +60,7 @@
 }
 
 /* top row guides */
-.card:nth-child(-n + 3):after {
+.card.first-row:after {
   content: "";
   position: absolute;
   height: 100%;
@@ -72,7 +72,7 @@
 }
 
 /* bottom row guides */
-.card:nth-last-child(-n + 3):after {
+.card.last-row:after {
   content: "";
   position: absolute;
   height: 100%;
@@ -84,7 +84,7 @@
 }
 
 /* right column guides */
-.card:nth-child(3n):before {
+.card.last-column:before {
   content: "";
   position: absolute;
   width: 100%;
@@ -96,7 +96,7 @@
 }
 
 /* left column guides */
-.card:nth-child(3n + 1):before {
+.card.first-column:before {
   content: "";
   position: absolute;
   width: 100%;
