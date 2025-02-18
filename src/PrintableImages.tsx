@@ -2,10 +2,10 @@ import { useContext, useMemo, useRef } from "react";
 import jsPDF, { type jsPDFOptions } from "jspdf";
 import html2canvas from "html2canvas";
 
-import { SettingsContext } from "./SettingsContext";
+import { SettingsContext } from "./context/SettingsContext";
 import "./PrintableImages.css";
 import { Card } from "./Card";
-import { Image, ImagesContext } from "./ImagesContext";
+import { Image, ImagesContext } from "./context/ImagesContext";
 
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);

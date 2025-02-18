@@ -1,6 +1,6 @@
 import { useCallback, useContext } from "react";
 import { useDropzone } from "react-dropzone";
-import { ImagesContext } from "./ImagesContext";
+import { ImagesContext } from "./context/ImagesContext";
 
 import "./ImageUploader.css";
 

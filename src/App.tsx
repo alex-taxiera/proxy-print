@@ -1,8 +1,8 @@
 import { ImageUploader } from "./ImageUploader";
 import { PrintableImages } from "./PrintableImages";
 import { SettingsForm } from "./SettingsForm";
-import { SettingsProvider } from "./SettingsProvider";
-import { ImagesProvider } from "./ImagesProvider";
+import { SettingsProvider } from "./context/SettingsProvider";
+import { ImagesProvider } from "./context/ImagesProvider";
 
 import "./App.css";
 

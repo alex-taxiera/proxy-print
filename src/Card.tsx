@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import './Card.css'
-import { Image, ImagesContext } from './ImagesContext';
+import { Image, ImagesContext } from './context/ImagesContext';
 
 export type CardProps = {
   image: Image

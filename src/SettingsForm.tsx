@@ -1,8 +1,8 @@
 import { useCallback, useContext } from "react";
-import { DEFAULT_SETTINGS, SettingsContext, Settings } from "./SettingsContext";
+import { DEFAULT_SETTINGS, SettingsContext, Settings } from "./context/SettingsContext";
 
 import "./SettingsForm.css";
-import { ImagesContext } from "./ImagesContext";
+import { ImagesContext } from "./context/ImagesContext";
 
 const getMaxGuideWidth = (settings: Settings) => {
   const bleedEdge = Number(settings.bleedEdge);
