@@ -23,6 +23,7 @@ export const PrintableImages = () => {
       if (!contentRef.current) {
         return;
       }
+
       const pageHeight = Number(settings.pageHeight);
       const pageWidth = Number(settings.pageWidth);
 
@@ -34,13 +35,17 @@ export const PrintableImages = () => {
 
       const pdf = new jsPDF(pdfOptions);
       const pages = contentRef.current.querySelectorAll<HTMLElement>(".page");
+
+      // render each page to a canvas
       const canvases = await Promise.all(
         Array.from(pages).map((page) => html2canvas(page, { scale: 12.5 })) // 12.5 for 1200dpi, 8.33 for 800dpi
       );
+      // convert each canvas to a data url
       const pageImages = canvases.map((canvas) =>
         canvas.toDataURL("image/jpeg")
       );
 
+      // add each page to the pdf
       for (let index = 0; index < pages.length; index++) {
         if (index !== 0) {
           pdf.addPage(pdfOptions.format, pdfOptions.orientation);
@@ -49,6 +54,7 @@ export const PrintableImages = () => {
       }
       const pdfOutput = pdf.output("blob");
 
+      // download the pdf
       const url = URL.createObjectURL(pdfOutput);
       const a = document.createElement("a");
       a.href = url;
@@ -97,21 +103,6 @@ export const PrintableImages = () => {
     return rows;
   }, [images, cardsPerPage]);
 
-  if (images.length === 0) {
-    return (
-      <div className="printable-images help">
-        <p>Upload images to get started.</p>
-        <p>
-          You can download images from your{" "}
-          <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
-            MPC Autofill
-          </a>{" "}
-          project with their &quot;Download Card Images&quot; option.
-        </p>
-      </div>
-    );
-  }
-
   const getCardClassName = (index: number) => {
     const row = Math.floor(index / columnsPerPage);
     const column = index % columnsPerPage;
@@ -130,6 +121,21 @@ export const PrintableImages = () => {
     }
     return className.join(" ");
   };
+
+  if (images.length === 0) {
+    return (
+      <div className="printable-images help">
+        <p>Upload images to get started.</p>
+        <p>
+          You can download images from your{" "}
+          <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
+            MPC Autofill
+          </a>{" "}
+          project with their &quot;Download Card Images&quot; option.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="printable-images" style={cssVars}>
