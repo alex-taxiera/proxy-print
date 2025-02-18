@@ -3,17 +3,18 @@ import './Card.css'
 import { Image, ImagesContext } from './ImagesContext';
 
 export type CardProps = {
-  image: { name: string, src?: string}
-  index: number
+  image: Image
 } & React.HTMLAttributes<HTMLDivElement>
 
-export const Card = ({ className, image, index, ...restProps }: CardProps) => {
+export const Card = ({ className, image, ...restProps }: CardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
-  const { onAdd, onRemove } = useContext(ImagesContext)
+  const { images, onAdd, onRemove } = useContext(ImagesContext)
+
+  const [src, setSrc] = useState<string>('')
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -31,12 +32,15 @@ export const Card = ({ className, image, index, ...restProps }: CardProps) => {
   };
 
   const buildAdd = (count: number) => () => {
-    onAdd(new Array<Image>(count).fill(image), index)
-    setMenuVisible(false)
+    if (image.file) {
+      const index = images.indexOf(image)
+      onAdd(new Array<File>(count).fill(image.file), index + 1)
+      setMenuVisible(false)
+    }
   }
 
   const handleRemove = () => {
-    onRemove(index)
+    onRemove(image.uuid)
     setMenuVisible(false)
   }
 
@@ -52,13 +56,26 @@ export const Card = ({ className, image, index, ...restProps }: CardProps) => {
     };
   }, [menuVisible]);
 
+  
+
+  useEffect(() => {
+    const blob = image.file ? URL.createObjectURL(image.file) : ''
+    setSrc(blob)
+    return () => {
+      if (blob) {
+        setSrc('')
+        URL.revokeObjectURL(blob)
+      }
+    }
+  }, [image])
+
   return (
     <div className={`card ${className}`} {...restProps} ref={cardRef}>
       <div className="image-container">
-        {image.src ? (
+        {image.file && src ? (
           <img
-            src={image.src}
-            alt={image.name}
+            src={src}
+            alt={image.file.name}
             className="image"
             onContextMenu={handleContextMenu}
           />

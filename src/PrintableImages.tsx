@@ -5,12 +5,12 @@ import html2canvas from "html2canvas";
 import { SettingsContext } from "./SettingsContext";
 import "./PrintableImages.css";
 import { Card } from "./Card";
-import { ImagesContext } from "./ImagesContext";
+import { Image, ImagesContext } from "./ImagesContext";
 
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
 
-  const { images, setImages } = useContext(ImagesContext);
+  const { images, onClear } = useContext(ImagesContext);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +77,7 @@ export const PrintableImages = () => {
       return [];
     }
 
-    const rows: Array<{ name: string; src?: string }>[] = [];
+    const rows: Image[][] = [];
     for (let i = 0; i < images.length; i += cardsPerPage) {
       rows.push(images.slice(i, i + cardsPerPage));
     }
@@ -129,7 +129,7 @@ export const PrintableImages = () => {
     <div className="printable-images" style={cssVars}>
       <div>{images.length} Total Cards</div>
       <div className="actions">
-        <button onClick={() => setImages([])}>Remove all cards</button>
+        <button onClick={() => onClear()}>Remove all cards</button>
         <button onClick={() => handleSave()}>Save</button>
       </div>
       <div ref={contentRef} className="print-container">
@@ -138,8 +138,7 @@ export const PrintableImages = () => {
             <div className="card-grid">
               {row.map((image, index) => (
                 <Card
-                  key={index}
-                  index={index + pageIndex * cardsPerPage}
+                  key={image.uuid}
                   image={image}
                   className={getCardClassName(index)}
                 />

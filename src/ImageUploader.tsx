@@ -5,29 +5,21 @@ import { ImagesContext } from "./ImagesContext";
 export function ImageUploader() {
   const { onAdd } = useContext(ImagesContext);
 
-  const addImages = useCallback((files: File[]) => {
-    onAdd(files.map((file) => ({
-        name: file.name,
-        src: URL.createObjectURL(file),
-      }))
-    );
-  }, [onAdd]);
-
   const inputOnChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files) {
-        addImages(Array.from(files));
+        onAdd(Array.from(files));
       }
     },
-    [addImages]
+    [onAdd]
   );
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      addImages(acceptedFiles);
+      onAdd(acceptedFiles);
     },
-    [addImages]
+    [onAdd]
   );
 
   const { getRootProps, getInputProps, isDragActive, isDragAccept } =
