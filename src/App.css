@@ -16,12 +16,20 @@
 
 #app-main {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   background-color: #282c34;
   color: white;
   flex: 1;
+  align-items: flex-start;
+  padding: 0 3rem;
+  gap: 3rem;
+}
+
+#app-main > aside {
+  display: flex;
+  align-items: center;
 }
 
 #app-footer {

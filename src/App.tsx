@@ -14,9 +14,13 @@ function App() {
           <h1>Proxy Print Setup</h1>
         </header>
         <main id="app-main">
-          <ImageUploader />
-          <SettingsForm />
           <PrintableImages />
+          <aside>
+            <div>
+              <ImageUploader />
+              <SettingsForm />
+            </div>
+          </aside>
         </main>
         <footer id="app-footer">
           <a href="https://github.com/alex-taxiera/proxy-print">{"<Code />"}</a>

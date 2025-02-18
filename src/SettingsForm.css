@@ -1,6 +1,6 @@
 form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 140px);
+  grid-template-columns: repeat(auto-fit, 165px);
   gap: 1rem;
   margin: 16px;
   align-self: stretch;
@@ -11,6 +11,7 @@ label {
   display: flex;
   flex-direction: column;
   font-weight: bold;
+  user-select: none;
 }
 
 input[type="number"],
@@ -29,6 +30,7 @@ input[type="color"] {
 }
 
 input[type="checkbox"] {
+  margin: 0;
   width: 2rem;
   height: 2rem;
 }

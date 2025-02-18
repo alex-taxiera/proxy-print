@@ -99,7 +99,7 @@ export const PrintableImages = () => {
 
   if (images.length === 0) {
     return (
-      <>
+      <div className="printable-images help">
         <p>Upload images to get started.</p>
         <p>
           You can download images from your{" "}
@@ -108,7 +108,7 @@ export const PrintableImages = () => {
           </a>{" "}
           project with their &quot;Download Card Images&quot; option.
         </p>
-      </>
+      </div>
     );
   }
 
@@ -133,8 +133,8 @@ export const PrintableImages = () => {
 
   return (
     <div className="printable-images" style={cssVars}>
-      <div>{images.length} Total Cards</div>
       <div className="actions">
+        <div>{images.length} Total Cards</div>
         <button disabled={isRendering} onClick={() => onClear()}>
           Remove all cards
         </button>

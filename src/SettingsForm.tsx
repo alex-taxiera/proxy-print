@@ -110,7 +110,7 @@ export const SettingsForm = () => {
         />
       </label>
       <label>
-        Guides at Bleed
+        Guides at Bleed Edge
         <input
           disabled={isRendering}
           type="checkbox"

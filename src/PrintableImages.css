@@ -3,6 +3,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
+  min-width: 0;
+  max-width: var(--page-width, 8.5in);
+}
+
+.printable-images.help {
+  align-self: stretch;
+  justify-content: center;
 }
 
 .print-container {
@@ -11,6 +19,8 @@
   display: flex;
   flex-direction: column;
   row-gap: 20px;
+  max-width: 100%;
+  overflow-x: auto;
 
   --bleed-edge-width: var(--bleed-edge, 0mm);
   --guide-display: var(--guides-display, block);
@@ -24,6 +34,7 @@
 
 .actions {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
