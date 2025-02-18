@@ -2,8 +2,10 @@ import { useCallback, useContext } from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagesContext } from "./ImagesContext";
 
+import "./ImageUploader.css";
+
 export function ImageUploader() {
-  const { onAdd } = useContext(ImagesContext);
+  const { onAdd, isRendering } = useContext(ImagesContext);
 
   const inputOnChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,32 +24,31 @@ export function ImageUploader() {
     [onAdd]
   );
 
-  const { getRootProps, getInputProps, isDragActive, isDragAccept } =
-    useDropzone({
-      onDrop,
-      accept: {
-        "image/jpg": [".jpg", ".jpeg"],
-        "image/png": [".png"],
-        "image/bmp": [".bmp"],
-      },
-    });
+  const {
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    isDragAccept,
+    isFileDialogActive,
+  } = useDropzone({
+    disabled: isRendering,
+    onDrop,
+    accept: {
+      "image/jpg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+      "image/bmp": [".bmp"],
+    },
+  });
 
-  const dropzoneStyle: React.CSSProperties = {
-    border: "2px dashed #007bff",
-    borderRadius: "5px",
-    padding: "20px",
-    textAlign: "center",
-    transition: "border .3s ease-in-out",
-    backgroundColor: isDragAccept ? "#f0f8ff" : "#fafafa",
-    cursor: "pointer",
-    color: "black",
-  };
+  console.log("getRootProps() :", getRootProps());
+  console.log("getInputProps() :", getInputProps());
 
   return (
     <div
       {...getRootProps()}
-      style={dropzoneStyle}
-      className={`dropzone ${isDragActive ? "active" : ""}`}
+      className={`dropzone ${
+        isDragActive || isFileDialogActive ? "active" : ""
+      } ${isDragAccept ? "accept" : ""} ${isRendering ? "disabled" : ""}`}
     >
       <input {...getInputProps()} onChange={inputOnChange} />
       Add Images

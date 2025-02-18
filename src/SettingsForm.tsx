@@ -2,9 +2,10 @@ import { useCallback, useContext } from "react";
 import { DEFAULT_SETTINGS, SettingsContext, Settings } from "./SettingsContext";
 
 import "./SettingsForm.css";
+import { ImagesContext } from "./ImagesContext";
 
 const getMaxGuideWidth = (settings: Settings) => {
-  const bleedEdge = Number(settings.bleedEdge)
+  const bleedEdge = Number(settings.bleedEdge);
 
   if (bleedEdge > 2) {
     return 1;
@@ -23,6 +24,7 @@ const getMaxGuideWidth = (settings: Settings) => {
 
 export const SettingsForm = () => {
   const { settings, setSettings } = useContext(SettingsContext);
+  const { isRendering } = useContext(ImagesContext);
 
   const handleChange = useCallback(
     (key: keyof typeof settings, eventKey: "value" | "checked" = "value") =>
@@ -49,6 +51,7 @@ export const SettingsForm = () => {
       <label>
         Page Width (in)
         <input
+          disabled={isRendering}
           type="number"
           min="0"
           value={settings.pageWidth}
@@ -58,6 +61,7 @@ export const SettingsForm = () => {
       <label>
         Page Height (in)
         <input
+          disabled={isRendering}
           type="number"
           min="0"
           value={settings.pageHeight}
@@ -67,6 +71,7 @@ export const SettingsForm = () => {
       <label>
         Columns
         <input
+          disabled={isRendering}
           type="number"
           min="1"
           value={settings.numberOfColumns}
@@ -76,6 +81,7 @@ export const SettingsForm = () => {
       <label>
         Bleed Edge (mm)
         <input
+          disabled={isRendering}
           type="number"
           min="0"
           max="3"
@@ -86,6 +92,7 @@ export const SettingsForm = () => {
       <label>
         Guides Color
         <input
+          disabled={isRendering}
           type="color"
           value={settings.guidesColor}
           onChange={handleChange("guidesColor")}
@@ -94,6 +101,7 @@ export const SettingsForm = () => {
       <label>
         Guides Width (px)
         <input
+          disabled={isRendering}
           type="number"
           min="0"
           max={maxGuideWidth}
@@ -104,6 +112,7 @@ export const SettingsForm = () => {
       <label>
         Guides at Bleed
         <input
+          disabled={isRendering}
           type="checkbox"
           checked={settings.guidesAtBleedEdge}
           onChange={handleChange("guidesAtBleedEdge", "checked")}

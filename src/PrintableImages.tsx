@@ -10,11 +10,14 @@ import { Image, ImagesContext } from "./ImagesContext";
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
 
-  const { images, onClear } = useContext(ImagesContext);
+  const { images, onClear, isRendering, setIsRendering } =
+    useContext(ImagesContext);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
+    setIsRendering(true);
+
     setTimeout(async () => {
       console.time("save");
       if (!contentRef.current) {
@@ -33,8 +36,10 @@ export const PrintableImages = () => {
       const pages = contentRef.current.querySelectorAll<HTMLElement>(".page");
       const canvases = await Promise.all(
         Array.from(pages).map((page) => html2canvas(page, { scale: 12.5 })) // 12.5 for 1200dpi, 8.33 for 800dpi
-      )
-      const pageImages = canvases.map((canvas) => canvas.toDataURL("image/jpeg"))
+      );
+      const pageImages = canvases.map((canvas) =>
+        canvas.toDataURL("image/jpeg")
+      );
 
       for (let index = 0; index < pages.length; index++) {
         if (index !== 0) {
@@ -51,6 +56,7 @@ export const PrintableImages = () => {
       a.click();
       URL.revokeObjectURL(url);
       console.timeEnd("save");
+      setIsRendering(false);
     });
   };
 
@@ -129,20 +135,29 @@ export const PrintableImages = () => {
     <div className="printable-images" style={cssVars}>
       <div>{images.length} Total Cards</div>
       <div className="actions">
-        <button onClick={() => onClear()}>Remove all cards</button>
-        <button onClick={() => handleSave()}>Save</button>
+        <button disabled={isRendering} onClick={() => onClear()}>
+          Remove all cards
+        </button>
+        <button disabled={isRendering} onClick={() => handleSave()}>
+          Save
+        </button>
       </div>
       <div ref={contentRef} className="print-container">
         {imageMatrix.map((row, pageIndex) => (
-          <div className="page" key={pageIndex}>
-            <div className="card-grid">
-              {row.map((image, index) => (
-                <Card
-                  key={image.uuid}
-                  image={image}
-                  className={getCardClassName(index)}
-                />
-              ))}
+          <div
+            className={`page-container ${isRendering ? "loading" : ""}`}
+            key={pageIndex}
+          >
+            <div className="page">
+              <div className="card-grid">
+                {row.map((image, index) => (
+                  <Card
+                    key={image.uuid}
+                    image={image}
+                    className={getCardClassName(index)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ))}

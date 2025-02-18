@@ -6,6 +6,7 @@ export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">
 ) => {
   const [images, setImages] = useState<Image[]>([]);
+  const [isRendering, setIsRendering] = useState(false);
 
   const onRemove = useCallback((uuid: string) => {
     setImages((old) => old.filter((image) => image.uuid !== uuid));
@@ -27,8 +28,8 @@ export const ImagesProvider = (
   }, []);
 
   const contextValue = useMemo(
-    () => ({ images, onClear, onRemove, onAdd }),
-    [images, onClear, onRemove, onAdd]
+    () => ({ images, onClear, onRemove, onAdd, isRendering, setIsRendering }),
+    [images, onClear, onRemove, onAdd, isRendering, setIsRendering]
   );
 
   return <ImagesContext.Provider {...props} value={contextValue} />;

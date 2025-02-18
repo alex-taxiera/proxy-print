@@ -12,17 +12,17 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
-  const { images, onAdd, onRemove } = useContext(ImagesContext)
+  const { images, onAdd, onRemove, isRendering } = useContext(ImagesContext)
 
   const [src, setSrc] = useState<string>('')
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault();
-    if (cardRef.current) {
+    if (cardRef.current && !isRendering) {
       const rect = cardRef.current.getBoundingClientRect();
       setMenuPosition({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+      setMenuVisible(true);
     }
-    setMenuVisible(true);
   };
 
   const handleClickOutside = (event: MouseEvent) => {

@@ -38,6 +38,26 @@
   overflow: hidden;
 }
 
+.page-container {
+  position: relative;
+}
+
+.page-container.loading::after {
+  content: "Rendering...";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  color: #aaa;
+  background-color: #00000099;
+  z-index: 100;
+}
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(var(--grid-columns, 3), min-content);
