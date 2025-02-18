@@ -17,10 +17,16 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
   const [src, setSrc] = useState<string>('')
 
   const handleContextMenu = (event: React.MouseEvent) => {
-    event.preventDefault();
     if (cardRef.current && !isRendering) {
       const rect = cardRef.current.getBoundingClientRect();
-      setMenuPosition({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+      const position = { x: event.clientX - rect.left, y: event.clientY - rect.top }
+      // check if position is the same as last time
+      if (menuPosition.x === position.x && menuPosition.y === position.y) {
+        setMenuPosition({ x: 0, y: 0 })
+        return
+      }
+      event.preventDefault();
+      setMenuPosition(position);
       setMenuVisible(true);
     }
   };
