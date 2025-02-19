@@ -11,11 +11,13 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --interaction-color: #646cff;
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--interaction-color);
   text-decoration: inherit;
 }
 a:hover {
@@ -44,18 +46,41 @@ button {
   font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-button:disabled {
-  cursor: not-allowed;
-  border-color: initial; 
+  transition-property: border-color, background-color;
+  transition-duration: 0.25s;
+
+  &:hover {
+    border-color: var(--interaction-color);
+  }
+  &:focus,
+  &:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+  &:disabled {
+    cursor: not-allowed;
+    border-color: transparent; 
+  }
+
+  &.primary {
+    background-color: var(--interaction-color);
+    color: white;
+
+    &:hover {
+      background-color: #535bf2;
+    }
+
+    &:disabled {
+      color: #aaaaaa;
+      background-color: #5559a7;
+      border-color: #5559a7;
+    }
+
+    &:focus,
+    &:focus-visible {
+      outline-color: #535bf2;
+    }
+  }
+
 }
 
 input:disabled {

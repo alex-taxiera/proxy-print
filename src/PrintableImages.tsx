@@ -122,6 +122,12 @@ export const PrintableImages = () => {
     return className.join(" ");
   };
 
+  const cardCount = useMemo(() => {
+    const totalCards = images.length;
+    const cardString = totalCards === 1 ? "card" : "cards";
+    return `${totalCards} total ${cardString}`;
+  }, [images]);
+
   if (images.length === 0) {
     return (
       <div className="printable-images help">
@@ -140,11 +146,11 @@ export const PrintableImages = () => {
   return (
     <div className="printable-images" style={cssVars}>
       <div className="actions">
-        <div>{images.length} Total Cards</div>
+        <div>{cardCount}</div>
         <button disabled={isRendering} onClick={() => onClear()}>
           Remove all cards
         </button>
-        <button disabled={isRendering} onClick={() => handleSave()}>
+        <button className="primary" disabled={isRendering} onClick={() => handleSave()}>
           Save
         </button>
       </div>

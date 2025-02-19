@@ -3,38 +3,74 @@
   background-color: white;
   border: 1px solid #ccc;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 9999;
   list-style: none;
   padding: 0;
   margin: 0;
+
+  li {
+    display:flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    gap: 16px;
+    cursor: pointer;
+    color: black;
+
+    &:hover {
+      background-color: #eee;
+    }
+
+    &.destructive {
+      color: red;
+
+      &:hover {
+        background-color: #fdd;
+      }
+    }
+
+    .command {
+      color: initial;
+      font-style: italic;
+      white-space: nowrap;
+      font-weight: 300;
+    }
+  }
 }
 
-.context-menu li {
-  padding: 8px 12px;
-  cursor: pointer;
-  color: black;
-}
 
-.context-menu li:hover {
-  background-color: #eee;
-}
 
 .card {
   position: relative;
-}
+  transition: outline-color 0.25s;
+  outline-color: transparent;
 
-.card.empty {
-  border-color: black;
-  border-style: solid;
-  border-width: var(--guide-border-width);
-}
+  &:not(.empty):hover {
+    outline-width: 4px;
+    outline-color: var(--interaction-color);
+    outline-style: solid;
+    z-index: 1000;
+  }
 
-.card:before,
-.card:after {
-  display: var(--guide-display);
-  border-color: black;
-  border-style: solid;
-  border-width: 0px;
+  &:before,
+  &:after {
+    pointer-events: none;
+    display: var(--guide-display);
+    border-color: black;
+    border-style: solid;
+    border-width: 0px;
+  }
+
+  .empty:after {
+    content: "";
+    position: absolute;
+    top: var(--guide-corner-offset);
+    left: var(--guide-corner-offset);
+    right: var(--guide-corner-offset);
+    bottom: var(--guide-corner-offset);
+    border-color: black;
+    border-style: solid;
+    border-width: var(--guide-border-width);
+  }
 }
 
 /* top row guides */
@@ -92,18 +128,6 @@
   align-items: center;
   width: calc(63mm + calc(var(--bleed-edge-width) * 2) + var(--guide-border-width));
   height: calc(88mm + calc(var(--bleed-edge-width) * 2) + var(--guide-border-width));
-}
-
-.empty:after {
-  content: "";
-  position: absolute;
-  top: var(--guide-corner-offset);
-  left: var(--guide-corner-offset);
-  right: var(--guide-corner-offset);
-  bottom: var(--guide-corner-offset);
-  border-color: black;
-  border-style: solid;
-  border-width: var(--guide-border-width);
 }
 
 .image {
