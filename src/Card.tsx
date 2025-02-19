@@ -144,7 +144,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         <ul
           ref={menuRef}
           className="context-menu"
-          style={{ top: menuPosition.y, left: menuPosition.x }}
+          style={{ top: menuPosition.y+1, left: menuPosition.x+1 }}
         >
           <li className="destructive" onClick={onRemoveClick}>
             Remove

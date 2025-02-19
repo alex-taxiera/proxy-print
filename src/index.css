@@ -47,7 +47,8 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition-property: border-color, background-color;
-  transition-duration: 0.25s;
+  transition-duration: 0.1s;
+  transition-timing-function: ease-in-out;
 
   &:hover {
     border-color: var(--interaction-color);

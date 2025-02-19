@@ -15,6 +15,7 @@
     gap: 16px;
     cursor: pointer;
     color: black;
+    transition: background-color 0.1s;
 
     &:hover {
       background-color: #eee;
@@ -41,7 +42,7 @@
 
 .card {
   position: relative;
-  transition: outline-color 0.25s;
+  transition: outline-color 0.1s ease-in-out;
   outline-color: transparent;
 
   &:not(.empty):hover {
