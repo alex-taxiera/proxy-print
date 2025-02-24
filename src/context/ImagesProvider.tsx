@@ -1,5 +1,5 @@
 import { ComponentProps, useCallback, useMemo, useState } from "react";
-import { Image, ImagesContext } from "./ImagesContext";
+import { GoogleImageData, Image, ImagesContext } from "./ImagesContext";
 import { nanoid } from "nanoid";
 
 export const ImagesProvider = (
@@ -16,9 +16,15 @@ export const ImagesProvider = (
     setImages([]);
   }, []);
 
-  const onAdd = useCallback((files: File[], index?: number) => {
+  const onAdd = useCallback((data: (File | GoogleImageData)[], index?: number) => {
     setImages((old) => {
-      const images = files.map((file) => ({ uuid: nanoid(), file }));
+      const images = data.map((item) => {
+        if (item instanceof File) {
+          return { uuid: nanoid(), file: item };
+        }
+
+        return { uuid: nanoid(), ...item };
+      });
       if (index === undefined) {
         return old.concat(images);
       }

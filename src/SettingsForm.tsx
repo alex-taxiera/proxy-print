@@ -32,7 +32,7 @@ export const SettingsForm = () => {
         setSettings((old) => {
           const updatedSettings = {
             ...old,
-            [key]: e.target[eventKey] || DEFAULT_SETTINGS[key],
+            [key]: e.target[eventKey] ?? DEFAULT_SETTINGS[key],
           };
           const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
           if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
@@ -76,6 +76,15 @@ export const SettingsForm = () => {
           min="1"
           value={settings.numberOfColumns}
           onChange={handleChange("numberOfColumns")}
+        />
+      </label>
+      <label>
+        Enable Bleed Edge
+        <input
+          disabled={isRendering}
+          type="checkbox"
+          checked={settings.enableBleedEdge}
+          onChange={handleChange("enableBleedEdge", "checked")}
         />
       </label>
       <label>

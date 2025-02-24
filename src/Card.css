@@ -38,14 +38,12 @@
   }
 }
 
-
-
 .card {
   position: relative;
   transition: outline-color 0.1s ease-in-out;
   outline-color: transparent;
 
-  &:not(.empty):hover {
+  &:not(.empty):not(.loading):hover {
     outline-width: 4px;
     outline-color: var(--interaction-color);
     outline-style: solid;
@@ -59,6 +57,19 @@
     border-color: black;
     border-style: solid;
     border-width: 0px;
+  }
+
+  .loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
   }
 
   .empty:after {
@@ -127,12 +138,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: calc(63mm + calc(var(--bleed-edge-width) * 2) + var(--guide-border-width));
-  height: calc(88mm + calc(var(--bleed-edge-width) * 2) + var(--guide-border-width));
+  width: calc(63mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width));
+  height: calc(88mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width));
 }
 
 .image {
-  width: calc(63mm + 6.2mm);
+  width: calc(63mm + var(--image-zoom-width));
   object-fit: cover;
 }
 
@@ -217,4 +228,13 @@
   left: 100%;
   border-top-width: var(--guide-border-width);
   border-left-width: var(--guide-border-width);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

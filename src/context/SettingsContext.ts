@@ -2,6 +2,7 @@ import { createContext } from "react";
 import zod from "zod";
 
 export const SettingsSchema = zod.object({
+  enableBleedEdge: zod.boolean(),
   bleedEdge: zod.string(),
   guides: zod.boolean(),
   guidesColor: zod.string(),
@@ -15,6 +16,7 @@ export const SettingsSchema = zod.object({
 export type Settings = zod.infer<typeof SettingsSchema>;
 
 export const DEFAULT_SETTINGS = {
+  enableBleedEdge: true,
   bleedEdge: "0",
   guides: true,
   guidesColor: "#adff2f",

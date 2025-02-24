@@ -37,11 +37,15 @@ export const SettingsProvider = (
   }, []);
 
   const cssVars = useMemo(() => {
+    const guideThickness = value.enableBleedEdge ? Number(value.guidesThickness) : 1
+    const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0
     return {
-      "--bleed-edge": `${value.bleedEdge}mm`,
+      "--image-zoom": value.enableBleedEdge ? '6.2mm' : '0mm',
+      "--image-container-buffer": `${imageContainerBuffer}px`,
+      "--bleed-edge": `${value.enableBleedEdge ? value.bleedEdge : 0}mm`,
       "--guides-display": value.guidesThickness !== '0' ? "block" : "none",
       "--guides-color": value.guidesColor,
-      "--guides-thickness": `${value.guidesThickness}px`,
+      "--guides-thickness": `${guideThickness}px`,
       "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
       "--page-height": `${value.pageHeight}in`,
       "--page-width": `${value.pageWidth}in`,

@@ -8,6 +8,14 @@ import React, {
 import "./Card.css";
 import { Image, ImagesContext } from "./context/ImagesContext";
 
+const getBase64ForGoogleImage = (id: string): Promise<string> => {
+  const url =
+    "https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec";
+  const params = new URLSearchParams({ id });
+
+  return fetch(`${url}?${params}`).then((response) => response.text());
+};
+
 export type CardProps = {
   image: Image;
 } & React.HTMLAttributes<HTMLDivElement>;
@@ -20,9 +28,10 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
 
   const { images, onAdd, onRemove, isRendering } = useContext(ImagesContext);
 
+  const [isLoading, setIsLoading] = useState(image.id ? true : false);
   const [src, setSrc] = useState<string>("");
 
-  const isEmpty = !image.file || !src;
+  const isEmpty = !image.file && !image.id;
 
   const add = useCallback(
     (count: number) => {
@@ -107,33 +116,51 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
   }, [menuVisible]);
 
   useEffect(() => {
-    const blob = image.file ? URL.createObjectURL(image.file) : "";
-    setSrc(blob);
+    let url: string | undefined;
+
+    if (image.file) {
+      url = URL.createObjectURL(image.file);
+      setSrc(url);
+    } else if (image.id) {
+      getBase64ForGoogleImage(image.id)
+        .then((base64) => {
+          setSrc(`data:image/jpeg;base64,${base64}`);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+
     return () => {
-      if (blob) {
+      if (url) {
         setSrc("");
-        URL.revokeObjectURL(blob);
+        URL.revokeObjectURL(url);
       }
     };
   }, [image]);
 
   return (
     <div
-      className={`card ${isEmpty ? "empty" : ""} ${className}`}
+      className={`card ${
+        isEmpty ? "empty" : isLoading ? "loading" : ""
+      } ${className}`}
       {...restProps}
       ref={cardRef}
       onClick={handleClick}
     >
       <div className="image-container">
-        {!isEmpty ? (
+        {isEmpty ? (
+          <span className="empty" />
+        ) : isLoading ? (
+          <span className="loading" />
+        ) : (
           <img
             src={src}
-            alt={image.file!.name}
+            alt={image.file?.name ?? image.name}
             className="image"
             onContextMenu={handleContextMenu}
           />
-        ) : (
-          <span className="empty" />
         )}
       </div>
       <div className="guide top-left"></div>
@@ -144,14 +171,14 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         <ul
           ref={menuRef}
           className="context-menu"
-          style={{ top: menuPosition.y+1, left: menuPosition.x+1 }}
+          style={{ top: menuPosition.y + 1, left: menuPosition.x + 1 }}
         >
           <li className="destructive" onClick={onRemoveClick}>
             Remove
             <span className="command">Alt + Click</span>
           </li>
-          <li onClick={buildOnAddClick(1)}>Add 1
-            <span className="command">Click</span>
+          <li onClick={buildOnAddClick(1)}>
+            Add 1<span className="command">Click</span>
           </li>
           <li onClick={buildOnAddClick(5)}>Add 5</li>
         </ul>

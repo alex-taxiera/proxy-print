@@ -1,0 +1,34 @@
+<order>
+    <details>
+        <quantity>100</quantity>
+        <bracket>108</bracket>
+        <stock>(S30) Standard Smooth</stock>
+        <foil>false</foil>
+    </details>
+    <fronts>
+        <card>
+            <id>1UTVMIYSLeozNAJLHM9m_IF0pBweLGrma</id>
+            <slots>0</slots>
+            <name>Altar of Dementia.png</name>
+            <query>altar of dementia</query>
+        </card>
+        <card>
+            <id>1LG-f2g6C7fDxDWAnIxtMh9Vn2Mp585yy</id>
+            <slots>1,2,3,4</slots>
+            <name>Island.png</name>
+            <query>island</query>
+        </card>
+        <card>
+            <id>1GnZGLxHj4x4MEvaSJH56xqA5ZCKhAPSi</id>
+            <slots>5,6,7,8,13</slots>
+            <name>Island (Serpent Isles).png</name>
+            <query>island</query>
+        </card>
+        <card>
+            <id>1SkSo-YXyGOh8pU1LEAhcTeMNa0NDWWa3</id>
+            <slots>9,10,11,12</slots>
+            <name>Island (Freljord, Nunu).png</name>
+            <query>island</query>
+        </card>
+    </fronts>
+</order>

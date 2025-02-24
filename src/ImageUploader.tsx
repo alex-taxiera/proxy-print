@@ -1,8 +1,49 @@
 import { useCallback, useContext } from "react";
 import { useDropzone } from "react-dropzone";
-import { ImagesContext } from "./context/ImagesContext";
+import { GoogleImageData, ImagesContext } from "./context/ImagesContext";
 
 import "./ImageUploader.css";
+
+const parseXML = (file: File): Promise<GoogleImageData[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(
+        event.target?.result as string,
+        "text/xml"
+      );
+      const cards: GoogleImageData[] = [];
+      Array.from(xml.querySelectorAll("card")).forEach((card) => {
+        const id = card.querySelector("id")?.textContent;
+        const name = card.querySelector("name")?.textContent;
+        const slots = card
+          .querySelector("slots")
+          ?.textContent?.split(",")
+          .map(Number);
+        if (id && name && slots) {
+          slots.forEach((slot) => {
+            cards[slot] = {
+              id,
+              name,
+            };
+          });
+        }
+      });
+      resolve(cards.filter(Boolean));
+    };
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+};
+
+const processFiles = async (files: File[]) => {
+  const xmlFiles = files.filter((file) => file.type === "text/xml");
+  const nonXmlFiles = files.filter((file) => file.type !== "text/xml");
+  const xmlFilesParsed = (await Promise.all(xmlFiles.map(parseXML))).flat();
+
+  return [...nonXmlFiles, ...xmlFilesParsed];
+};
 
 export function ImageUploader() {
   const { onAdd, isRendering } = useContext(ImagesContext);
@@ -11,7 +52,7 @@ export function ImageUploader() {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files) {
-        onAdd(Array.from(files));
+        processFiles(Array.from(files)).then(onAdd).catch(console.error);
       }
     },
     [onAdd]
@@ -19,7 +60,7 @@ export function ImageUploader() {
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      onAdd(acceptedFiles);
+      processFiles(acceptedFiles).then(onAdd).catch(console.error);
     },
     [onAdd]
   );
@@ -37,11 +78,9 @@ export function ImageUploader() {
       "image/jpg": [".jpg", ".jpeg"],
       "image/png": [".png"],
       "image/bmp": [".bmp"],
+      "text/xml": [".xml"],
     },
   });
-
-  console.log("getRootProps() :", getRootProps());
-  console.log("getInputProps() :", getInputProps());
 
   return (
     <div

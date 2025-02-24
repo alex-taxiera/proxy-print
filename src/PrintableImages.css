@@ -23,9 +23,11 @@
   overflow-x: auto;
 
   --bleed-edge-width: var(--bleed-edge, 0mm);
+  --image-zoom-width: var(--image-zoom, 6.2mm);
   --guide-display: var(--guides-display, block);
   --guide-border-color: var(--guides-color, #adff2f);
   --guide-border-width: var(--guides-thickness, 1px);
+  --image-container-buffer-width: var(--image-container-buffer, var(--guide-border-width));
   --guide-corner-offset: calc(
     calc(-0.5 * var(--guide-border-width)) +
       calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1))
