@@ -8,14 +8,6 @@ import React, {
 import "./Card.css";
 import { Image, ImagesContext } from "./context/ImagesContext";
 
-const getBase64ForGoogleImage = (id: string): Promise<string> => {
-  const url =
-    "https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec";
-  const params = new URLSearchParams({ id });
-
-  return fetch(`${url}?${params}`).then((response) => response.text());
-};
-
 export type CardProps = {
   image: Image;
 } & React.HTMLAttributes<HTMLDivElement>;
@@ -26,7 +18,8 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
-  const { images, onAdd, onRemove, isRendering } = useContext(ImagesContext);
+  const { images, onAdd, onRemove,onError, isRendering, downloadManager } =
+    useContext(ImagesContext);
 
   const [isLoading, setIsLoading] = useState(image.id ? true : false);
   const [src, setSrc] = useState<string>("");
@@ -122,13 +115,17 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
       url = URL.createObjectURL(image.file);
       setSrc(url);
     } else if (image.id) {
-      getBase64ForGoogleImage(image.id)
+      downloadManager
+        .fetch(image.id)
         .then((base64) => {
           setSrc(`data:image/jpeg;base64,${base64}`);
-          setIsLoading(false);
         })
         .catch((error) => {
-          console.error(error);
+          onError(image.uuid);
+          console.error("Error fetching image: ", error);
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
     }
 
@@ -138,7 +135,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [image]);
+  }, [downloadManager, image]);
 
   return (
     <div
@@ -154,13 +151,15 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
           <span className="empty" />
         ) : isLoading ? (
           <span className="loading" />
-        ) : (
+        ) : src ? (
           <img
             src={src}
             alt={image.file?.name ?? image.name}
             className="image"
             onContextMenu={handleContextMenu}
           />
+        ) : (
+          <span className="error">Error!</span>
         )}
       </div>
       <div className="guide top-left"></div>

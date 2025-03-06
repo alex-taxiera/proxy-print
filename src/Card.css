@@ -72,6 +72,16 @@
     animation: spin 1s linear infinite;
   }
 
+  .error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+    font-size: 24px;
+    user-select: none;
+  }
+
   .empty:after {
     content: "";
     position: absolute;
