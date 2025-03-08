@@ -14,7 +14,13 @@ const parseXML = (file: File): Promise<GoogleImageData[]> => {
         "text/xml"
       );
       const cards: GoogleImageData[] = [];
-      Array.from(xml.querySelectorAll("card")).forEach((card) => {
+      const frontsSection = xml.querySelector("fronts");
+      const cardFronts = frontsSection?.querySelectorAll("card");
+      if (!cardFronts) {
+        reject(new Error("No cards found in XML"));
+        return
+      }
+      Array.from(cardFronts).forEach((card) => {
         const id = card.querySelector("id")?.textContent;
         const name = card.querySelector("name")?.textContent;
         const slots = card
