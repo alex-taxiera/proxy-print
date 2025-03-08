@@ -11,28 +11,35 @@ export const ImagesProvider = (
   const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
   const [isRendering, setIsRendering] = useState(false);
 
-  const onError = useCallback((uuid: string) => {
-    setImagesWithError((old) => {
-      const image = images.find((image) => image.uuid === uuid);
-      if (!image) {
-        return old;
-      }
+  const onError = useCallback(
+    (uuid: string) => {
+      setImages((old) => old.filter((image) => image.uuid !== uuid));
+      setImagesWithError((old) => {
+        const image = images.find((image) => image.uuid === uuid);
+        if (!image) {
+          return old;
+        }
 
-      return old.concat(image);
-    });
-  }, [images])
+        return old.concat(image);
+      });
+    },
+    [images]
+  );
 
   const onClearErrors = useCallback(() => {
     setImagesWithError([]);
   }, []);
 
   const onRemove = useCallback((uuid: string) => {
+    downloadManager.remove(uuid);
     setImages((old) => old.filter((image) => image.uuid !== uuid));
-  }, []);
+  }, [downloadManager]);
 
   const onClear = useCallback(() => {
+    downloadManager.removeAll();
+    onClearErrors();
     setImages([]);
-  }, []);
+  }, [downloadManager, onClearErrors]);
 
   const onAdd = useCallback(
     (data: (File | GoogleImageData)[], index?: number) => {

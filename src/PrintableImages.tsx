@@ -6,6 +6,7 @@ import { SettingsContext } from "./context/SettingsContext";
 import "./PrintableImages.css";
 import { Card } from "./Card";
 import { Image, ImagesContext } from "./context/ImagesContext";
+import { ImageErrors } from "./ImageErrors";
 
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
@@ -131,7 +132,14 @@ export const PrintableImages = () => {
   if (images.length === 0) {
     return (
       <div className="printable-images help">
-        <p>Upload images to get started.</p>
+        <p>Add images to get started.</p>
+        <p>
+          Upload an XML from{" "}
+          <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
+            MPC Autofill
+          </a>{" "}
+          &quot;Download XML&quot; option.
+        </p>
         <p>
           You can download images from your{" "}
           <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
@@ -150,10 +158,15 @@ export const PrintableImages = () => {
         <button disabled={isRendering} onClick={() => onClear()}>
           Remove all cards
         </button>
-        <button className="primary" disabled={isRendering} onClick={() => handleSave()}>
+        <button
+          className="primary"
+          disabled={isRendering}
+          onClick={() => handleSave()}
+        >
           Save
         </button>
       </div>
+      <ImageErrors />
       <div ref={contentRef} className="print-container">
         {imageMatrix.map((row, pageIndex) => (
           <div

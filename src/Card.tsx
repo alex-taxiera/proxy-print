@@ -18,7 +18,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
-  const { images, onAdd, onRemove,onError, isRendering, downloadManager } =
+  const { images, onAdd, onRemove, onError, isRendering, downloadManager } =
     useContext(ImagesContext);
 
   const [isLoading, setIsLoading] = useState(image.id ? true : false);
@@ -77,7 +77,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
 
   const handleClick = useCallback(
     (event: React.MouseEvent) => {
-      if (isEmpty) {
+      if (isEmpty || isLoading || isRendering) {
         return;
       }
 
@@ -87,7 +87,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         add(1);
       }
     },
-    [isEmpty, onRemove, image, add]
+    [isEmpty, isLoading, isRendering, onRemove, image.uuid, add]
   );
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -135,7 +135,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [downloadManager, image]);
+  }, [downloadManager, image, onError]);
 
   return (
     <div
