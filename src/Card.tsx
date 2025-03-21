@@ -162,10 +162,10 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
           <span className="error">Error!</span>
         )}
       </div>
-      <div className="guide top-left"></div>
-      <div className="guide top-right"></div>
-      <div className="guide bottom-left"></div>
-      <div className="guide bottom-right"></div>
+      <Guide position="top-left" />
+      <Guide position="top-right" />
+      <Guide position="bottom-left" />
+      <Guide position="bottom-right" />
       {menuVisible && (
         <ul
           ref={menuRef}
@@ -185,3 +185,15 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     </div>
   );
 };
+
+type GuideProps = {
+  position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+}
+const Guide = ({ position }: GuideProps) => {
+  return <div className={`guide ${position}`}>
+    <div className="content">
+      <div className="inner" />
+      <div className="outer" />
+    </div>
+  </div>;
+}
