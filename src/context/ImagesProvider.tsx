@@ -16,7 +16,8 @@ export const ImagesProvider = (
       setImages((old) => old.filter((image) => image.uuid !== uuid));
       setImagesWithError((old) => {
         const image = images.find((image) => image.uuid === uuid);
-        if (!image) {
+        const existingError = old.find((image) => image.uuid === uuid);
+        if (!image || existingError) {
           return old;
         }
 
