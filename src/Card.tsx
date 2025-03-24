@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import "./Card.css";
-import { Image, ImagesContext } from "./context/ImagesContext";
+import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
 
 export type CardProps = {
   image: Image;
@@ -28,10 +28,11 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
 
   const add = useCallback(
     (count: number) => {
-      if (image.file) {
-        const index = images.indexOf(image);
-        onAdd(new Array<File>(count).fill(image.file), index + 1);
-      }
+      const index = images.indexOf(image);
+      onAdd(
+        new Array<File | GoogleImageData>(count).fill(image.file ?? image),
+        index + 1
+      );
     },
     [image, images, onAdd]
   );
@@ -188,12 +189,14 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
 
 type GuideProps = {
   position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
-}
+};
 const Guide = ({ position }: GuideProps) => {
-  return <div className={`guide ${position}`}>
-    <div className="content">
-      <div className="inner" />
-      <div className="outer" />
+  return (
+    <div className={`guide ${position}`}>
+      <div className="content">
+        <div className="inner" />
+        <div className="outer" />
+      </div>
     </div>
-  </div>;
-}
+  );
+};
