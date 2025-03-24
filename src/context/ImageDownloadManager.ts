@@ -8,6 +8,7 @@ export class ImageDownloadManager {
   private queue: Item[] = [];
   private inflight: Item[] = [];
   private abortControllers = new Map<string, AbortController>();
+  private imageCache = new Map<string, string>();
 
   constructor(private maxInflight = 20) {}
 
@@ -17,6 +18,31 @@ export class ImageDownloadManager {
 
   public fetch(id: string): Promise<string> {
     return new Promise((resolve, reject) => {
+      if (this.imageCache.has(id)) {
+        // resolve with cached image
+        resolve(this.imageCache.get(id)!);
+        return;
+      }
+
+      // check if inflight or queue contains the id
+      // combine resolve and reject with the existing item
+      const existingItem =
+        this.inflight.find((i) => i.id === id) ||
+        this.queue.find((i) => i.id === id);
+      if (existingItem) {
+        const originalResolve = existingItem.resolve;
+        const originalReject = existingItem.reject;
+        existingItem.resolve = (value) => {
+          originalResolve(value);
+          resolve(value);
+        };
+        existingItem.reject = (reason) => {
+          originalReject(reason);
+          reject(reason as Error);
+        };
+        return;
+      }
+
       const abortController = new AbortController();
       this.abortControllers.set(id, abortController);
       this.queue.push({ id, resolve, reject });
@@ -51,6 +77,7 @@ export class ImageDownloadManager {
       this.inflight.push(item);
       this.fetchImage(item)
         .then((data) => {
+          this.imageCache.set(item.id, data);
           item.resolve(data);
         })
         .catch((error) => {
@@ -75,7 +102,9 @@ export class ImageDownloadManager {
       "https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec";
     const params = new URLSearchParams({ id });
     // FIXME: this signal doesn't work because script.google.com redirects to script.googleusercontent.com
-    const response = await fetch(`${url}?${params}`, { signal: abortController?.signal });
+    const response = await fetch(`${url}?${params}`, {
+      signal: abortController?.signal,
+    });
     return await response.text();
   }
 }
