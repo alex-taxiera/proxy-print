@@ -177,7 +177,7 @@ export const PrintableImages = () => {
               <div className="card-grid">
                 {row.map((image, index) => (
                   <Card
-                    key={image.uuid}
+                    key={image.uuid || `empty-${index}`}
                     image={image}
                     className={getCardClassName(index)}
                   />
