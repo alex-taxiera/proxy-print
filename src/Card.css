@@ -196,8 +196,8 @@
   }
 
   .inner:after, .outer:after {
-    filter: invert(100%);
-    border-style: dashed;
+    border-color: var(--guide-border-color-inverted);
+    border-style: dotted;
   }
 }
 

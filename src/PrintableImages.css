@@ -26,6 +26,7 @@
   --image-zoom-width: var(--image-zoom, 6.2mm);
   --guide-display: var(--guides-display, block);
   --guide-border-color: var(--guides-color, #adff2f);
+  --guide-border-color-inverted: var(--guides-color-inverted, #ff0000);
   --guide-border-width: var(--guides-thickness, 1px);
   --image-container-buffer-width: var(--image-container-buffer, var(--guide-border-width));
   --guide-corner-offset: calc(
