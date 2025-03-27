@@ -30,7 +30,7 @@
     }
 
     .command {
-      color: initial;
+      color: black;
       font-style: italic;
       white-space: nowrap;
       font-weight: 300;
