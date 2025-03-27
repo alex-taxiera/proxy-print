@@ -23,6 +23,11 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
 
   const [isLoading, setIsLoading] = useState(image.id ? true : false);
   const [src, setSrc] = useState<string>("");
+  const downloadedSrc = image.id
+    ? downloadManager.getCachedImage(image.id)
+    : undefined;
+
+  const imageSrc = downloadedSrc ?? src;
 
   const isEmpty = !image.file && !image.id;
 
@@ -118,9 +123,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     } else if (image.id) {
       downloadManager
         .fetch(image.id)
-        .then((base64) => {
-          setSrc(`data:image/jpeg;base64,${base64}`);
-        })
+        .then(() => console.debug("Image fetched"))
         .catch((error) => {
           onError(image.uuid);
           console.error("Error fetching image: ", error);
@@ -152,9 +155,9 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
           <span className="empty" />
         ) : isLoading ? (
           <span className="loading" />
-        ) : src ? (
+        ) : imageSrc ? (
           <img
-            src={src}
+            src={imageSrc}
             alt={image.file?.name ?? image.name}
             className="image"
             onContextMenu={handleContextMenu}

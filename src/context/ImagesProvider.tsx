@@ -11,6 +11,11 @@ export const ImagesProvider = (
   const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
   const [isRendering, setIsRendering] = useState(false);
 
+  const getDownloadedImage = useCallback(
+    (id: string) => downloadManager.getCachedImage(id),
+    [downloadManager]
+  );
+
   const onError = useCallback(
     (uuid: string) => {
       setImages((old) => old.filter((image) => image.uuid !== uuid));
@@ -74,6 +79,7 @@ export const ImagesProvider = (
       isRendering,
       setIsRendering,
       downloadManager,
+      getDownloadedImage,
     }),
     [
       images,
@@ -86,6 +92,7 @@ export const ImagesProvider = (
       isRendering,
       setIsRendering,
       downloadManager,
+      getDownloadedImage,
     ]
   );
 

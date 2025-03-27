@@ -17,6 +17,7 @@ export type ImagesContextValue = {
   isRendering: boolean;
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
   downloadManager: ImageDownloadManager;
+  getDownloadedImage: (id: string) => string | undefined;
   onAdd: (files: (File | GoogleImageData)[], index?: number) => void;
   onRemove: (uuid: string) => void;
   onClear: () => void;
@@ -30,6 +31,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   isRendering: false,
   setIsRendering: () => {},
   downloadManager: new ImageDownloadManager(),
+  getDownloadedImage: () => undefined,
   onAdd: () => {},
   onRemove: () => {},
   onClear: () => {},

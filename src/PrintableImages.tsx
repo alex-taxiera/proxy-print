@@ -8,6 +8,28 @@ import { Card } from "./Card";
 import { Image, ImagesContext } from "./context/ImagesContext";
 import { ImageErrors } from "./ImageErrors";
 
+async function addNodesToPdf(
+  nodeList: Array<HTMLElement>,
+  pdf: jsPDF,
+  pdfOptions: jsPDFOptions
+) {
+  // render each node to a canvas
+  const canvases = await Promise.all(
+    nodeList.map((node) => html2canvas(node, { scale: 12.5 })) // 12.5 for 1200dpi, 8.33 for 800dpi
+  );
+
+  // convert each canvas to a data url
+  const nodeImages = canvases.map((canvas) => canvas.toDataURL("image/jpeg"));
+
+  const [pageWidth, pageHeight] = pdfOptions.format as number[];
+  for (let index = 0; index < nodeImages.length; index++) {
+    if (index !== 0) {
+      pdf.addPage(pdfOptions.format, pdfOptions.orientation);
+    }
+    pdf.addImage(nodeImages[index], "JPEG", 0, 0, pageWidth, pageHeight);
+  }
+}
+
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
 
@@ -38,21 +60,18 @@ export const PrintableImages = () => {
       const pages = contentRef.current.querySelectorAll<HTMLElement>(".page");
 
       // render each page to a canvas
-      const canvases = await Promise.all(
-        Array.from(pages).map((page) => html2canvas(page, { scale: 12.5 })) // 12.5 for 1200dpi, 8.33 for 800dpi
-      );
-      // convert each canvas to a data url
-      const pageImages = canvases.map((canvas) =>
-        canvas.toDataURL("image/jpeg")
-      );
+      const batchSize = 8;
 
-      // add each page to the pdf
-      for (let index = 0; index < pages.length; index++) {
-        if (index !== 0) {
+      for (let i = 0; i < pages.length; i += batchSize) {
+        const batch = Array.from(pages).slice(i, i + batchSize);
+        await addNodesToPdf(batch, pdf, pdfOptions);
+
+        // add a page between batches
+        if (i + batchSize < pages.length) {
           pdf.addPage(pdfOptions.format, pdfOptions.orientation);
         }
-        pdf.addImage(pageImages[index], "JPEG", 0, 0, pageWidth, pageHeight);
       }
+
       const pdfOutput = pdf.output("blob");
 
       // download the pdf
