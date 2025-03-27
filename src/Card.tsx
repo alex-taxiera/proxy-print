@@ -35,7 +35,12 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     (count: number) => {
       const index = images.indexOf(image);
       onAdd(
-        new Array<File | GoogleImageData>(count).fill(image.file ?? image),
+        new Array<File | GoogleImageData>(count).fill(
+          image.file ?? {
+            id: image.id,
+            name: image.name,
+          }
+        ),
         index + 1
       );
     },
