@@ -5,6 +5,7 @@ import { SettingsProvider } from "./context/SettingsProvider";
 import { ImagesProvider } from "./context/ImagesProvider";
 
 import "./App.css";
+import { ImageDownloadIndicator } from "./ImageDownloadIndicator";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <ImagesProvider>
         <header id="app-header">
           <h1>Proxy Print Setup</h1>
+          <ImageDownloadIndicator />
         </header>
         <main id="app-main">
           <PrintableImages />

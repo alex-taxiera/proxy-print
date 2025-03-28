@@ -33,7 +33,7 @@ async function addNodesToPdf(
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
 
-  const { images, onClear, isRendering, setIsRendering } =
+  const { images, onClear, isRendering, setIsRendering, isFetching } =
     useContext(ImagesContext);
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -179,7 +179,7 @@ export const PrintableImages = () => {
         </button>
         <button
           className="primary"
-          disabled={isRendering}
+          disabled={isRendering || isFetching}
           onClick={() => handleSave()}
         >
           Save

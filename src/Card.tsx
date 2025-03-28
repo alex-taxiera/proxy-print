@@ -18,14 +18,19 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
-  const { images, onAdd, onRemove, onError, isRendering, downloadManager } =
-    useContext(ImagesContext);
+  const {
+    images,
+    onAdd,
+    onRemove,
+    onError,
+    isRendering,
+    downloadImage,
+    getCachedImage,
+  } = useContext(ImagesContext);
 
   const [isLoading, setIsLoading] = useState(image.id ? true : false);
   const [src, setSrc] = useState<string>("");
-  const downloadedSrc = image.id
-    ? downloadManager.getCachedImage(image.id)
-    : undefined;
+  const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
 
   const imageSrc = downloadedSrc ?? src;
 
@@ -126,8 +131,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
       url = URL.createObjectURL(image.file);
       setSrc(url);
     } else if (image.id) {
-      downloadManager
-        .fetch(image.id)
+      downloadImage(image.id)
         .then(() => console.debug("Image fetched"))
         .catch((error) => {
           onError(image.uuid);
@@ -144,7 +148,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [downloadManager, image, onError]);
+  }, [downloadImage, image, onError]);
 
   return (
     <div

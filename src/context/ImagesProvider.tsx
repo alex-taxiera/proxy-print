@@ -1,20 +1,21 @@
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 import { GoogleImageData, Image, ImagesContext } from "./ImagesContext";
 import { nanoid } from "nanoid";
-import { ImageDownloadManager } from "./ImageDownloadManager";
+import { useImageDownloadManager } from "./ImageDownloadManager";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">
 ) => {
-  const downloadManager = useMemo(() => new ImageDownloadManager(), []);
+  const {
+    isFetching,
+    add,
+    remove,
+    removeAll,
+    getCachedImage,
+  } = useImageDownloadManager();
   const [images, setImages] = useState<Image[]>([]);
   const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
   const [isRendering, setIsRendering] = useState(false);
-
-  const getDownloadedImage = useCallback(
-    (id: string) => downloadManager.getCachedImage(id),
-    [downloadManager]
-  );
 
   const onError = useCallback(
     (uuid: string) => {
@@ -37,15 +38,15 @@ export const ImagesProvider = (
   }, []);
 
   const onRemove = useCallback((uuid: string) => {
-    downloadManager.remove(uuid);
+    remove(uuid);
     setImages((old) => old.filter((image) => image.uuid !== uuid));
-  }, [downloadManager]);
+  }, [remove]);
 
   const onClear = useCallback(() => {
-    downloadManager.removeAll();
+    removeAll();
     onClearErrors();
     setImages([]);
-  }, [downloadManager, onClearErrors]);
+  }, [removeAll, onClearErrors]);
 
   const onAdd = useCallback(
     (data: (File | GoogleImageData)[], index?: number) => {
@@ -69,6 +70,7 @@ export const ImagesProvider = (
 
   const contextValue = useMemo(
     () => ({
+      isFetching,
       images,
       imagesWithError,
       onClear,
@@ -78,10 +80,11 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      downloadManager,
-      getDownloadedImage,
+      downloadImage: add,
+      getCachedImage,
     }),
     [
+      isFetching,
       images,
       imagesWithError,
       onClear,
@@ -91,8 +94,8 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      downloadManager,
-      getDownloadedImage,
+      add,
+      getCachedImage,
     ]
   );
 

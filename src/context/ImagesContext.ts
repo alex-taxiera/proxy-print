@@ -1,5 +1,4 @@
 import { createContext } from "react";
-import { ImageDownloadManager } from "./ImageDownloadManager";
 
 export type GoogleImageData = {
   id?: string;
@@ -12,12 +11,13 @@ export type Image = {
 } & GoogleImageData;
 
 export type ImagesContextValue = {
+  isFetching: boolean;
   images: Image[];
   imagesWithError: Image[];
   isRendering: boolean;
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
-  downloadManager: ImageDownloadManager;
-  getDownloadedImage: (id: string) => string | undefined;
+  downloadImage: (id: string) => Promise<void>;
+  getCachedImage: (id: string) => string | undefined;
   onAdd: (files: (File | GoogleImageData)[], index?: number) => void;
   onRemove: (uuid: string) => void;
   onClear: () => void;
@@ -26,12 +26,13 @@ export type ImagesContextValue = {
 }
 
 export const ImagesContext = createContext<ImagesContextValue>({
+  isFetching: false,
   images: [],
   imagesWithError: [],
   isRendering: false,
   setIsRendering: () => {},
-  downloadManager: new ImageDownloadManager(),
-  getDownloadedImage: () => undefined,
+  downloadImage: () => Promise.resolve(),
+  getCachedImage: () => undefined,
   onAdd: () => {},
   onRemove: () => {},
   onClear: () => {},
