@@ -4,41 +4,27 @@ type Item = {
   reject: (reason?: unknown) => void;
 };
 
-function convertAndCompressBase64ToJpeg(base64String: string, outputQuality = 1) {
-  return new Promise<Blob>((resolve, reject) => {
-    // Create an Image element
-    const img = new Image();
-    img.onload = () => {
-      // Create a canvas element
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+/**
+ * Converts a Base64 string to a Blob.
+ * @param base64String - The Base64 string of the image.
+ * @param contentType - The MIME type of the image (e.g., "image/jpeg", "image/png").
+ * @returns The resulting Blob object.
+ */
+function base64ToBlob(base64String: string, contentType: string = 'image/jpeg'): Blob {
+  // Decode the Base64 string
+  const byteCharacters = atob(base64String);
 
-      // Set canvas dimensions to match the image
-      canvas.width = img.width;
-      canvas.height = img.height;
+  // Convert the decoded string into an array of bytes
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
 
-      // Draw the image onto the canvas
-      ctx!.drawImage(img, 0, 0);
+  // Create a Uint8Array from the byte numbers
+  const byteArray = new Uint8Array(byteNumbers);
 
-      // Convert the canvas to a JPEG Blob with the specified quality
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob); // Return the Blob
-          } else {
-            reject(new Error('Failed to create JPEG Blob'));
-          }
-        },
-        'image/jpeg',
-        outputQuality // Compression quality (0.0 - 1.0)
-      );
-    };
-
-    img.onerror = (err) => reject(err);
-
-    // Set the image source to the base64 string
-    img.src = `data:image/png;base64,${base64String}`;
-  });
+  // Create and return the Blob
+  return new Blob([byteArray], { type: contentType });
 }
 
 export class ImageDownloadManager {
@@ -93,33 +79,27 @@ export class ImageDownloadManager {
     });
   }
 
+  /**
+   * Remove a download from the queue
+   * @param id The id of the download to remove
+   * @remarks If the download is inflight, it cannot be aborted, so it will continue to completion
+   * @remarks If the download is in the queue, it will be removed
+   * @remarks If the download is cached, it will be remain
+   */
   public remove(id: string) {
-    const inflight = this.inflight.find((i) => i.id === id);
-    if (inflight) {
-      const abortController = this.abortControllers.get(id);
-      abortController?.abort();
-      this.inflight = this.inflight.filter((i) => i !== inflight);
-    }
     const queue = this.queue.find((i) => i.id === id);
     if (queue) {
       this.queue = this.queue.filter((i) => i.id !== id);
     }
-
-    const item = this.imageCache.get(id);
-    if (item) {
-      URL.revokeObjectURL(item);
-      this.imageCache.delete(id);
-    }
   }
 
+  /**
+   * Remove all downloads from the queue
+   * @remarks Downloads that are inflight or cached will remain
+   * @remarks Downloads that are in the queue will be removed
+   */
   public removeAll() {
     this.queue = [];
-    this.inflight.forEach((item) => {
-      this.abortControllers.get(item.id)?.abort();
-    });
-    this.inflight = [];
-    this.imageCache.forEach((url) => URL.revokeObjectURL(url));
-    this.imageCache.clear();
   }
 
   private processQueue() {
@@ -127,8 +107,8 @@ export class ImageDownloadManager {
       const item = this.queue.shift()!;
       this.inflight.push(item);
       this.fetchImage(item)
-        .then(async (data) => {
-          const blob = await convertAndCompressBase64ToJpeg(data);
+        .then((data) => {
+          const blob = base64ToBlob(data);
           const url = URL.createObjectURL(blob);
           this.imageCache.set(item.id, url);
           item.resolve();
