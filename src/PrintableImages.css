@@ -5,7 +5,7 @@
   align-items: center;
   flex: 1;
   min-width: 0;
-  max-width: var(--page-width, 8.5in);
+  max-width: var(--page-width, 8.5 var(--page-unit, in));
 }
 
 .printable-images.help {
@@ -46,8 +46,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: var(--page-height, 11in);
-  width: var(--page-width, 8.5in);
+  height: var(--page-height, 11 var(--page-unit, in));
+  width: var(--page-width, 8.5 var(--page-unit, in));
   background: white;
   overflow: hidden;
 }

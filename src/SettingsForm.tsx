@@ -1,5 +1,5 @@
 import { useCallback, useContext } from "react";
-import { DEFAULT_SETTINGS, SettingsContext, Settings } from "./context/SettingsContext";
+import { DEFAULT_SETTINGS, Settings, SettingsContext } from "./context/SettingsContext";
 
 import "./SettingsForm.css";
 import { ImagesContext } from "./context/ImagesContext";
@@ -28,11 +28,14 @@ export const SettingsForm = () => {
 
   const handleChange = useCallback(
     (key: keyof typeof settings, eventKey: "value" | "checked" = "value") =>
-      (e: React.ChangeEvent<HTMLInputElement>) => {
+      (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setSettings((old) => {
           const updatedSettings = {
             ...old,
-            [key]: e.target[eventKey] ?? DEFAULT_SETTINGS[key],
+            [key]:
+            (e.target instanceof HTMLInputElement
+              ? e.target[eventKey]
+              : e.target.value) ?? DEFAULT_SETTINGS[key],
           };
           const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
           if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
@@ -49,7 +52,18 @@ export const SettingsForm = () => {
   return (
     <form>
       <label>
-        Page Width (in)
+        Unit
+        <select
+          disabled={isRendering}
+          value={settings.unit}
+          onChange={handleChange("unit")}
+        >
+          <option value="in">in</option>
+          <option value="mm">mm</option>
+        </select>
+      </label>
+      <label>
+        Page Width ({settings.unit})
         <input
           disabled={isRendering}
           type="number"
@@ -59,7 +73,7 @@ export const SettingsForm = () => {
         />
       </label>
       <label>
-        Page Height (in)
+        Page Height ({settings.unit})
         <input
           disabled={isRendering}
           type="number"
