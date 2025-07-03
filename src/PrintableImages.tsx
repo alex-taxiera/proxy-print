@@ -52,7 +52,7 @@ export const PrintableImages = () => {
 
       const pdfOptions = {
         orientation: pageWidth > pageHeight ? "l" : "p",
-        unit: settings.unit || "in",
+        unit: settings.unit,
         format: [pageWidth, pageHeight],
       } satisfies jsPDFOptions;
 
