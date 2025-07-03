@@ -66,7 +66,7 @@ export const SettingsForm = () => {
         Unit
         <select
           disabled={isRendering}
-          value={settings.unit}
+          value={settings.unit || "in"}
           onChange={handleUnitChange}
         >
           <option value="in">in</option>
@@ -74,7 +74,7 @@ export const SettingsForm = () => {
         </select>
       </label>
       <label>
-        Page Width ({settings.unit})
+        Page Width ({settings.unit || "in"})
         <input
           disabled={isRendering}
           type="number"
@@ -84,7 +84,7 @@ export const SettingsForm = () => {
         />
       </label>
       <label>
-        Page Height ({settings.unit})
+        Page Height ({settings.unit || "in"})
         <input
           disabled={isRendering}
           type="number"
