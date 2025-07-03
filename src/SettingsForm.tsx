@@ -32,7 +32,10 @@ export const SettingsForm = () => {
         setSettings((old) => {
           const updatedSettings = {
             ...old,
-            [key]: e.target[eventKey] ?? DEFAULT_SETTINGS[key],
+            [key]:
+            (e.target instanceof HTMLInputElement
+              ? e.target[eventKey]
+              : e.target.value) ?? DEFAULT_SETTINGS[key],
           };
           const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
           if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
