@@ -27,14 +27,12 @@ export const SettingsForm = () => {
   const { isRendering } = useContext(ImagesContext);
 
   const handleChange = useCallback(
-    (key: keyof typeof settings, eventKey: "value" | "select" | "checked" = "value") =>
+    (key: keyof typeof settings, eventKey: "value" | "checked" = "value") =>
       (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setSettings((old) => {
           const updatedSettings = {
             ...old,
-            [key]: eventKey !== "select"
-              ? (e.target as HTMLInputElement)[eventKey]
-              : (e.target as HTMLSelectElement).value ?? DEFAULT_SETTINGS[key],
+            [key]: e.target[eventKey] ?? DEFAULT_SETTINGS[key],
           };
           const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
           if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
@@ -55,7 +53,7 @@ export const SettingsForm = () => {
         <select
           disabled={isRendering}
           value={settings.unit}
-          onChange={handleChange("unit", "value")}
+          onChange={handleChange("unit")}
         >
           <option value="in">in</option>
           <option value="mm">mm</option>
