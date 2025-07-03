@@ -1,9 +1,9 @@
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 import {
-  SettingsContext,
   DEFAULT_SETTINGS,
-  SettingsSchema,
   Settings,
+  SettingsContext,
+  SettingsSchema,
 } from "./SettingsContext";
 
 /**
@@ -58,9 +58,20 @@ export const SettingsProvider = (
 
   const [value, setter] = useState<Settings>(defaultSettings);
 
+  const calculatePageDimensions = (value: string, unit: "in" | "mm") => {
+    const convertedValue = unit === "in" ? Number(value) / 25.4 : (Number(value) * 25.4);
+    return convertedValue.toFixed(2).toString();
+  };
+
   const setSettings = useCallback((updater: (old: Settings) => Settings) => {
     setter((old) => {
       const updated = updater(old);
+
+      if (updated.unit !== old.unit) {
+        updated.pageHeight = calculatePageDimensions(updated.pageHeight, updated.unit);
+        updated.pageWidth = calculatePageDimensions(updated.pageWidth, updated.unit);
+      }
+
       localStorage.setItem("settings", JSON.stringify(updated));
       return updated;
     });
@@ -78,9 +89,9 @@ export const SettingsProvider = (
       "--guides-color-inverted": invertHexColor(value.guidesColor),
       "--guides-thickness": `${guideThickness}px`,
       "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
-      "--page-unit": value.unit || "in",
-      "--page-height": `${value.pageHeight}${value.unit || "in"}`,
-      "--page-width": `${value.pageWidth}${value.unit || "in"}`,
+      "--page-unit": value.unit,
+      "--page-height": `${value.pageHeight}${value.unit}`,
+      "--page-width": `${value.pageWidth}${value.unit}`,
       "--grid-columns": value.numberOfColumns,
     } as React.CSSProperties;
   }, [value]);

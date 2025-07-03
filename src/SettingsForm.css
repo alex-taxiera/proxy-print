@@ -15,7 +15,8 @@ label {
 }
 
 input[type="number"],
-input[type="color"] {
+input[type="color"],
+select {
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
@@ -33,14 +34,5 @@ input[type="checkbox"] {
   margin: 0;
   width: 2rem;
   height: 2rem;
-}
-
-select {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 100%;
-  box-sizing: border-box;
 }
 

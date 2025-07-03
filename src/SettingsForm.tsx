@@ -27,12 +27,14 @@ export const SettingsForm = () => {
   const { isRendering } = useContext(ImagesContext);
 
   const handleChange = useCallback(
-    (key: keyof typeof settings, eventKey: "value" | "checked" = "value") =>
-      (e: React.ChangeEvent<HTMLInputElement>) => {
+    (key: keyof typeof settings, eventKey: "value" | "select" | "checked" = "value") =>
+      (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setSettings((old) => {
           const updatedSettings = {
             ...old,
-            [key]: e.target[eventKey] ?? DEFAULT_SETTINGS[key],
+            [key]: eventKey !== "select"
+              ? (e.target as HTMLInputElement)[eventKey]
+              : (e.target as HTMLSelectElement).value ?? DEFAULT_SETTINGS[key],
           };
           const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
           if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
@@ -44,20 +46,6 @@ export const SettingsForm = () => {
     [setSettings]
   );
 
-  const handleUnitChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const calculatePageDimensions = (value: string, unit: "in" | "mm") => {
-        const convertedValue = unit === "in" ? Number(value) / 25.4 : (Number(value) * 25.4);
-        return convertedValue.toFixed(2).toString();
-    };
-
-    setSettings(old => ({
-      ...old,
-      unit: e.target.value as "in" | "mm",
-      pageWidth: calculatePageDimensions(settings.pageWidth, e.target.value as "in" | "mm"),
-      pageHeight:calculatePageDimensions(settings.pageHeight, e.target.value as "in" | "mm"),
-    }));
-  }, [setSettings, settings.pageWidth, settings.pageHeight]);
-
   const maxGuideWidth = getMaxGuideWidth(settings);
 
   return (
@@ -66,15 +54,15 @@ export const SettingsForm = () => {
         Unit
         <select
           disabled={isRendering}
-          value={settings.unit || "in"}
-          onChange={handleUnitChange}
+          value={settings.unit}
+          onChange={handleChange("unit", "value")}
         >
           <option value="in">in</option>
           <option value="mm">mm</option>
         </select>
       </label>
       <label>
-        Page Width ({settings.unit || "in"})
+        Page Width ({settings.unit})
         <input
           disabled={isRendering}
           type="number"
@@ -84,7 +72,7 @@ export const SettingsForm = () => {
         />
       </label>
       <label>
-        Page Height ({settings.unit || "in"})
+        Page Height ({settings.unit})
         <input
           disabled={isRendering}
           type="number"
