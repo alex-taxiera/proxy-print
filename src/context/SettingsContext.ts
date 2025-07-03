@@ -11,6 +11,7 @@ export const SettingsSchema = zod.object({
   pageHeight: zod.string(),
   pageWidth: zod.string(),
   numberOfColumns: zod.string(),
+  unit: zod.enum(["in", "mm"]),
 });
 
 export type Settings = zod.infer<typeof SettingsSchema>;
@@ -25,6 +26,7 @@ export const DEFAULT_SETTINGS = {
   pageHeight: "11",
   pageWidth: "8.5",
   numberOfColumns: "3",
+  unit: "in",
 } as const satisfies Settings;
 
 export type SettingsContextValue = {

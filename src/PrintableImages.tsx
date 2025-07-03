@@ -52,7 +52,7 @@ export const PrintableImages = () => {
 
       const pdfOptions = {
         orientation: pageWidth > pageHeight ? "l" : "p",
-        unit: "in",
+        unit: settings.unit || "in",
         format: [pageWidth, pageHeight],
       } satisfies jsPDFOptions;
 
@@ -87,11 +87,12 @@ export const PrintableImages = () => {
   };
 
   const rowsPerPage = useMemo(() => {
-    const pageHeight = parseFloat(settings.pageHeight) * 25.4; // convert in to mm
+    // convert in to mm when settings.unit is set to "in"
+    const pageHeight = parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1); 
     const guidesThickness = parseFloat(settings.guidesThickness) * 0.265; // convert px to mm
     const bleedEdge = parseFloat(settings.bleedEdge); // mm
     // card height is 88mm + 2 * bleedEdge + guidesThickness
-    const cardHeight = 88 + 2 * bleedEdge + guidesThickness; // inches
+    const cardHeight = 88 + 2 * bleedEdge + guidesThickness; // mm
     return Math.floor(pageHeight / cardHeight);
   }, [settings]);
 

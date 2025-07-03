@@ -78,8 +78,9 @@ export const SettingsProvider = (
       "--guides-color-inverted": invertHexColor(value.guidesColor),
       "--guides-thickness": `${guideThickness}px`,
       "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
-      "--page-height": `${value.pageHeight}in`,
-      "--page-width": `${value.pageWidth}in`,
+      "--page-unit": value.unit || "in",
+      "--page-height": `${value.pageHeight}${value.unit || "in"}`,
+      "--page-width": `${value.pageWidth}${value.unit || "in"}`,
       "--grid-columns": value.numberOfColumns,
     } as React.CSSProperties;
   }, [value]);
