@@ -1,6 +1,5 @@
 import { useContext, useMemo, useRef } from "react";
 import jsPDF, { type jsPDFOptions } from "jspdf";
-import html2canvas from "html2canvas";
 
 import { SettingsContext } from "./context/SettingsContext";
 import "./PrintableImages.css";
@@ -8,25 +7,126 @@ import { Card } from "./Card";
 import { Image, ImagesContext } from "./context/ImagesContext";
 import { ImageErrors } from "./ImageErrors";
 
-async function addNodesToPdf(
+function addNodesToPdf(
   nodeList: Array<HTMLElement>,
   pdf: jsPDF,
   pdfOptions: jsPDFOptions
 ) {
-  // render each node to a canvas
-  const canvases = await Promise.all(
-    nodeList.map((node) => html2canvas(node, { scale: 12.5 })) // 12.5 for 1200dpi, 8.33 for 800dpi
-  );
-
-  // convert each canvas to a data url
-  const nodeImages = canvases.map((canvas) => canvas.toDataURL("image/jpeg"));
-
   const [pageWidth, pageHeight] = pdfOptions.format as number[];
-  for (let index = 0; index < nodeImages.length; index++) {
-    if (index !== 0) {
+  
+  for (let pageIndex = 0; pageIndex < nodeList.length; pageIndex++) {
+    if (pageIndex !== 0) {
       pdf.addPage(pdfOptions.format, pdfOptions.orientation);
     }
-    pdf.addImage(nodeImages[index], "JPEG", 0, 0, pageWidth, pageHeight);
+    
+    const pageNode = nodeList[pageIndex];
+    
+    // Create a canvas to render the page
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      // Get the page dimensions
+      const rect = pageNode.getBoundingClientRect();
+      
+      // Set canvas size to match the page dimensions with high DPI
+      const scale = 12.5; // Same scale as original html2canvas for 1200dpi
+      canvas.width = rect.width * scale;
+      canvas.height = rect.height * scale;
+      
+      // Scale the context to match
+      ctx.scale(scale, scale);
+      
+      // Use html2canvas-like approach: capture the page as it appears
+      // We'll use a simpler method that focuses on the card grid layout
+      const cardElements = pageNode.querySelectorAll<HTMLElement>('.card');
+      
+      // Set white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, rect.width, rect.height);
+      
+      // Process each card
+      cardElements.forEach(cardElement => {
+        const cardRect = cardElement.getBoundingClientRect();
+        const imgElement = cardElement.querySelector('img') as HTMLImageElement;
+        
+        if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
+          try {
+            // Calculate position relative to the page
+            const imgX = cardRect.left - rect.left;
+            const imgY = cardRect.top - rect.top;
+            
+            // Create a temporary canvas for the image
+            const imgCanvas = document.createElement('canvas');
+            const imgCtx = imgCanvas.getContext('2d');
+            
+            if (imgCtx) {
+              // Get the image container element to understand the actual dimensions
+              const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
+              const imageContainerRect = imageContainer.getBoundingClientRect();
+              
+              // Get the actual image dimensions as rendered
+              const imageRect = imgElement.getBoundingClientRect();
+              
+              // Set canvas size to match the image dimensions
+              imgCanvas.width = imgElement.naturalWidth;
+              imgCanvas.height = imgElement.naturalHeight;
+              
+              // Draw the full image
+              imgCtx.drawImage(imgElement, 0, 0);
+              
+              // The logic: the image is oversized and the container crops it with overflow: hidden
+              // We need to calculate what portion of the oversized image is visible
+              
+              // Calculate the crop proportions based on the actual rendered sizes
+              // The image is oversized, so we need to show the center portion that fits in the container
+              const containerWidth = imageContainerRect.width;
+              const containerHeight = imageContainerRect.height;
+              const imageWidth = imageRect.width;
+              const imageHeight = imageRect.height;
+              
+              // Calculate the source rectangle for cropping
+              // The image is centered in the container, so we crop from the center
+              const sourceWidth = (containerWidth / imageWidth) * imgElement.naturalWidth;
+              const sourceHeight = (containerHeight / imageHeight) * imgElement.naturalHeight;
+              const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
+              const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
+              
+              // Create a cropped canvas
+              const croppedCanvas = document.createElement('canvas');
+              const croppedCtx = croppedCanvas.getContext('2d');
+              
+              if (croppedCtx) {
+                croppedCanvas.width = sourceWidth;
+                croppedCanvas.height = sourceHeight;
+                
+                // Draw the cropped portion
+                croppedCtx.drawImage(
+                  imgCanvas,
+                  sourceX, sourceY, sourceWidth, sourceHeight,
+                  0, 0, sourceWidth, sourceHeight
+                );
+                
+                // Draw the cropped image to the main canvas at the correct position and size
+                ctx.drawImage(
+                  croppedCanvas,
+                  imgX,
+                  imgY,
+                  containerWidth,
+                  containerHeight
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Error processing image for PDF:', error);
+          }
+        }
+      });
+      
+      // Convert canvas to image and add to PDF
+      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(imageDataUrl, 'JPEG', 0, 0, pageWidth, pageHeight);
+    }
   }
 }
 
@@ -41,7 +141,7 @@ export const PrintableImages = () => {
   const handleSave = () => {
     setIsRendering(true);
 
-    setTimeout(async () => {
+    setTimeout(() => {
       console.time("save");
       if (!contentRef.current) {
         return;
@@ -64,7 +164,7 @@ export const PrintableImages = () => {
 
       for (let i = 0; i < pages.length; i += batchSize) {
         const batch = Array.from(pages).slice(i, i + batchSize);
-        await addNodesToPdf(batch, pdf, pdfOptions);
+        addNodesToPdf(batch, pdf, pdfOptions);
 
         // add a page between batches
         if (i + batchSize < pages.length) {
