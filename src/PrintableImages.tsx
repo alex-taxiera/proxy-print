@@ -20,113 +20,103 @@ function addNodesToPdf(
     }
     
     const pageNode = nodeList[pageIndex];
+    const cardElements = pageNode.querySelectorAll<HTMLElement>('.card');
     
-    // Create a canvas to render the page
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    // Set white background for the page
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
     
-    if (ctx) {
-      // Get the page dimensions
-      const rect = pageNode.getBoundingClientRect();
+    console.log(`Processing page ${pageIndex + 1} with ${cardElements.length} cards`);
+    console.log(`PDF page dimensions: ${pageWidth}x${pageHeight} ${pdfOptions.unit}`);
+    
+    // Get the page dimensions in pixels for coordinate conversion
+    const pageRect = pageNode.getBoundingClientRect();
+    console.log(`Page DOM dimensions: ${pageRect.width}x${pageRect.height}px`);
+    
+    // Process each card on this page
+    cardElements.forEach((cardElement, cardIndex) => {
+      const imgElement = cardElement.querySelector('img') as HTMLImageElement;
       
-      // Set canvas size to match the page dimensions with high DPI
-      const scale = 12.5; // Same scale as original html2canvas for 1200dpi
-      canvas.width = rect.width * scale;
-      canvas.height = rect.height * scale;
-      
-      // Scale the context to match
-      ctx.scale(scale, scale);
-      
-      // Use html2canvas-like approach: capture the page as it appears
-      // We'll use a simpler method that focuses on the card grid layout
-      const cardElements = pageNode.querySelectorAll<HTMLElement>('.card');
-      
-      // Set white background
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, rect.width, rect.height);
-      
-      // Process each card
-      cardElements.forEach(cardElement => {
-        const cardRect = cardElement.getBoundingClientRect();
-        const imgElement = cardElement.querySelector('img') as HTMLImageElement;
-        
-        if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
-          try {
-            // Calculate position relative to the page
-            const imgX = cardRect.left - rect.left;
-            const imgY = cardRect.top - rect.top;
+      if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
+        try {
+          console.log(`Processing card ${cardIndex + 1}, image src: ${imgElement.src.substring(0, 50)}...`);
+          
+          // Get the image container element to understand the actual dimensions
+          const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
+          const imageContainerRect = imageContainer.getBoundingClientRect();
+          
+          // Get the actual image dimensions as rendered
+          const imageRect = imgElement.getBoundingClientRect();
+          
+          console.log(`Container: ${imageContainerRect.width}x${imageContainerRect.height}, Image: ${imageRect.width}x${imageRect.height}, Natural: ${imgElement.naturalWidth}x${imgElement.naturalHeight}`);
+          
+          // Calculate the crop proportions based on the actual rendered sizes
+          const containerWidth = imageContainerRect.width;
+          const containerHeight = imageContainerRect.height;
+          const imageWidth = imageRect.width;
+          const imageHeight = imageRect.height;
+          
+          // Calculate the source rectangle for cropping
+          // The image is centered in the container, so we crop from the center
+          const sourceWidth = (containerWidth / imageWidth) * imgElement.naturalWidth;
+          const sourceHeight = (containerHeight / imageHeight) * imgElement.naturalHeight;
+          const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
+          const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
+          
+          console.log(`Crop source: ${sourceX},${sourceY} ${sourceWidth}x${sourceHeight}`);
+          
+          // Create a canvas to crop the image
+          const cropCanvas = document.createElement('canvas');
+          const cropCtx = cropCanvas.getContext('2d');
+          
+          if (cropCtx) {
+            cropCanvas.width = sourceWidth;
+            cropCanvas.height = sourceHeight;
             
-            // Create a temporary canvas for the image
-            const imgCanvas = document.createElement('canvas');
-            const imgCtx = imgCanvas.getContext('2d');
+            // Draw the cropped portion
+            cropCtx.drawImage(
+              imgElement,
+              sourceX, sourceY, sourceWidth, sourceHeight,
+              0, 0, sourceWidth, sourceHeight
+            );
             
-            if (imgCtx) {
-              // Get the image container element to understand the actual dimensions
-              const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
-              const imageContainerRect = imageContainer.getBoundingClientRect();
-              
-              // Get the actual image dimensions as rendered
-              const imageRect = imgElement.getBoundingClientRect();
-              
-              // Set canvas size to match the image dimensions
-              imgCanvas.width = imgElement.naturalWidth;
-              imgCanvas.height = imgElement.naturalHeight;
-              
-              // Draw the full image
-              imgCtx.drawImage(imgElement, 0, 0);
-              
-              // The logic: the image is oversized and the container crops it with overflow: hidden
-              // We need to calculate what portion of the oversized image is visible
-              
-              // Calculate the crop proportions based on the actual rendered sizes
-              // The image is oversized, so we need to show the center portion that fits in the container
-              const containerWidth = imageContainerRect.width;
-              const containerHeight = imageContainerRect.height;
-              const imageWidth = imageRect.width;
-              const imageHeight = imageRect.height;
-              
-              // Calculate the source rectangle for cropping
-              // The image is centered in the container, so we crop from the center
-              const sourceWidth = (containerWidth / imageWidth) * imgElement.naturalWidth;
-              const sourceHeight = (containerHeight / imageHeight) * imgElement.naturalHeight;
-              const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
-              const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
-              
-              // Create a cropped canvas
-              const croppedCanvas = document.createElement('canvas');
-              const croppedCtx = croppedCanvas.getContext('2d');
-              
-              if (croppedCtx) {
-                croppedCanvas.width = sourceWidth;
-                croppedCanvas.height = sourceHeight;
-                
-                // Draw the cropped portion
-                croppedCtx.drawImage(
-                  imgCanvas,
-                  sourceX, sourceY, sourceWidth, sourceHeight,
-                  0, 0, sourceWidth, sourceHeight
-                );
-                
-                // Draw the cropped image to the main canvas at the correct position and size
-                ctx.drawImage(
-                  croppedCanvas,
-                  imgX,
-                  imgY,
-                  containerWidth,
-                  containerHeight
-                );
-              }
-            }
-          } catch (error) {
-            console.error('Error processing image for PDF:', error);
+            // Convert the cropped image to data URL
+            const imageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95);
+            
+            // Calculate the position of this card on the page
+            const cardRect = cardElement.getBoundingClientRect();
+            const cardX = cardRect.left - pageRect.left;
+            const cardY = cardRect.top - pageRect.top;
+            
+            // Convert browser coordinates to PDF coordinates
+            // PDF coordinates start from bottom-left, browser from top-left
+            // Also need to convert from pixels to PDF units
+            const scaleX = pageWidth / pageRect.width;
+            const scaleY = pageHeight / pageRect.height;
+            
+            const pdfX = cardX * scaleX;
+            const pdfY = cardY * scaleY;
+            
+            console.log(`Browser position: ${cardX},${cardY} -> PDF position: ${pdfX},${pdfY}`);
+            console.log(`Adding image at position: ${pdfX},${pdfY} with size: ${containerWidth * scaleX}x${containerHeight * scaleY}`);
+            
+            // Add the cropped image directly to the PDF at the card's position
+            pdf.addImage(
+              imageDataUrl,
+              'JPEG',
+              pdfX,
+              pdfY,
+              containerWidth * scaleX,
+              containerHeight * scaleY
+            );
           }
+        } catch (error) {
+          console.error('Error processing image for PDF:', error);
         }
-      });
-      
-      // Convert canvas to image and add to PDF
-      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      pdf.addImage(imageDataUrl, 'JPEG', 0, 0, pageWidth, pageHeight);
-    }
+      } else {
+        console.log(`Skipping card ${cardIndex + 1}: no image or loading`);
+      }
+    });
   }
 }
 
