@@ -10,10 +10,10 @@ import { ImageErrors } from "./ImageErrors";
 function addNodesToPdf(
   nodeList: Array<HTMLElement>,
   pdf: jsPDF,
-  pdfOptions: jsPDFOptions
+  pdfOptions: jsPDFOptions,
 ) {
   const [pageWidth, pageHeight] = pdfOptions.format as number[];
-  
+    
   for (let pageIndex = 0; pageIndex < nodeList.length; pageIndex++) {
     if (pageIndex !== 0) {
       pdf.addPage(pdfOptions.format, pdfOptions.orientation);
@@ -33,17 +33,51 @@ function addNodesToPdf(
     const pageRect = pageNode.getBoundingClientRect();
     console.log(`Page DOM dimensions: ${pageRect.width}x${pageRect.height}px`);
     
+    // Get guide settings from CSS variables
+    const printContainer = pageNode.closest('.print-container') as HTMLElement;
+    const computedStyle = getComputedStyle(printContainer);
+    const guideBorderWidth = parseFloat(computedStyle.getPropertyValue('--guide-border-width')) || 1;
+    const bleedEdgeWidth = parseFloat(computedStyle.getPropertyValue('--bleed-edge-width')) || 0;
+    const guideColor = computedStyle.getPropertyValue('--guide-border-color') || '#adff2f';
+    const invertedGuideColor = computedStyle.getPropertyValue('--guide-border-color-inverted') || '#ff0000';
+    const unit = computedStyle.getPropertyValue('--page-unit') || 'in';
+    const guidesThickness = 0.2645833333 * (parseFloat(computedStyle.getPropertyValue('--guides-thickness')) || 0); // mm
+    const guidesAtBleedEdge = computedStyle.getPropertyValue('--guides-at-bleed-edge') === '0';
+
+    // Convert guide border width from pixels to PDF units
+    const scaleX = pageWidth / pageRect.width;
+    const scaleY = pageHeight / pageRect.height;
+    const pdfGuideBorderWidth = guideBorderWidth * scaleX;
+    
     // Process each card on this page
-    cardElements.forEach((cardElement, cardIndex) => {
+    for (let cardIndex = 0; cardIndex < cardElements.length; cardIndex++) {
+      const cardElement = cardElements[cardIndex];
       const imgElement = cardElement.querySelector('img') as HTMLImageElement;
       
+      // Get card position and classes for guides (needed for both images and empty cards)
+      const cardRect = cardElement.getBoundingClientRect();
+      const cardX = cardRect.left - pageRect.left;
+      const cardY = cardRect.top - pageRect.top;
+      const pdfX = cardX * scaleX;
+      const pdfY = cardY * scaleY;
+      
+      // Get card classes to determine guide types
+      const cardClasses = cardElement.className.split(' ');
+      const isFirstRow = cardClasses.includes('first-row');
+      const isLastRow = cardClasses.includes('last-row');
+      const isFirstColumn = cardClasses.includes('first-column');
+      const isLastColumn = cardClasses.includes('last-column');
+      
+      // Get the image container element to understand the actual dimensions
+      const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
+      const imageContainerRect = imageContainer.getBoundingClientRect();
+      const containerWidth = imageContainerRect.width;
+      const containerHeight = imageContainerRect.height;
+      
+      // Process image if it exists
       if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
         try {
           console.log(`Processing card ${cardIndex + 1}, image src: ${imgElement.src.substring(0, 50)}...`);
-          
-          // Get the image container element to understand the actual dimensions
-          const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
-          const imageContainerRect = imageContainer.getBoundingClientRect();
           
           // Get the actual image dimensions as rendered
           const imageRect = imgElement.getBoundingClientRect();
@@ -51,8 +85,6 @@ function addNodesToPdf(
           console.log(`Container: ${imageContainerRect.width}x${imageContainerRect.height}, Image: ${imageRect.width}x${imageRect.height}, Natural: ${imgElement.naturalWidth}x${imgElement.naturalHeight}`);
           
           // Calculate the crop proportions based on the actual rendered sizes
-          const containerWidth = imageContainerRect.width;
-          const containerHeight = imageContainerRect.height;
           const imageWidth = imageRect.width;
           const imageHeight = imageRect.height;
           
@@ -62,9 +94,7 @@ function addNodesToPdf(
           const sourceHeight = (containerHeight / imageHeight) * imgElement.naturalHeight;
           const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
           const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
-          
-          console.log(`Crop source: ${sourceX},${sourceY} ${sourceWidth}x${sourceHeight}`);
-          
+                    
           // Create a canvas to crop the image
           const cropCanvas = document.createElement('canvas');
           const cropCtx = cropCanvas.getContext('2d');
@@ -81,25 +111,8 @@ function addNodesToPdf(
             );
             
             // Convert the cropped image to data URL
-            const imageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95);
-            
-            // Calculate the position of this card on the page
-            const cardRect = cardElement.getBoundingClientRect();
-            const cardX = cardRect.left - pageRect.left;
-            const cardY = cardRect.top - pageRect.top;
-            
-            // Convert browser coordinates to PDF coordinates
-            // PDF coordinates start from bottom-left, browser from top-left
-            // Also need to convert from pixels to PDF units
-            const scaleX = pageWidth / pageRect.width;
-            const scaleY = pageHeight / pageRect.height;
-            
-            const pdfX = cardX * scaleX;
-            const pdfY = cardY * scaleY;
-            
-            console.log(`Browser position: ${cardX},${cardY} -> PDF position: ${pdfX},${pdfY}`);
-            console.log(`Adding image at position: ${pdfX},${pdfY} with size: ${containerWidth * scaleX}x${containerHeight * scaleY}`);
-            
+            const imageDataUrl = cropCanvas.toDataURL('image/jpeg', 1);
+                        
             // Add the cropped image directly to the PDF at the card's position
             pdf.addImage(
               imageDataUrl,
@@ -116,7 +129,115 @@ function addNodesToPdf(
       } else {
         console.log(`Skipping card ${cardIndex + 1}: no image or loading`);
       }
-    });
+
+      // Add guide lines if guides are enabled (for all cards, including empty ones)
+      if (guidesThickness) {
+        const pdfContainerWidth = containerWidth * scaleX;
+        const pdfContainerHeight = containerHeight * scaleY;
+
+        // Set line color and style
+        pdf.setDrawColor(0, 0, 0); // Black for guides
+        pdf.setLineWidth(pdfGuideBorderWidth);
+
+        // Edge guides
+        // Convert mm to PDF units (assuming PDF unit is inches, 1 inch = 25.4 mm)
+        const bleedEdgeWidthPdf = guidesAtBleedEdge ? 0 : unit === 'in' ? bleedEdgeWidth / 25.4 : bleedEdgeWidth;
+        // Crosshair size (4mm = 0.157 inches)
+        const crosshairSize = bleedEdgeWidthPdf || (unit === 'in' ? 1 / 25.4 : 1);
+        
+        // Calculate crosshair positions (at the edges of the card area - 63mm x 88mm)
+        const topLeft = {
+          x: pdfX + bleedEdgeWidthPdf,
+          y: pdfY + bleedEdgeWidthPdf
+        }
+        const topRight = {
+          x: pdfX + pdfContainerWidth - bleedEdgeWidthPdf,
+          y: pdfY + bleedEdgeWidthPdf
+        }
+        const bottomLeft = {
+          x: pdfX + bleedEdgeWidthPdf,
+          y: pdfY + pdfContainerHeight - bleedEdgeWidthPdf
+        }
+        const bottomRight = {
+          x: pdfX + pdfContainerWidth - bleedEdgeWidthPdf,
+          y: pdfY + pdfContainerHeight - bleedEdgeWidthPdf
+        }
+
+        // draw 4 crosses, centered on each corner
+        
+
+        // draw base crosshair with inverted color
+        pdf.setDrawColor(invertedGuideColor); // Reset line color to black for subsequent lines
+        pdf.setLineWidth(unit === 'in' ? guidesThickness / 24.5 : guidesThickness);
+
+        // top left
+        pdf.line(topLeft.x - crosshairSize, topLeft.y, topLeft.x + crosshairSize, topLeft.y);
+        pdf.line(topLeft.x, topLeft.y - crosshairSize, topLeft.x, topLeft.y + crosshairSize);
+
+        // top right
+        pdf.line(topRight.x - crosshairSize, topRight.y, topRight.x + crosshairSize, topRight.y);
+        pdf.line(topRight.x, topRight.y - crosshairSize, topRight.x, topRight.y + crosshairSize);
+        
+        // bottom left
+        pdf.line(bottomLeft.x - crosshairSize, bottomLeft.y, bottomLeft.x + crosshairSize, bottomLeft.y);
+        pdf.line(bottomLeft.x, bottomLeft.y - crosshairSize, bottomLeft.x, bottomLeft.y + crosshairSize);
+
+        // bottom right
+        pdf.line(bottomRight.x - crosshairSize, bottomRight.y, bottomRight.x + crosshairSize, bottomRight.y);
+        pdf.line(bottomRight.x, bottomRight.y - crosshairSize, bottomRight.x, bottomRight.y + crosshairSize);
+        
+        // Draw crosshairs with guide color centered on the crosshair
+        pdf.setDrawColor(guideColor);
+
+        pdf.setLineDashPattern([crosshairSize / 5, crosshairSize / 4], 0);
+        pdf.line(topLeft.x - crosshairSize, topLeft.y, topLeft.x + crosshairSize, topLeft.y);
+        pdf.line(topLeft.x, topLeft.y - crosshairSize, topLeft.x, topLeft.y + crosshairSize);
+        
+        // Draw crosshair at top-right corner
+        pdf.setLineDashPattern([crosshairSize / 5, crosshairSize / 4], 0);
+        pdf.line(topRight.x - crosshairSize, topRight.y, topRight.x + crosshairSize, topRight.y);
+        pdf.line(topRight.x, topRight.y - crosshairSize, topRight.x, topRight.y + crosshairSize);
+        
+        // Draw crosshair at bottom-left corner
+        pdf.setLineDashPattern([crosshairSize / 5, crosshairSize / 4], 0);
+        pdf.line(bottomLeft.x - crosshairSize, bottomLeft.y, bottomLeft.x + crosshairSize, bottomLeft.y);
+        pdf.line(bottomLeft.x, bottomLeft.y - crosshairSize, bottomLeft.x, bottomLeft.y + crosshairSize);
+        
+        // Draw crosshair at bottom-right corner
+        pdf.setLineDashPattern([crosshairSize / 5, crosshairSize / 4], 0);
+        pdf.line(bottomRight.x - crosshairSize, bottomRight.y, bottomRight.x + crosshairSize, bottomRight.y);
+        pdf.line(bottomRight.x, bottomRight.y - crosshairSize, bottomRight.x, bottomRight.y + crosshairSize);
+        
+        
+        pdf.setLineDashPattern([], 0); // reset line dash pattern
+        pdf.setDrawColor(0, 0, 0); // Reset line color to black for subsequent lines      
+        // Draw edge guides that extend to page boundaries
+        
+        // Top edge guide (if first row)
+        if (isFirstRow) {
+          pdf.line(topLeft.x, 0, topLeft.x, topLeft.y - (crosshairSize));
+          pdf.line(topRight.x, 0, topRight.x, topRight.y - (crosshairSize));
+        }
+        
+        // Bottom edge guide (if last row)
+        if (isLastRow) {
+          pdf.line(bottomLeft.x, pageHeight, bottomLeft.x, bottomLeft.y + (crosshairSize));
+          pdf.line(bottomRight.x, pageHeight, bottomRight.x, bottomRight.y + (crosshairSize));
+        }
+        
+        // Left edge guide (if first column)
+        if (isFirstColumn) {
+          pdf.line(0, topLeft.y, topLeft.x - (crosshairSize), topLeft.y);
+          pdf.line(0, bottomLeft.y, bottomLeft.x - (crosshairSize), bottomLeft.y);
+        }
+        
+        // Right edge guide (if last column)
+        if (isLastColumn) {
+          pdf.line(pageWidth, topRight.y, topRight.x + (crosshairSize), topRight.y);
+          pdf.line(pageWidth, bottomRight.y, bottomRight.x + (crosshairSize), bottomRight.y);
+        }
+      }
+    }
   }
 }
 
