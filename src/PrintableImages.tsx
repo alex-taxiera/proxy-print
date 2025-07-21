@@ -111,11 +111,9 @@ export const PrintableImages = () => {
                 const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
                 const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
                 
-                const maxWidth = 1500;
-                const maxHeight = 2100;
-                const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight, 1);
-                const targetWidth = Math.round(sourceWidth * scale);
-                const targetHeight = Math.round(sourceHeight * scale);
+                // Use full resolution - no max width/height constraints
+                const targetWidth = Math.round(sourceWidth);
+                const targetHeight = Math.round(sourceHeight);
                 
                 const cropCanvas = document.createElement('canvas');
                 const cropCtx = cropCanvas.getContext('2d');
