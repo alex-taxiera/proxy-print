@@ -5,8 +5,8 @@ import "./PrintableImages.css";
 import { Card } from "./Card";
 import { Image, ImagesContext } from "./context/ImagesContext";
 import { ImageErrors } from "./ImageErrors";
-
-
+import { ProgressOverlay } from "./components/ProgressOverlay";
+import { progressEvents } from "./utils/progress-events";
 
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
@@ -183,6 +183,10 @@ export const PrintableImages = () => {
             
             processedCards++;
             const progress = Math.round((processedCards / totalCards) * 100);
+            progressEvents.emit('progress', {
+              progress,
+              phase: 'Processing images'
+            });
             console.log(`Processing: ${progress}% (${processedCards}/${totalCards})`);
             
             currentCardIndex++;
@@ -202,6 +206,10 @@ export const PrintableImages = () => {
             const { type, percentage, blob, error } = e.data;
             
             if (type === 'progress') {
+              progressEvents.emit('progress', {
+                progress: percentage || 0,
+                phase: 'Saving PDF'
+              });
               console.log(`PDF Generation: ${percentage}%`);
             } else if (type === 'complete' && blob) {
               // Download the PDF
@@ -213,6 +221,7 @@ export const PrintableImages = () => {
               URL.revokeObjectURL(url);
               console.timeEnd("save");
               setIsRendering(false);
+              progressEvents.emit('complete');
               worker.terminate();
             } else if (type === 'error') {
               console.error('PDF generation error:', error);
@@ -332,6 +341,7 @@ export const PrintableImages = () => {
 
   return (
     <div className="printable-images" style={cssVars}>
+      <ProgressOverlay />
       <div className="actions">
         <div>{cardCount}</div>
         <button disabled={isRendering} onClick={() => onClear()}>
