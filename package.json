@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "cp node_modules/jspdf/dist/jspdf.umd.js public/"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",

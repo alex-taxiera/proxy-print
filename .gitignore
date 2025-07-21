@@ -25,3 +25,6 @@ dist-ssr
 
 # Docker
 docker-compose.override.yml
+
+# Generated files
+public/jspdf.umd.js
