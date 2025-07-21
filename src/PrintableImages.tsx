@@ -16,168 +16,232 @@ export const PrintableImages = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleSave = () => {
+    const handleSave = () => {
     setIsRendering(true);
     console.time("save");
 
-    setTimeout(() => {
-      const pageHeight = Number(settings.pageHeight);
-      const pageWidth = Number(settings.pageWidth);
-      const pages = contentRef.current?.querySelectorAll<HTMLElement>(".page") || [];
-  
-      // Prepare page data for the worker
-      const pageData = Array.from(pages).map((pageNode) => {
-        const cardElements = pageNode.querySelectorAll<HTMLElement>('.card');
-        const pageRect = pageNode.getBoundingClientRect();
-        const printContainer = pageNode.closest('.print-container') as HTMLElement;
-        const computedStyle = getComputedStyle(printContainer);
-        
-        // Get guide settings
-        const guideBorderWidth = parseFloat(computedStyle.getPropertyValue('--guide-border-width')) || 1;
-        const bleedEdgeWidth = parseFloat(computedStyle.getPropertyValue('--bleed-edge-width')) || 0;
-        const guideColor = computedStyle.getPropertyValue('--guide-border-color') || '#adff2f';
-        const invertedGuideColor = computedStyle.getPropertyValue('--guide-border-color-inverted') || '#ff0000';
-        const unit = computedStyle.getPropertyValue('--page-unit') || 'in';
-        const guidesThickness = 0.2645833333 * (parseFloat(computedStyle.getPropertyValue('--guides-thickness')) || 0);
-        const guidesAtBleedEdge = computedStyle.getPropertyValue('--guides-at-bleed-edge') === '0';
-  
-        const scaleX = pageWidth / pageRect.width;
-        const scaleY = pageHeight / pageRect.height;
-        const pdfGuideBorderWidth = guideBorderWidth * scaleX;
-  
-        const cards = Array.from(cardElements).map((cardElement) => {
-          const imgElement = cardElement.querySelector('img') as HTMLImageElement;
-          const cardRect = cardElement.getBoundingClientRect();
-          const cardX = cardRect.left - pageRect.left;
-          const cardY = cardRect.top - pageRect.top;
-          const pdfX = cardX * scaleX;
-          const pdfY = cardY * scaleY;
-  
-          const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
-          const imageContainerRect = imageContainer.getBoundingClientRect();
-          const containerWidth = imageContainerRect.width;
-          const containerHeight = imageContainerRect.height;
-  
-          let imageDataUrl = null;
-          
-          if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
-            try {
-              const imageRect = imgElement.getBoundingClientRect();
-              const imageWidth = imageRect.width;
-              const imageHeight = imageRect.height;
-              
-              const sourceWidth = (containerWidth / imageWidth) * imgElement.naturalWidth;
-              const sourceHeight = (containerHeight / imageHeight) * imgElement.naturalHeight;
-              const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
-              const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
-              
-              const maxWidth = 1500;
-              const maxHeight = 2100;
-              const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight, 1);
-              const targetWidth = Math.round(sourceWidth * scale);
-              const targetHeight = Math.round(sourceHeight * scale);
-              
-              const cropCanvas = document.createElement('canvas');
-              const cropCtx = cropCanvas.getContext('2d');
-              
-              if (cropCtx) {
-                cropCanvas.width = targetWidth;
-                cropCanvas.height = targetHeight;
-                
-                cropCtx.drawImage(
-                  imgElement,
-                  sourceX, sourceY, sourceWidth, sourceHeight,
-                  0, 0, targetWidth, targetHeight
-                );
-                
-                imageDataUrl = cropCanvas.toDataURL('image/jpeg', 1);
-                
-                // Clear canvas
-                cropCanvas.width = 0;
-                cropCanvas.height = 0;
-                cropCtx.clearRect(0, 0, 0, 0);
-              }
-            } catch (error) {
-              console.error('Error processing image for PDF:', error);
-            }
-          }
-  
-          // Get card classes to determine guide types
-          const cardClasses = cardElement.className.split(' ');
-          const isFirstRow = cardClasses.includes('first-row');
-          const isLastRow = cardClasses.includes('last-row');
-          const isFirstColumn = cardClasses.includes('first-column');
-          const isLastColumn = cardClasses.includes('last-column');
+    const pageHeight = Number(settings.pageHeight);
+    const pageWidth = Number(settings.pageWidth);
+    const pages = contentRef.current?.querySelectorAll<HTMLElement>(".page") || [];
 
-          return {
-            imageDataUrl,
-            pdfX,
-            pdfY,
-            containerWidth,
-            containerHeight,
-            scaleX,
-            scaleY,
-            cardPosition: {
-              isFirstRow,
-              isLastRow,
-              isFirstColumn,
-              isLastColumn
-            },
-            guides: guidesThickness ? {
-              enabled: true,
-              thickness: pdfGuideBorderWidth,
-              bleedEdgeWidth,
-              guideColor,
-              invertedGuideColor,
-              unit,
-              guidesThickness,
-              guidesAtBleedEdge
-            } : null
-          };
-        });
-  
-        return { cards };
-      });
-  
-      // Create worker and send data
-      const worker = new Worker('/pdf-worker.js');
+    // Process images progressively using requestIdleCallback
+    const processImagesProgressively = () => {
+      let currentPageIndex = 0;
+      let currentCardIndex = 0;
+      const processedPages: Array<{ cards: Array<{
+        imageDataUrl: string | null;
+        pdfX: number;
+        pdfY: number;
+        containerWidth: number;
+        containerHeight: number;
+        scaleX: number;
+        scaleY: number;
+        cardPosition: {
+          isFirstRow: boolean;
+          isLastRow: boolean;
+          isFirstColumn: boolean;
+          isLastColumn: boolean;
+        };
+        guides: {
+          enabled: boolean;
+          thickness: number;
+          bleedEdgeWidth: number;
+          guideColor: string;
+          invertedGuideColor: string;
+          unit: string;
+          guidesThickness: number;
+          guidesAtBleedEdge: boolean;
+        } | null;
+      }> }> = [];
+      let totalCards = 0;
+      let processedCards = 0;
       
-      worker.onmessage = (e: MessageEvent<{ type: string; percentage?: number; blob?: Blob; error?: string }>) => {
-        const { type, percentage, blob, error } = e.data;
-        
-        if (type === 'progress') {
-          console.log(`Processing: ${percentage}%`);
-        } else if (type === 'complete' && blob) {
-          // Download the PDF
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "cards.pdf";
-          a.click();
-          URL.revokeObjectURL(url);
-          console.timeEnd("save");
-          setIsRendering(false);
-          worker.terminate();
-        } else if (type === 'error') {
-          console.error('PDF generation error:', error);
-          console.timeEnd("save");
-          setIsRendering(false);
-          worker.terminate();
+      // Count total cards for progress
+      Array.from(pages).forEach(pageNode => {
+        totalCards += pageNode.querySelectorAll('.card').length;
+      });
+      
+      const processNextCard = () => {
+        if (currentPageIndex < pages.length) {
+          const pageNode = pages[currentPageIndex];
+          const cardElements = pageNode.querySelectorAll<HTMLElement>('.card');
+          
+          if (currentCardIndex < cardElements.length) {
+            // Process single card
+            const cardElement = cardElements[currentCardIndex];
+            const imgElement = cardElement.querySelector('img') as HTMLImageElement;
+            const cardRect = cardElement.getBoundingClientRect();
+            const pageRect = pageNode.getBoundingClientRect();
+            const printContainer = pageNode.closest('.print-container') as HTMLElement;
+            const computedStyle = getComputedStyle(printContainer);
+            
+            // Get guide settings
+            const guideBorderWidth = parseFloat(computedStyle.getPropertyValue('--guide-border-width')) || 1;
+            const bleedEdgeWidth = parseFloat(computedStyle.getPropertyValue('--bleed-edge-width')) || 0;
+            const guideColor = computedStyle.getPropertyValue('--guide-border-color') || '#adff2f';
+            const invertedGuideColor = computedStyle.getPropertyValue('--guide-border-color-inverted') || '#ff0000';
+            const unit = computedStyle.getPropertyValue('--page-unit') || 'in';
+            const guidesThickness = 0.2645833333 * (parseFloat(computedStyle.getPropertyValue('--guides-thickness')) || 0);
+            const guidesAtBleedEdge = computedStyle.getPropertyValue('--guides-at-bleed-edge') === '0';
+
+            const scaleX = pageWidth / pageRect.width;
+            const scaleY = pageHeight / pageRect.height;
+            const pdfGuideBorderWidth = guideBorderWidth * scaleX;
+
+            const cardX = cardRect.left - pageRect.left;
+            const cardY = cardRect.top - pageRect.top;
+            const pdfX = cardX * scaleX;
+            const pdfY = cardY * scaleY;
+
+            const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
+            const imageContainerRect = imageContainer.getBoundingClientRect();
+            const containerWidth = imageContainerRect.width;
+            const containerHeight = imageContainerRect.height;
+
+            let imageDataUrl = null;
+            
+            if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
+              try {
+                const imageRect = imgElement.getBoundingClientRect();
+                const imageWidth = imageRect.width;
+                const imageHeight = imageRect.height;
+                
+                const sourceWidth = (containerWidth / imageWidth) * imgElement.naturalWidth;
+                const sourceHeight = (containerHeight / imageHeight) * imgElement.naturalHeight;
+                const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
+                const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
+                
+                const maxWidth = 1500;
+                const maxHeight = 2100;
+                const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight, 1);
+                const targetWidth = Math.round(sourceWidth * scale);
+                const targetHeight = Math.round(sourceHeight * scale);
+                
+                const cropCanvas = document.createElement('canvas');
+                const cropCtx = cropCanvas.getContext('2d');
+                
+                if (cropCtx) {
+                  cropCanvas.width = targetWidth;
+                  cropCanvas.height = targetHeight;
+                  
+                  cropCtx.drawImage(
+                    imgElement,
+                    sourceX, sourceY, sourceWidth, sourceHeight,
+                    0, 0, targetWidth, targetHeight
+                  );
+                  
+                  imageDataUrl = cropCanvas.toDataURL('image/jpeg', 1);
+                  
+                  // Clear canvas
+                  cropCanvas.width = 0;
+                  cropCanvas.height = 0;
+                  cropCtx.clearRect(0, 0, 0, 0);
+                }
+              } catch (error) {
+                console.error('Error processing image for PDF:', error);
+              }
+            }
+
+            // Get card classes to determine guide types
+            const cardClasses = cardElement.className.split(' ');
+            const isFirstRow = cardClasses.includes('first-row');
+            const isLastRow = cardClasses.includes('last-row');
+            const isFirstColumn = cardClasses.includes('first-column');
+            const isLastColumn = cardClasses.includes('last-column');
+
+            const processedCard = {
+              imageDataUrl,
+              pdfX,
+              pdfY,
+              containerWidth,
+              containerHeight,
+              scaleX,
+              scaleY,
+              cardPosition: {
+                isFirstRow,
+                isLastRow,
+                isFirstColumn,
+                isLastColumn
+              },
+              guides: guidesThickness ? {
+                enabled: true,
+                thickness: pdfGuideBorderWidth,
+                bleedEdgeWidth,
+                guideColor,
+                invertedGuideColor,
+                unit,
+                guidesThickness,
+                guidesAtBleedEdge
+              } : null
+            };
+
+            // Add card to current page or create new page
+            if (!processedPages[currentPageIndex]) {
+              processedPages[currentPageIndex] = { cards: [] };
+            }
+            processedPages[currentPageIndex].cards.push(processedCard);
+            
+            processedCards++;
+            const progress = Math.round((processedCards / totalCards) * 100);
+            console.log(`Processing: ${progress}% (${processedCards}/${totalCards})`);
+            
+            currentCardIndex++;
+            requestIdleCallback(processNextCard, { timeout: 50 });
+          } else {
+            // Move to next page
+            currentPageIndex++;
+            currentCardIndex = 0;
+            requestIdleCallback(processNextCard, { timeout: 50 });
+          }
+        } else {
+          // All cards processed, send to worker
+          console.log('All images processed, generating PDF...');
+          const worker = new Worker('/pdf-worker.js');
+          
+          worker.onmessage = (e: MessageEvent<{ type: string; percentage?: number; blob?: Blob; error?: string }>) => {
+            const { type, percentage, blob, error } = e.data;
+            
+            if (type === 'progress') {
+              console.log(`PDF Generation: ${percentage}%`);
+            } else if (type === 'complete' && blob) {
+              // Download the PDF
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "cards.pdf";
+              a.click();
+              URL.revokeObjectURL(url);
+              console.timeEnd("save");
+              setIsRendering(false);
+              worker.terminate();
+            } else if (type === 'error') {
+              console.error('PDF generation error:', error);
+              console.timeEnd("save");
+              setIsRendering(false);
+              worker.terminate();
+            }
+          };
+
+          // Send data to worker
+          worker.postMessage({
+            type: 'generatePdf',
+            data: {
+              pages: processedPages,
+              settings,
+              pageHeight,
+              pageWidth,
+              unit: settings.unit
+            }
+          });
         }
       };
-  
-      // Send data to worker
-      worker.postMessage({
-        type: 'generatePdf',
-        data: {
-          pages: pageData,
-          settings,
-          pageHeight,
-          pageWidth,
-          unit: settings.unit
-        }
-      });
-    })
+      
+      // Start processing
+      requestIdleCallback(processNextCard, { timeout: 50 });
+    };
+    
+    // Start the progressive processing
+    processImagesProgressively();
 
   };
 
