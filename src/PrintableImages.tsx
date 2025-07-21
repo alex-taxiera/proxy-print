@@ -23,15 +23,10 @@ function addNodesToPdf(
     const cardElements = pageNode.querySelectorAll<HTMLElement>('.card');
     
     // Set white background for the page
-    pdf.setFillColor(255, 255, 255);
-    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
     
-    console.log(`Processing page ${pageIndex + 1} with ${cardElements.length} cards`);
-    console.log(`PDF page dimensions: ${pageWidth}x${pageHeight} ${pdfOptions.unit}`);
     
     // Get the page dimensions in pixels for coordinate conversion
     const pageRect = pageNode.getBoundingClientRect();
-    console.log(`Page DOM dimensions: ${pageRect.width}x${pageRect.height}px`);
     
     // Get guide settings from CSS variables
     const printContainer = pageNode.closest('.print-container') as HTMLElement;
@@ -77,12 +72,10 @@ function addNodesToPdf(
       // Process image if it exists
       if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
         try {
-          console.log(`Processing card ${cardIndex + 1}, image src: ${imgElement.src.substring(0, 50)}...`);
           
           // Get the actual image dimensions as rendered
           const imageRect = imgElement.getBoundingClientRect();
           
-          console.log(`Container: ${imageContainerRect.width}x${imageContainerRect.height}, Image: ${imageRect.width}x${imageRect.height}, Natural: ${imgElement.naturalWidth}x${imgElement.naturalHeight}`);
           
           // Calculate the crop proportions based on the actual rendered sizes
           const imageWidth = imageRect.width;
@@ -111,7 +104,7 @@ function addNodesToPdf(
             );
             
             // Convert the cropped image to data URL
-            const imageDataUrl = cropCanvas.toDataURL('image/jpeg', 1);
+            const imageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95);
                         
             // Add the cropped image directly to the PDF at the card's position
             pdf.addImage(
@@ -122,6 +115,11 @@ function addNodesToPdf(
               containerWidth * scaleX,
               containerHeight * scaleY
             );
+            
+            // Clear canvas immediately
+            cropCanvas.width = 0;
+            cropCanvas.height = 0;
+            cropCtx.clearRect(0, 0, 0, 0);
           }
         } catch (error) {
           console.error('Error processing image for PDF:', error);
@@ -274,6 +272,8 @@ export const PrintableImages = () => {
       const batchSize = 8;
 
       for (let i = 0; i < pages.length; i += batchSize) {
+        console.log(`batch ${i / batchSize + 1} of ${Math.ceil(pages.length / batchSize)}`);
+        console.time(`batch ${i / batchSize + 1} of ${Math.ceil(pages.length / batchSize)}`);
         const batch = Array.from(pages).slice(i, i + batchSize);
         addNodesToPdf(batch, pdf, pdfOptions);
 
@@ -281,6 +281,7 @@ export const PrintableImages = () => {
         if (i + batchSize < pages.length) {
           pdf.addPage(pdfOptions.format, pdfOptions.orientation);
         }
+        console.timeEnd(`batch ${i / batchSize + 1} of ${Math.ceil(pages.length / batchSize)}`);
       }
 
       const pdfOutput = pdf.output("blob");
