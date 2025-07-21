@@ -1,0 +1,34 @@
+# dependencies
+node_modules
+.pnpm
+.yarn
+*.log
+
+# build output
+dist
+build
+
+# misc
+.env
+.env.*
+.DS_Store
+
+# local config
+.vscode
+.idea
+
+# test coverage
+coverage
+
+# system files
+Thumbs.db
+
+# npm debug files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.yaml
