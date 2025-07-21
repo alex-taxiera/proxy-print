@@ -128,7 +128,7 @@ export const PrintableImages = () => {
                     0, 0, targetWidth, targetHeight
                   );
                   
-                  imageDataUrl = cropCanvas.toDataURL('image/jpeg', 1);
+                  imageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95);
                   
                   // Clear canvas
                   cropCanvas.width = 0;
