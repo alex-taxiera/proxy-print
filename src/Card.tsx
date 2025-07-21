@@ -26,6 +26,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     isRendering,
     downloadImage,
     getCachedImage,
+    onLocalImageLoaded,
   } = useContext(ImagesContext);
 
   const [isLoading, setIsLoading] = useState(image.id ? true : false);
@@ -130,6 +131,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     if (image.file) {
       url = URL.createObjectURL(image.file);
       setSrc(url);
+      // Don't call onLocalImageLoaded here - wait for img onload
     } else if (image.id) {
       downloadImage(image.id)
         .then(() => console.debug("Image fetched"))
@@ -170,6 +172,11 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
             alt={image.file?.name ?? image.name}
             className="image"
             onContextMenu={handleContextMenu}
+            onLoad={() => {
+              if (image.file) {
+                onLocalImageLoaded(image.uuid);
+              }
+            }}
           />
         ) : (
           <span className="error">Error!</span>

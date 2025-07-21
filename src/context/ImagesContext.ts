@@ -23,6 +23,10 @@ export type ImagesContextValue = {
   onClear: () => void;
   onError: (uuid: string) => void;
   onClearErrors: () => void;
+  onLocalImageLoaded: (uuid: string) => void;
+  isLoadingLocalImages: boolean;
+  loadedLocalImageCount: number;
+  totalLocalImageCount: number;
 }
 
 export const ImagesContext = createContext<ImagesContextValue>({
@@ -38,4 +42,8 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onClear: () => {},
   onError: () => {},
   onClearErrors: () => {},
+  onLocalImageLoaded: () => {},
+  isLoadingLocalImages: false,
+  loadedLocalImageCount: 0,
+  totalLocalImageCount: 0,
 });

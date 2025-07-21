@@ -16,6 +16,7 @@ export const ImagesProvider = (
   const [images, setImages] = useState<Image[]>([]);
   const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
   const [isRendering, setIsRendering] = useState(false);
+  const [loadedLocalImageIds, setLoadedLocalImageIds] = useState<Set<string>>(new Set());
 
   const onError = useCallback(
     (uuid: string) => {
@@ -37,6 +38,14 @@ export const ImagesProvider = (
     setImagesWithError([]);
   }, []);
 
+  const onLocalImageLoaded = useCallback((uuid: string) => {
+    setLoadedLocalImageIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(uuid);
+      return newSet;
+    });
+  }, []);
+
   const onRemove = useCallback((uuid: string) => {
     remove(uuid);
     setImages((old) => old.filter((image) => image.uuid !== uuid));
@@ -46,7 +55,13 @@ export const ImagesProvider = (
     removeAll();
     onClearErrors();
     setImages([]);
+    setLoadedLocalImageIds(new Set());
   }, [removeAll, onClearErrors]);
+
+  // Calculate local image loading state
+  const totalLocalImageCount = images.filter(img => img.file).length;
+  const loadedLocalImageCount = loadedLocalImageIds.size;
+  const isLoadingLocalImages = loadedLocalImageCount < totalLocalImageCount;
 
   const onAdd = useCallback(
     (data: (File | GoogleImageData)[], index?: number) => {
@@ -82,6 +97,10 @@ export const ImagesProvider = (
       setIsRendering,
       downloadImage: add,
       getCachedImage,
+      onLocalImageLoaded,
+      isLoadingLocalImages,
+      loadedLocalImageCount,
+      totalLocalImageCount,
     }),
     [
       isFetching,
@@ -96,6 +115,10 @@ export const ImagesProvider = (
       setIsRendering,
       add,
       getCachedImage,
+      onLocalImageLoaded,
+      isLoadingLocalImages,
+      loadedLocalImageCount,
+      totalLocalImageCount,
     ]
   );
 
