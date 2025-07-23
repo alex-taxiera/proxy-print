@@ -83,6 +83,11 @@ export const ImagesProvider = (
     []
   );
 
+  const downloadImage = useCallback(async (id: string) => {
+    const { mimeType, url } = await add(id);
+    setImages((old) => old.map((image) => image.id === id ? { ...image, mimeType, url } : image));
+  }, [add]);
+
   const contextValue = useMemo(
     () => ({
       isFetching,
@@ -95,7 +100,7 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      downloadImage: add,
+      downloadImage,
       getCachedImage,
       onLocalImageLoaded,
       isLoadingLocalImages,

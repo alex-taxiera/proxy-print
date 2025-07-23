@@ -2,7 +2,9 @@ import { createContext } from "react";
 
 export type GoogleImageData = {
   id?: string;
-  name?: string
+  name?: string;
+  mimeType?: string;
+  url?: string
 }
 
 export type Image = {

@@ -5,15 +5,25 @@ import './ProgressOverlay.css';
 
 export const ProgressOverlay = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [isIndeterminate, setIsIndeterminate] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [totalProgressAmount, setTotalProgressAmount] = useState(100);
   const [phase, setPhase] = useState('');
   const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleProgress = (data: { progress: number; phase: string } | void) => {
+    const handleProgress = (data: { progress: number; totalProgressAmount?: number; phase?: string; isIndeterminate?: boolean } | void) => {
       if (data && typeof data === 'object' && 'progress' in data) {
         setProgress(data.progress);
-        setPhase(data.phase);
+        if (data.totalProgressAmount) {
+          setTotalProgressAmount(data.totalProgressAmount);
+        }
+        if (data.phase) {
+          setPhase(data.phase);
+        }
+        if (data.isIndeterminate) {
+          setIsIndeterminate(true);
+        }
         setIsVisible(true);
       }
     };
@@ -21,6 +31,8 @@ export const ProgressOverlay = () => {
     const handleComplete = () => {
       setTimeout(() => {
         setIsVisible(false);
+        setIsIndeterminate(false);
+        setTotalProgressAmount(100);
         setProgress(0);
         setPhase('');
       }, 1000);
@@ -44,7 +56,8 @@ export const ProgressOverlay = () => {
         <div className="progress-bar-container" ref={progressRef}>
           <ProgressBar 
             completed={progress}
-            isIndeterminate={phase === 'Saving PDF'}
+            maxCompleted={totalProgressAmount}
+            isIndeterminate={isIndeterminate}
             isLabelVisible={false}
             bgColor="#00d4aa"
             height="8px"

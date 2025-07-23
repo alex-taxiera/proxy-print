@@ -3,10 +3,50 @@ import { useContext, useMemo, useRef } from "react";
 import { SettingsContext } from "./context/SettingsContext";
 import "./PrintableImages.css";
 import { Card } from "./Card";
-import { Image, ImagesContext } from "./context/ImagesContext";
+import { Image as ImageType, ImagesContext } from "./context/ImagesContext";
 import { ImageErrors } from "./ImageErrors";
 import { ProgressOverlay } from "./components/ProgressOverlay";
 import { progressEvents } from "./utils/progress-events";
+
+import { PDFDocument } from 'pdf-lib';
+
+async function mergePDFsBlobs(blobs: Blob[]): Promise<Blob> {
+  const mergedPdf = await PDFDocument.create();
+
+  for (const blob of blobs) {
+    const arrayBuffer = await blob.arrayBuffer();
+    const pdf = await PDFDocument.load(arrayBuffer);
+    const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+    pages.forEach(page => mergedPdf.addPage(page));
+  }
+
+  const mergedBytes = await mergedPdf.save();
+  return new Blob([mergedBytes], { type: 'application/pdf' });
+}
+
+function assignAndInterleave<T>(workers: Worker[], items: T[], chunkSize: number): [T, Worker][] {
+  const assignments: T[][] = [];
+
+  // Step 1: Assign 45 items to each worker
+  for (let i = 0; i < workers.length; i++) {
+    const start = i * chunkSize;
+    const end = start + chunkSize;
+    assignments.push(items.slice(start, end));
+  }
+
+  // Step 2: Interleave items from each worker
+  const interleaved: [T, Worker][] = [];
+  for (let i = 0; i < chunkSize; i++) {
+    for (let j = 0; j < workers.length; j++) {
+      const item = assignments[j][i];
+      if (item !== undefined) {
+        interleaved.push([item, workers[j]]);
+      }
+    }
+  }
+
+  return interleaved;
+}
 
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
@@ -14,243 +54,13 @@ export const PrintableImages = () => {
   const { images, onClear, isRendering, setIsRendering, isFetching, isLoadingLocalImages, loadedLocalImageCount, totalLocalImageCount } =
     useContext(ImagesContext);
 
+  const cardCount = useMemo(() => {
+    const totalCards = images.length;
+    const cardString = totalCards === 1 ? "card" : "cards";
+    return `${totalCards} total ${cardString}`;
+  }, [images]);
+
   const contentRef = useRef<HTMLDivElement>(null);
-
-    const handleSave = () => {
-    setIsRendering(true);
-    console.time("save");
-
-    const pageHeight = Number(settings.pageHeight);
-    const pageWidth = Number(settings.pageWidth);
-    const pages = contentRef.current?.querySelectorAll<HTMLElement>(".page") || [];
-
-    // Process images progressively using requestIdleCallback
-    const processImagesProgressively = () => {
-      let currentPageIndex = 0;
-      let currentCardIndex = 0;
-      const processedPages: Array<{ cards: Array<{
-        imageDataUrl: string | null;
-        pdfX: number;
-        pdfY: number;
-        containerWidth: number;
-        containerHeight: number;
-        scaleX: number;
-        scaleY: number;
-        cardPosition: {
-          isFirstRow: boolean;
-          isLastRow: boolean;
-          isFirstColumn: boolean;
-          isLastColumn: boolean;
-        };
-        guides: {
-          enabled: boolean;
-          thickness: number;
-          bleedEdgeWidth: number;
-          guideColor: string;
-          invertedGuideColor: string;
-          unit: string;
-          guidesThickness: number;
-          guidesAtBleedEdge: boolean;
-        } | null;
-      }> }> = [];
-      let totalCards = 0;
-      let processedCards = 0;
-      
-      // Count total cards for progress
-      Array.from(pages).forEach(pageNode => {
-        totalCards += pageNode.querySelectorAll('.card').length;
-      });
-      
-      const processNextCard = () => {
-        if (currentPageIndex < pages.length) {
-          const pageNode = pages[currentPageIndex];
-          const cardElements = pageNode.querySelectorAll<HTMLElement>('.card');
-          
-          if (currentCardIndex < cardElements.length) {
-            // Process single card
-            const cardElement = cardElements[currentCardIndex];
-            const imgElement = cardElement.querySelector('img') as HTMLImageElement;
-            const cardRect = cardElement.getBoundingClientRect();
-            const pageRect = pageNode.getBoundingClientRect();
-            const printContainer = pageNode.closest('.print-container') as HTMLElement;
-            const computedStyle = getComputedStyle(printContainer);
-            
-            // Get guide settings
-            const guideBorderWidth = parseFloat(computedStyle.getPropertyValue('--guide-border-width')) || 1;
-            const bleedEdgeWidth = parseFloat(computedStyle.getPropertyValue('--bleed-edge-width')) || 0;
-            const guideColor = computedStyle.getPropertyValue('--guide-border-color') || '#adff2f';
-            const invertedGuideColor = computedStyle.getPropertyValue('--guide-border-color-inverted') || '#ff0000';
-            const unit = computedStyle.getPropertyValue('--page-unit') || 'in';
-            const guidesThickness = 0.2645833333 * (parseFloat(computedStyle.getPropertyValue('--guides-thickness')) || 0);
-            const guidesAtBleedEdge = computedStyle.getPropertyValue('--guides-at-bleed-edge') === '0';
-
-            const scaleX = pageWidth / pageRect.width;
-            const scaleY = pageHeight / pageRect.height;
-            const pdfGuideBorderWidth = guideBorderWidth * scaleX;
-
-            const cardX = cardRect.left - pageRect.left;
-            const cardY = cardRect.top - pageRect.top;
-            const pdfX = cardX * scaleX;
-            const pdfY = cardY * scaleY;
-
-            const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
-            const imageContainerRect = imageContainer.getBoundingClientRect();
-            const containerWidth = imageContainerRect.width;
-            const containerHeight = imageContainerRect.height;
-
-            let imageDataUrl = null;
-            
-            if (imgElement && imgElement.src && !imgElement.classList.contains('loading')) {
-              try {
-                const imageRect = imgElement.getBoundingClientRect();
-                const imageWidth = imageRect.width;
-                const imageHeight = imageRect.height;
-                
-                const sourceWidth = (containerWidth / imageWidth) * imgElement.naturalWidth;
-                const sourceHeight = (containerHeight / imageHeight) * imgElement.naturalHeight;
-                const sourceX = (imgElement.naturalWidth - sourceWidth) / 2;
-                const sourceY = (imgElement.naturalHeight - sourceHeight) / 2;
-                
-                // Use full resolution - no max width/height constraints
-                const targetWidth = Math.round(sourceWidth);
-                const targetHeight = Math.round(sourceHeight);
-                
-                const cropCanvas = document.createElement('canvas');
-                const cropCtx = cropCanvas.getContext('2d');
-                
-                if (cropCtx) {
-                  cropCanvas.width = targetWidth;
-                  cropCanvas.height = targetHeight;
-                  
-                  cropCtx.drawImage(
-                    imgElement,
-                    sourceX, sourceY, sourceWidth, sourceHeight,
-                    0, 0, targetWidth, targetHeight
-                  );
-                  
-                  imageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95);
-                  
-                  // Clear canvas
-                  cropCanvas.width = 0;
-                  cropCanvas.height = 0;
-                  cropCtx.clearRect(0, 0, 0, 0);
-                }
-              } catch (error) {
-                console.error('Error processing image for PDF:', error);
-              }
-            }
-
-            // Get card classes to determine guide types
-            const cardClasses = cardElement.className.split(' ');
-            const isFirstRow = cardClasses.includes('first-row');
-            const isLastRow = cardClasses.includes('last-row');
-            const isFirstColumn = cardClasses.includes('first-column');
-            const isLastColumn = cardClasses.includes('last-column');
-
-            const processedCard = {
-              imageDataUrl,
-              pdfX,
-              pdfY,
-              containerWidth,
-              containerHeight,
-              scaleX,
-              scaleY,
-              cardPosition: {
-                isFirstRow,
-                isLastRow,
-                isFirstColumn,
-                isLastColumn
-              },
-              guides: guidesThickness ? {
-                enabled: true,
-                thickness: pdfGuideBorderWidth,
-                bleedEdgeWidth,
-                guideColor,
-                invertedGuideColor,
-                unit,
-                guidesThickness,
-                guidesAtBleedEdge
-              } : null
-            };
-
-            // Add card to current page or create new page
-            if (!processedPages[currentPageIndex]) {
-              processedPages[currentPageIndex] = { cards: [] };
-            }
-            processedPages[currentPageIndex].cards.push(processedCard);
-            
-            processedCards++;
-            const progress = Math.round((processedCards / totalCards) * 100);
-            progressEvents.emit('progress', {
-              progress,
-              phase: 'Processing images'
-            });
-            console.log(`Processing: ${progress}% (${processedCards}/${totalCards})`);
-            
-            currentCardIndex++;
-            requestIdleCallback(processNextCard, { timeout: 50 });
-          } else {
-            // Move to next page
-            currentPageIndex++;
-            currentCardIndex = 0;
-            requestIdleCallback(processNextCard, { timeout: 50 });
-          }
-        } else {
-          // All cards processed, send to worker
-          console.log('All images processed, generating PDF...');
-          const worker = new Worker('/pdf-worker.js');
-          
-          worker.onmessage = (e: MessageEvent<{ type: string; percentage?: number; blob?: Blob; error?: string }>) => {
-            const { type, percentage, blob, error } = e.data;
-            
-            if (type === 'progress') {
-              progressEvents.emit('progress', {
-                progress: percentage || 0,
-                phase: 'Saving PDF'
-              });
-              console.log(`PDF Generation: ${percentage}%`);
-            } else if (type === 'complete' && blob) {
-              // Download the PDF
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "cards.pdf";
-              a.click();
-              URL.revokeObjectURL(url);
-              console.timeEnd("save");
-              setIsRendering(false);
-              progressEvents.emit('complete');
-              worker.terminate();
-            } else if (type === 'error') {
-              console.error('PDF generation error:', error);
-              console.timeEnd("save");
-              setIsRendering(false);
-              worker.terminate();
-            }
-          };
-
-          // Send data to worker
-          worker.postMessage({
-            type: 'generatePdf',
-            data: {
-              pages: processedPages,
-              settings,
-              pageHeight,
-              pageWidth,
-              unit: settings.unit
-            }
-          });
-        }
-      };
-      
-      // Start processing
-      requestIdleCallback(processNextCard, { timeout: 50 });
-    };
-    
-    // Start the progressive processing
-    processImagesProgressively();
-
-  };
 
   const rowsPerPage = useMemo(() => {
     // convert in to mm when settings.unit is set to "in"
@@ -271,12 +81,285 @@ export const PrintableImages = () => {
     [rowsPerPage, columnsPerPage]
   );
 
+  const handleSave = () => {
+    setIsRendering(true);
+    console.time("save");
+    progressEvents.emit('progress', {
+      progress: 0,
+      phase: 'Initializing'
+    });
+
+    const pageHeight = Number(settings.pageHeight);
+    const pageWidth = Number(settings.pageWidth);
+    const firstPage = contentRef.current?.querySelector<HTMLElement>(".page") as HTMLElement;
+    const printContainer = firstPage.closest('.print-container') as HTMLElement;
+    const computedStyle = getComputedStyle(printContainer);
+    // Get guide settings
+    const guideBorderWidth = parseFloat(computedStyle.getPropertyValue('--guide-border-width')) || 1;
+    const bleedEdgeWidth = parseFloat(computedStyle.getPropertyValue('--bleed-edge-width')) || 0;
+    const guideColor = computedStyle.getPropertyValue('--guide-border-color') || '#adff2f';
+    const invertedGuideColor = computedStyle.getPropertyValue('--guide-border-color-inverted') || '#ff0000';
+    const unit = computedStyle.getPropertyValue('--page-unit') as 'in' | 'mm' | 'em' | 'pt' | 'px' | 'cm' | 'ex' | 'pc' || 'in';
+    const guidesThickness = 0.2645833333 * (parseFloat(computedStyle.getPropertyValue('--guides-thickness')) || 0);
+    const guidesAtBleedEdge = computedStyle.getPropertyValue('--guides-at-bleed-edge') === '0';
+
+    const cardsPerWorker = cardsPerPage * 1;
+    const cards = Array.from(contentRef.current?.querySelectorAll<HTMLElement>(".card") || []);
+    const workers = Array.from({ length: Math.ceil(cards.length / cardsPerWorker) }, () => new Worker('/pdf-worker.js'));
+    const lastWorker = workers.at(-1)!;
+    const lastWorkerLimit = (cards.length % cardsPerWorker) || cardsPerWorker;
+    const cardsDone = new Map<Worker, number>();
+    const pdfPages = new Map<Worker, Blob>();
+    let progress = 0;
+    const totalProgressAmount = cards.length * 2; // 1 for processing 1 for adding to pdf
+
+    // sort cards into separate lists per worker
+    const reorderedCards = assignAndInterleave(workers, cards, cardsPerWorker);
+
+    const processCard = async (cardElement: HTMLElement) => {
+      // Process cards sequentially to reduce memory usage
+      const imgElement = cardElement.querySelector('img') as HTMLImageElement;
+      const imageUuid = imgElement?.id;
+      const image = images.find(image => image.uuid === imageUuid);
+      const cardRect = cardElement.getBoundingClientRect();
+      // get page for specific card
+      const pageRect = cardElement.closest('.page-container')?.getBoundingClientRect();
+      if (!pageRect) {
+        throw new Error('Page not found');
+      }
+
+      const scaleX = pageWidth / pageRect.width;
+      const scaleY = pageHeight / pageRect.height;
+      const pdfGuideBorderWidth = guideBorderWidth * scaleX;
+
+      const cardX = cardRect.left - pageRect.left;
+      const cardY = cardRect.top - pageRect.top;
+      const pdfX = cardX * scaleX;
+      const pdfY = cardY * scaleY;
+
+      const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
+      const imageContainerRect = imageContainer.getBoundingClientRect();
+      const containerWidth = imageContainerRect.width;
+      const containerHeight = imageContainerRect.height;
+
+      let imageDataUrl = null;
+      
+      if (image && !imgElement.classList.contains('loading')) {
+        try {
+          // Get the image source URL (could be blob URL or data URL)
+          const imageSrc = image.url ?? URL.createObjectURL(image.file!);
+          
+          // Create a new image element to get natural dimensions
+          const tempImg = new Image();
+          tempImg.crossOrigin = 'anonymous';
+          
+          // Wait for the image to load
+          await new Promise((resolve, reject) => {
+            tempImg.onload = resolve;
+            tempImg.onerror = reject;
+            tempImg.src = imageSrc;
+          });
+          
+          const imageRect = imgElement.getBoundingClientRect();
+          const imageWidth = imageRect.width;
+          const imageHeight = imageRect.height;
+          
+          const sourceWidth = (containerWidth / imageWidth) * tempImg.naturalWidth;
+          const sourceHeight = (containerHeight / imageHeight) * tempImg.naturalHeight;
+          const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
+          const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
+          
+          // Use full resolution - no max width/height constraints
+          const targetWidth = Math.round(sourceWidth);
+          const targetHeight = Math.round(sourceHeight);
+          
+          const cropCanvas = document.createElement('canvas');
+          const cropCtx = cropCanvas.getContext('2d');
+          
+          if (cropCtx) {
+            cropCanvas.width = targetWidth;
+            cropCanvas.height = targetHeight;
+            
+            cropCtx.drawImage(
+              tempImg,
+              sourceX, sourceY, sourceWidth, sourceHeight,
+              0, 0, targetWidth, targetHeight
+            );
+            
+            imageDataUrl = cropCanvas.toDataURL(image.mimeType ?? image.file!.type, 1);
+            
+            // Clear canvas immediately to free memory
+            cropCanvas.width = 0;
+            cropCanvas.height = 0;
+            cropCtx.clearRect(0, 0, 0, 0);
+            if (image.file) {
+              URL.revokeObjectURL(imageSrc);
+            }
+          }
+          
+          // Clear tempImg reference to help GC
+          tempImg.src = '';
+        } catch (error) {
+          console.error('Error processing image for PDF:', error);
+        }
+      }
+
+      progress++;
+      console.debug('Card image processed', progress, totalProgressAmount);
+
+      // Get card classes to determine guide types
+      const cardClasses = cardElement.className.split(' ');
+      const isFirstRow = cardClasses.includes('first-row');
+      const isLastRow = cardClasses.includes('last-row');
+      const isFirstColumn = cardClasses.includes('first-column');
+      const isLastColumn = cardClasses.includes('last-column');
+
+      return {
+        imageDataUrl,
+        mimeType: image?.mimeType ?? image?.file!.type,
+        pdfX,
+        pdfY,
+        containerWidth,
+        containerHeight,
+        scaleX,
+        scaleY,
+        cardPosition: {
+          isFirstRow,
+          isLastRow,
+          isFirstColumn,
+          isLastColumn
+        },
+        guides: guidesThickness ? {
+          enabled: true,
+          thickness: pdfGuideBorderWidth,
+          bleedEdgeWidth,
+          guideColor,
+          invertedGuideColor,
+          unit,
+          guidesThickness,
+          guidesAtBleedEdge
+        } : null
+      }
+    }
+
+    const requestNextCard = (data: [HTMLElement, Worker]) => {
+      const [cardElement, worker] = data;
+      progressEvents.emit('progress', {
+        progress: progress,
+        totalProgressAmount,
+        phase: 'Building PDF'
+      });
+      processCard(cardElement).then((card) => {
+        progressEvents.emit('progress', {
+          progress: progress,
+          totalProgressAmount,
+          phase: 'Building PDF'
+        });
+        worker.postMessage({
+          type: 'addImage',
+          data: {
+            card,
+            init: {
+              pageHeight: Number(settings.pageHeight),
+              pageWidth: Number(settings.pageWidth),
+              unit: settings.unit,
+            },
+          }
+        });
+
+        if (reorderedCards.length > 0) {
+          requestIdleCallback(() => requestNextCard(reorderedCards.shift()!), { timeout: 50 });
+        }
+      }).catch(error => {
+        console.error('Error processing card:', error);
+      });
+    }
+
+    const buildOnMessage = (worker: Worker) => {
+      return (e: MessageEvent<{ type: string; success: boolean; error?: string, blob?: Blob }>) => {
+        switch (e.data.type) {
+          case 'cardProcessed': {
+            progress++;
+            console.debug('PDF card processed', progress, totalProgressAmount);
+            progressEvents.emit('progress', {
+              progress: progress,
+              totalProgressAmount,
+              phase: 'Building PDF'
+            });
+
+            cardsDone.set(worker, (cardsDone.get(worker) || 0) + 1);
+            const done = cardsDone.get(worker) === (lastWorker === worker ? lastWorkerLimit : cardsPerWorker);
+            if (done) {
+              worker.postMessage({
+                type: 'save',
+              })
+            }
+            break;
+          }
+          case 'save': {
+            worker.terminate();
+            console.debug('saving pdf', e.data.blob);
+            pdfPages.set(worker, e.data.blob!);
+            if (pdfPages.size === workers.length) {
+              progressEvents.emit('progress', {
+                progress: progress,
+                totalProgressAmount,
+                isIndeterminate: true,
+                phase: 'Saving PDF'
+              });
+              // combine pdfs
+              mergePDFsBlobs(
+                workers.map(worker => pdfPages.get(worker)!)
+              ).then((blob) => {
+                // Download the PDF
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "cards.pdf";
+                a.click();
+                URL.revokeObjectURL(url);
+                console.timeEnd("save");
+                setIsRendering(false);
+                progressEvents.emit('complete');
+              }).catch((error) => {
+                console.error('Error merging PDFs', error);
+                console.timeEnd("save");
+                setIsRendering(false);
+                progressEvents.emit('complete');
+              })
+            }
+            break;
+          }
+          case 'error':
+            console.error('PDF error:', e.data.error);
+            console.timeEnd("save");
+            setIsRendering(false);
+            progressEvents.emit('complete');
+            break;
+        }
+      }
+    }
+
+    workers.forEach(worker => {
+      worker.onmessage = buildOnMessage(worker);
+    });
+
+    progressEvents.emit('progress', {
+      progress: progress,
+      totalProgressAmount,
+      phase: 'Building PDF'
+    });
+
+    requestIdleCallback(() => requestNextCard(reorderedCards.shift()!), { timeout: 50 });
+  };
+
+
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {
       return [];
     }
 
-    const rows: Image[][] = [];
+    const rows: ImageType[][] = [];
     for (let i = 0; i < images.length; i += cardsPerPage) {
       rows.push(images.slice(i, i + cardsPerPage));
     }
@@ -308,12 +391,6 @@ export const PrintableImages = () => {
     }
     return className.join(" ");
   };
-
-  const cardCount = useMemo(() => {
-    const totalCards = images.length;
-    const cardString = totalCards === 1 ? "card" : "cards";
-    return `${totalCards} total ${cardString}`;
-  }, [images]);
 
   if (images.length === 0) {
     return (

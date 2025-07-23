@@ -1,6 +1,8 @@
 interface ProgressData {
   progress: number;
-  phase: string;
+  phase?: string;
+  totalProgressAmount?: number;
+  isIndeterminate?: boolean;
 }
 
 type EventCallback = (data: ProgressData | void) => void;

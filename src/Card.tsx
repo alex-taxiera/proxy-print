@@ -132,7 +132,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
       url = URL.createObjectURL(image.file);
       setSrc(url);
       // Don't call onLocalImageLoaded here - wait for img onload
-    } else if (image.id) {
+    } else if (image.id && !downloadedSrc) {
       downloadImage(image.id)
         .then(() => console.debug("Image fetched"))
         .catch((error) => {
@@ -150,7 +150,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [downloadImage, image, onError]);
+  }, [downloadImage, image.uuid, onError]);
 
   return (
     <div
@@ -169,6 +169,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         ) : imageSrc ? (
           <img
             src={imageSrc}
+            id={image.uuid}
             alt={image.file?.name ?? image.name}
             className="image"
             onContextMenu={handleContextMenu}
