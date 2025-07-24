@@ -10,18 +10,34 @@ import { progressEvents } from "./utils/progress-events";
 
 import { PDFDocument } from 'pdf-lib';
 
-async function mergePDFsBlobs(blobs: Blob[]): Promise<Blob> {
-  const mergedPdf = await PDFDocument.create();
+async function* mergePDFsBlobs(blobs: Blob[]) {
+  let mergedPdf = await PDFDocument.create();
+  // split the blobs into chunks of 2GB
+  const maxPdfSize = 2 * 1024 * 1024 * 1024;
+  let pdfSize = 0;
 
-  for (const blob of blobs) {
+  console.debug('maxPdfSize :>> ', maxPdfSize);
+
+  for (let i = 0; i < blobs.length; i++) {
+    const blob = blobs[i];
+    if (pdfSize + blob.size > maxPdfSize) {
+      console.debug('pdf is too large, saving the current pdf');
+      const mergedBytes = await mergedPdf.save();
+      yield new Blob([mergedBytes], { type: 'application/pdf' });
+      mergedPdf = await PDFDocument.create();
+      pdfSize = 0;
+    }
+
+    pdfSize += blob.size;
     const arrayBuffer = await blob.arrayBuffer();
     const pdf = await PDFDocument.load(arrayBuffer);
     const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
     pages.forEach(page => mergedPdf.addPage(page));
   }
 
+  console.debug('saving the final pdf');
   const mergedBytes = await mergedPdf.save();
-  return new Blob([mergedBytes], { type: 'application/pdf' });
+  yield new Blob([mergedBytes], { type: 'application/pdf' });
 }
 
 function assignAndInterleave<T>(workers: Worker[], items: T[], chunkSize: number): [T, Worker][] {
@@ -275,8 +291,25 @@ export const PrintableImages = () => {
       });
     }
 
+    const savePDF = async () => {
+      // combine pdfs
+      const pdfGenerator = mergePDFsBlobs(
+        workers.map(worker => pdfPages.get(worker)!)
+      )
+
+      for await (const blob of pdfGenerator) {
+        console.debug('saving pdf', blob);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "cards.pdf";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+
     const buildOnMessage = (worker: Worker) => {
-      return (e: MessageEvent<{ type: string; success: boolean; error?: string, blob?: Blob }>) => {
+      return async (e: MessageEvent<{ type: string; success: boolean; error?: string, blob?: Blob }>) => {
         switch (e.data.type) {
           case 'cardProcessed': {
             progress++;
@@ -307,26 +340,19 @@ export const PrintableImages = () => {
                 isIndeterminate: true,
                 phase: 'Saving PDF'
               });
-              // combine pdfs
-              mergePDFsBlobs(
-                workers.map(worker => pdfPages.get(worker)!)
-              ).then((blob) => {
-                // Download the PDF
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "cards.pdf";
-                a.click();
-                URL.revokeObjectURL(url);
+
+              try {
+                await savePDF();
+                console.debug('done!');
                 console.timeEnd("save");
                 setIsRendering(false);
                 progressEvents.emit('complete');
-              }).catch((error) => {
+              } catch (error) {
                 console.error('Error merging PDFs', error);
                 console.timeEnd("save");
                 setIsRendering(false);
                 progressEvents.emit('complete');
-              })
+              }
             }
             break;
           }
