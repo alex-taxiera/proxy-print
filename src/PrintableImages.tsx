@@ -121,18 +121,31 @@ export const PrintableImages = () => {
 
     const cardsPerWorker = cardsPerPage * 1;
     const cards = Array.from(contentRef.current?.querySelectorAll<HTMLElement>(".card") || []);
+    let progress = 0;
+    const totalProgressAmount = cards.length * 2; // 1 for processing 1 for adding to pdf
+
+    const maxWorkers = Math.min(Math.floor(imageMatrix.length / 2), 100);
     const workers = Array.from({ length: Math.ceil(cards.length / cardsPerWorker) }, () => new Worker('/pdf-worker.js'));
+    const waitingWorkers = workers.slice(maxWorkers);
     const lastWorker = workers.at(-1)!;
     const lastWorkerLimit = (cards.length % cardsPerWorker) || cardsPerWorker;
     const cardsDone = new Map<Worker, number>();
     const pdfPages = new Map<Worker, Blob>();
-    let progress = 0;
-    const totalProgressAmount = cards.length * 2; // 1 for processing 1 for adding to pdf
 
     // sort cards into separate lists per worker
-    const reorderedCards = assignAndInterleave(workers, cards, cardsPerWorker);
+    const assignments: HTMLElement[][] = [];
+    // Step 1: Assign 45 items to each worker
+    for (let i = 0; i < workers.length; i++) {
+      const start = i * cardsPerWorker;
+      const end = start + cardsPerWorker;
+      assignments.push(cards.slice(start, end));
+    }
+    // const reorderedCards = assignAndInterleave(workers, cards, cardsPerWorker);
+    // const deferredCards: [HTMLElement, Worker][] = [];
 
     const processCard = async (cardElement: HTMLElement) => {
+      const index = cards.indexOf(cardElement);
+      console.debug('processing card', index);
       // Process cards sequentially to reduce memory usage
       const imgElement = cardElement.querySelector('img') as HTMLImageElement;
       const imageUuid = imgElement?.id;
@@ -258,8 +271,16 @@ export const PrintableImages = () => {
       }
     }
 
-    const requestNextCard = (data: [HTMLElement, Worker]) => {
+    const requestNextCard = (data: [HTMLElement, Worker], cards: [HTMLElement, Worker][]) => {
       const [cardElement, worker] = data;
+      // if (!activeWorkers.has(worker)) {
+      //   deferredCards.push(data);
+      //   if (cards.length > 0) {
+      //     requestIdleCallback(() => requestNextCard(cards.shift()!, cards), { timeout: 50 });
+      //   }
+      //   return;
+      // }
+
       progressEvents.emit('progress', {
         progress: progress,
         totalProgressAmount,
@@ -283,8 +304,8 @@ export const PrintableImages = () => {
           }
         });
 
-        if (reorderedCards.length > 0) {
-          requestIdleCallback(() => requestNextCard(reorderedCards.shift()!), { timeout: 50 });
+        if (cards.length > 0) {
+          requestIdleCallback(() => requestNextCard(cards.shift()!, cards), { timeout: 50 });
         }
       }).catch(error => {
         console.error('Error processing card:', error);
@@ -305,6 +326,23 @@ export const PrintableImages = () => {
         a.download = "cards.pdf";
         a.click();
         URL.revokeObjectURL(url);
+      }
+    }
+
+    const startWorker = (worker: Worker, cards: HTMLElement[]) => {
+      requestIdleCallback(() => {
+        requestNextCard([cards.shift()!, worker], cards.map(card => [card, worker]));
+      })
+    }
+
+    const startNextWorker = () => {
+      // workerQueue.runNext();
+      if (waitingWorkers.length > 0) {
+        console.debug('starting next worker', waitingWorkers.length);
+        const worker = waitingWorkers.shift()!;
+        // activeWorkers.add(worker);
+        const workerIndex = workers.indexOf(worker);
+        startWorker(worker, assignments[workerIndex]);
       }
     }
 
@@ -330,8 +368,11 @@ export const PrintableImages = () => {
             break;
           }
           case 'save': {
-            worker.terminate();
             console.debug('saving pdf', e.data.blob);
+            // cleanup worker and start any sleeping workers
+            worker.terminate();
+            // activeWorkers.delete(worker);
+            startNextWorker();
             pdfPages.set(worker, e.data.blob!);
             if (pdfPages.size === workers.length) {
               progressEvents.emit('progress', {
@@ -376,7 +417,13 @@ export const PrintableImages = () => {
       phase: 'Building PDF'
     });
 
-    requestIdleCallback(() => requestNextCard(reorderedCards.shift()!), { timeout: 50 });
+    for (let i = 0; i < workers.length; i++) {
+      if (i < maxWorkers) {
+        startWorker(workers[i], assignments[i]);
+      }
+    }
+
+    // requestIdleCallback(() => requestNextCard(reorderedCards.shift()!, reorderedCards), { timeout: 50 });
   };
 
 

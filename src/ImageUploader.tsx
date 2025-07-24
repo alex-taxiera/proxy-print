@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { GoogleImageData, ImagesContext } from "./context/ImagesContext";
 
@@ -53,12 +53,17 @@ const processFiles = async (files: File[]) => {
 
 export function ImageUploader() {
   const { onAdd, isRendering } = useContext(ImagesContext);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const inputOnChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files) {
-        processFiles(Array.from(files)).then(onAdd).catch(console.error);
+        setIsProcessing(true);
+        processFiles(Array.from(files))
+          .then(onAdd)
+          .catch(console.error)
+          .finally(() => setIsProcessing(false));
       }
     },
     [onAdd]
@@ -66,7 +71,11 @@ export function ImageUploader() {
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      processFiles(acceptedFiles).then(onAdd).catch(console.error);
+      setIsProcessing(true);
+      processFiles(acceptedFiles)
+        .then(onAdd)
+        .catch(console.error)
+        .finally(() => setIsProcessing(false));
     },
     [onAdd]
   );
@@ -78,7 +87,7 @@ export function ImageUploader() {
     isDragAccept,
     isFileDialogActive,
   } = useDropzone({
-    disabled: isRendering,
+    disabled: isRendering || isProcessing,
     onDrop,
     accept: {
       "image/jpg": [".jpg", ".jpeg"],
@@ -93,10 +102,10 @@ export function ImageUploader() {
       {...getRootProps()}
       className={`dropzone ${
         isDragActive || isFileDialogActive ? "active" : ""
-      } ${isDragAccept ? "accept" : ""} ${isRendering ? "disabled" : ""}`}
+      } ${isDragAccept ? "accept" : ""} ${isRendering || isProcessing ? "disabled" : ""}`}
     >
       <input {...getInputProps()} onChange={inputOnChange} />
-      Add Images
+      {isProcessing ? "Processing files..." : "Add Images"}
     </div>
   );
 }
