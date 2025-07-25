@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -10,9 +11,10 @@ import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
 
 export type CardProps = {
   image: Image;
+  showImage?: boolean;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const Card = ({ className, image, ...restProps }: CardProps) => {
+export const Card = ({ className, image, showImage = true, ...restProps }: CardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -22,16 +24,14 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     images,
     onAdd,
     onRemove,
-    onError,
     isRendering,
-    downloadImage,
     getCachedImage,
     onLocalImageLoaded,
   } = useContext(ImagesContext);
 
-  const [isLoading, setIsLoading] = useState(image.id ? true : false);
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
+  const isLoading = useMemo(() => image.id && !downloadedSrc, [image.id, downloadedSrc]);
 
   const imageSrc = downloadedSrc ?? src;
 
@@ -132,17 +132,18 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
       url = URL.createObjectURL(image.file);
       setSrc(url);
       // Don't call onLocalImageLoaded here - wait for img onload
-    } else if (image.id && !downloadedSrc) {
-      downloadImage(image.id)
-        .then(() => console.debug("Image fetched"))
-        .catch((error) => {
-          onError(image.uuid);
-          console.error("Error fetching image: ", error);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
     }
+    // else if (image.id && !downloadedSrc) {
+    //   downloadImage(image.id)
+    //     .then(() => console.debug("Image fetched"))
+    //     .catch((error) => {
+    //       onError(image.uuid);
+    //       console.error("Error fetching image: ", error);
+    //     })
+    //     .finally(() => {
+    //       setIsLoading(false);
+    //     });
+    // }
 
     return () => {
       if (url) {
@@ -150,7 +151,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [downloadImage, image.uuid, onError]);
+  }, [image.file]);
 
   return (
     <div
@@ -160,16 +161,16 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
       {...restProps}
       ref={cardRef}
       onClick={handleClick}
+      id={image.uuid}
     >
       <div className="image-container">
         {isEmpty ? (
           <span className="empty" />
         ) : isLoading ? (
           <span className="loading" />
-        ) : imageSrc ? (
+        ) : imageSrc && showImage ? (
           <img
             src={imageSrc}
-            id={image.uuid}
             alt={image.file?.name ?? image.name}
             className="image"
             onContextMenu={handleContextMenu}

@@ -63,6 +63,11 @@ export const ImagesProvider = (
   const loadedLocalImageCount = loadedLocalImageIds.size;
   const isLoadingLocalImages = loadedLocalImageCount < totalLocalImageCount;
 
+  const downloadImage = useCallback(async (id: string) => {
+    const { mimeType, url } = await add(id);
+    setImages((old) => old.map((image) => image.id === id ? { ...image, mimeType, url } : image));
+  }, [add]);
+
   const onAdd = useCallback(
     (data: (File | GoogleImageData)[], index?: number) => {
       setImages((old) => {
@@ -70,6 +75,8 @@ export const ImagesProvider = (
           if (item instanceof File) {
             return { uuid: nanoid(), file: item };
           }
+
+          void downloadImage(item.id!);
 
           return { uuid: nanoid(), ...item };
         });
@@ -80,13 +87,8 @@ export const ImagesProvider = (
         return old.toSpliced(index, 0, ...images);
       });
     },
-    []
+    [downloadImage]
   );
-
-  const downloadImage = useCallback(async (id: string) => {
-    const { mimeType, url } = await add(id);
-    setImages((old) => old.map((image) => image.id === id ? { ...image, mimeType, url } : image));
-  }, [add]);
 
   const contextValue = useMemo(
     () => ({
@@ -118,7 +120,7 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      add,
+      downloadImage,
       getCachedImage,
       onLocalImageLoaded,
       isLoadingLocalImages,

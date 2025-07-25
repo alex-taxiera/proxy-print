@@ -95,8 +95,10 @@ export const PrintableImages = () => {
 
     const pageHeight = Number(settings.pageHeight);
     const pageWidth = Number(settings.pageWidth);
-    const firstPage = contentRef.current?.querySelector<HTMLElement>(".page") as HTMLElement;
-    const printContainer = firstPage.closest('.print-container') as HTMLElement;
+    const referencePage = contentRef.current?.querySelector<HTMLElement>(".page") as HTMLElement;
+    const referencePageRect = referencePage.getBoundingClientRect();
+    const printContainer = referencePage.closest('.print-container') as HTMLElement;
+    const referenceCards = Array.from(referencePage.querySelectorAll<HTMLElement>(".card"));
     const computedStyle = getComputedStyle(printContainer);
     // Get guide settings
     const guideBorderWidth = parseFloat(computedStyle.getPropertyValue('--guide-border-width')) || 1;
@@ -112,7 +114,7 @@ export const PrintableImages = () => {
     let progress = 0;
     const totalProgressAmount = cards.length * 2; // 1 for processing 1 for adding to pdf
 
-    const maxWorkers = Math.min(Math.floor(imageMatrix.length / 2) || 1, 100);
+    const maxWorkers = Math.min(Math.floor(imageMatrix.length / 2) || 1, 34);
     const workers = Array.from({ length: Math.ceil(cards.length / cardsPerWorker) }, (_, index) => new PdfWorker({ name: `PDF Worker ${index + 1}` }));
     const waitingWorkers = workers.slice(maxWorkers);
     const lastWorker = workers.at(-1)!;
@@ -125,35 +127,32 @@ export const PrintableImages = () => {
 
     const processCard = async (cardElement: HTMLElement) => {
       const index = cards.indexOf(cardElement);
+      const referenceCard = referenceCards[index % 9];
+      const referenceImgElement = referenceCard.querySelector('img') as HTMLImageElement;
       console.debug(`Card ${index + 1} of ${cards.length} processing`);
       // Process cards sequentially to reduce memory usage
-      const imgElement = cardElement.querySelector('img') as HTMLImageElement;
-      const imageUuid = imgElement?.id;
+      const imageUuid = cardElement?.id;
       const image = images.find(image => image.uuid === imageUuid);
-      const cardRect = cardElement.getBoundingClientRect();
-      // get page for specific card
-      const pageRect = cardElement.closest('.page-container')?.getBoundingClientRect();
-      if (!pageRect) {
-        throw new Error('Page not found');
-      }
+      const cardRect = referenceCard.getBoundingClientRect();
 
-      const scaleX = pageWidth / pageRect.width;
-      const scaleY = pageHeight / pageRect.height;
+
+      const scaleX = pageWidth / referencePageRect.width;
+      const scaleY = pageHeight / referencePageRect.height;
       const pdfGuideBorderWidth = guideBorderWidth * scaleX;
 
-      const cardX = cardRect.left - pageRect.left;
-      const cardY = cardRect.top - pageRect.top;
+      const cardX = cardRect.left - referencePageRect.left;
+      const cardY = cardRect.top - referencePageRect.top;
       const pdfX = cardX * scaleX;
       const pdfY = cardY * scaleY;
 
-      const imageContainer = cardElement.querySelector('.image-container') as HTMLElement;
+      const imageContainer = referenceCard.querySelector('.image-container') as HTMLElement;
       const imageContainerRect = imageContainer.getBoundingClientRect();
       const containerWidth = imageContainerRect.width;
       const containerHeight = imageContainerRect.height;
 
       let imageDataUrl = null;
       
-      if (image && !imgElement.classList.contains('loading')) {
+      if (image) {
         try {
           // Get the image source URL (could be blob URL or data URL)
           const imageSrc = image.url ?? URL.createObjectURL(image.file!);
@@ -169,7 +168,7 @@ export const PrintableImages = () => {
             tempImg.src = imageSrc;
           });
           
-          const imageRect = imgElement.getBoundingClientRect();
+          const imageRect = referenceImgElement.getBoundingClientRect();
           const imageWidth = imageRect.width;
           const imageHeight = imageRect.height;
           
@@ -217,7 +216,7 @@ export const PrintableImages = () => {
       console.debug(`Card ${index + 1} of ${cards.length} processed`);
 
       // Get card classes to determine guide types
-      const cardClasses = cardElement.className.split(' ');
+      const cardClasses = referenceCard.className.split(' ');
       const isFirstRow = cardClasses.includes('first-row');
       const isLastRow = cardClasses.includes('last-row');
       const isFirstColumn = cardClasses.includes('first-column');
@@ -336,18 +335,20 @@ export const PrintableImages = () => {
     }
 
     workers.forEach((worker, index) => {
-      worker.onmessage = async (e: MessageEvent<{ type: string; success: boolean; error?: string, blob?: Blob }>) => {
+      worker.onmessage = (e: MessageEvent<{ type: string; success: boolean; error?: string, blob?: Blob }>) => {
         switch (e.data.type) {
           case 'cardProcessed': {
             progress++;
+            cardsDone.set(worker, (cardsDone.get(worker) || 0) + 1);
+
             console.debug(`PDF Worker ${index + 1}: card ${cardsDone.get(worker)} of ${lastWorkerLimit} processed`);
+
             progressEvents.emit('progress', {
               progress: progress,
               totalProgressAmount,
               phase: 'Building PDF'
             });
 
-            cardsDone.set(worker, (cardsDone.get(worker) || 0) + 1);
             const done = cardsDone.get(worker) === (lastWorker === worker ? lastWorkerLimit : cardsPerWorker);
             if (done) {
               worker.postMessage({
@@ -365,7 +366,7 @@ export const PrintableImages = () => {
 
             if (pdfPages.size === workers.length) {
               // done, moving to save logic
-              savePDF();
+              void savePDF();
             }
             break;
           }
@@ -472,7 +473,7 @@ export const PrintableImages = () => {
         </button>
         <button
           className="primary"
-          disabled={isRendering || isFetching || isLoadingLocalImages}
+          disabled={isRendering || isFetching}
           onClick={() => handleSave()}
           title={
             isLoadingLocalImages 
@@ -493,6 +494,9 @@ export const PrintableImages = () => {
           <div
             className={`page-container ${isRendering ? "loading" : ""}`}
             key={pageIndex}
+            style={{
+              display: pageIndex === 0 ? 'block' : 'none'
+            }}
           >
             <div className="page">
               <div className="card-grid">
@@ -501,6 +505,7 @@ export const PrintableImages = () => {
                     key={image.uuid || `empty-${index}`}
                     image={image}
                     className={getCardClassName(index)}
+                    showImage={pageIndex === 0}
                   />
                 ))}
               </div>
