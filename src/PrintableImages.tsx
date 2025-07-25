@@ -20,8 +20,7 @@ export const PrintableImages = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { rowsPerPage, columnsPerPage, imageMatrix } =
-    usePreviewData();
+  const { imageMatrix } = usePreviewData();
 
   const generatePdf = useGeneratePdf(contentRef);
 

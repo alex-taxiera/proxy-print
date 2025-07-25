@@ -1,4 +1,3 @@
-// Import jsPDF in the worker
 import { jsPDF } from "jspdf";
 import { Settings } from "../context/SettingsContext";
 

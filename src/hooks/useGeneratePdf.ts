@@ -2,13 +2,13 @@ import { useCallback, useContext } from "react";
 import { progressEvents } from "../utils/progress-events";
 import { SettingsContext } from "../context/SettingsContext";
 import { ImagesContext } from "../context/ImagesContext";
-import { PDFDocument } from "pdf-lib";
 import PdfWorker from "../workers/pdf-worker?worker";
 import { usePreviewData } from "./usePreviewData";
 import { useCardClassNames } from "./useCardClassNames";
 import { invertHexColor } from "../utils/invert-hex-color";
 
 async function* mergePDFsBlobs(blobs: Blob[]) {
+  const { PDFDocument } = await import("pdf-lib/es");
   let mergedPdf = await PDFDocument.create();
   // split the blobs into chunks of 2GB -- this is the limit in Chrome
   const maxPdfSize = 2 * 1024 * 1024 * 1024;
@@ -58,7 +58,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const { imageMatrix, cardsPerPage } = usePreviewData();
   const cardClassNames = useCardClassNames();
 
-  return useCallback(async () => {
+  return useCallback(() => {
     const referencePage = contentRef.current?.querySelector<HTMLElement>(
       ".page"
     ) as HTMLElement;
@@ -420,12 +420,12 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       }
     }
   }, [
-    settings,
     contentRef,
-    images,
-    setIsRendering,
-    cardClassNames,
-    imageMatrix,
+    settings,
     cardsPerPage,
+    imageMatrix.length,
+    images,
+    cardClassNames,
+    setIsRendering,
   ]);
 };
