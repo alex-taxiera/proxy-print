@@ -9,14 +9,13 @@ import { ProgressOverlay } from "./components/ProgressOverlay";
 import { progressEvents } from "./utils/progress-events";
 
 import { PDFDocument } from 'pdf-lib';
+import PdfWorker from './workers/pdf-worker?worker'
 
 async function* mergePDFsBlobs(blobs: Blob[]) {
   let mergedPdf = await PDFDocument.create();
   // split the blobs into chunks of 2GB
   const maxPdfSize = 2 * 1024 * 1024 * 1024;
   let pdfSize = 0;
-
-  console.debug('maxPdfSize :>> ', maxPdfSize);
 
   for (let i = 0; i < blobs.length; i++) {
     const blob = blobs[i];
@@ -40,7 +39,7 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
   yield new Blob([mergedBytes], { type: 'application/pdf' });
 }
 
-function assignAndInterleave<T>(workers: Worker[], items: T[], chunkSize: number): [T, Worker][] {
+function buildWorkerQueues<T>(workers: Worker[], items: T[], chunkSize: number): T[][] {
   const assignments: T[][] = [];
 
   // Step 1: Assign 45 items to each worker
@@ -50,18 +49,7 @@ function assignAndInterleave<T>(workers: Worker[], items: T[], chunkSize: number
     assignments.push(items.slice(start, end));
   }
 
-  // Step 2: Interleave items from each worker
-  const interleaved: [T, Worker][] = [];
-  for (let i = 0; i < chunkSize; i++) {
-    for (let j = 0; j < workers.length; j++) {
-      const item = assignments[j][i];
-      if (item !== undefined) {
-        interleaved.push([item, workers[j]]);
-      }
-    }
-  }
-
-  return interleaved;
+  return assignments
 }
 
 export const PrintableImages = () => {
@@ -124,8 +112,8 @@ export const PrintableImages = () => {
     let progress = 0;
     const totalProgressAmount = cards.length * 2; // 1 for processing 1 for adding to pdf
 
-    const maxWorkers = Math.min(Math.floor(imageMatrix.length / 2), 100);
-    const workers = Array.from({ length: Math.ceil(cards.length / cardsPerWorker) }, () => new Worker('/pdf-worker.js'));
+    const maxWorkers = Math.min(Math.floor(imageMatrix.length / 2) || 1, 100);
+    const workers = Array.from({ length: Math.ceil(cards.length / cardsPerWorker) }, (_, index) => new PdfWorker({ name: `PDF Worker ${index + 1}` }));
     const waitingWorkers = workers.slice(maxWorkers);
     const lastWorker = workers.at(-1)!;
     const lastWorkerLimit = (cards.length % cardsPerWorker) || cardsPerWorker;
@@ -133,19 +121,11 @@ export const PrintableImages = () => {
     const pdfPages = new Map<Worker, Blob>();
 
     // sort cards into separate lists per worker
-    const assignments: HTMLElement[][] = [];
-    // Step 1: Assign 45 items to each worker
-    for (let i = 0; i < workers.length; i++) {
-      const start = i * cardsPerWorker;
-      const end = start + cardsPerWorker;
-      assignments.push(cards.slice(start, end));
-    }
-    // const reorderedCards = assignAndInterleave(workers, cards, cardsPerWorker);
-    // const deferredCards: [HTMLElement, Worker][] = [];
+    const assignments = buildWorkerQueues(workers, cards, cardsPerWorker)
 
     const processCard = async (cardElement: HTMLElement) => {
       const index = cards.indexOf(cardElement);
-      console.debug('processing card', index);
+      console.debug(`Card ${index + 1} of ${cards.length} processing`);
       // Process cards sequentially to reduce memory usage
       const imgElement = cardElement.querySelector('img') as HTMLImageElement;
       const imageUuid = imgElement?.id;
@@ -234,7 +214,7 @@ export const PrintableImages = () => {
       }
 
       progress++;
-      console.debug('Card image processed', progress, totalProgressAmount);
+      console.debug(`Card ${index + 1} of ${cards.length} processed`);
 
       // Get card classes to determine guide types
       const cardClasses = cardElement.className.split(' ');
@@ -273,13 +253,6 @@ export const PrintableImages = () => {
 
     const requestNextCard = (data: [HTMLElement, Worker], cards: [HTMLElement, Worker][]) => {
       const [cardElement, worker] = data;
-      // if (!activeWorkers.has(worker)) {
-      //   deferredCards.push(data);
-      //   if (cards.length > 0) {
-      //     requestIdleCallback(() => requestNextCard(cards.shift()!, cards), { timeout: 50 });
-      //   }
-      //   return;
-      // }
 
       progressEvents.emit('progress', {
         progress: progress,
@@ -313,19 +286,37 @@ export const PrintableImages = () => {
     }
 
     const savePDF = async () => {
+      progressEvents.emit('progress', {
+        progress: progress,
+        totalProgressAmount,
+        isIndeterminate: true,
+        phase: 'Saving PDF'
+      });
+
       // combine pdfs
       const pdfGenerator = mergePDFsBlobs(
         workers.map(worker => pdfPages.get(worker)!)
       )
 
-      for await (const blob of pdfGenerator) {
-        console.debug('saving pdf', blob);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "cards.pdf";
-        a.click();
-        URL.revokeObjectURL(url);
+      try {
+        for await (const blob of pdfGenerator) {
+          console.debug('saving pdf', blob);
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "cards.pdf";
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+        console.debug('done!');
+        console.timeEnd("save");
+        setIsRendering(false);
+        progressEvents.emit('complete');
+      } catch (error) {
+        console.error('Error merging PDFs', error);
+        console.timeEnd("save");
+        setIsRendering(false);
+        progressEvents.emit('complete');
       }
     }
 
@@ -336,22 +327,20 @@ export const PrintableImages = () => {
     }
 
     const startNextWorker = () => {
-      // workerQueue.runNext();
       if (waitingWorkers.length > 0) {
-        console.debug('starting next worker', waitingWorkers.length);
         const worker = waitingWorkers.shift()!;
-        // activeWorkers.add(worker);
+        console.debug(`Starting next worker, ${waitingWorkers.length} workers left`);
         const workerIndex = workers.indexOf(worker);
         startWorker(worker, assignments[workerIndex]);
       }
     }
 
-    const buildOnMessage = (worker: Worker) => {
-      return async (e: MessageEvent<{ type: string; success: boolean; error?: string, blob?: Blob }>) => {
+    workers.forEach((worker, index) => {
+      worker.onmessage = async (e: MessageEvent<{ type: string; success: boolean; error?: string, blob?: Blob }>) => {
         switch (e.data.type) {
           case 'cardProcessed': {
             progress++;
-            console.debug('PDF card processed', progress, totalProgressAmount);
+            console.debug(`PDF Worker ${index + 1}: card ${cardsDone.get(worker)} of ${lastWorkerLimit} processed`);
             progressEvents.emit('progress', {
               progress: progress,
               totalProgressAmount,
@@ -368,32 +357,15 @@ export const PrintableImages = () => {
             break;
           }
           case 'save': {
-            console.debug('saving pdf', e.data.blob);
+            console.debug(`PDF Worker ${index + 1}: saved pdf size ${e.data.blob?.size}`);
             // cleanup worker and start any sleeping workers
             worker.terminate();
-            // activeWorkers.delete(worker);
             startNextWorker();
             pdfPages.set(worker, e.data.blob!);
-            if (pdfPages.size === workers.length) {
-              progressEvents.emit('progress', {
-                progress: progress,
-                totalProgressAmount,
-                isIndeterminate: true,
-                phase: 'Saving PDF'
-              });
 
-              try {
-                await savePDF();
-                console.debug('done!');
-                console.timeEnd("save");
-                setIsRendering(false);
-                progressEvents.emit('complete');
-              } catch (error) {
-                console.error('Error merging PDFs', error);
-                console.timeEnd("save");
-                setIsRendering(false);
-                progressEvents.emit('complete');
-              }
+            if (pdfPages.size === workers.length) {
+              // done, moving to save logic
+              savePDF();
             }
             break;
           }
@@ -404,26 +376,29 @@ export const PrintableImages = () => {
             progressEvents.emit('complete');
             break;
         }
-      }
-    }
+      };
 
-    workers.forEach(worker => {
-      worker.onmessage = buildOnMessage(worker);
+      worker.onerror = (e) => {
+        console.error('Worker error:', e.error);
+        console.timeEnd("save");
+        setIsRendering(false);
+        progressEvents.emit('complete');
+      }
     });
 
+    // Finally start the process
     progressEvents.emit('progress', {
       progress: progress,
       totalProgressAmount,
       phase: 'Building PDF'
     });
 
+    // start first set of workers
     for (let i = 0; i < workers.length; i++) {
       if (i < maxWorkers) {
         startWorker(workers[i], assignments[i]);
       }
     }
-
-    // requestIdleCallback(() => requestNextCard(reorderedCards.shift()!, reorderedCards), { timeout: 50 });
   };
 
 
