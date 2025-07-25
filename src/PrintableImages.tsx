@@ -55,8 +55,7 @@ function buildWorkerQueues<T>(workers: Worker[], items: T[], chunkSize: number):
 export const PrintableImages = () => {
   const { cssVars, settings } = useContext(SettingsContext);
 
-  const { images, onClear, isRendering, setIsRendering, isFetching, isLoadingLocalImages, loadedLocalImageCount, totalLocalImageCount } =
-    useContext(ImagesContext);
+  const { images, onClear, isRendering, setIsRendering, isFetching } = useContext(ImagesContext);
 
   const cardCount = useMemo(() => {
     const totalCards = images.length;
