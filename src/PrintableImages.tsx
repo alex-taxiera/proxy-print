@@ -476,13 +476,11 @@ export const PrintableImages = () => {
           disabled={isRendering || isFetching}
           onClick={() => handleSave()}
           title={
-            isLoadingLocalImages 
-              ? `Waiting for ${totalLocalImageCount - loadedLocalImageCount} image${totalLocalImageCount - loadedLocalImageCount === 1 ? '' : 's'} to finish loading...`
-              : isRendering 
-                ? "Generating PDF..." 
-                : isFetching 
-                  ? "Downloading images..." 
-                  : ""
+            isRendering 
+              ? "Generating PDF..." 
+              : isFetching 
+                ? "Downloading images..." 
+                : ""
           }
         >
           Save
@@ -495,7 +493,7 @@ export const PrintableImages = () => {
             className={`page-container ${isRendering ? "loading" : ""}`}
             key={pageIndex}
             style={{
-              display: pageIndex === 0 ? 'block' : 'none'
+              display: pageIndex < 10 ? 'block' : 'none'
             }}
           >
             <div className="page">
@@ -505,7 +503,7 @@ export const PrintableImages = () => {
                     key={image.uuid || `empty-${index}`}
                     image={image}
                     className={getCardClassName(index)}
-                    showImage={pageIndex === 0}
+                    showImage={pageIndex < 10}
                   />
                 ))}
               </div>
