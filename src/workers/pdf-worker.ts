@@ -51,16 +51,12 @@ let pdfOptions:
 
 function initPdf(data: InitData) {
   const { pageHeight, pageWidth, unit } = data;
-  pdf = new jsPDF({
-    orientation: pageWidth > pageHeight ? "l" : "p",
-    unit: unit,
-    format: [pageWidth, pageHeight],
-  });
   pdfOptions = {
     orientation: pageWidth > pageHeight ? "l" : "p",
     unit: unit,
     format: [pageWidth, pageHeight],
   };
+  pdf = new jsPDF(pdfOptions);
 }
 
 function addImage(cardData: CardData) {
@@ -350,7 +346,7 @@ function addImage(cardData: CardData) {
 }
 
 // PDF generation worker
-self.onmessage = async function (e: MessageEvent<{ type: string; data: MessageEventData }>) {
+self.onmessage = function (e: MessageEvent<{ type: string; data: MessageEventData }>) {
   const { type, data } = e.data;
 
   switch (type) {
