@@ -131,7 +131,7 @@ function addImage(cardData: CardData) {
       : guides.unit === "in"
       ? guides.bleedEdgeWidth / 25.4
       : guides.bleedEdgeWidth;
-    // Crosshair size (4mm = 0.157 inches)
+
     const crosshairSize =
       bleedEdgeWidthPdf || (guides.unit === "in" ? 1 / 25.4 : 1);
 
