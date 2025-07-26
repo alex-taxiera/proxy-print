@@ -37,14 +37,15 @@ export const Card = ({
 
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
-  const isLoading = useMemo(
+  const isFetching = useMemo(
     () => image.id && !downloadedSrc,
     [image.id, downloadedSrc]
   );
-  const isLoadingLocal = useMemo(
-    () => !image.id && !loadedLocalImageIds.has(image.uuid),
-    [loadedLocalImageIds, image.uuid, image.id]
+  const isLoading = useMemo(
+    () => !loadedLocalImageIds.has(image.uuid),
+    [loadedLocalImageIds, image.uuid]
   );
+  const isPending = isLoading || isFetching;
 
   const imageSrc = downloadedSrc ?? src;
 
@@ -107,7 +108,7 @@ export const Card = ({
 
   const handleClick = useCallback(
     (event: React.MouseEvent) => {
-      if (isEmpty || isLoading || isRendering) {
+      if (isEmpty || isPending || isRendering) {
         return;
       }
 
@@ -117,7 +118,7 @@ export const Card = ({
         add(1);
       }
     },
-    [isEmpty, isLoading, isRendering, onRemove, image.uuid, add]
+    [isEmpty, isPending, isRendering, onRemove, image.uuid, add]
   );
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -157,7 +158,7 @@ export const Card = ({
   return (
     <div
       className={`card ${
-        isEmpty ? "empty" : (isLoading || isLoadingLocal) ? "loading" : ""
+        isEmpty ? "empty" : isPending ? "loading" : ""
       } ${className}`}
       {...restProps}
       ref={cardRef}
@@ -165,30 +166,28 @@ export const Card = ({
       id={image.uuid}
     >
       <div className="image-container">
-        {isEmpty ? (
-          <span className="empty" />
-        ) : isLoading ? (
-          <span className="loading" />
-        ) : imageSrc && showImage ? (
-          <>
+        <>
+          {isEmpty ? (
+            <span className="empty" />
+          ) : imageSrc && showImage ? (
             <img
               src={imageSrc}
               alt={image.file?.name ?? image.name}
               className="image"
               onContextMenu={handleContextMenu}
               onLoad={() => {
-                if (image.file) {
-                  onLocalImageLoaded(image.uuid);
-                }
+                onLocalImageLoaded(image.uuid);
               }}
             />
-            {isLoadingLocal && <span className="placeholder">
+          ) : (
+            <span className="error">Error!</span>
+          )}
+          {isPending && (
+            <span className="placeholder">
               <span className="loading" />
-              </span>}
-          </>
-        ) : (
-          <span className="error">Error!</span>
-        )}
+            </span>
+          )}
+        </>
       </div>
       <Guide position="top-left" />
       <Guide position="top-right" />

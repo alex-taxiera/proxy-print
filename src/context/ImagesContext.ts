@@ -29,7 +29,6 @@ export type ImagesContextValue = {
   loadedLocalImageIds: Set<string>;
   isLoadingLocalImages: boolean;
   loadedLocalImageCount: number;
-  totalLocalImageCount: number;
 }
 
 export const ImagesContext = createContext<ImagesContextValue>({
@@ -49,5 +48,4 @@ export const ImagesContext = createContext<ImagesContextValue>({
   loadedLocalImageIds: new Set(),
   isLoadingLocalImages: false,
   loadedLocalImageCount: 0,
-  totalLocalImageCount: 0,
 });

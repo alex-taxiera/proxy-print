@@ -60,9 +60,8 @@ export const ImagesProvider = (
   }, [removeAll, onClearErrors]);
 
   // Calculate local image loading state
-  const totalLocalImageCount = images.filter(img => img.file).length;
   const loadedLocalImageCount = loadedLocalImageIds.size;
-  const isLoadingLocalImages = loadedLocalImageCount < Math.min(totalLocalImageCount, MAX_PREVIEW_PAGES);
+  const isLoadingLocalImages = loadedLocalImageCount < Math.min(images.length, MAX_PREVIEW_PAGES);
 
   const downloadImage = useCallback(async (id: string) => {
     const { mimeType, url } = await add(id);
@@ -109,7 +108,6 @@ export const ImagesProvider = (
       onLocalImageLoaded,
       isLoadingLocalImages,
       loadedLocalImageCount,
-      totalLocalImageCount,
     }),
     [
       isFetching,
@@ -128,7 +126,6 @@ export const ImagesProvider = (
       onLocalImageLoaded,
       isLoadingLocalImages,
       loadedLocalImageCount,
-      totalLocalImageCount,
     ]
   );
 
