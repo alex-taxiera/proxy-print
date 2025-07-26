@@ -26,6 +26,7 @@ export type ImagesContextValue = {
   onError: (uuid: string) => void;
   onClearErrors: () => void;
   onLocalImageLoaded: (uuid: string) => void;
+  loadedLocalImageIds: Set<string>;
   isLoadingLocalImages: boolean;
   loadedLocalImageCount: number;
   totalLocalImageCount: number;
@@ -45,6 +46,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onError: () => {},
   onClearErrors: () => {},
   onLocalImageLoaded: () => {},
+  loadedLocalImageIds: new Set(),
   isLoadingLocalImages: false,
   loadedLocalImageCount: 0,
   totalLocalImageCount: 0,

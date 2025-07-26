@@ -2,6 +2,7 @@ import { ComponentProps, useCallback, useMemo, useState } from "react";
 import { GoogleImageData, Image, ImagesContext } from "./ImagesContext";
 import { nanoid } from "nanoid";
 import { useImageDownloadManager } from "./ImageDownloadManager";
+import { MAX_PREVIEW_PAGES } from "../const/preview";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">
@@ -61,7 +62,7 @@ export const ImagesProvider = (
   // Calculate local image loading state
   const totalLocalImageCount = images.filter(img => img.file).length;
   const loadedLocalImageCount = loadedLocalImageIds.size;
-  const isLoadingLocalImages = loadedLocalImageCount < totalLocalImageCount;
+  const isLoadingLocalImages = loadedLocalImageCount < Math.min(totalLocalImageCount, MAX_PREVIEW_PAGES);
 
   const downloadImage = useCallback(async (id: string) => {
     const { mimeType, url } = await add(id);
@@ -104,6 +105,7 @@ export const ImagesProvider = (
       setIsRendering,
       downloadImage,
       getCachedImage,
+      loadedLocalImageIds,
       onLocalImageLoaded,
       isLoadingLocalImages,
       loadedLocalImageCount,
@@ -122,6 +124,7 @@ export const ImagesProvider = (
       setIsRendering,
       downloadImage,
       getCachedImage,
+      loadedLocalImageIds,
       onLocalImageLoaded,
       isLoadingLocalImages,
       loadedLocalImageCount,

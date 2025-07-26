@@ -11,11 +11,12 @@ import { progressEvents } from "./utils/progress-events";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { useGeneratePdf } from "./hooks/useGeneratePdf";
 import { useCardClassNames } from "./hooks/useCardClassNames";
+import { MAX_PREVIEW_PAGES } from "./const/preview";
 
 export const PrintableImages = () => {
   const { cssVars } = useContext(SettingsContext);
 
-  const { images, onClear, isRendering, setIsRendering, isFetching } =
+  const { images, onClear, isRendering, setIsRendering, isFetching, isLoadingLocalImages } =
     useContext(ImagesContext);
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -74,13 +75,15 @@ export const PrintableImages = () => {
         </button>
         <button
           className="primary"
-          disabled={isRendering || isFetching}
+          disabled={isRendering || isFetching || isLoadingLocalImages}
           onClick={() => handleSave()}
           title={
             isRendering
               ? "Generating PDF..."
               : isFetching
               ? "Downloading images..."
+              : isLoadingLocalImages
+              ? "Loading images..."
               : ""
           }
         >
@@ -94,7 +97,7 @@ export const PrintableImages = () => {
             className={`page-container ${isRendering ? "loading" : ""}`}
             key={pageIndex}
             style={{
-              display: pageIndex < 10 ? "block" : "none",
+              display: pageIndex < MAX_PREVIEW_PAGES ? "block" : "none",
             }}
           >
             <div className="page">
@@ -104,7 +107,7 @@ export const PrintableImages = () => {
                     key={image.uuid || `empty-${index}`}
                     image={image}
                     className={cardClassNames[index]}
-                    showImage={pageIndex < 10}
+                    showImage={pageIndex < MAX_PREVIEW_PAGES}
                   />
                 ))}
               </div>

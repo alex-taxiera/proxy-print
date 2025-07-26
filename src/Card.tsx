@@ -14,7 +14,12 @@ export type CardProps = {
   showImage?: boolean;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const Card = ({ className, image, showImage = true, ...restProps }: CardProps) => {
+export const Card = ({
+  className,
+  image,
+  showImage = true,
+  ...restProps
+}: CardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -26,12 +31,20 @@ export const Card = ({ className, image, showImage = true, ...restProps }: CardP
     onRemove,
     isRendering,
     getCachedImage,
+    loadedLocalImageIds,
     onLocalImageLoaded,
   } = useContext(ImagesContext);
 
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
-  const isLoading = useMemo(() => image.id && !downloadedSrc, [image.id, downloadedSrc]);
+  const isLoading = useMemo(
+    () => image.id && !downloadedSrc,
+    [image.id, downloadedSrc]
+  );
+  const isLoadingLocal = useMemo(
+    () => !loadedLocalImageIds.has(image.uuid),
+    [loadedLocalImageIds, image.uuid]
+  );
 
   const imageSrc = downloadedSrc ?? src;
 
@@ -131,19 +144,7 @@ export const Card = ({ className, image, showImage = true, ...restProps }: CardP
     if (image.file) {
       url = URL.createObjectURL(image.file);
       setSrc(url);
-      // Don't call onLocalImageLoaded here - wait for img onload
     }
-    // else if (image.id && !downloadedSrc) {
-    //   downloadImage(image.id)
-    //     .then(() => console.debug("Image fetched"))
-    //     .catch((error) => {
-    //       onError(image.uuid);
-    //       console.error("Error fetching image: ", error);
-    //     })
-    //     .finally(() => {
-    //       setIsLoading(false);
-    //     });
-    // }
 
     return () => {
       if (url) {
@@ -156,7 +157,7 @@ export const Card = ({ className, image, showImage = true, ...restProps }: CardP
   return (
     <div
       className={`card ${
-        isEmpty ? "empty" : isLoading ? "loading" : ""
+        isEmpty ? "empty" : (isLoading || isLoadingLocal) ? "loading" : ""
       } ${className}`}
       {...restProps}
       ref={cardRef}
@@ -169,17 +170,22 @@ export const Card = ({ className, image, showImage = true, ...restProps }: CardP
         ) : isLoading ? (
           <span className="loading" />
         ) : imageSrc && showImage ? (
-          <img
-            src={imageSrc}
-            alt={image.file?.name ?? image.name}
-            className="image"
-            onContextMenu={handleContextMenu}
-            onLoad={() => {
-              if (image.file) {
-                onLocalImageLoaded(image.uuid);
-              }
-            }}
-          />
+          <>
+            <img
+              src={imageSrc}
+              alt={image.file?.name ?? image.name}
+              className="image"
+              onContextMenu={handleContextMenu}
+              onLoad={() => {
+                if (image.file) {
+                  onLocalImageLoaded(image.uuid);
+                }
+              }}
+            />
+            {isLoadingLocal && <span className="placeholder">
+              <span className="loading" />
+              </span>}
+          </>
         ) : (
           <span className="error">Error!</span>
         )}
