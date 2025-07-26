@@ -42,8 +42,8 @@ export const Card = ({
     [image.id, downloadedSrc]
   );
   const isLoadingLocal = useMemo(
-    () => !loadedLocalImageIds.has(image.uuid),
-    [loadedLocalImageIds, image.uuid]
+    () => !image.id && !loadedLocalImageIds.has(image.uuid),
+    [loadedLocalImageIds, image.uuid, image.id]
   );
 
   const imageSrc = downloadedSrc ?? src;
