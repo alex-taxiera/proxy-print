@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { GoogleImageData, ImagesContext } from "./context/ImagesContext";
 
@@ -18,7 +18,7 @@ const parseXML = (file: File): Promise<GoogleImageData[]> => {
       const cardFronts = frontsSection?.querySelectorAll("card");
       if (!cardFronts) {
         reject(new Error("No cards found in XML"));
-        return
+        return;
       }
       Array.from(cardFronts).forEach((card) => {
         const id = card.querySelector("id")?.textContent;
@@ -55,23 +55,20 @@ export function ImageUploader() {
   const { onAdd, isRendering } = useContext(ImagesContext);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const inputOnChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (files) {
-        setIsProcessing(true);
-        processFiles(Array.from(files))
-          .then(onAdd)
-          .catch(console.error)
-          .finally(() => setIsProcessing(false));
-      }
-    },
-    [onAdd]
-  );
-
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
+  const onChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
       setIsProcessing(true);
+    }
+  }, []);
+
+  const onDrop = useCallback(() => {
+    setIsProcessing(true);
+  }, []);
+
+  // called for both dropped and input change
+  const onDropAccepted = useCallback(
+    (acceptedFiles: File[]) => {
       processFiles(acceptedFiles)
         .then(onAdd)
         .catch(console.error)
@@ -88,7 +85,7 @@ export function ImageUploader() {
     isFileDialogActive,
   } = useDropzone({
     disabled: isRendering || isProcessing,
-    onDrop,
+    onDropAccepted,
     accept: {
       "image/jpg": [".jpg", ".jpeg"],
       "image/png": [".png"],
@@ -97,14 +94,26 @@ export function ImageUploader() {
     },
   });
 
+  const rootProps = useMemo(
+    () => getRootProps({ onDrop }),
+    [getRootProps, onDrop]
+  );
+
+  const inputProps = useMemo(
+    () => getInputProps({ onChange }),
+    [getInputProps, onChange]
+  );
+
   return (
     <div
-      {...getRootProps()}
+      {...rootProps}
       className={`dropzone ${
         isDragActive || isFileDialogActive ? "active" : ""
-      } ${isDragAccept ? "accept" : ""} ${isRendering || isProcessing ? "disabled" : ""}`}
+      } ${isDragAccept ? "accept" : ""} ${
+        isRendering || isProcessing ? "disabled" : ""
+      }`}
     >
-      <input {...getInputProps()} onChange={inputOnChange} />
+      <input {...inputProps} />
       {isProcessing ? "Processing files..." : "Add Images"}
     </div>
   );
