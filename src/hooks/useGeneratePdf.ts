@@ -80,26 +80,23 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     const guidesThickness = 0.2645833333 * guideBorderWidth;
     const guidesAtBleedEdge = settings.guidesAtBleedEdge;
 
-    const cardsPerWorker = cardsPerPage * 1;
     const cards = Array.from(
       contentRef.current?.querySelectorAll<HTMLElement>(".card") || []
     );
+
     let progress = 0;
     const totalProgressAmount = cards.length * 2; // 1 for processing 1 for adding to pdf
-
-    const maxWorkers = Math.min(Math.floor(imageMatrix.length / 2) || 1, 34);
-    const workers = Array.from(
-      { length: Math.ceil(cards.length / cardsPerWorker) },
-      (_, index) => new PdfWorker({ name: `PDF Worker ${index + 1}` })
-    );
-    const waitingWorkers = workers.slice(maxWorkers);
-    const lastWorker = workers.at(-1)!;
-    const lastWorkerLimit = cards.length % cardsPerWorker || cardsPerWorker;
-    const cardsDone = new Map<Worker, number>();
-    const pdfPages = new Map<Worker, Blob>();
+    const numberOfPages = imageMatrix.length;
+    const maxWorkers = Math.min(Math.floor(numberOfPages / 2) || 1, 34);
+    const cardsDone = new Map<number, number>();
+    const pdfPages = new Map<number, Blob>();
 
     // sort cards into separate lists per worker
-    const assignments = splitIntoChunks(cards, workers.length, cardsPerWorker);
+    const assignments = splitIntoChunks(
+      cards,
+      numberOfPages,
+      cardsPerPage
+    );
 
     const processCard = async (cardElement: HTMLElement) => {
       const index = cards.indexOf(cardElement);
@@ -253,6 +250,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         totalProgressAmount,
         phase: "Building PDF",
       });
+
       processCard(cardElement)
         .then((card) => {
           progressEvents.emit("progress", {
@@ -293,7 +291,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
       // combine pdfs
       const pdfGenerator = mergePDFsBlobs(
-        workers.map((worker) => pdfPages.get(worker)!)
+        Array.from(pdfPages.entries())
+          .sort((a, b) => a[0] - b[0])
+          .map(([, blob]) => blob)
       );
 
       try {
@@ -318,27 +318,12 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       }
     };
 
-    const startWorker = (worker: Worker, cards: HTMLElement[]) => {
-      requestIdleCallback(() => {
-        requestNextCard(
-          [cards.shift()!, worker],
-          cards.map((card) => [card, worker])
-        );
-      });
-    };
+    const startWorker = () => {
+      const cards = assignments.shift()!;
+      const workerIndex = numberOfPages - assignments.length;
+      const worker = new PdfWorker({ name: `PDF Worker ${workerIndex}` });
 
-    const startNextWorker = () => {
-      if (waitingWorkers.length > 0) {
-        const worker = waitingWorkers.shift()!;
-        console.debug(
-          `Starting next worker, ${waitingWorkers.length} workers left`
-        );
-        const workerIndex = workers.indexOf(worker);
-        startWorker(worker, assignments[workerIndex]);
-      }
-    };
-
-    workers.forEach((worker, index) => {
+      // set up handlers
       worker.onmessage = (
         e: MessageEvent<{
           type: string;
@@ -350,12 +335,12 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         switch (e.data.type) {
           case "cardProcessed": {
             progress++;
-            cardsDone.set(worker, (cardsDone.get(worker) || 0) + 1);
+            cardsDone.set(workerIndex, (cardsDone.get(workerIndex) || 0) + 1);
 
             console.debug(
-              `PDF Worker ${index + 1}: card ${cardsDone.get(
-                worker
-              )} of ${lastWorkerLimit} processed`
+              `PDF Worker ${workerIndex + 1}: card ${cardsDone.get(
+                workerIndex
+              )} of ${cardsPerPage} processed`
             );
 
             progressEvents.emit("progress", {
@@ -364,9 +349,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               phase: "Building PDF",
             });
 
-            const done =
-              cardsDone.get(worker) ===
-              (lastWorker === worker ? lastWorkerLimit : cardsPerWorker);
+            const done = cardsDone.get(workerIndex) === cardsPerPage;
             if (done) {
               worker.postMessage({
                 type: "save",
@@ -376,14 +359,18 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           }
           case "save": {
             console.debug(
-              `PDF Worker ${index + 1}: saved pdf size ${e.data.blob?.size}`
+              `PDF Worker ${workerIndex + 1}: saved pdf size ${
+                e.data.blob?.size
+              }`
             );
-            // cleanup worker and start any sleeping workers
             worker.terminate();
-            startNextWorker();
-            pdfPages.set(worker, e.data.blob!);
+            if (assignments.length > 0) {
+              startWorker();
+            }
+            // cleanup worker and start any sleeping workers
+            pdfPages.set(workerIndex, e.data.blob!);
 
-            if (pdfPages.size === workers.length) {
+            if (pdfPages.size === numberOfPages) {
               // done, moving to save logic
               void savePDF();
             }
@@ -404,7 +391,15 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         setIsRendering(false);
         progressEvents.emit("complete");
       };
-    });
+
+      // start the worker
+      requestIdleCallback(() => {
+        requestNextCard(
+          [cards.shift()!, worker],
+          cards.map((card) => [card, worker])
+        );
+      });
+    };
 
     // Finally start the process
     progressEvents.emit("progress", {
@@ -413,11 +408,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       phase: "Building PDF",
     });
 
-    // start first set of workers
-    for (let i = 0; i < workers.length; i++) {
-      if (i < maxWorkers) {
-        startWorker(workers[i], assignments[i]);
-      }
+    for (let i = 0; i < maxWorkers; i++) {
+      startWorker();
     }
   }, [
     contentRef,
