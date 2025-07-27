@@ -182,7 +182,7 @@ export const Card = ({
           ) : (
             <span className="error">Error!</span>
           )}
-          {isPending && (
+          {isPending && !isEmpty && (
             <span className="placeholder">
               <span className="loading" />
             </span>
