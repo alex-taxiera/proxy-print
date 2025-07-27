@@ -1,6 +1,9 @@
 import { useContext, useMemo } from "react";
 import { SettingsContext } from "../context/SettingsContext";
 import { type Image, ImagesContext } from "../context/ImagesContext";
+
+const MAX_PREVIEW_CARDS = 108;
+
 export const usePreviewData = () => {
   const { settings } = useContext(SettingsContext);
   const { images } = useContext(ImagesContext);
@@ -25,6 +28,8 @@ export const usePreviewData = () => {
     [rowsPerPage, columnsPerPage]
   );
 
+  const maxPages = Math.floor(MAX_PREVIEW_CARDS / cardsPerPage);
+
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {
       return [];
@@ -48,6 +53,7 @@ export const usePreviewData = () => {
     rowsPerPage,
     columnsPerPage,
     cardsPerPage,
+    maxPages,
     imageMatrix,
   };
 };

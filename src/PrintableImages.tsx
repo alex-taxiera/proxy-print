@@ -11,7 +11,7 @@ import { progressEvents } from "./utils/progress-events";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { useGeneratePdf } from "./hooks/useGeneratePdf";
 import { useCardClassNames } from "./hooks/useCardClassNames";
-import { MAX_PREVIEW_PAGES } from "./const/preview";
+import TruncatedPreviewWarning from "./TruncatedPreviewWarning";
 
 export const PrintableImages = () => {
   const { cssVars } = useContext(SettingsContext);
@@ -21,7 +21,7 @@ export const PrintableImages = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { imageMatrix } = usePreviewData();
+  const { imageMatrix, maxPages } = usePreviewData();
 
   const generatePdf = useGeneratePdf(contentRef);
 
@@ -90,6 +90,7 @@ export const PrintableImages = () => {
           Save
         </button>
       </div>
+      <TruncatedPreviewWarning />
       <ImageErrors />
       <div ref={contentRef} className="print-container">
         {imageMatrix.map((row, pageIndex) => (
@@ -97,7 +98,7 @@ export const PrintableImages = () => {
             className={`page-container ${isRendering ? "loading" : ""}`}
             key={pageIndex}
             style={{
-              display: pageIndex < MAX_PREVIEW_PAGES ? "block" : "none",
+              display: pageIndex < maxPages ? "block" : "none",
             }}
           >
             <div className="page">
@@ -107,7 +108,7 @@ export const PrintableImages = () => {
                     key={image.uuid || `empty-${index}`}
                     image={image}
                     className={cardClassNames[index]}
-                    showImage={pageIndex < MAX_PREVIEW_PAGES}
+                    showImage={pageIndex < maxPages}
                   />
                 ))}
               </div>
