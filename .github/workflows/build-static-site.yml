@@ -22,13 +22,40 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install dependencies
-        run: npm install
+      - name: Dependency Cache
+        id: deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: npm ci
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
 
   lint:
     runs-on: ubuntu-latest
     needs: install
+
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Dependency Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
       - name: Lint project
         run: npm run lint
 
@@ -37,6 +64,21 @@ jobs:
     needs: [install, lint]
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+  
+      - name: Dependency Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
 
       - name: Build project
         run: npm run build
