@@ -3,6 +3,7 @@ import { GoogleImageData, Image, ImagesContext } from "./ImagesContext";
 import { nanoid } from "nanoid";
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import { MAX_PREVIEW_CARDS } from "../const/preview";
+import { usePageLimits } from "../hooks/usePreviewData";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">
@@ -15,6 +16,8 @@ export const ImagesProvider = (
   const [loadedLocalImageIds, setLoadedLocalImageIds] = useState<Set<string>>(
     new Set()
   );
+
+  const { cardsPerPage } = usePageLimits();
 
   const onError = useCallback(
     (uuid: string) => {
@@ -62,7 +65,7 @@ export const ImagesProvider = (
   // Calculate local image loading state
   const loadedLocalImageCount = loadedLocalImageIds.size;
   const isLoadingLocalImages =
-    loadedLocalImageCount < Math.min(images.length, MAX_PREVIEW_CARDS);
+    loadedLocalImageCount < Math.min(images.length, (MAX_PREVIEW_CARDS - MAX_PREVIEW_CARDS % cardsPerPage));
 
   const downloadImage = useCallback(
     async (id: string) => {

@@ -4,9 +4,8 @@ import { type Image, ImagesContext } from "../context/ImagesContext";
 
 const MAX_PREVIEW_CARDS = 108;
 
-export const usePreviewData = () => {
+export const usePageLimits = () => {
   const { settings } = useContext(SettingsContext);
-  const { images } = useContext(ImagesContext);
 
   const rowsPerPage = useMemo(() => {
     // convert in to mm when settings.unit is set to "in"
@@ -29,6 +28,19 @@ export const usePreviewData = () => {
   );
 
   const maxPages = Math.floor(MAX_PREVIEW_CARDS / cardsPerPage);
+
+  return {
+    rowsPerPage,
+    columnsPerPage,
+    cardsPerPage,
+    maxPages,
+  };
+}
+
+export const usePreviewData = () => {
+  const { images } = useContext(ImagesContext);
+
+  const { cardsPerPage, rowsPerPage, columnsPerPage, maxPages } = usePageLimits();
 
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {
