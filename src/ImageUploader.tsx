@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { GoogleImageData, ImagesContext } from "./context/ImagesContext";
 
@@ -18,7 +18,7 @@ const parseXML = (file: File): Promise<GoogleImageData[]> => {
       const cardFronts = frontsSection?.querySelectorAll("card");
       if (!cardFronts) {
         reject(new Error("No cards found in XML"));
-        return
+        return;
       }
       Array.from(cardFronts).forEach((card) => {
         const id = card.querySelector("id")?.textContent;
@@ -53,20 +53,26 @@ const processFiles = async (files: File[]) => {
 
 export function ImageUploader() {
   const { onAdd, isRendering } = useContext(ImagesContext);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const inputOnChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (files) {
-        processFiles(Array.from(files)).then(onAdd).catch(console.error);
-      }
-    },
-    [onAdd]
-  );
+  const onChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      setIsProcessing(true);
+    }
+  }, []);
 
-  const onDrop = useCallback(
+  const onDrop = useCallback(() => {
+    setIsProcessing(true);
+  }, []);
+
+  // called for both dropped and input change
+  const onDropAccepted = useCallback(
     (acceptedFiles: File[]) => {
-      processFiles(acceptedFiles).then(onAdd).catch(console.error);
+      processFiles(acceptedFiles)
+        .then(onAdd)
+        .catch(console.error)
+        .finally(() => setIsProcessing(false));
     },
     [onAdd]
   );
@@ -78,8 +84,8 @@ export function ImageUploader() {
     isDragAccept,
     isFileDialogActive,
   } = useDropzone({
-    disabled: isRendering,
-    onDrop,
+    disabled: isRendering || isProcessing,
+    onDropAccepted,
     accept: {
       "image/jpg": [".jpg", ".jpeg"],
       "image/png": [".png"],
@@ -88,15 +94,27 @@ export function ImageUploader() {
     },
   });
 
+  const rootProps = useMemo(
+    () => getRootProps({ onDrop }),
+    [getRootProps, onDrop]
+  );
+
+  const inputProps = useMemo(
+    () => getInputProps({ onChange }),
+    [getInputProps, onChange]
+  );
+
   return (
     <div
-      {...getRootProps()}
+      {...rootProps}
       className={`dropzone ${
         isDragActive || isFileDialogActive ? "active" : ""
-      } ${isDragAccept ? "accept" : ""} ${isRendering ? "disabled" : ""}`}
+      } ${isDragAccept ? "accept" : ""} ${
+        isRendering || isProcessing ? "disabled" : ""
+      }`}
     >
-      <input {...getInputProps()} onChange={inputOnChange} />
-      Add Images
+      <input {...inputProps} />
+      {isProcessing ? "Processing files..." : "Add Images"}
     </div>
   );
 }

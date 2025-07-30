@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -10,9 +11,15 @@ import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
 
 export type CardProps = {
   image: Image;
+  showImage?: boolean;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const Card = ({ className, image, ...restProps }: CardProps) => {
+export const Card = ({
+  className,
+  image,
+  showImage = true,
+  ...restProps
+}: CardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -22,15 +29,23 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     images,
     onAdd,
     onRemove,
-    onError,
     isRendering,
-    downloadImage,
     getCachedImage,
+    loadedLocalImageIds,
+    onLocalImageLoaded,
   } = useContext(ImagesContext);
 
-  const [isLoading, setIsLoading] = useState(image.id ? true : false);
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
+  const isFetching = useMemo(
+    () => image.id && !downloadedSrc,
+    [image.id, downloadedSrc]
+  );
+  const isLoading = useMemo(
+    () => !loadedLocalImageIds.has(image.uuid),
+    [loadedLocalImageIds, image.uuid]
+  );
+  const isPending = isLoading || isFetching;
 
   const imageSrc = downloadedSrc ?? src;
 
@@ -93,7 +108,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
 
   const handleClick = useCallback(
     (event: React.MouseEvent) => {
-      if (isEmpty || isLoading || isRendering) {
+      if (isEmpty || isPending || isRendering) {
         return;
       }
 
@@ -103,7 +118,7 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         add(1);
       }
     },
-    [isEmpty, isLoading, isRendering, onRemove, image.uuid, add]
+    [isEmpty, isPending, isRendering, onRemove, image.uuid, add]
   );
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -130,16 +145,6 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
     if (image.file) {
       url = URL.createObjectURL(image.file);
       setSrc(url);
-    } else if (image.id) {
-      downloadImage(image.id)
-        .then(() => console.debug("Image fetched"))
-        .catch((error) => {
-          onError(image.uuid);
-          console.error("Error fetching image: ", error);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
     }
 
     return () => {
@@ -148,32 +153,41 @@ export const Card = ({ className, image, ...restProps }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [downloadImage, image, onError]);
+  }, [image.file]);
 
   return (
     <div
       className={`card ${
-        isEmpty ? "empty" : isLoading ? "loading" : ""
+        isEmpty ? "empty" : isPending ? "loading" : ""
       } ${className}`}
       {...restProps}
       ref={cardRef}
       onClick={handleClick}
+      id={image.uuid}
     >
       <div className="image-container">
-        {isEmpty ? (
-          <span className="empty" />
-        ) : isLoading ? (
-          <span className="loading" />
-        ) : imageSrc ? (
-          <img
-            src={imageSrc}
-            alt={image.file?.name ?? image.name}
-            className="image"
-            onContextMenu={handleContextMenu}
-          />
-        ) : (
-          <span className="error">Error!</span>
-        )}
+        <>
+          {isEmpty ? (
+            <span className="empty" />
+          ) : imageSrc && showImage ? (
+            <img
+              src={imageSrc}
+              alt={image.file?.name ?? image.name}
+              className="image"
+              onContextMenu={handleContextMenu}
+              onLoad={() => {
+                onLocalImageLoaded(image.uuid);
+              }}
+            />
+          ) : (
+            <span className="error">Error!</span>
+          )}
+          {isPending && !isEmpty && (
+            <span className="placeholder">
+              <span className="loading" />
+            </span>
+          )}
+        </>
       </div>
       <Guide position="top-left" />
       <Guide position="top-right" />

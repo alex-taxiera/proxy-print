@@ -2,7 +2,9 @@ import { createContext } from "react";
 
 export type GoogleImageData = {
   id?: string;
-  name?: string
+  name?: string;
+  mimeType?: string;
+  url?: string
 }
 
 export type Image = {
@@ -23,6 +25,10 @@ export type ImagesContextValue = {
   onClear: () => void;
   onError: (uuid: string) => void;
   onClearErrors: () => void;
+  onLocalImageLoaded: (uuid: string) => void;
+  loadedLocalImageIds: Set<string>;
+  isLoadingLocalImages: boolean;
+  loadedLocalImageCount: number;
 }
 
 export const ImagesContext = createContext<ImagesContextValue>({
@@ -38,4 +44,8 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onClear: () => {},
   onError: () => {},
   onClearErrors: () => {},
+  onLocalImageLoaded: () => {},
+  loadedLocalImageIds: new Set(),
+  isLoadingLocalImages: false,
+  loadedLocalImageCount: 0,
 });

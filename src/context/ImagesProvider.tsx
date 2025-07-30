@@ -2,20 +2,22 @@ import { ComponentProps, useCallback, useMemo, useState } from "react";
 import { GoogleImageData, Image, ImagesContext } from "./ImagesContext";
 import { nanoid } from "nanoid";
 import { useImageDownloadManager } from "./ImageDownloadManager";
+import { MAX_PREVIEW_CARDS } from "../const/preview";
+import { usePageLimits } from "../hooks/usePreviewData";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">
 ) => {
-  const {
-    isFetching,
-    add,
-    remove,
-    removeAll,
-    getCachedImage,
-  } = useImageDownloadManager();
+  const { isFetching, add, remove, removeAll, getCachedImage } =
+    useImageDownloadManager();
   const [images, setImages] = useState<Image[]>([]);
   const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
   const [isRendering, setIsRendering] = useState(false);
+  const [loadedLocalImageIds, setLoadedLocalImageIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  const { cardsPerPage } = usePageLimits();
 
   const onError = useCallback(
     (uuid: string) => {
@@ -37,16 +39,45 @@ export const ImagesProvider = (
     setImagesWithError([]);
   }, []);
 
-  const onRemove = useCallback((uuid: string) => {
-    remove(uuid);
-    setImages((old) => old.filter((image) => image.uuid !== uuid));
-  }, [remove]);
+  const onLocalImageLoaded = useCallback((uuid: string) => {
+    setLoadedLocalImageIds((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(uuid);
+      return newSet;
+    });
+  }, []);
+
+  const onRemove = useCallback(
+    (uuid: string) => {
+      remove(uuid);
+      setImages((old) => old.filter((image) => image.uuid !== uuid));
+    },
+    [remove]
+  );
 
   const onClear = useCallback(() => {
     removeAll();
     onClearErrors();
     setImages([]);
+    setLoadedLocalImageIds(new Set());
   }, [removeAll, onClearErrors]);
+
+  // Calculate local image loading state
+  const loadedLocalImageCount = loadedLocalImageIds.size;
+  const isLoadingLocalImages =
+    loadedLocalImageCount < Math.min(images.length, (MAX_PREVIEW_CARDS - MAX_PREVIEW_CARDS % cardsPerPage));
+
+  const downloadImage = useCallback(
+    async (id: string) => {
+      const { mimeType, url } = await add(id);
+      setImages((old) =>
+        old.map((image) =>
+          image.id === id ? { ...image, mimeType, url } : image
+        )
+      );
+    },
+    [add]
+  );
 
   const onAdd = useCallback(
     (data: (File | GoogleImageData)[], index?: number) => {
@@ -55,6 +86,8 @@ export const ImagesProvider = (
           if (item instanceof File) {
             return { uuid: nanoid(), file: item };
           }
+
+          void downloadImage(item.id!);
 
           return { uuid: nanoid(), ...item };
         });
@@ -65,7 +98,7 @@ export const ImagesProvider = (
         return old.toSpliced(index, 0, ...images);
       });
     },
-    []
+    [downloadImage]
   );
 
   const contextValue = useMemo(
@@ -80,8 +113,12 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      downloadImage: add,
+      downloadImage,
       getCachedImage,
+      loadedLocalImageIds,
+      onLocalImageLoaded,
+      isLoadingLocalImages,
+      loadedLocalImageCount,
     }),
     [
       isFetching,
@@ -94,8 +131,12 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      add,
+      downloadImage,
       getCachedImage,
+      loadedLocalImageIds,
+      onLocalImageLoaded,
+      isLoadingLocalImages,
+      loadedLocalImageCount,
     ]
   );
 

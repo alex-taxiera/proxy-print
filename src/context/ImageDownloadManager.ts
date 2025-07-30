@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 
 type Item = {
   id: string;
-  resolve: () => void;
+  resolve: (value: { mimeType: string, url: string }) => void;
   reject: (reason?: unknown) => void;
 };
 
@@ -14,7 +14,7 @@ type Item = {
  */
 function base64ToBlob(
   base64String: string,
-  contentType: string = "image/jpeg"
+  contentType: string
 ): Blob {
   // Decode the Base64 string
   const byteCharacters = atob(base64String);
@@ -49,7 +49,7 @@ export function useImageDownloadManager({
   const queueRef = useRef<Item[]>([]);
   const inflightRef = useRef<Item[]>([]);
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
-  const imageCacheRef = useRef<Map<string, string>>(new Map());
+  const imageCacheRef = useRef<Map<string, { url: string; mimeType: string }>>(new Map());
 
   const [isFetching, setIsFetching] = useState(false);
 
@@ -64,10 +64,20 @@ export function useImageDownloadManager({
       const abortController = abortControllersRef.current.get(item.id);
       fetchImage(item, { signal: abortController?.signal })
         .then((data) => {
-          const blob = base64ToBlob(data);
+          let mimeType = 'image/png';
+
+          // Check for JPEG signature (base64 starts with /9j/ for JFIF)
+          if (data.startsWith('/9j/')) {
+            mimeType = 'image/jpeg';
+          }
+          // Check for WebP signature (UklGRiI)
+          else if (data.startsWith('UklGRiI')) {
+            mimeType = 'image/webp';
+          }
+          const blob = base64ToBlob(data, mimeType);
           const url = URL.createObjectURL(blob);
-          imageCacheRef.current.set(item.id, url);
-          item.resolve();
+          imageCacheRef.current.set(item.id, { url, mimeType });
+          item.resolve({ mimeType, url });
         })
         .catch((error) => {
           item.reject(error);
@@ -91,11 +101,11 @@ export function useImageDownloadManager({
   }, [maxInflight]);
 
   const add = useCallback(
-    (id: string): Promise<void> => {
+    (id: string): Promise<{ mimeType: string, url: string }> => {
       return new Promise((resolve, reject) => {
         if (imageCacheRef.current.has(id)) {
           // resolve with cached image
-          resolve();
+          resolve(imageCacheRef.current.get(id)!);
           return;
         }
 
@@ -107,9 +117,9 @@ export function useImageDownloadManager({
         if (existingItem) {
           const originalResolve = existingItem.resolve;
           const originalReject = existingItem.reject;
-          existingItem.resolve = () => {
-            originalResolve();
-            resolve();
+          existingItem.resolve = (value) => {
+            originalResolve(value);
+            resolve(value);
           };
           existingItem.reject = (reason) => {
             originalReject(reason);
@@ -153,7 +163,7 @@ export function useImageDownloadManager({
   }, []);
 
   const getCachedImage = useCallback(
-    (id: string) => imageCacheRef.current.get(id),
+    (id: string) => imageCacheRef.current.get(id)?.url,
     []
   );
 

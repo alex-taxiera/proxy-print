@@ -1,153 +1,47 @@
 import { useContext, useMemo, useRef } from "react";
-import jsPDF, { type jsPDFOptions } from "jspdf";
-import html2canvas from "html2canvas";
 
 import { SettingsContext } from "./context/SettingsContext";
 import "./PrintableImages.css";
 import { Card } from "./Card";
-import { Image, ImagesContext } from "./context/ImagesContext";
+import { ImagesContext } from "./context/ImagesContext";
 import { ImageErrors } from "./ImageErrors";
+import { ProgressOverlay } from "./components/ProgressOverlay";
+import { progressEvents } from "./utils/progress-events";
 
-async function addNodesToPdf(
-  nodeList: Array<HTMLElement>,
-  pdf: jsPDF,
-  pdfOptions: jsPDFOptions
-) {
-  // render each node to a canvas
-  const canvases = await Promise.all(
-    nodeList.map((node) => html2canvas(node, { scale: 12.5 })) // 12.5 for 1200dpi, 8.33 for 800dpi
-  );
-
-  // convert each canvas to a data url
-  const nodeImages = canvases.map((canvas) => canvas.toDataURL("image/jpeg"));
-
-  const [pageWidth, pageHeight] = pdfOptions.format as number[];
-  for (let index = 0; index < nodeImages.length; index++) {
-    if (index !== 0) {
-      pdf.addPage(pdfOptions.format, pdfOptions.orientation);
-    }
-    pdf.addImage(nodeImages[index], "JPEG", 0, 0, pageWidth, pageHeight);
-  }
-}
+import { usePreviewData } from "./hooks/usePreviewData";
+import { useGeneratePdf } from "./hooks/useGeneratePdf";
+import { useCardClassNames } from "./hooks/useCardClassNames";
+import TruncatedPreviewWarning from "./TruncatedPreviewWarning";
 
 export const PrintableImages = () => {
-  const { cssVars, settings } = useContext(SettingsContext);
+  const { cssVars } = useContext(SettingsContext);
 
-  const { images, onClear, isRendering, setIsRendering, isFetching } =
+  const { images, onClear, isRendering, setIsRendering, isFetching, isLoadingLocalImages } =
     useContext(ImagesContext);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleSave = () => {
-    setIsRendering(true);
+  const { imageMatrix, maxPages } = usePreviewData();
 
-    setTimeout(async () => {
-      console.time("save");
-      if (!contentRef.current) {
-        return;
-      }
-
-      const pageHeight = Number(settings.pageHeight);
-      const pageWidth = Number(settings.pageWidth);
-
-      const pdfOptions = {
-        orientation: pageWidth > pageHeight ? "l" : "p",
-        unit: settings.unit,
-        format: [pageWidth, pageHeight],
-      } satisfies jsPDFOptions;
-
-      const pdf = new jsPDF(pdfOptions);
-      const pages = contentRef.current.querySelectorAll<HTMLElement>(".page");
-
-      // render each page to a canvas
-      const batchSize = 8;
-
-      for (let i = 0; i < pages.length; i += batchSize) {
-        const batch = Array.from(pages).slice(i, i + batchSize);
-        await addNodesToPdf(batch, pdf, pdfOptions);
-
-        // add a page between batches
-        if (i + batchSize < pages.length) {
-          pdf.addPage(pdfOptions.format, pdfOptions.orientation);
-        }
-      }
-
-      const pdfOutput = pdf.output("blob");
-
-      // download the pdf
-      const url = URL.createObjectURL(pdfOutput);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "cards.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-      console.timeEnd("save");
-      setIsRendering(false);
-    });
-  };
-
-  const rowsPerPage = useMemo(() => {
-    // convert in to mm when settings.unit is set to "in"
-    const pageHeight = parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1); 
-    const guidesThickness = parseFloat(settings.guidesThickness) * 0.265; // convert px to mm
-    const bleedEdge = parseFloat(settings.bleedEdge); // mm
-    // card height is 88mm + 2 * bleedEdge + guidesThickness
-    const cardHeight = 88 + 2 * bleedEdge + guidesThickness; // mm
-    return Math.floor(pageHeight / cardHeight);
-  }, [settings]);
-
-  const columnsPerPage = useMemo(() => {
-    return parseInt(settings.numberOfColumns);
-  }, [settings]);
-
-  const cardsPerPage = useMemo(
-    () => rowsPerPage * columnsPerPage,
-    [rowsPerPage, columnsPerPage]
-  );
-
-  const imageMatrix = useMemo(() => {
-    if (images.length === 0) {
-      return [];
-    }
-
-    const rows: Image[][] = [];
-    for (let i = 0; i < images.length; i += cardsPerPage) {
-      rows.push(images.slice(i, i + cardsPerPage));
-    }
-    const paddingItems = rows.at(-1)!.length % cardsPerPage;
-    if (paddingItems > 0) {
-      const filler = Array.from({ length: cardsPerPage - paddingItems }).fill({
-        name: "empty",
-      }) as (typeof rows)[0];
-      rows.at(-1)!.push(...filler);
-    }
-    return rows;
-  }, [images, cardsPerPage]);
-
-  const getCardClassName = (index: number) => {
-    const row = Math.floor(index / columnsPerPage);
-    const column = index % columnsPerPage;
-    const className = ["card"];
-    if (column === 0) {
-      className.push("first-column");
-    }
-    if (row === 0) {
-      className.push("first-row");
-    }
-    if (column === columnsPerPage - 1) {
-      className.push("last-column");
-    }
-    if (row === rowsPerPage - 1) {
-      className.push("last-row");
-    }
-    return className.join(" ");
-  };
+  const generatePdf = useGeneratePdf(contentRef);
 
   const cardCount = useMemo(() => {
     const totalCards = images.length;
     const cardString = totalCards === 1 ? "card" : "cards";
     return `${totalCards} total ${cardString}`;
   }, [images]);
+
+  const handleSave = () => {
+    setIsRendering(true);
+    console.time("save");
+    progressEvents.emit("progress", {
+      progress: 0,
+      phase: "Initializing",
+    });
+    generatePdf();
+  };
+
+  const cardClassNames = useCardClassNames();
 
   if (images.length === 0) {
     return (
@@ -173,6 +67,7 @@ export const PrintableImages = () => {
 
   return (
     <div className="printable-images" style={cssVars}>
+      <ProgressOverlay />
       <div className="actions">
         <div>{cardCount}</div>
         <button disabled={isRendering} onClick={() => onClear()}>
@@ -180,18 +75,31 @@ export const PrintableImages = () => {
         </button>
         <button
           className="primary"
-          disabled={isRendering || isFetching}
+          disabled={isRendering || isFetching || isLoadingLocalImages}
           onClick={() => handleSave()}
+          title={
+            isRendering
+              ? "Generating PDF..."
+              : isFetching
+              ? "Downloading images..."
+              : isLoadingLocalImages
+              ? "Loading images..."
+              : ""
+          }
         >
           Save
         </button>
       </div>
+      <TruncatedPreviewWarning />
       <ImageErrors />
       <div ref={contentRef} className="print-container">
         {imageMatrix.map((row, pageIndex) => (
           <div
             className={`page-container ${isRendering ? "loading" : ""}`}
             key={pageIndex}
+            style={{
+              display: pageIndex < maxPages ? "block" : "none",
+            }}
           >
             <div className="page">
               <div className="card-grid">
@@ -199,7 +107,8 @@ export const PrintableImages = () => {
                   <Card
                     key={image.uuid || `empty-${index}`}
                     image={image}
-                    className={getCardClassName(index)}
+                    className={cardClassNames[index]}
+                    showImage={pageIndex < maxPages}
                   />
                 ))}
               </div>
