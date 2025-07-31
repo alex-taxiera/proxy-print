@@ -7,6 +7,14 @@ import { usePreviewData } from "./usePreviewData";
 import { useCardClassNames } from "./useCardClassNames";
 import { invertHexColor } from "../utils/invert-hex-color";
 
+const doTimeout = (fn: () => void, timeout?: number) => {
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(fn, { timeout });
+  } else {
+    setTimeout(fn, timeout);
+  }
+};
+
 async function* mergePDFsBlobs(blobs: Blob[]) {
   const { PDFDocument } = await import("pdf-lib/es");
   let mergedPdf = await PDFDocument.create();
@@ -271,9 +279,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           });
 
           if (cards.length > 0) {
-            requestIdleCallback(() => requestNextCard(cards.shift()!, cards), {
-              timeout: 50,
-            });
+            doTimeout(() => requestNextCard(cards.shift()!, cards), 50);
           }
         })
         .catch((error) => {
@@ -393,7 +399,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       };
 
       // start the worker
-      requestIdleCallback(() => {
+      doTimeout(() => {
         requestNextCard(
           [cards.shift()!, worker],
           cards.map((card) => [card, worker])
