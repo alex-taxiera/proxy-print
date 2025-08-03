@@ -66,14 +66,6 @@ export const SettingsForm = () => {
     [setSettings]
   );
 
-  const buildInputChangeHandler = useCallback(
-    (key: keyof typeof settings) =>
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        handle(e.target.value, key);
-      },
-    [handle]
-  );
-
   const buildNumberInputChangeHandler = useCallback(
     (key: keyof typeof settings) =>
       (details: NumberInputValueChangeDetails) => {
@@ -149,59 +141,49 @@ export const SettingsForm = () => {
         </Select.Root>
       </Field.Root>
       <Field.Root disabled={isRendering}>
-        <Field.Label>
+        <NumberInput
+          min={0}
+          value={settings.pageWidth}
+          onValueChange={buildNumberInputChangeHandler("pageWidth")}
+        >
           Page Width ({settings.unit})
-          <Field.Input
-            type="number"
-            min="0"
-            value={settings.pageWidth}
-            onChange={buildInputChangeHandler("pageWidth")}
-          />
-        </Field.Label>
+        </NumberInput>
       </Field.Root>
       <Field.Root disabled={isRendering}>
-        <Field.Label>
+        <NumberInput
+          min={0}
+          value={settings.pageHeight}
+          onValueChange={buildNumberInputChangeHandler("pageHeight")}
+        >
           Page Height ({settings.unit})
-          <Field.Input
-            type="number"
-            min="0"
-            value={settings.pageHeight}
-            onChange={buildInputChangeHandler("pageHeight")}
-          />
-        </Field.Label>
+        </NumberInput>
       </Field.Root>
       <Field.Root disabled={isRendering}>
-        <Field.Label>
+        <NumberInput
+          min={1}
+          value={settings.numberOfColumns}
+          onValueChange={buildNumberInputChangeHandler("numberOfColumns")}
+        >
           Columns
-          <Field.Input
-            type="number"
-            min="1"
-            value={settings.numberOfColumns}
-            onChange={buildInputChangeHandler("numberOfColumns")}
-          />
-        </Field.Label>
+        </NumberInput>
       </Field.Root>
       <Field.Root disabled={isRendering}>
-        <Field.Label>
-          Enable Bleed Edge
-          <Checkbox
-            size="lg"
-            checked={settings.enableBleedEdge}
-            onCheckedChange={buildCheckboxChangeHandler("enableBleedEdge")}
-          />
-        </Field.Label>
+        <Field.Label>Enable Bleed Edge</Field.Label>
+        <Checkbox
+          size="lg"
+          checked={settings.enableBleedEdge}
+          onCheckedChange={buildCheckboxChangeHandler("enableBleedEdge")}
+        />
       </Field.Root>
       <Field.Root disabled={isRendering}>
-        <Field.Label>
+        <NumberInput
+          min={0}
+          max={3}
+          value={settings.bleedEdge}
+          onValueChange={buildNumberInputChangeHandler("bleedEdge")}
+        >
           Bleed Edge (mm)
-          <Field.Input
-            type="number"
-            min="0"
-            max="3"
-            value={settings.bleedEdge}
-            onChange={buildInputChangeHandler("bleedEdge")}
-          />
-        </Field.Label>
+        </NumberInput>
       </Field.Root>
       <Field.Root disabled={isRendering}>
         <ColorPicker
@@ -218,26 +200,14 @@ export const SettingsForm = () => {
         >
           Guides Width (px)
         </NumberInput>
-        {/* <Field.Label>
-          Guides Width (px)
-          <Field.Input
-            type="number"
-            min="0"
-            max={maxGuideWidth}
-            value={settings.guidesThickness}
-            onChange={buildInputChangeHandler("guidesThickness")}
-          />
-        </Field.Label> */}
       </Field.Root>
       <Field.Root disabled={isRendering}>
-        <Field.Label>
-          Guides at Bleed Edge
-          <Checkbox
-            size="lg"
-            checked={settings.guidesAtBleedEdge}
-            onCheckedChange={buildCheckboxChangeHandler("guidesAtBleedEdge")}
-          />
-        </Field.Label>
+        <Field.Label>Guides at Bleed Edge</Field.Label>
+        <Checkbox
+          size="lg"
+          checked={settings.guidesAtBleedEdge}
+          onCheckedChange={buildCheckboxChangeHandler("guidesAtBleedEdge")}
+        />
       </Field.Root>
     </form>
   );
