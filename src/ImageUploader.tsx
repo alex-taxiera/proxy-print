@@ -1,8 +1,9 @@
-import { useCallback, useContext, useMemo, useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { GoogleImageData, ImagesContext } from "./context/ImagesContext";
-
-import "./ImageUploader.css";
+import { FileUpload } from "./components/ui/file-upload";
+import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
+import { center } from "styled-system/patterns";
+import { css } from "styled-system/css";
 
 const parseXML = (file: File): Promise<GoogleImageData[]> => {
   return new Promise((resolve, reject) => {
@@ -55,21 +56,10 @@ export function ImageUploader() {
   const { onAdd, isRendering } = useContext(ImagesContext);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const onChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
+  const onFileAccept = useCallback(
+    ({ files }: FileUploadFileAcceptDetails) => {
       setIsProcessing(true);
-    }
-  }, []);
-
-  const onDrop = useCallback(() => {
-    setIsProcessing(true);
-  }, []);
-
-  // called for both dropped and input change
-  const onDropAccepted = useCallback(
-    (acceptedFiles: File[]) => {
-      processFiles(acceptedFiles)
+      processFiles(files)
         .then(onAdd)
         .catch(console.error)
         .finally(() => setIsProcessing(false));
@@ -77,44 +67,40 @@ export function ImageUploader() {
     [onAdd]
   );
 
-  const {
-    getRootProps,
-    getInputProps,
-    isDragActive,
-    isDragAccept,
-    isFileDialogActive,
-  } = useDropzone({
+  const fileUpload = useFileUpload({
+    maxFiles: Infinity,
     disabled: isRendering || isProcessing,
-    onDropAccepted,
-    accept: {
-      "image/jpg": [".jpg", ".jpeg"],
-      "image/png": [".png"],
-      "image/bmp": [".bmp"],
-      "text/xml": [".xml"],
-    },
+    onFileAccept,
+    accept: [".jpg", ".jpeg", ".png", ".bmp", ".xml"],
   });
 
-  const rootProps = useMemo(
-    () => getRootProps({ onDrop }),
-    [getRootProps, onDrop]
-  );
-
-  const inputProps = useMemo(
-    () => getInputProps({ onChange }),
-    [getInputProps, onChange]
-  );
+  // hack to clear files after they are accepted
+  const acceptedFiles = fileUpload.acceptedFiles;
+  useEffect(() => {
+    if (acceptedFiles.length > 0) {
+      fileUpload.clearFiles();
+    }
+  }, [acceptedFiles, fileUpload]);
 
   return (
-    <div
-      {...rootProps}
-      className={`dropzone ${
-        isDragActive || isFileDialogActive ? "active" : ""
-      } ${isDragAccept ? "accept" : ""} ${
-        isRendering || isProcessing ? "disabled" : ""
-      }`}
-    >
-      <input {...inputProps} />
-      {isProcessing ? "Processing files..." : "Add Images"}
-    </div>
+    <FileUpload.RootProvider value={fileUpload}>
+      <FileUpload.Trigger asChild>
+        <FileUpload.Dropzone className={css({ cursor: "pointer" })}>
+          <FileUpload.Label className={center({ flexDirection: "column" })}>
+            {fileUpload.dragging ? (
+              "Drop!"
+            ) : (
+              <>
+                <span>Drop files here</span>
+                <span className={css({ color: "fg.muted", fontSize: "xs" })}>
+                  or click to browse
+                </span>
+              </>
+            )}
+          </FileUpload.Label>
+        </FileUpload.Dropzone>
+      </FileUpload.Trigger>
+      <FileUpload.HiddenInput />
+    </FileUpload.RootProvider>
   );
 }

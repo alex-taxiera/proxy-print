@@ -28,3 +28,12 @@ docker-compose.override.yml
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+## Panda
+styled-system
+styled-system-studio
+*storybook.log
+storybook-static
+
+## copied part recipes
+src/components/ui/preset/theme/recipes/**

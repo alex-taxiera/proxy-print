@@ -4,38 +4,63 @@ import { SettingsForm } from "./SettingsForm";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { ImagesProvider } from "./context/ImagesProvider";
 
-import "./App.css";
-import { ImageDownloadIndicator } from "./ImageDownloadIndicator";
 import { CommunityBanner } from "./CommunityBanner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { center, hstack, vstack } from "styled-system/patterns";
+import { Toaster } from "./components/ui/styled/toast";
+import { AlertToast } from "./components/ui/toast";
+import { toaster } from "./utils/toaster";
+import { Link } from "./components/ui/link";
 
 function App() {
   return (
     <SettingsProvider>
       <ImagesProvider>
+        <Toaster toaster={toaster}>
+          {(toast) => <AlertToast toast={toast} />}
+        </Toaster>
         <CommunityBanner />
-        <header id="app-header">
+        <header className={center({ fontSize: "4xl", fontWeight: "bold" })}>
           <h1>Proxy Print Setup</h1>
-          <ImageDownloadIndicator />
         </header>
-        <main id="app-main">
+        <main
+          className={hstack({
+            justify: "center",
+            alignItems: "flex-start",
+            gap: "12",
+            flex: 1,
+            paddingX: "12",
+          })}
+        >
           <PrintableImages />
-          <aside>
-            <div>
+          <aside className={vstack({ alignItems: "center" })}>
+            <div className={vstack({ gap: "4" })}>
               <ImageUploader />
               <SettingsForm />
             </div>
           </aside>
         </main>
-        <footer id="app-footer">
-          <a href="https://github.com/alex-taxiera/proxy-print">{"<Code />"}</a>
+        <footer className={center()}>
+          <Link asChild>
+            <a href="https://github.com/alex-taxiera/proxy-print">
+              {"<Code />"}
+            </a>
+          </Link>
           &nbsp;by&nbsp;
-          <a href="https://github.com/alex-taxiera">Alex Taxiera</a>
+          <Link asChild>
+            <a href="https://github.com/alex-taxiera">Alex Taxiera</a>
+          </Link>
           &nbsp;|&nbsp;
-          <a href="https://discord.gg/A5AkkyP8CU" target="_blank" rel="noopener noreferrer">
-            <FontAwesomeIcon icon={faDiscord} style={{ color: 'inherit' }}/>
-          </a>
+          <Link asChild>
+            <a
+              href="https://discord.gg/A5AkkyP8CU"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FontAwesomeIcon icon={faDiscord} style={{ color: "inherit" }} />
+            </a>
+          </Link>
         </footer>
       </ImagesProvider>
     </SettingsProvider>

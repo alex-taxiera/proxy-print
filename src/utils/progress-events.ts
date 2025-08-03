@@ -1,9 +1,8 @@
-interface ProgressData {
-  progress: number;
+export type ProgressData = {
+  progress: number | null;
   phase?: string;
   totalProgressAmount?: number;
-  isIndeterminate?: boolean;
-}
+};
 
 type EventCallback = (data: ProgressData | void) => void;
 

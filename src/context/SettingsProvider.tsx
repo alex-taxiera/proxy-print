@@ -69,7 +69,7 @@ export const SettingsProvider = (
       "--grid-columns": value.numberOfColumns,
       "--card-width": cardWidth,
       "--card-height": cardHeight,
-    } as React.CSSProperties;
+    };
   }, [value]);
 
   const contextValue = useMemo(
