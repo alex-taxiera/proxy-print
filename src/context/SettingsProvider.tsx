@@ -64,7 +64,7 @@ export const SettingsProvider = (
       "--page-height": `${value.pageHeight}${value.unit}`,
       "--page-width": `${value.pageWidth}${value.unit}`,
       "--grid-columns": value.numberOfColumns,
-    } as React.CSSProperties;
+    };
   }, [value]);
 
   const contextValue = useMemo(

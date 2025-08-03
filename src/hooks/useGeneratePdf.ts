@@ -4,7 +4,7 @@ import { SettingsContext } from "../context/SettingsContext";
 import { ImagesContext } from "../context/ImagesContext";
 import PdfWorker from "../workers/pdf-worker?worker";
 import { usePreviewData } from "./usePreviewData";
-import { useCardClassNames } from "./useCardClassNames";
+import { useCardPositionMeta } from "./useCardClassNames";
 import { invertHexColor } from "../utils/invert-hex-color";
 
 const doTimeout = (fn: () => void, timeout?: number) => {
@@ -64,7 +64,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const { settings } = useContext(SettingsContext);
   const { images, setIsRendering } = useContext(ImagesContext);
   const { imageMatrix, cardsPerPage } = usePreviewData();
-  const cardClassNames = useCardClassNames();
+  const cardPositionMeta = useCardPositionMeta();
 
   return useCallback(() => {
     const referencePage = contentRef.current?.querySelector<HTMLElement>(
@@ -100,11 +100,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     const pdfPages = new Map<number, Blob>();
 
     // sort cards into separate lists per worker
-    const assignments = splitIntoChunks(
-      cards,
-      numberOfPages,
-      cardsPerPage
-    );
+    const assignments = splitIntoChunks(cards, numberOfPages, cardsPerPage);
 
     const processCard = async (cardElement: HTMLElement) => {
       const index = cards.indexOf(cardElement);
@@ -211,11 +207,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       console.debug(`Card ${index + 1} of ${cards.length} processed`);
 
       // Get card classes to determine guide types
-      const cardClasses = cardClassNames[relativeIndex].split(" ");
-      const isFirstRow = cardClasses.includes("first-row");
-      const isLastRow = cardClasses.includes("last-row");
-      const isFirstColumn = cardClasses.includes("first-column");
-      const isLastColumn = cardClasses.includes("last-column");
+      const { isFirstRow, isLastRow, isFirstColumn, isLastColumn } =
+        cardPositionMeta[relativeIndex];
 
       return {
         imageDataUrl,
@@ -289,9 +282,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
     const savePDF = async () => {
       progressEvents.emit("progress", {
-        progress: progress,
+        progress: null,
         totalProgressAmount,
-        isIndeterminate: true,
         phase: "Saving PDF",
       });
 
@@ -423,7 +415,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     cardsPerPage,
     imageMatrix.length,
     images,
-    cardClassNames,
+    cardPositionMeta,
     setIsRendering,
   ]);
 };

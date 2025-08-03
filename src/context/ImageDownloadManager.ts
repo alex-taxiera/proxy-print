@@ -1,8 +1,9 @@
 import { useCallback, useRef, useState } from "react";
+import { toaster } from "../utils/toaster";
 
 type Item = {
   id: string;
-  resolve: (value: { mimeType: string, url: string }) => void;
+  resolve: (value: { mimeType: string; url: string }) => void;
   reject: (reason?: unknown) => void;
 };
 
@@ -12,10 +13,7 @@ type Item = {
  * @param contentType - The MIME type of the image (e.g., "image/jpeg", "image/png").
  * @returns The resulting Blob object.
  */
-function base64ToBlob(
-  base64String: string,
-  contentType: string
-): Blob {
+function base64ToBlob(base64String: string, contentType: string): Blob {
   // Decode the Base64 string
   const byteCharacters = atob(base64String);
 
@@ -49,8 +47,11 @@ export function useImageDownloadManager({
   const queueRef = useRef<Item[]>([]);
   const inflightRef = useRef<Item[]>([]);
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
-  const imageCacheRef = useRef<Map<string, { url: string; mimeType: string }>>(new Map());
+  const imageCacheRef = useRef<Map<string, { url: string; mimeType: string }>>(
+    new Map()
+  );
 
+  const loadingToastId = useRef<string>();
   const [isFetching, setIsFetching] = useState(false);
 
   const processQueue = useCallback(() => {
@@ -60,19 +61,44 @@ export function useImageDownloadManager({
     ) {
       const item = queueRef.current.shift()!;
       inflightRef.current.push(item);
+      if (!loadingToastId.current) {
+        loadingToastId.current = toaster.create({
+          title: "Downloading images from MPC Autofill",
+          description: "This may take a while...",
+          duration: Infinity,
+          closable: false,
+          meta: {
+            progress: imageCacheRef.current.size,
+            totalProgressAmount:
+              queueRef.current.length +
+              inflightRef.current.length +
+              imageCacheRef.current.size,
+          },
+        });
+      } else {
+        toaster.update(loadingToastId.current, {
+          meta: {
+            progress: imageCacheRef.current.size,
+            totalProgressAmount:
+              queueRef.current.length +
+              inflightRef.current.length +
+              imageCacheRef.current.size,
+          },
+        });
+      }
       setIsFetching((oldIsFetching) => oldIsFetching || true);
       const abortController = abortControllersRef.current.get(item.id);
       fetchImage(item, { signal: abortController?.signal })
         .then((data) => {
-          let mimeType = 'image/png';
+          let mimeType = "image/png";
 
           // Check for JPEG signature (base64 starts with /9j/ for JFIF)
-          if (data.startsWith('/9j/')) {
-            mimeType = 'image/jpeg';
+          if (data.startsWith("/9j/")) {
+            mimeType = "image/jpeg";
           }
           // Check for WebP signature (UklGRiI)
-          else if (data.startsWith('UklGRiI')) {
-            mimeType = 'image/webp';
+          else if (data.startsWith("UklGRiI")) {
+            mimeType = "image/webp";
           }
           const blob = base64ToBlob(data, mimeType);
           const url = URL.createObjectURL(blob);
@@ -94,14 +120,18 @@ export function useImageDownloadManager({
             inflightRef.current.length === 0 &&
             queueRef.current.length === 0
           ) {
+            if (loadingToastId.current) {
+              toaster.remove(loadingToastId.current);
+              loadingToastId.current = undefined;
+            }
             setIsFetching(false);
           }
         });
     }
-  }, [maxInflight]);
+  }, [maxInflight, loadingToastId]);
 
   const add = useCallback(
-    (id: string): Promise<{ mimeType: string, url: string }> => {
+    (id: string): Promise<{ mimeType: string; url: string }> => {
       return new Promise((resolve, reject) => {
         if (imageCacheRef.current.has(id)) {
           // resolve with cached image

@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS = {
 export type SettingsContextValue = {
   settings: Settings;
   setSettings: (updater: (old: Settings) => Settings) => void;
-  cssVars: React.CSSProperties;
+  cssVars: Record<string, string>;
 };
 export const SettingsContext = createContext<SettingsContextValue>({
   settings: DEFAULT_SETTINGS,
