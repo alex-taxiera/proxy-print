@@ -25,20 +25,21 @@ export default defineConfig({
   worker: {
     format: "es",
   },
+  resolve: {
+    alias: {
+      "styled-system": path.resolve(__dirname, "./styled-system"),
+    },
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
+          "ark-ui": ["@ark-ui/react"],
           "pdf-lib": ["pdf-lib"],
         },
       },
     },
     sourcemap: true,
-  },
-  resolve: {
-    alias: {
-      "styled-system": path.resolve(__dirname, "./styled-system"),
-    },
   },
   test: {
     projects: [
