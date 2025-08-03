@@ -1,108 +1,22 @@
 'use client'
 import type { Assign } from '@ark-ui/react'
-import { FileUpload, fileUploadAnatomy } from '@ark-ui/react/file-upload'
-import type { ComponentProps, HTMLStyledProps, RecipeVariantProps } from 'styled-system/types'
+import { FileUpload } from '@ark-ui/react/file-upload'
+import type { ComponentProps, HTMLStyledProps } from 'styled-system/types'
 import { createStyleContext } from './utils/create-style-context'
-import { sva } from 'styled-system/css'
-
-const fileUpload = sva({
-  className: 'fileUpload',
-  slots: fileUploadAnatomy.keys(),
-  base: {
-    root: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '4',
-      width: '100%',
-    },
-    label: {
-      fontWeight: 'medium',
-      textStyle: 'sm',
-      pointerEvents: 'none',
-    },
-    dropzone: {
-      alignItems: 'center',
-      background: 'bg.default',
-      borderColor: 'border.default',
-      borderRadius: 'l3',
-      borderWidth: '1px',
-      borderStyle: 'dashed',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '3',
-      justifyContent: 'center',
-      px: '6',
-      py: '4',
-      _hover: {
-        backgroundColor: 'bg.info',
-      },
-      _active: {
-        backgroundColor: 'border.info',
-      },
-      '&[data-dragging="true"]': {
-        backgroundColor: 'border.info',
-      },
-    },
-    item: {
-      animation: 'fadeIn 0.25s ease-out',
-      background: 'bg.default',
-      borderRadius: 'l3',
-      borderWidth: '1px',
-      columnGap: '3',
-      display: 'grid',
-      gridTemplateColumns: 'auto 1fr auto',
-      gridTemplateAreas: `
-        "preview name delete"
-        "preview size delete"
-        `,
-      p: '4',
-    },
-    itemGroup: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '3',
-    },
-    itemName: {
-      color: 'fg.default',
-      fontWeight: 'medium',
-      gridArea: 'name',
-      textStyle: 'sm',
-    },
-    itemSizeText: {
-      color: 'fg.muted',
-      gridArea: 'size',
-      textStyle: 'sm',
-    },
-    itemDeleteTrigger: {
-      alignSelf: 'flex-start',
-      gridArea: 'delete',
-    },
-    itemPreview: {
-      gridArea: 'preview',
-    },
-    itemPreviewImage: {
-      aspectRatio: '1',
-      height: '10',
-      objectFit: 'scale-down',
-      width: '10',
-    },
-  },
-})
-
-export type FileUploadVariants = RecipeVariantProps<typeof fileUpload>
+import { fileUpload, type FileUploadVariantProps } from 'styled-system/recipes'
 
 const { withProvider, withContext } = createStyleContext(fileUpload)
 
 export type RootProviderProps = ComponentProps<typeof RootProvider>
 export const RootProvider = withProvider<
   HTMLDivElement,
-  Assign<Assign<HTMLStyledProps<'div'>, FileUpload.RootProviderBaseProps>, FileUploadVariants>
+  Assign<Assign<HTMLStyledProps<'div'>, FileUpload.RootProviderBaseProps>, FileUploadVariantProps>
 >(FileUpload.RootProvider, 'root')
 
 export type RootProps = ComponentProps<typeof Root>
 export const Root = withProvider<
   HTMLDivElement,
-  Assign<Assign<HTMLStyledProps<'div'>, FileUpload.RootBaseProps>, FileUploadVariants>
+  Assign<Assign<HTMLStyledProps<'div'>, FileUpload.RootBaseProps>, FileUploadVariantProps>
 >(FileUpload.Root, 'root')
 
 export const Dropzone = withContext<

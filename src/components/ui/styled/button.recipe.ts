@@ -1,11 +1,8 @@
-import { ark } from '@ark-ui/react/factory'
-import { cva } from 'styled-system/css'
-import { styled } from 'styled-system/jsx'
-import type { ComponentProps, RecipeVariantProps } from 'styled-system/types'
+import { defineRecipe } from "@pandacss/dev";
 
-const button = cva({
-  // className: 'button',
-  // jsx: ['Button', 'IconButton', 'SubmitButton', 'Link'],
+export const button = defineRecipe({
+  className: 'button',
+  jsx: ['Button', 'IconButton', 'SubmitButton', 'Link'],
   base: {
     alignItems: 'center',
     appearance: 'none',
@@ -132,7 +129,7 @@ const button = cva({
         },
         height: 'auto!',
         px: '0!',
-        minW: '0!',
+        minW: '0 !important',
       },
       subtle: {
         background: 'colorPalette.a3',
@@ -202,20 +199,4 @@ const button = cva({
       },
     },
   },
-})
-
-export type ButtonVariants = RecipeVariantProps<typeof button>
-
-export type ButtonProps = ComponentProps<typeof Button>
-export const Button = styled(ark.button, button)
-
-
-export type LinkProps = Omit<ComponentProps<typeof Link>, "variant">;
-export const Link = styled(ark.button, button, {
-  defaultProps: { size: "lg", variant: "link" } as ButtonVariants,
-});
-
-export type IconButtonProps = ComponentProps<typeof IconButton>
-export const IconButton = styled(ark.button, button, {
-  defaultProps: { px: '0', variant: 'ghost' } as ButtonVariants,
 })

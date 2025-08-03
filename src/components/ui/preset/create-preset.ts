@@ -1,28 +1,31 @@
-import { type SemanticTokens, definePreset } from '@pandacss/dev'
-import red from './colors/red'
-import yellow from './colors/yellow'
-import green from './colors/green'
-import type { PresetOptions } from './options'
-import { breakpoints } from './theme/breakpoints'
-import { conditions } from './theme/conditions'
-import { globalCss } from './theme/global-css'
-import { keyframes } from './theme/keyframes'
-// import { recipes, slotRecipes } from './theme/recipes'
-import { semanticTokens } from './theme/semantic-tokens'
-import { textStyles } from './theme/text-styles'
-import { tokens } from './theme/tokens'
-import { createRadii } from './utils/create-radii'
-import blue from './colors/blue'
+import { type SemanticTokens, definePreset } from "@pandacss/dev";
+
+import type { PresetOptions } from "./options";
+import { breakpoints } from "./theme/breakpoints";
+import { conditions } from "./theme/conditions";
+import { globalCss } from "./theme/global-css";
+import { keyframes } from "./theme/keyframes";
+import { semanticTokens } from "./theme/semantic-tokens";
+import { textStyles } from "./theme/text-styles";
+import { tokens } from "./theme/tokens";
+import red from "./colors/red";
+import yellow from "./colors/yellow";
+import blue from "./colors/blue";
+import green from "./colors/green";
+import { createRadii } from "./utils/create-radii";
+import { recipes, slotRecipes } from "../styled/_recipes";
 
 export const createPreset = (options: PresetOptions) => {
-  const { accentColor, grayColor, radius } = options
+  const { accentColor, grayColor, radius } = options;
 
-  const standardizeGrayTokens = (tokens: SemanticTokens['colors']) =>
-    JSON.parse(JSON.stringify(tokens).replace(new RegExp(grayColor.name, 'g'), 'gray')) as SemanticTokens['colors']
+  const standardizeGrayTokens = (tokens: SemanticTokens["colors"]) =>
+    JSON.parse(
+      JSON.stringify(tokens).replace(new RegExp(grayColor.name, "g"), "gray")
+    ) as SemanticTokens["colors"];
 
   return definePreset({
-    name: '@park-ui/panda-preset',
-    presets: ['@pandacss/preset-base'],
+    name: "@park-ui/panda-preset",
+    presets: ["@pandacss/preset-base"],
     conditions,
     globalCss: {
       ...globalCss,
@@ -34,8 +37,8 @@ export const createPreset = (options: PresetOptions) => {
       extend: {
         breakpoints,
         keyframes,
-        // recipes,
-        // slotRecipes,
+        recipes,
+        slotRecipes,
         textStyles,
         tokens: {
           ...tokens,
@@ -47,7 +50,7 @@ export const createPreset = (options: PresetOptions) => {
             blue: blue.tokens,
             gray: grayColor.tokens ?? {},
             [accentColor.name]: accentColor.tokens,
-            accent: accentColor.tokens!
+            accent: accentColor.tokens!,
           },
         },
         semanticTokens: {
@@ -66,5 +69,5 @@ export const createPreset = (options: PresetOptions) => {
         },
       },
     },
-  })
-}
+  });
+};
