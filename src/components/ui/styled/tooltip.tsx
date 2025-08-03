@@ -1,34 +1,9 @@
 'use client'
 import type { Assign } from '@ark-ui/react'
-import { Tooltip, tooltipAnatomy } from '@ark-ui/react/tooltip'
+import { Tooltip } from '@ark-ui/react/tooltip'
 import type { ComponentProps, HTMLStyledProps, RecipeVariantProps } from 'styled-system/types'
 import { createStyleContext } from './utils/create-style-context'
-import { sva } from 'styled-system/css'
-
-const tooltip = sva({
-  className: 'tooltip',
-  slots: tooltipAnatomy.keys(),
-  base: {
-    content: {
-      background: 'gray.a12',
-      borderRadius: 'l2',
-      boxShadow: 'sm',
-      color: 'bg.default',
-      fontWeight: 'semibold',
-      px: '3',
-      py: '2',
-      textStyle: 'xs',
-      maxWidth: '2xs',
-      zIndex: 'tooltip',
-      _open: {
-        animation: 'fadeIn 0.25s ease-out',
-      },
-      _closed: {
-        animation: 'fadeOut 0.2s ease-out',
-      },
-    },
-  },
-})
+import { tooltip } from 'styled-system/recipes'
 
 export type TooltipVariants = RecipeVariantProps<typeof tooltip>
 

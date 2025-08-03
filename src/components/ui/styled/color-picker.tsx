@@ -1,111 +1,23 @@
 'use client'
 import type { Assign } from '@ark-ui/react'
-import { ColorPicker, colorPickerAnatomy } from '@ark-ui/react/color-picker'
-import type { ComponentProps, HTMLStyledProps, RecipeVariantProps } from 'styled-system/types'
+import { ColorPicker } from '@ark-ui/react/color-picker'
+import type { ComponentProps, HTMLStyledProps } from 'styled-system/types'
 import { createStyleContext } from './utils/create-style-context'
-import { sva } from 'styled-system/css'
+import { colorPicker, type ColorPickerVariantProps } from 'styled-system/recipes'
 
-const colorPicker = sva({
-  className: 'colorPicker',
-  slots: colorPickerAnatomy.keys(),
-  base: {
-    root: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1.5',
-    },
-    label: {
-      color: 'fg.default',
-      fontWeight: 'medium',
-      textStyle: 'sm',
-    },
-    control: {
-      display: 'flex',
-      flexDirection: 'row',
-      gap: '2',
-    },
-    content: {
-      background: 'bg.default',
-      borderRadius: 'l3',
-      boxShadow: 'lg',
-      display: 'flex',
-      flexDirection: 'column',
-      maxWidth: 'sm',
-      p: '4',
-      zIndex: 'dropdown',
-      _open: {
-        animation: 'fadeIn 0.25s ease-out',
-      },
-      _closed: {
-        animation: 'fadeOut 0.2s ease-out',
-      },
-      _hidden: {
-        display: 'none',
-      },
-    },
-    area: {
-      height: '36',
-      borderRadius: 'l2',
-      overflow: 'hidden',
-    },
-    areaThumb: {
-      borderRadius: 'full',
-      height: '2.5',
-      width: '2.5',
-      boxShadow: 'white 0px 0px 0px 2px, black 0px 0px 2px 1px',
-      outline: 'none',
-    },
-    areaBackground: {
-      height: 'full',
-    },
-    channelSlider: {
-      borderRadius: 'l2',
-    },
-    channelSliderTrack: {
-      height: '3',
-      borderRadius: 'l2',
-    },
-    swatchGroup: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(7, 1fr)',
-      gap: '2',
-      background: 'bg.default',
-    },
-    swatch: {
-      height: '6',
-      width: '6',
-      borderRadius: 'l2',
-      boxShadow:
-        '0 0 0 1px var(--colors-border-emphasized), 0 0 0 2px var(--colors-bg-default) inset',
-    },
-    channelSliderThumb: {
-      borderRadius: 'full',
-      height: '2.5',
-      width: '2.5',
-      boxShadow: 'white 0px 0px 0px 2px, black 0px 0px 2px 1px',
-      transform: 'translate(-50%, -50%)',
-      outline: 'none',
-    },
-    transparencyGrid: {
-      borderRadius: 'l2',
-    },
-  },
-});
-
-export type ColorPickerVariants = RecipeVariantProps<typeof colorPicker>
 
 const { withProvider, withContext } = createStyleContext(colorPicker);
 
 export type RootProviderProps = ComponentProps<typeof RootProvider>
 export const RootProvider = withProvider<
   HTMLDivElement,
-  Assign<Assign<HTMLStyledProps<'div'>, ColorPicker.RootProviderBaseProps>, ColorPickerVariants>
+  Assign<Assign<HTMLStyledProps<'div'>, ColorPicker.RootProviderBaseProps>, ColorPickerVariantProps>
 >(ColorPicker.RootProvider, 'root')
 
 export type RootProps = ComponentProps<typeof Root>
 export const Root = withProvider<
   HTMLDivElement,
-  Assign<Assign<HTMLStyledProps<'div'>, ColorPicker.RootBaseProps>, ColorPickerVariants>
+  Assign<Assign<HTMLStyledProps<'div'>, ColorPicker.RootBaseProps>, ColorPickerVariantProps>
 >(ColorPicker.Root, 'root')
 
 export const AreaBackground = withContext<
