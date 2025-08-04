@@ -33,7 +33,11 @@ export const SocialLinks = () => {
         </a>
       </Link>
       <Link asChild color="colorPalette.fg" aria-label="Donate via PayPal">
-        <a href="https://www.paypal.me/alextaxiera">
+        <a
+          href="https://www.paypal.me/alextaxiera"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <FontAwesomeIcon icon={faPaypal} />
         </a>
       </Link>
