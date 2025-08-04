@@ -12,7 +12,7 @@ export const SocialLinks = () => {
         aria-label="View the Proxy Print Setup GitHub repository"
       >
         <a
-          href="https://github.com/proxy-print/proxy-print-setup"
+          href="https://github.com/alex-taxiera/proxy-print"
           target="_blank"
           rel="noopener noreferrer"
         >

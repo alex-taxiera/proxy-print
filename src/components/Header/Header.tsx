@@ -46,7 +46,13 @@ export const Header = () => {
                 color: "inherit",
               })}
             >
-              <a href="https://github.com/alextaxiera">Alex Taxiera</a>
+              <a
+                href="https://github.com/alex-taxiera"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Alex Taxiera
+              </a>
             </Link>
           </span>
         </span>
