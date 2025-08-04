@@ -3,7 +3,7 @@ import { GoogleImageData, Image, ImagesContext } from "./ImagesContext";
 import { nanoid } from "nanoid";
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import { MAX_PREVIEW_CARDS } from "../const/preview";
-import { usePageLimits } from "../hooks/usePreviewData";
+import { usePreviewData } from "../hooks/usePreviewData";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">
@@ -17,23 +17,20 @@ export const ImagesProvider = (
     new Set()
   );
 
-  const { cardsPerPage } = usePageLimits();
+  const { cardsPerPage } = usePreviewData();
 
-  const onError = useCallback(
-    (uuid: string) => {
-      setImages((old) => old.filter((image) => image.uuid !== uuid));
-      setImagesWithError((old) => {
-        const image = images.find((image) => image.uuid === uuid);
-        const existingError = old.find((image) => image.uuid === uuid);
-        if (!image || existingError) {
-          return old;
-        }
+  const onError = useCallback((image: Image) => {
+    const uuid = image.uuid;
+    setImages((old) => old.filter((i) => i.uuid !== uuid));
+    setImagesWithError((old) => {
+      const existingError = old.find((image) => image.uuid === uuid);
+      if (existingError) {
+        return old;
+      }
 
-        return old.concat(image);
-      });
-    },
-    [images]
-  );
+      return old.concat(image);
+    });
+  }, []);
 
   const onClearErrors = useCallback(() => {
     setImagesWithError([]);
@@ -65,31 +62,41 @@ export const ImagesProvider = (
   // Calculate local image loading state
   const loadedLocalImageCount = loadedLocalImageIds.size;
   const isLoadingLocalImages =
-    loadedLocalImageCount < Math.min(images.length, (MAX_PREVIEW_CARDS - MAX_PREVIEW_CARDS % cardsPerPage));
+    loadedLocalImageCount <
+    Math.min(
+      images.length,
+      MAX_PREVIEW_CARDS - (MAX_PREVIEW_CARDS % cardsPerPage)
+    );
 
   const downloadImage = useCallback(
-    async (id: string) => {
-      const { mimeType, url } = await add(id);
-      setImages((old) =>
-        old.map((image) =>
-          image.id === id ? { ...image, mimeType, url } : image
-        )
-      );
+    async (image: Image) => {
+      const id = image.id;
+      try {
+        const { mimeType, url } = await add(id!);
+        setImages((old) =>
+          old.map((image) =>
+            image.id === id ? { ...image, mimeType, url } : image
+          )
+        );
+      } catch {
+        onError(image);
+      }
     },
-    [add]
+    [add, onError]
   );
 
   const onAdd = useCallback(
     (data: (File | GoogleImageData)[], index?: number) => {
       setImages((old) => {
         const images = data.map((item) => {
+          const uuid = nanoid();
           if (item instanceof File) {
-            return { uuid: nanoid(), file: item };
+            return { uuid, file: item };
           }
 
-          void downloadImage(item.id!);
+          void downloadImage({ uuid, ...item });
 
-          return { uuid: nanoid(), ...item };
+          return { uuid, ...item };
         });
         if (index === undefined) {
           return old.concat(images);
@@ -109,11 +116,9 @@ export const ImagesProvider = (
       onClear,
       onRemove,
       onAdd,
-      onError,
       onClearErrors,
       isRendering,
       setIsRendering,
-      downloadImage,
       getCachedImage,
       loadedLocalImageIds,
       onLocalImageLoaded,
@@ -127,11 +132,9 @@ export const ImagesProvider = (
       onClear,
       onRemove,
       onAdd,
-      onError,
       onClearErrors,
       isRendering,
       setIsRendering,
-      downloadImage,
       getCachedImage,
       loadedLocalImageIds,
       onLocalImageLoaded,

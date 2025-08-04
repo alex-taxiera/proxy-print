@@ -8,6 +8,7 @@ import { fileUpload } from "./file-upload.recipe";
 import { kbd } from "./kbd.recipe";
 import { menu } from "./menu.recipe";
 import { numberInput } from "./number-input.recipe";
+import { pagination } from "./pagination.recipe";
 import { progress } from "./progress.recipe";
 import { select } from "./select.recipe";
 import { spinner } from "./spinner.recipe";
@@ -31,6 +32,7 @@ export const slotRecipes = {
   fileUpload,
   menu,
   numberInput,
+  pagination,
   progress,
   select,
   toast,

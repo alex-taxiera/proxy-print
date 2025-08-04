@@ -12,7 +12,7 @@ export default defineConfig({
       accentColor: iris,
       grayColor: slate,
       radius: "sm",
-    })
+    }),
   ],
 
   // Where to look for your css declarations

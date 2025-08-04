@@ -15,6 +15,7 @@ export const fileUpload = defineSlotRecipe({
       fontWeight: 'medium',
       textStyle: 'sm',
       pointerEvents: 'none',
+      userSelect: 'none',
     },
     dropzone: {
       alignItems: 'center',

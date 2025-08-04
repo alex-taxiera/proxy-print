@@ -114,6 +114,7 @@ export const button = defineRecipe({
         },
       },
       link: {
+        userSelect: 'text',
         verticalAlign: 'baseline',
         color: 'colorPalette.emphasized',
         '&[aria-disabled="true"]': {

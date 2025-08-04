@@ -11,6 +11,7 @@ export const alert = defineSlotRecipe({
       gap: "3",
       p: "4",
       width: "full",
+      position: "relative",
     },
     content: {
       display: "flex",

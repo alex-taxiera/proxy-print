@@ -1,4 +1,4 @@
-import { useContext, useMemo, useRef } from "react";
+import { useContext, useRef, useState } from "react";
 
 import { SettingsContext } from "./context/SettingsContext";
 import { Card } from "./Card";
@@ -9,20 +9,21 @@ import { progressEvents } from "./utils/progress-events";
 
 import { usePreviewData } from "./hooks/usePreviewData";
 import { useGeneratePdf } from "./hooks/useGeneratePdf";
-import { TruncatedPreviewWarning } from "./components/TruncatedPreviewWarning";
-import { center, flex, grid, vstack } from "styled-system/patterns";
+import { center, flex, grid, hstack, vstack } from "styled-system/patterns";
 import { css, cx } from "styled-system/css";
 import { Button } from "./components/ui/button";
 import { Link } from "./components/ui/link";
 import { Tooltip } from "./components/ui/tooltip";
+import { Pagination } from "./components/ui/pagination";
 
 const containerStyles = flex.raw({
-  marginTop: "2.5",
   direction: "column",
   alignItems: "center",
+  paddingY: "6",
+  paddingX: "2",
   flex: 1,
   minWidth: 0,
-  maxWidth: "var(--page-width, 8.5 var(--page-unit, in))",
+  overflow: 'auto'
 });
 
 export const PrintableImages = () => {
@@ -41,15 +42,10 @@ export const PrintableImages = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { imageMatrix, maxPages } = usePreviewData();
+  const { imageMatrix, cardsPerPage } = usePreviewData();
+  const [currentPage, setCurrentPage] = useState(1);
 
   const generatePdf = useGeneratePdf(contentRef);
-
-  const cardCount = useMemo(() => {
-    const totalCards = images.length;
-    const cardString = totalCards === 1 ? "card" : "cards";
-    return `${totalCards} total ${cardString}`;
-  }, [images]);
 
   const handleSave = () => {
     setIsRendering(true);
@@ -96,60 +92,93 @@ export const PrintableImages = () => {
   return (
     <div className={css(containerStyles)} style={cssVars}>
       <ProgressOverlay />
-      <div className={center({ gap: "2" })}>
-        <div>{cardCount}</div>
-        <Button
-          colorPalette="gray"
-          disabled={isRendering}
-          onClick={() => onClear()}
+      <div
+        className={vstack({
+          gap: "2",
+          width: "max(var(--page-width), 8.5in)",
+          minWidth: "max",
+          maxWidth: "full",
+          alignItems: "stretch",
+          position: "sticky",
+          left: "0",
+        })}
+      >
+        <div
+          className={hstack({
+            gap: "2",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+          })}
         >
-          Remove all cards
-        </Button>
-        <Tooltip.Root
-          disabled={!isRendering && !isFetching && !isLoadingLocalImages}
-          positioning={{
-            placement: "top",
-          }}
-        >
-          <Tooltip.Trigger asChild>
+          <div className={hstack({ gap: "2" })}>
             <Button
-              disabled={isRendering || isFetching || isLoadingLocalImages}
-              onClick={() => handleSave()}
+              colorPalette="gray"
+              disabled={isRendering}
+              onClick={() => onClear()}
             >
-              Save
+              Remove all cards
             </Button>
-          </Tooltip.Trigger>
-          <Tooltip.Positioner>
-            <Tooltip.Arrow>
-              <Tooltip.ArrowTip />
-            </Tooltip.Arrow>
-            <Tooltip.Content>
-              {isRendering
-                ? "Generating PDF..."
-                : isFetching
-                  ? "Downloading images..."
-                  : isLoadingLocalImages
-                    ? "Loading images..."
-                    : ""}
-            </Tooltip.Content>
-          </Tooltip.Positioner>
-        </Tooltip.Root>
+            <Tooltip.Root
+              disabled={!isRendering && !isFetching && !isLoadingLocalImages}
+              positioning={{
+                placement: "top",
+              }}
+            >
+              <Tooltip.Trigger asChild>
+                <Button
+                  disabled={isRendering || isFetching || isLoadingLocalImages}
+                  onClick={() => handleSave()}
+                >
+                  Save
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Positioner>
+                <Tooltip.Arrow>
+                  <Tooltip.ArrowTip />
+                </Tooltip.Arrow>
+                <Tooltip.Content>
+                  {isRendering
+                    ? "Generating PDF..."
+                    : isFetching
+                      ? "Downloading images..."
+                      : isLoadingLocalImages
+                        ? "Loading images..."
+                        : ""}
+                </Tooltip.Content>
+              </Tooltip.Positioner>
+            </Tooltip.Root>
+          </div>
+          <div className={vstack({ alignItems: "center", gap: "2" })}>
+            <span className={css({ fontSize: "xs", color: "fg.muted" })}>
+              Showing {currentPage * cardsPerPage - cardsPerPage + 1} -{" "}
+              {Math.min(
+                currentPage * cardsPerPage,
+                imageMatrix.length * cardsPerPage,
+                images.length
+              )}{" "}
+              of {Math.min(imageMatrix.length * cardsPerPage, images.length)}
+            </span>
+            <Pagination
+              count={imageMatrix.length * cardsPerPage}
+              page={currentPage}
+              pageSize={cardsPerPage}
+              siblingCount={1}
+              onPageChange={({ page }) => setCurrentPage(page)}
+            />
+          </div>
+        </div>
+        <ImageErrors
+          onDismiss={onClearErrors}
+          imagesWithError={imagesWithError}
+        />
       </div>
-      <TruncatedPreviewWarning
-        maxPages={maxPages}
-        totalPages={imageMatrix.length}
-      />
-      <ImageErrors
-        onDismiss={onClearErrors}
-        imagesWithError={imagesWithError}
-      />
       <div
         ref={contentRef}
         className={vstack({
           marginY: "2.5",
           rowGap: "5",
           maxWidth: "100%",
-          overflowX: "auto",
+          // overflowX: "auto",
           "--bleed-edge-width": "var(--bleed-edge, 0mm)",
           "--image-zoom-width": "var(--image-zoom, 6.2mm)",
           "--guide-display": "var(--guides-display, block)",
@@ -163,53 +192,48 @@ export const PrintableImages = () => {
             "calc(calc(-0.5 * var(--guide-border-width)) + calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1)))",
         })}
       >
-        {imageMatrix.map((row, pageIndex) => (
+        <div
+          className={css(
+            {
+              position: "relative",
+              width: "100%",
+            },
+            isRendering ? { pointerEvents: "none" } : {}
+          )}
+        >
           <div
-            className={css(
-              {
-                position: "relative",
-                width: "100%",
-                display: pageIndex < maxPages ? "block" : "none",
-              },
-              isRendering ? { pointerEvents: "none" } : {}
+            className={cx(
+              "page",
+              center({
+                flexDirection: "column",
+                height: "var(--page-height, 11 var(--page-unit, in))",
+                width: "var(--page-width, 8.5 var(--page-unit, in))",
+                background: "white",
+                overflow: "hidden",
+              })
             )}
-            key={pageIndex}
           >
             <div
-              className={cx(
-                "page",
-                center({
-                  flexDirection: "column",
-                  height: "var(--page-height, 11 var(--page-unit, in))",
-                  width: "var(--page-width, 8.5 var(--page-unit, in))",
-                  background: "white",
-                  overflow: "hidden",
-                })
-              )}
+              className={grid({
+                gap: "0",
+                gridTemplateColumns:
+                  "repeat(var(--grid-columns, 3), min-content)",
+                pageBreakAfter: "always",
+                justifyContent: "center",
+                alignItems: "center",
+                textAlign: "center",
+              })}
             >
-              <div
-                className={grid({
-                  gap: "0",
-                  gridTemplateColumns:
-                    "repeat(var(--grid-columns, 3), min-content)",
-                  pageBreakAfter: "always",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  textAlign: "center",
-                })}
-              >
-                {row.map((image, index) => (
-                  <Card
-                    key={image.uuid || `empty-${index}`}
-                    image={image}
-                    index={index}
-                    showImage={pageIndex < maxPages}
-                  />
-                ))}
-              </div>
+              {imageMatrix[currentPage - 1].map((image, index) => (
+                <Card
+                  key={image.uuid || `empty-${index}`}
+                  image={image}
+                  index={index}
+                />
+              ))}
             </div>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

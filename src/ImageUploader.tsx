@@ -87,16 +87,16 @@ export function ImageUploader() {
       <FileUpload.Trigger asChild>
         <FileUpload.Dropzone className={css({ cursor: "pointer" })}>
           <FileUpload.Label className={center({ flexDirection: "column" })}>
-            {fileUpload.dragging ? (
-              "Drop!"
-            ) : (
-              <>
-                <span>Drop files here</span>
-                <span className={css({ color: "fg.muted", fontSize: "xs" })}>
-                  or click to browse
-                </span>
-              </>
-            )}
+            <span>{fileUpload.dragging ? "Drop!" : "Drop files here"}</span>
+            <span
+              className={css({
+                color: "fg.muted",
+                fontSize: "xs",
+                visibility: fileUpload.dragging ? "hidden" : "visible",
+              })}
+            >
+              or click to browse
+            </span>
           </FileUpload.Label>
         </FileUpload.Dropzone>
       </FileUpload.Trigger>

@@ -103,7 +103,6 @@ export const SettingsForm = () => {
       className={grid({
         gridTemplateColumns: "repeat(auto-fit, 165px)",
         gap: "2",
-        margin: "1",
         alignSelf: "stretch",
         justifyContent: "center",
       })}

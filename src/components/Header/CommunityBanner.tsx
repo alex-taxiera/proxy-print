@@ -1,5 +1,5 @@
 import { css } from "styled-system/css";
-import { Link } from "./components/ui/link";
+import { Link } from "../ui/link";
 
 export const CommunityBanner = () => {
   return (
@@ -7,10 +7,9 @@ export const CommunityBanner = () => {
       className={css({
         bg: "colorPalette.default",
         color: "colorPalette.fg",
-        paddingY: "2",
+        paddingY: "1",
         textAlign: "center",
-        width: "100%",
-        boxShadow: "sm",
+        alignSelf: "stretch",
       })}
     >
       <Link asChild color="colorPalette.fg" fontSize="sm">
