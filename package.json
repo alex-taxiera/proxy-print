@@ -30,7 +30,6 @@
     "@chromatic-com/storybook": "^4.1.0",
     "@eslint/js": "^9.15.0",
     "@pandacss/dev": "^0.54.0",
-    "@park-ui/panda-preset": "^0.42.0",
     "@storybook/addon-a11y": "^9.1.0",
     "@storybook/addon-docs": "^9.1.0",
     "@storybook/addon-onboarding": "^9.1.0",
