@@ -70,7 +70,7 @@ export const SettingsForm = () => {
   const buildTextInputChangeHandler = useCallback(
     (key: keyof typeof settings) =>
       (event: React.ChangeEvent<HTMLInputElement>) => {
-        handle(event.target.value, key)
+        handle(event.target.value, key);
       },
     [handle],
   );
@@ -118,14 +118,12 @@ export const SettingsForm = () => {
       })}
     >
       <Field.Root disabled={isRendering}>
-        <Field.Label>
-          Filename
-        </Field.Label>
+        <Field.Label>Filename</Field.Label>
         <Field.Input
           minLength={1}
           maxLength={50}
           value={settings.filename}
-          onChange={buildTextInputChangeHandler('filename')}
+          onChange={buildTextInputChangeHandler("filename")}
         />
       </Field.Root>
       <Field.Root disabled={isRendering}>

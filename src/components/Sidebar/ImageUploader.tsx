@@ -87,7 +87,10 @@ export function ImageUploader() {
   return (
     <FileUpload.RootProvider value={fileUpload}>
       <FileUpload.Trigger asChild>
-        <FileUpload.Dropzone className={css({ cursor: "pointer" })} onClick={(e) => e.preventDefault}>
+        <FileUpload.Dropzone
+          className={css({ cursor: "pointer" })}
+          onClick={(e) => e.preventDefault}
+        >
           <FileUpload.Label className={center({ flexDirection: "column" })}>
             <span>{fileUpload.dragging ? "Drop!" : "Drop files here"}</span>
             <span

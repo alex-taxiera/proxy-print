@@ -19,12 +19,12 @@ export const SettingsProvider = (
         const parsedSettings = JSON.parse(savedSettings) as unknown;
         const { data, success } = SettingsSchema.safeParse(parsedSettings);
         if (success) {
-          return data
+          return data;
         } else {
           return SettingsSchema.parse({
             ...DEFAULT_SETTINGS,
-            ...(parsedSettings as any)
-          })
+            ...(parsedSettings as any),
+          });
         }
       } catch (error) {
         localStorage.removeItem("settings");

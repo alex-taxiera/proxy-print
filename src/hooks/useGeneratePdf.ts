@@ -88,7 +88,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     const unit = settings.unit;
     const guidesThickness = 0.2645833333 * guideBorderWidth;
     const guidesAtBleedEdge = settings.guidesAtBleedEdge;
-    const pdfName = `${settings.filename}.pdf`
+    const pdfName = `${settings.filename}.pdf`;
 
     const cards = Array.from(
       contentRef.current?.querySelectorAll<HTMLElement>(".card") || [],

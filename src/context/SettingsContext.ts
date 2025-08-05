@@ -17,7 +17,7 @@ export const SettingsSchema = zod.object({
 export type Settings = zod.infer<typeof SettingsSchema>;
 
 export const DEFAULT_SETTINGS = {
-  filename: 'cards',
+  filename: "cards",
   unit: "in",
   pageWidth: "8.5",
   pageHeight: "11",
