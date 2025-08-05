@@ -8,7 +8,7 @@ import {
 import { invertHexColor } from "../utils/invert-hex-color";
 
 export const SettingsProvider = (
-  props: Omit<ComponentProps<typeof SettingsContext.Provider>, "value">
+  props: Omit<ComponentProps<typeof SettingsContext.Provider>, "value">,
 ) => {
   const savedSettings = localStorage.getItem("settings");
 
@@ -30,7 +30,8 @@ export const SettingsProvider = (
   const [value, setter] = useState<Settings>(defaultSettings);
 
   const calculatePageDimensions = (value: string, unit: "in" | "mm") => {
-    const convertedValue = unit === "in" ? Number(value) / 25.4 : (Number(value) * 25.4);
+    const convertedValue =
+      unit === "in" ? Number(value) / 25.4 : Number(value) * 25.4;
     return convertedValue.toFixed(2).toString();
   };
 
@@ -39,8 +40,14 @@ export const SettingsProvider = (
       const updated = updater(old);
 
       if (updated.unit !== old.unit) {
-        updated.pageHeight = calculatePageDimensions(updated.pageHeight, updated.unit);
-        updated.pageWidth = calculatePageDimensions(updated.pageWidth, updated.unit);
+        updated.pageHeight = calculatePageDimensions(
+          updated.pageHeight,
+          updated.unit,
+        );
+        updated.pageWidth = calculatePageDimensions(
+          updated.pageWidth,
+          updated.unit,
+        );
       }
 
       localStorage.setItem("settings", JSON.stringify(updated));
@@ -49,13 +56,15 @@ export const SettingsProvider = (
   }, []);
 
   const cssVars = useMemo(() => {
-    const guideThickness = value.enableBleedEdge ? Number(value.guidesThickness) : 1
-    const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0
+    const guideThickness = value.enableBleedEdge
+      ? Number(value.guidesThickness)
+      : 1;
+    const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0;
     return {
-      "--image-zoom": value.enableBleedEdge ? '6.2mm' : '0mm',
+      "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
       "--image-container-buffer": `${imageContainerBuffer}px`,
       "--bleed-edge": `${value.enableBleedEdge ? value.bleedEdge : 0}mm`,
-      "--guides-display": value.guidesThickness !== '0' ? "block" : "none",
+      "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
       "--guides-color": value.guidesColor,
       "--guides-color-inverted": invertHexColor(value.guidesColor),
       "--guides-thickness": `${guideThickness}px`,
@@ -69,7 +78,7 @@ export const SettingsProvider = (
 
   const contextValue = useMemo(
     () => ({ settings: value, setSettings, cssVars }),
-    [value, setSettings, cssVars]
+    [value, setSettings, cssVars],
   );
 
   return <SettingsContext.Provider {...props} value={contextValue} />;

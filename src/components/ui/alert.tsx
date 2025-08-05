@@ -23,7 +23,7 @@ const Root = forwardRef<HTMLDivElement, RootProps>(
         </Styled.Root>
       </AlertProvider>
     );
-  }
+  },
 );
 
 Root.displayName = "Root";

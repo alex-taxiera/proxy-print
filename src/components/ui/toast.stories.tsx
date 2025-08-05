@@ -192,7 +192,8 @@ export const LongContentToast: Story = {
             toaster.create({
               type: "info",
               title: "Important Update",
-              description: "This is a very long description that demonstrates how the toast handles content that spans multiple lines. It should wrap appropriately and maintain good readability while providing comprehensive information to the user.",
+              description:
+                "This is a very long description that demonstrates how the toast handles content that spans multiple lines. It should wrap appropriately and maintain good readability while providing comprehensive information to the user.",
             });
           }}
         >
@@ -241,7 +242,9 @@ export const MultipleToasts: Story = {
         <Toaster toaster={toaster}>
           {(toast) => <AlertToast toast={toast} />}
         </Toaster>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
           <Button
             onClick={() => {
               toaster.create({
@@ -292,7 +295,9 @@ export const AllVariants: Story = {
         <Toaster toaster={toaster}>
           {(toast) => <AlertToast toast={toast} />}
         </Toaster>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
           <Button
             onClick={() => {
               toaster.create({
@@ -367,8 +372,15 @@ export const DifferentPlacements: Story = {
         <Toaster toaster={bottomToaster}>
           {(toast) => <AlertToast toast={toast} />}
         </Toaster>
-        
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: "400px" }}>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            maxWidth: "400px",
+          }}
+        >
           <Button
             onClick={() => {
               topToaster.create({
@@ -438,13 +450,16 @@ export const PersistentToasts: Story = {
         <Toaster toaster={persistentToaster}>
           {(toast) => <AlertToast toast={toast} />}
         </Toaster>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
           <Button
             onClick={() => {
               persistentToaster.create({
                 type: "info",
                 title: "Persistent Toast",
-                description: "This toast will not auto-dismiss. You must close it manually.",
+                description:
+                  "This toast will not auto-dismiss. You must close it manually.",
               });
             }}
           >
@@ -455,7 +470,8 @@ export const PersistentToasts: Story = {
               persistentToaster.create({
                 type: "error",
                 title: "Critical Error",
-                description: "This is a critical error that requires user attention.",
+                description:
+                  "This is a critical error that requires user attention.",
               });
             }}
           >
@@ -479,7 +495,9 @@ export const ShortDurationToasts: Story = {
         <Toaster toaster={shortToaster}>
           {(toast) => <AlertToast toast={toast} />}
         </Toaster>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
           <Button
             onClick={() => {
               shortToaster.create({
@@ -520,13 +538,16 @@ export const LongDurationToasts: Story = {
         <Toaster toaster={longToaster}>
           {(toast) => <AlertToast toast={toast} />}
         </Toaster>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
           <Button
             onClick={() => {
               longToaster.create({
                 type: "info",
                 title: "Long Duration Toast",
-                description: "This toast will stay visible for 10 seconds before auto-dismissing.",
+                description:
+                  "This toast will stay visible for 10 seconds before auto-dismissing.",
               });
             }}
           >
@@ -537,7 +558,8 @@ export const LongDurationToasts: Story = {
               longToaster.create({
                 type: "warning",
                 title: "Important Notice",
-                description: "This is an important notice that needs more time to read.",
+                description:
+                  "This is an important notice that needs more time to read.",
               });
             }}
           >
@@ -548,5 +570,3 @@ export const LongDurationToasts: Story = {
     );
   },
 };
-
-

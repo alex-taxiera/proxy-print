@@ -100,6 +100,6 @@ export const ColorPicker = forwardRef<HTMLDivElement, Styled.RootProps>(
       </Styled.Context>
       <Styled.HiddenInput />
     </Styled.Root>
-  )
+  ),
 );
 ColorPicker.displayName = "ColorPicker";

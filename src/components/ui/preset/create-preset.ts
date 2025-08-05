@@ -20,7 +20,7 @@ export const createPreset = (options: PresetOptions) => {
 
   const standardizeGrayTokens = (tokens: SemanticTokens["colors"]) =>
     JSON.parse(
-      JSON.stringify(tokens).replace(new RegExp(grayColor.name, "g"), "gray")
+      JSON.stringify(tokens).replace(new RegExp(grayColor.name, "g"), "gray"),
     ) as SemanticTokens["colors"];
 
   return definePreset({

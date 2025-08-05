@@ -29,8 +29,8 @@ export const ImageErrors = ({
               gap: "0.25rem",
               listStyleType: "none",
               margin: 0,
-              paddingX: '4',
-              paddingY: '2'
+              paddingX: "4",
+              paddingY: "2",
             })}
           >
             {imagesWithError.map((image) => (
@@ -40,11 +40,9 @@ export const ImageErrors = ({
                   fontSize: "0.875rem",
                 })}
               >
-                <strong>
-                  {image.name}
-                </strong>
+                <strong>{image.name}</strong>
                 &nbsp;
-                <span className={css({ fontFamily: 'mono'})}>
+                <span className={css({ fontFamily: "mono" })}>
                   ({image.id})
                 </span>
               </li>

@@ -102,7 +102,7 @@ export const MultipleCheckboxes: Story = {
 
     const handleToggle = (item: string, checked: boolean) => {
       setSelectedItems((prev) =>
-        checked ? [...prev, item] : prev.filter((i) => i !== item)
+        checked ? [...prev, item] : prev.filter((i) => i !== item),
       );
     };
 
@@ -162,7 +162,7 @@ export const SelectAllPattern: Story = {
     const handleToggleItem = (item: string, details: CheckedChangeDetails) => {
       const checked = Boolean(details.checked);
       setSelectedItems((prev) =>
-        checked ? [...prev, item] : prev.filter((i) => i !== item)
+        checked ? [...prev, item] : prev.filter((i) => i !== item),
       );
     };
 

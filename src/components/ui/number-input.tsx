@@ -24,7 +24,7 @@ export const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(
         </StyledNumberInput.Control>
       </StyledNumberInput.Root>
     );
-  }
+  },
 );
 
 NumberInput.displayName = "NumberInput";

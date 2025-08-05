@@ -6,7 +6,7 @@ import { MAX_PREVIEW_CARDS } from "../const/preview";
 import { usePreviewData } from "../hooks/usePreviewData";
 
 export const ImagesProvider = (
-  props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">
+  props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,
 ) => {
   const { isFetching, add, remove, removeAll, getCachedImage } =
     useImageDownloadManager();
@@ -14,7 +14,7 @@ export const ImagesProvider = (
   const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
   const [isRendering, setIsRendering] = useState(false);
   const [loadedLocalImageIds, setLoadedLocalImageIds] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const { cardsPerPage } = usePreviewData();
@@ -49,7 +49,7 @@ export const ImagesProvider = (
       remove(uuid);
       setImages((old) => old.filter((image) => image.uuid !== uuid));
     },
-    [remove]
+    [remove],
   );
 
   const onClear = useCallback(() => {
@@ -65,7 +65,7 @@ export const ImagesProvider = (
     loadedLocalImageCount <
     Math.min(
       images.length,
-      MAX_PREVIEW_CARDS - (MAX_PREVIEW_CARDS % cardsPerPage)
+      MAX_PREVIEW_CARDS - (MAX_PREVIEW_CARDS % cardsPerPage),
     );
 
   const downloadImage = useCallback(
@@ -75,14 +75,14 @@ export const ImagesProvider = (
         const { mimeType, url } = await add(id!);
         setImages((old) =>
           old.map((image) =>
-            image.id === id ? { ...image, mimeType, url } : image
-          )
+            image.id === id ? { ...image, mimeType, url } : image,
+          ),
         );
       } catch {
         onError(image);
       }
     },
-    [add, onError]
+    [add, onError],
   );
 
   const onAdd = useCallback(
@@ -105,7 +105,7 @@ export const ImagesProvider = (
         return old.toSpliced(index, 0, ...images);
       });
     },
-    [downloadImage]
+    [downloadImage],
   );
 
   const contextValue = useMemo(
@@ -140,7 +140,7 @@ export const ImagesProvider = (
       onLocalImageLoaded,
       isLoadingLocalImages,
       loadedLocalImageCount,
-    ]
+    ],
   );
 
   return <ImagesContext.Provider {...props} value={contextValue} />;

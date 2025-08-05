@@ -12,7 +12,7 @@ const parseXML = (file: File): Promise<GoogleImageData[]> => {
       const parser = new DOMParser();
       const xml = parser.parseFromString(
         event.target?.result as string,
-        "text/xml"
+        "text/xml",
       );
       const cards: GoogleImageData[] = [];
       const frontsSection = xml.querySelector("fronts");
@@ -64,7 +64,7 @@ export function ImageUploader() {
         .catch(console.error)
         .finally(() => setIsProcessing(false));
     },
-    [onAdd]
+    [onAdd],
   );
 
   const fileUpload = useFileUpload({

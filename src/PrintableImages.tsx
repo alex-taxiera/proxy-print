@@ -23,7 +23,7 @@ const containerStyles = flex.raw({
   paddingX: "2",
   flex: 1,
   minWidth: 0,
-  overflow: 'auto'
+  overflow: "auto",
 });
 
 export const PrintableImages = () => {
@@ -148,13 +148,19 @@ export const PrintableImages = () => {
               </Tooltip.Positioner>
             </Tooltip.Root>
           </div>
-          <div className={vstack({ alignItems: "center", gap: "2", visibility: imageMatrix.length > 1 ? "visible" : "hidden" })}>
+          <div
+            className={vstack({
+              alignItems: "center",
+              gap: "2",
+              visibility: imageMatrix.length > 1 ? "visible" : "hidden",
+            })}
+          >
             <span className={css({ fontSize: "xs", color: "fg.muted" })}>
               Showing {currentPage * cardsPerPage - cardsPerPage + 1} -{" "}
               {Math.min(
                 currentPage * cardsPerPage,
                 imageMatrix.length * cardsPerPage,
-                images.length
+                images.length,
               )}{" "}
               of {Math.min(imageMatrix.length * cardsPerPage, images.length)}
             </span>
@@ -198,7 +204,7 @@ export const PrintableImages = () => {
               position: "relative",
               width: "100%",
             },
-            isRendering ? { pointerEvents: "none" } : {}
+            isRendering ? { pointerEvents: "none" } : {},
           )}
         >
           <div
@@ -210,7 +216,7 @@ export const PrintableImages = () => {
                 width: "var(--page-width, 8.5 var(--page-unit, in))",
                 background: "white",
                 overflow: "hidden",
-              })
+              }),
             )}
           >
             <div

@@ -33,7 +33,7 @@ export const DismissButton = forwardRef<HTMLButtonElement, DismissButtonProps>(
         <FontAwesomeIcon icon={faXmark} size="lg" />
       </IconButton>
     );
-  }
+  },
 );
 DismissButton.displayName = "DismissButton";
 

@@ -63,7 +63,7 @@ export const SettingsForm = () => {
         return updatedSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const buildNumberInputChangeHandler = useCallback(
@@ -71,21 +71,21 @@ export const SettingsForm = () => {
       (details: NumberInputValueChangeDetails) => {
         handle(details.value, key);
       },
-    [handle]
+    [handle],
   );
 
   const buildCheckboxChangeHandler = useCallback(
     (key: keyof typeof settings) => (details: CheckboxCheckedChangeDetails) => {
       handle(details.checked, key);
     },
-    [handle]
+    [handle],
   );
 
   const buildSelectChangeHandler = useCallback(
     (key: keyof typeof settings) => (details: SelectValueChangeDetails) => {
       handle(details.value[0] ?? DEFAULT_SETTINGS[key], key);
     },
-    [handle]
+    [handle],
   );
 
   const buildColorPickerChangeHandler = useCallback(
@@ -93,7 +93,7 @@ export const SettingsForm = () => {
       (details: ColorPickerValueChangeDetails) => {
         handle(details.value.toString("hex"), key);
       },
-    [handle]
+    [handle],
   );
 
   const maxGuideWidth = getMaxGuideWidth(settings);
@@ -101,8 +101,8 @@ export const SettingsForm = () => {
   return (
     <form
       className={vstack({
-        width: 'full',
-        alignItems: 'stretch',
+        width: "full",
+        alignItems: "stretch",
         gap: "2",
         alignSelf: "stretch",
         justifyContent: "center",

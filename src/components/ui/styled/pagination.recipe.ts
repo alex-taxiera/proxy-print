@@ -2,22 +2,22 @@ import { paginationAnatomy } from "@ark-ui/react/pagination";
 import { defineSlotRecipe } from "@pandacss/dev";
 
 export const pagination = defineSlotRecipe({
-  className: 'pagination',
+  className: "pagination",
   slots: paginationAnatomy.keys(),
   base: {
     root: {
-      display: 'flex',
-      gap: '2.5',
+      display: "flex",
+      gap: "2.5",
     },
     item: {
-      fontVariantNumeric: 'tabular-nums',
+      fontVariantNumeric: "tabular-nums",
     },
     ellipsis: {
-      alignItems: 'center',
-      color: 'fg.default',
-      display: 'inline-flex',
-      fontWeight: 'semibold',
-      px: '3.5',
+      alignItems: "center",
+      color: "fg.default",
+      display: "inline-flex",
+      fontWeight: "semibold",
+      px: "3.5",
     },
   },
-})
+});

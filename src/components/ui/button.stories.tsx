@@ -1,98 +1,98 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Button } from './button'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { 
-  faDownload, 
-  faHeart, 
-  faStar, 
-  faTrash, 
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Button } from "./button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faDownload,
+  faHeart,
+  faStar,
+  faTrash,
   faPlus,
   faArrowRight,
-  faCog
-} from '@fortawesome/free-solid-svg-icons'
+  faCog,
+} from "@fortawesome/free-solid-svg-icons";
 
 const meta: Meta<typeof Button> = {
-  title: 'Core Components/Button',
+  title: "Core Components/Button",
   component: Button,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: { type: 'select' },
-      options: ['solid', 'outline', 'ghost', 'link', 'subtle'],
-      description: 'The visual style variant of the button',
+      control: { type: "select" },
+      options: ["solid", "outline", "ghost", "link", "subtle"],
+      description: "The visual style variant of the button",
     },
     size: {
-      control: { type: 'select' },
-      options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'],
-      description: 'The size of the button',
+      control: { type: "select" },
+      options: ["xs", "sm", "md", "lg", "xl", "2xl"],
+      description: "The size of the button",
     },
     colorPalette: {
-      control: { type: 'select' },
-      options: ['gray', 'blue', 'green', 'red', 'yellow'],
-      description: 'The color palette of the button',
+      control: { type: "select" },
+      options: ["gray", "blue", "green", "red", "yellow"],
+      description: "The color palette of the button",
     },
     loading: {
-      control: { type: 'boolean' },
-      description: 'Whether the button is in a loading state',
+      control: { type: "boolean" },
+      description: "Whether the button is in a loading state",
     },
     disabled: {
-      control: { type: 'boolean' },
-      description: 'Whether the button is disabled',
+      control: { type: "boolean" },
+      description: "Whether the button is disabled",
     },
   },
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    children: 'Button',
+    children: "Button",
   },
-}
+};
 
 export const Primary: Story = {
   args: {
-    variant: 'solid',
-    colorPalette: 'blue',
-    children: 'Primary Button',
+    variant: "solid",
+    colorPalette: "blue",
+    children: "Primary Button",
   },
-}
+};
 
 export const Secondary: Story = {
   args: {
-    variant: 'outline',
-    children: 'Secondary Button',
+    variant: "outline",
+    children: "Secondary Button",
   },
-}
+};
 
 export const Ghost: Story = {
   args: {
-    variant: 'ghost',
-    children: 'Ghost Button',
+    variant: "ghost",
+    children: "Ghost Button",
   },
-}
+};
 
 export const Link: Story = {
   args: {
-    variant: 'link',
-    children: 'Link Button',
+    variant: "link",
+    children: "Link Button",
   },
-}
+};
 
 export const Subtle: Story = {
   args: {
-    variant: 'subtle',
-    children: 'Subtle Button',
+    variant: "subtle",
+    children: "Subtle Button",
   },
-}
+};
 
 export const WithIcon: Story = {
   args: {
-    variant: 'solid',
+    variant: "solid",
     children: (
       <>
         <FontAwesomeIcon icon={faDownload} />
@@ -100,45 +100,52 @@ export const WithIcon: Story = {
       </>
     ),
   },
-}
+};
 
 export const IconOnly: Story = {
   args: {
-    variant: 'ghost',
-    size: 'md',
+    variant: "ghost",
+    size: "md",
     children: <FontAwesomeIcon icon={faHeart} />,
-    'aria-label': 'Like',
+    "aria-label": "Like",
   },
-}
+};
 
 export const Loading: Story = {
   args: {
-    variant: 'solid',
+    variant: "solid",
     loading: true,
-    children: 'Loading Button',
+    children: "Loading Button",
   },
-}
+};
 
 export const LoadingWithText: Story = {
   args: {
-    variant: 'solid',
+    variant: "solid",
     loading: true,
-    loadingText: 'Processing...',
-    children: 'Submit',
+    loadingText: "Processing...",
+    children: "Submit",
   },
-}
+};
 
 export const Disabled: Story = {
   args: {
-    variant: 'solid',
+    variant: "solid",
     disabled: true,
-    children: 'Disabled Button',
+    children: "Disabled Button",
   },
-}
+};
 
 export const AllVariants: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Button variant="solid">Solid Button</Button>
       <Button variant="outline">Outline Button</Button>
       <Button variant="ghost">Ghost Button</Button>
@@ -146,11 +153,18 @@ export const AllVariants: Story = {
       <Button variant="subtle">Subtle Button</Button>
     </div>
   ),
-}
+};
 
 export const AllSizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "1rem",
+        flexWrap: "wrap",
+      }}
+    >
       <Button size="xs">Extra Small</Button>
       <Button size="sm">Small</Button>
       <Button size="md">Medium</Button>
@@ -159,11 +173,18 @@ export const AllSizes: Story = {
       <Button size="2xl">2XL</Button>
     </div>
   ),
-}
+};
 
 export const ColorPalettes: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Button colorPalette="gray">Gray</Button>
       <Button colorPalette="blue">Blue</Button>
       <Button colorPalette="green">Green</Button>
@@ -173,25 +194,53 @@ export const ColorPalettes: Story = {
       <Button colorPalette="orange">Orange</Button>
     </div>
   ),
-}
+};
 
 export const OutlineColors: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
-      <Button variant="outline" colorPalette="gray">Gray Outline</Button>
-      <Button variant="outline" colorPalette="blue">Blue Outline</Button>
-      <Button variant="outline" colorPalette="green">Green Outline</Button>
-      <Button variant="outline" colorPalette="red">Red Outline</Button>
-      <Button variant="outline" colorPalette="yellow">Yellow Outline</Button>
-      <Button variant="outline" colorPalette="purple">Purple Outline</Button>
-      <Button variant="outline" colorPalette="orange">Orange Outline</Button>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
+      <Button variant="outline" colorPalette="gray">
+        Gray Outline
+      </Button>
+      <Button variant="outline" colorPalette="blue">
+        Blue Outline
+      </Button>
+      <Button variant="outline" colorPalette="green">
+        Green Outline
+      </Button>
+      <Button variant="outline" colorPalette="red">
+        Red Outline
+      </Button>
+      <Button variant="outline" colorPalette="yellow">
+        Yellow Outline
+      </Button>
+      <Button variant="outline" colorPalette="purple">
+        Purple Outline
+      </Button>
+      <Button variant="outline" colorPalette="orange">
+        Orange Outline
+      </Button>
     </div>
   ),
-}
+};
 
 export const WithIcons: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Button>
         <FontAwesomeIcon icon={faDownload} />
         Download
@@ -214,11 +263,11 @@ export const WithIcons: Story = {
       </Button>
     </div>
   ),
-}
+};
 
 export const IconButtons: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <Button variant="ghost" size="sm" aria-label="Settings">
         <FontAwesomeIcon icon={faCog} />
       </Button>
@@ -236,11 +285,18 @@ export const IconButtons: Story = {
       </Button>
     </div>
   ),
-}
+};
 
 export const LoadingStates: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Button loading>Loading Button</Button>
       <Button loading loadingText="Processing...">
         Submit Form
@@ -253,47 +309,62 @@ export const LoadingStates: Story = {
       </Button>
     </div>
   ),
-}
+};
 
 export const DisabledStates: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Button disabled>Disabled Solid</Button>
-      <Button variant="outline" disabled>Disabled Outline</Button>
-      <Button variant="ghost" disabled>Disabled Ghost</Button>
-      <Button variant="link" disabled>Disabled Link</Button>
-      <Button variant="subtle" disabled>Disabled Subtle</Button>
+      <Button variant="outline" disabled>
+        Disabled Outline
+      </Button>
+      <Button variant="ghost" disabled>
+        Disabled Ghost
+      </Button>
+      <Button variant="link" disabled>
+        Disabled Link
+      </Button>
+      <Button variant="subtle" disabled>
+        Disabled Subtle
+      </Button>
     </div>
   ),
-}
+};
 
 export const Interactive: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
-      <Button 
-        onClick={() => alert('Button clicked!')}
-      >
-        Click Me
-      </Button>
-      <Button 
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
+      <Button onClick={() => alert("Button clicked!")}>Click Me</Button>
+      <Button
         variant="outline"
-        onClick={() => alert('Outline button clicked!')}
+        onClick={() => alert("Outline button clicked!")}
       >
         Outline Click
       </Button>
-      <Button 
-        variant="ghost"
-        onClick={() => alert('Ghost button clicked!')}
-      >
+      <Button variant="ghost" onClick={() => alert("Ghost button clicked!")}>
         Ghost Click
       </Button>
     </div>
   ),
-}
+};
 
 export const FormButtons: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
       <Button type="submit" colorPalette="green">
         Submit
       </Button>
@@ -305,20 +376,26 @@ export const FormButtons: Story = {
       </Button>
     </div>
   ),
-}
+};
 
 export const ButtonGroup: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
         <Button size="sm">Previous</Button>
-        <Button size="sm" variant="outline">1</Button>
-        <Button size="sm" variant="outline">2</Button>
-        <Button size="sm" variant="outline">3</Button>
+        <Button size="sm" variant="outline">
+          1
+        </Button>
+        <Button size="sm" variant="outline">
+          2
+        </Button>
+        <Button size="sm" variant="outline">
+          3
+        </Button>
         <Button size="sm">Next</Button>
       </div>
-      
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+
+      <div style={{ display: "flex", gap: "0.5rem" }}>
         <Button variant="outline">
           <FontAwesomeIcon icon={faHeart} />
         </Button>
@@ -331,4 +408,4 @@ export const ButtonGroup: Story = {
       </div>
     </div>
   ),
-}
+};

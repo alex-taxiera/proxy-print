@@ -1,3 +1,3 @@
 import * as alert from "./alert";
 
-export { alert as Alert};
+export { alert as Alert };

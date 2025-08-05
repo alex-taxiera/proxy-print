@@ -1,36 +1,36 @@
-'use client'
-import type { Assign } from '@ark-ui/react'
-import { Toast } from '@ark-ui/react/toast'
-import type { HTMLStyledProps } from 'styled-system/types'
-import { createStyleContext } from './utils/create-style-context'
-import { toast } from 'styled-system/recipes'
+"use client";
+import type { Assign } from "@ark-ui/react";
+import { Toast } from "@ark-ui/react/toast";
+import type { HTMLStyledProps } from "styled-system/types";
+import { createStyleContext } from "./utils/create-style-context";
+import { toast } from "styled-system/recipes";
 
-const { withProvider, withContext } = createStyleContext(toast)
+const { withProvider, withContext } = createStyleContext(toast);
 
 export const Root = withProvider<
   HTMLDivElement,
-  Assign<HTMLStyledProps<'div'>, Toast.RootProps>
->(Toast.Root, 'root')
+  Assign<HTMLStyledProps<"div">, Toast.RootProps>
+>(Toast.Root, "root");
 
 export const ActionTrigger = withContext<
   HTMLButtonElement,
-  Assign<HTMLStyledProps<'button'>, Toast.ActionTriggerProps>
->(Toast.ActionTrigger, 'actionTrigger')
+  Assign<HTMLStyledProps<"button">, Toast.ActionTriggerProps>
+>(Toast.ActionTrigger, "actionTrigger");
 
 export const CloseTrigger = withContext<
   HTMLDivElement,
-  Assign<HTMLStyledProps<'div'>, Toast.CloseTriggerProps>
->(Toast.CloseTrigger, 'closeTrigger')
+  Assign<HTMLStyledProps<"div">, Toast.CloseTriggerProps>
+>(Toast.CloseTrigger, "closeTrigger");
 
 export const Description = withContext<
   HTMLDivElement,
-  Assign<HTMLStyledProps<'div'>, Toast.DescriptionProps>
->(Toast.Description, 'description')
+  Assign<HTMLStyledProps<"div">, Toast.DescriptionProps>
+>(Toast.Description, "description");
 
-export const Title = withContext<HTMLDivElement, Assign<HTMLStyledProps<'div'>, Toast.TitleProps>>(
-  Toast.Title,
-  'title',
-)
+export const Title = withContext<
+  HTMLDivElement,
+  Assign<HTMLStyledProps<"div">, Toast.TitleProps>
+>(Toast.Title, "title");
 
 export {
   ToastContext as Context,
@@ -38,4 +38,4 @@ export {
   createToaster,
   type ToastContextProps as ContextProps,
   type ToasterProps,
-} from '@ark-ui/react/toast'
+} from "@ark-ui/react/toast";

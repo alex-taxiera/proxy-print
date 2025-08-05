@@ -18,7 +18,7 @@ const CloseButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         <FontAwesomeIcon size="xl" icon={faXmark} />
       </IconButton>
     </Styled.CloseTrigger>
-  )
+  ),
 );
 
 CloseButton.displayName = "CloseButton";

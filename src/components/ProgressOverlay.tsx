@@ -65,7 +65,7 @@ export const ProgressOverlay = () => {
                 color: "fg.muted",
                 fontSize: "xs",
                 fontWeight: "semibold",
-                mt: "1"
+                mt: "1",
               })}
             >
               {phase}

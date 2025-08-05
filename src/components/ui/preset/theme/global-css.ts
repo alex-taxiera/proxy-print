@@ -1,35 +1,36 @@
-import { defineGlobalStyles } from '@pandacss/dev'
+import { defineGlobalStyles } from "@pandacss/dev";
 
 export const globalCss = defineGlobalStyles({
-  ':root': {
-    '--global-font-body': 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
+  ":root": {
+    "--global-font-body":
+      "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
   },
   body: {
-    background: 'bg.canvas',
-    color: 'fg.default',
+    background: "bg.canvas",
+    color: "fg.default",
     _dark: {
-      colorScheme: 'dark',
+      colorScheme: "dark",
     },
   },
-  '#root': {
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
+  "#root": {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
   },
-  '*, *::before, *::after': {
-    borderColor: 'border.subtle',
-    borderStyle: 'solid',
-    boxSizing: 'border-box',
+  "*, *::before, *::after": {
+    borderColor: "border.subtle",
+    borderStyle: "solid",
+    boxSizing: "border-box",
   },
-  '*::placeholder': {
+  "*::placeholder": {
     opacity: 1,
-    color: 'fg.subtle',
+    color: "fg.subtle",
   },
-  '*::selection': {
-    bg: 'colorPalette.a3',
+  "*::selection": {
+    bg: "colorPalette.a3",
   },
   // Storybook docs story
-  '.docs-story': {
-    background: 'bg.canvas',
+  ".docs-story": {
+    background: "bg.canvas",
   },
-})
+});

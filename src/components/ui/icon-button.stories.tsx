@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { IconButton } from './icon-button'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { 
-  faHeart, 
-  faStar, 
-  faTrash, 
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { IconButton } from "./icon-button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHeart,
+  faStar,
+  faTrash,
   faPlus,
   faCog,
   faDownload,
@@ -16,101 +16,101 @@ import {
   faSearch,
   faFilter,
   faSort,
-  faRefresh
-} from '@fortawesome/free-solid-svg-icons'
+  faRefresh,
+} from "@fortawesome/free-solid-svg-icons";
 
 const meta: Meta<typeof IconButton> = {
-  title: 'Core Components/IconButton',
+  title: "Core Components/IconButton",
   component: IconButton,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: { type: 'select' },
-      options: ['solid', 'outline', 'ghost', 'link', 'subtle'],
-      description: 'The visual style variant of the icon button',
+      control: { type: "select" },
+      options: ["solid", "outline", "ghost", "link", "subtle"],
+      description: "The visual style variant of the icon button",
     },
     size: {
-      control: { type: 'select' },
-      options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'],
-      description: 'The size of the icon button',
+      control: { type: "select" },
+      options: ["xs", "sm", "md", "lg", "xl", "2xl"],
+      description: "The size of the icon button",
     },
     colorPalette: {
-      control: { type: 'select' },
-      options: ['gray', 'blue', 'green', 'red', 'yellow'],
-      description: 'The color palette of the icon button',
+      control: { type: "select" },
+      options: ["gray", "blue", "green", "red", "yellow"],
+      description: "The color palette of the icon button",
     },
     disabled: {
-      control: { type: 'boolean' },
-      description: 'Whether the icon button is disabled',
+      control: { type: "boolean" },
+      description: "Whether the icon button is disabled",
     },
   },
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    'aria-label': 'Settings',
+    "aria-label": "Settings",
     children: <FontAwesomeIcon icon={faCog} />,
   },
-}
+};
 
 export const Solid: Story = {
   args: {
-    variant: 'solid',
-    'aria-label': 'Like',
+    variant: "solid",
+    "aria-label": "Like",
     children: <FontAwesomeIcon icon={faHeart} />,
   },
-}
+};
 
 export const Outline: Story = {
   args: {
-    variant: 'outline',
-    'aria-label': 'Star',
+    variant: "outline",
+    "aria-label": "Star",
     children: <FontAwesomeIcon icon={faStar} />,
   },
-}
+};
 
 export const Ghost: Story = {
   args: {
-    variant: 'ghost',
-    'aria-label': 'Settings',
+    variant: "ghost",
+    "aria-label": "Settings",
     children: <FontAwesomeIcon icon={faCog} />,
   },
-}
+};
 
 export const Subtle: Story = {
   args: {
-    variant: 'subtle',
-    'aria-label': 'Add',
+    variant: "subtle",
+    "aria-label": "Add",
     children: <FontAwesomeIcon icon={faPlus} />,
   },
-}
+};
 
 export const Link: Story = {
   args: {
-    variant: 'link',
-    'aria-label': 'Share',
+    variant: "link",
+    "aria-label": "Share",
     children: <FontAwesomeIcon icon={faShare} />,
   },
-}
+};
 
 export const Disabled: Story = {
   args: {
-    variant: 'solid',
+    variant: "solid",
     disabled: true,
-    'aria-label': 'Disabled button',
+    "aria-label": "Disabled button",
     children: <FontAwesomeIcon icon={faHeart} />,
   },
-}
+};
 
 export const AllVariants: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <IconButton variant="solid" aria-label="Solid">
         <FontAwesomeIcon icon={faHeart} />
       </IconButton>
@@ -128,11 +128,11 @@ export const AllVariants: Story = {
       </IconButton>
     </div>
   ),
-}
+};
 
 export const AllSizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <IconButton size="xs" aria-label="Extra Small">
         <FontAwesomeIcon icon={faHeart} />
       </IconButton>
@@ -153,11 +153,11 @@ export const AllSizes: Story = {
       </IconButton>
     </div>
   ),
-}
+};
 
 export const ColorPalettes: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <IconButton colorPalette="gray" aria-label="Gray">
         <FontAwesomeIcon icon={faCog} />
       </IconButton>
@@ -175,11 +175,11 @@ export const ColorPalettes: Story = {
       </IconButton>
     </div>
   ),
-}
+};
 
 export const CommonActions: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <IconButton variant="ghost" aria-label="Edit">
         <FontAwesomeIcon icon={faEdit} />
       </IconButton>
@@ -197,11 +197,11 @@ export const CommonActions: Story = {
       </IconButton>
     </div>
   ),
-}
+};
 
 export const NavigationActions: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <IconButton variant="outline" aria-label="Search">
         <FontAwesomeIcon icon={faSearch} />
       </IconButton>
@@ -219,11 +219,11 @@ export const NavigationActions: Story = {
       </IconButton>
     </div>
   ),
-}
+};
 
 export const SocialActions: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <IconButton variant="ghost" colorPalette="red" aria-label="Like">
         <FontAwesomeIcon icon={faHeart} />
       </IconButton>
@@ -241,11 +241,11 @@ export const SocialActions: Story = {
       </IconButton>
     </div>
   ),
-}
+};
 
 export const DisabledStates: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
       <IconButton variant="solid" disabled aria-label="Disabled Solid">
         <FontAwesomeIcon icon={faHeart} />
       </IconButton>
@@ -263,41 +263,41 @@ export const DisabledStates: Story = {
       </IconButton>
     </div>
   ),
-}
+};
 
 export const Interactive: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-      <IconButton 
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+      <IconButton
         variant="ghost"
         aria-label="Like"
-        onClick={() => alert('Liked!')}
+        onClick={() => alert("Liked!")}
       >
         <FontAwesomeIcon icon={faHeart} />
       </IconButton>
-      <IconButton 
+      <IconButton
         variant="outline"
         aria-label="Star"
-        onClick={() => alert('Starred!')}
+        onClick={() => alert("Starred!")}
       >
         <FontAwesomeIcon icon={faStar} />
       </IconButton>
-      <IconButton 
+      <IconButton
         variant="solid"
         colorPalette="red"
         aria-label="Delete"
-        onClick={() => alert('Delete clicked!')}
+        onClick={() => alert("Delete clicked!")}
       >
         <FontAwesomeIcon icon={faTrash} />
       </IconButton>
     </div>
   ),
-}
+};
 
 export const ButtonGroup: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
         <IconButton variant="outline" size="sm" aria-label="Previous">
           <FontAwesomeIcon icon={faCog} />
         </IconButton>
@@ -305,8 +305,8 @@ export const ButtonGroup: Story = {
           <FontAwesomeIcon icon={faCog} />
         </IconButton>
       </div>
-      
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+
+      <div style={{ display: "flex", gap: "0.5rem" }}>
         <IconButton variant="ghost" aria-label="Edit">
           <FontAwesomeIcon icon={faEdit} />
         </IconButton>
@@ -319,19 +319,21 @@ export const ButtonGroup: Story = {
       </div>
     </div>
   ),
-}
+};
 
 export const ToolbarExample: Story = {
   render: () => (
-    <div style={{ 
-      display: 'flex', 
-      gap: '0.5rem', 
-      alignItems: 'center',
-      padding: '1rem',
-      border: '1px solid #e2e8f0',
-      borderRadius: '0.5rem',
-      backgroundColor: '#f8fafc'
-    }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "0.5rem",
+        alignItems: "center",
+        padding: "1rem",
+        border: "1px solid #e2e8f0",
+        borderRadius: "0.5rem",
+        backgroundColor: "#f8fafc",
+      }}
+    >
       <IconButton variant="ghost" size="sm" aria-label="Bold">
         <FontAwesomeIcon icon={faEdit} />
       </IconButton>
@@ -341,7 +343,9 @@ export const ToolbarExample: Story = {
       <IconButton variant="ghost" size="sm" aria-label="Underline">
         <FontAwesomeIcon icon={faShare} />
       </IconButton>
-      <div style={{ width: '1px', height: '1.5rem', backgroundColor: '#e2e8f0' }} />
+      <div
+        style={{ width: "1px", height: "1.5rem", backgroundColor: "#e2e8f0" }}
+      />
       <IconButton variant="ghost" size="sm" aria-label="Align Left">
         <FontAwesomeIcon icon={faCog} />
       </IconButton>
@@ -353,4 +357,4 @@ export const ToolbarExample: Story = {
       </IconButton>
     </div>
   ),
-} 
+};

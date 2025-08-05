@@ -33,7 +33,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </StyledButton>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

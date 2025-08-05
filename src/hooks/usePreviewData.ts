@@ -24,7 +24,7 @@ export const usePageLimits = () => {
 
   const cardsPerPage = useMemo(
     () => rowsPerPage * columnsPerPage,
-    [rowsPerPage, columnsPerPage]
+    [rowsPerPage, columnsPerPage],
   );
 
   const maxPages = Math.floor(MAX_PREVIEW_CARDS / cardsPerPage);
@@ -35,12 +35,13 @@ export const usePageLimits = () => {
     cardsPerPage,
     maxPages,
   };
-}
+};
 
 export const usePreviewData = () => {
   const { images } = useContext(ImagesContext);
 
-  const { cardsPerPage, rowsPerPage, columnsPerPage, maxPages } = usePageLimits();
+  const { cardsPerPage, rowsPerPage, columnsPerPage, maxPages } =
+    usePageLimits();
 
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {

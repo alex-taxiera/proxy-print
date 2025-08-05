@@ -14,22 +14,22 @@ export const Root = withProvider<
 
 export const Content = withContext<HTMLDivElement, Alert.ContentProps>(
   Alert.Content,
-  "content"
+  "content",
 );
 
 export const Description = withContext<HTMLDivElement, Alert.DescriptionProps>(
   Alert.Description,
-  "description"
+  "description",
 );
 
 export const Icon = withContext<HTMLOrSVGElement, Alert.IconProps>(
   Alert.Icon,
-  "icon"
+  "icon",
 );
 
 export const Title = withContext<HTMLHeadingElement, Alert.TitleProps>(
   Alert.Title,
-  "title"
+  "title",
 );
 
 export const DismissButton = withContext<

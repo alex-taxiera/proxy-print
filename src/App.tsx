@@ -22,7 +22,7 @@ function App() {
             alignItems: "stretch",
             flex: 1,
             gap: "0",
-            overflow: 'hidden'
+            overflow: "hidden",
           })}
         >
           <PrintableImages />

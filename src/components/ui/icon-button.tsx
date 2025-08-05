@@ -13,7 +13,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     const { disabled, ...rest } = props;
 
     return <StyledIconButton ref={ref} aria-disabled={disabled} {...rest} />;
-  }
+  },
 );
 
 IconButton.displayName = "IconButton";

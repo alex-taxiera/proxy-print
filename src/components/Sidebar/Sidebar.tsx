@@ -11,20 +11,27 @@ import { Button } from "../ui/button";
 export const Sidebar = () => {
   const collapse = useCollapsible({ defaultOpen: true });
   return (
-    <Collapsible.RootProvider direction="right" value={collapse} className={css({
-      boxShadow: "sm",
-      backgroundColor: "bg.subtle",
-      zIndex: "2",
-      gap: '1'
-      // position: "relative",
-    })}>
-      <Collapsible.Trigger asChild className={css({
-        // position: "absolute",
-        // top: "3",
-        // left: "-4",
-        // transform: !collapse.open ? 'translateX(-50%)' : 'translateX(0)',
-        // transition: 'transform 0.2s ease-in-out',
-      })}>
+    <Collapsible.RootProvider
+      direction="right"
+      value={collapse}
+      className={css({
+        boxShadow: "sm",
+        backgroundColor: "bg.subtle",
+        zIndex: "2",
+        gap: "1",
+        // position: "relative",
+      })}
+    >
+      <Collapsible.Trigger
+        asChild
+        className={css({
+          // position: "absolute",
+          // top: "3",
+          // left: "-4",
+          // transform: !collapse.open ? 'translateX(-50%)' : 'translateX(0)',
+          // transition: 'transform 0.2s ease-in-out',
+        })}
+      >
         <Button
           aria-label="Settings"
           // variant={collapse.open ? 'solid' : 'ghost'}
@@ -34,16 +41,16 @@ export const Sidebar = () => {
           className={css({
             paddingX: "1",
             paddingY: "4",
-            height: 'full',
-            alignItems: 'flex-start',
+            height: "full",
+            alignItems: "flex-start",
             borderRadius: "0",
           })}
         >
           <FontAwesomeIcon
             icon={faChevronLeft}
             className={css({
-              transform: collapse.open ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s ease-in-out',
+              transform: collapse.open ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease-in-out",
             })}
             size="lg"
           />
@@ -55,19 +62,19 @@ export const Sidebar = () => {
             // backgroundColor: "bg.subtle",
             // boxShadow: "sm",
             minHeight: "100%",
-            paddingBottom: '12', // dont let edge go to bottom of page
+            paddingBottom: "12", // dont let edge go to bottom of page
           })}
         >
           <div
             className={vstack({
-              width: '64',
+              width: "64",
               gap: "4",
               paddingY: "2",
               paddingRight: "6",
               lg: {
                 paddingY: "4",
                 paddingRight: "8",
-              }
+              },
             })}
           >
             <ImageUploader />
@@ -76,5 +83,5 @@ export const Sidebar = () => {
         </aside>
       </Collapsible.Content>
     </Collapsible.RootProvider>
-  )
-}
+  );
+};

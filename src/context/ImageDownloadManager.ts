@@ -48,7 +48,7 @@ export function useImageDownloadManager({
   const inflightRef = useRef<Item[]>([]);
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
   const imageCacheRef = useRef<Map<string, { url: string; mimeType: string }>>(
-    new Map()
+    new Map(),
   );
 
   const loadingToastId = useRef<string>();
@@ -166,7 +166,7 @@ export function useImageDownloadManager({
         }
       });
     },
-    [maxInflight, processQueue]
+    [maxInflight, processQueue],
   );
 
   /**
@@ -194,7 +194,7 @@ export function useImageDownloadManager({
 
   const getCachedImage = useCallback(
     (id: string) => imageCacheRef.current.get(id)?.url,
-    []
+    [],
   );
 
   return {

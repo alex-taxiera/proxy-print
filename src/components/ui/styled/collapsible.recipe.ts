@@ -2,14 +2,14 @@ import { defineSlotRecipe } from "@pandacss/dev";
 import { collapsibleAnatomy } from "@ark-ui/react/collapsible";
 
 export const collapsible = defineSlotRecipe({
-  className: 'collapsible',
+  className: "collapsible",
   slots: collapsibleAnatomy.keys(),
   base: {
     root: {
-      display: 'flex',
+      display: "flex",
     },
     content: {
-      overflow: 'hidden',
+      overflow: "hidden",
       // width: 'full',
       // _open: {
       //   animation: 'collapse-in',
@@ -23,54 +23,54 @@ export const collapsible = defineSlotRecipe({
     direction: {
       down: {
         root: {
-          alignItems: 'flex-start',
-          flexDirection: 'column',
-          width: 'full',
+          alignItems: "flex-start",
+          flexDirection: "column",
+          width: "full",
         },
         content: {
-          width: 'full',
+          width: "full",
           _open: {
-            animation: 'collapse-in',
+            animation: "collapse-in",
           },
           _closed: {
-            animation: 'collapse-out',
+            animation: "collapse-out",
           },
-        }
+        },
       },
       right: {
         root: {
-          alignItems: 'stretch',
-          flexDirection: 'row',
-          height: 'full',
+          alignItems: "stretch",
+          flexDirection: "row",
+          height: "full",
         },
         content: {
-          height: 'full',
+          height: "full",
           _open: {
-            animation: 'collapse-in-right',
+            animation: "collapse-in-right",
           },
           _closed: {
-            animation: 'collapse-out-right',
+            animation: "collapse-out-right",
           },
-        }
+        },
       },
       left: {
         root: {
-          flexDirection: 'row',
-          height: 'full',
+          flexDirection: "row",
+          height: "full",
         },
         content: {
-          height: 'full',
+          height: "full",
           _open: {
-            animation: 'collapse-in-left',
+            animation: "collapse-in-left",
           },
           _closed: {
-            animation: 'collapse-out-left',
+            animation: "collapse-out-left",
           },
-        }
-      }
-    }
+        },
+      },
+    },
   },
   defaultVariants: {
-    direction: 'down',
+    direction: "down",
   },
-})
+});

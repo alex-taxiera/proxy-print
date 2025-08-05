@@ -50,7 +50,7 @@ const useCardClassName = (props: {
           outlineStyle: "solid",
           zIndex: "1",
         },
-      })
+      }),
     );
   }
 
@@ -70,7 +70,7 @@ const useCardClassName = (props: {
           borderTopWidth: "var(--guide-border-width)",
           borderBottomWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
   if (isFirstRow) {
@@ -86,7 +86,7 @@ const useCardClassName = (props: {
           borderLeftWidth: "var(--guide-border-width)",
           borderRightWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
   if (isLastColumn) {
@@ -102,7 +102,7 @@ const useCardClassName = (props: {
           borderTopWidth: "var(--guide-border-width)",
           borderBottomWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
   if (isLastRow) {
@@ -118,7 +118,7 @@ const useCardClassName = (props: {
           borderLeftWidth: "var(--guide-border-width)",
           borderRightWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
 
@@ -154,11 +154,11 @@ export const Card = ({
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
   const isFetching = useMemo(
     () => !!image.id && !downloadedSrc,
-    [image.id, downloadedSrc]
+    [image.id, downloadedSrc],
   );
   const isLoading = useMemo(
     () => !loadedLocalImageIds.has(image.uuid),
-    [loadedLocalImageIds, image.uuid]
+    [loadedLocalImageIds, image.uuid],
   );
   const isPending = isLoading || isFetching;
 
@@ -180,19 +180,19 @@ export const Card = ({
           image.file ?? {
             id: image.id,
             name: image.name,
-          }
+          },
         ),
-        index + 1
+        index + 1,
       );
     },
-    [image, images, onAdd]
+    [image, images, onAdd],
   );
 
   const buildOnAddClick = useCallback(
     (count: number) => () => {
       add(count);
     },
-    [add]
+    [add],
   );
 
   const onRemoveClick = useCallback(() => {
@@ -211,7 +211,7 @@ export const Card = ({
         add(1);
       }
     },
-    [isEmpty, isPending, isRendering, onRemove, image.uuid, add]
+    [isEmpty, isPending, isRendering, onRemove, image.uuid, add],
   );
 
   useEffect(() => {
@@ -246,7 +246,7 @@ export const Card = ({
               "calc(63mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
             height:
               "calc(88mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
-          })
+          }),
         )}
       >
         <>

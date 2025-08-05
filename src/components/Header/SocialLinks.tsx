@@ -1,11 +1,15 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "../ui/link";
-import { faDiscord, faGithub, faPaypal } from "@fortawesome/free-brands-svg-icons";
+import {
+  faDiscord,
+  faGithub,
+  faPaypal,
+} from "@fortawesome/free-brands-svg-icons";
 import { hstack } from "styled-system/patterns";
 
 export const SocialLinks = () => {
   return (
-    <div className={hstack({ gap: "4", color: 'fg.default' })}>
+    <div className={hstack({ gap: "4", color: "fg.default" })}>
       <Link
         asChild
         color="inherit"

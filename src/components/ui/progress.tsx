@@ -16,8 +16,14 @@ export interface ProgressProps extends StyledProgress.RootProps {
 
 export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
   (props, ref) => {
-    const { children, type = "linear", showValue = true, value, ...rootProps } = props;
-    
+    const {
+      children,
+      type = "linear",
+      showValue = true,
+      value,
+      ...rootProps
+    } = props;
+
     const isIndeterminate = value === null;
 
     return (
@@ -25,16 +31,16 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
         {children && <StyledProgress.Label>{children}</StyledProgress.Label>}
         {type === "linear" && (
           <StyledProgress.Track>
-            <StyledProgress.Range 
+            <StyledProgress.Range
               data-state={isIndeterminate ? "indeterminate" : undefined}
-              style={isIndeterminate ? { width: '100%' } : undefined}
+              style={isIndeterminate ? { width: "100%" } : undefined}
             />
           </StyledProgress.Track>
         )}
         {type === "circular" && (
           <StyledProgress.Circle>
             <StyledProgress.CircleTrack />
-            <StyledProgress.CircleRange 
+            <StyledProgress.CircleRange
               data-state={isIndeterminate ? "indeterminate" : undefined}
             />
             {showValue && <StyledProgress.ValueText />}
@@ -43,7 +49,7 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
         {showValue && !isIndeterminate && <StyledProgress.ValueText />}
       </StyledProgress.Root>
     );
-  }
+  },
 );
 
 Progress.displayName = "Progress";

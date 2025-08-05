@@ -23,7 +23,7 @@ export const Checkbox = forwardRef<HTMLLabelElement, CheckboxProps>(
         <StyledCheckbox.HiddenInput />
       </StyledCheckbox.Root>
     );
-  }
+  },
 );
 
 Checkbox.displayName = "Checkbox";

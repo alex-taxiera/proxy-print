@@ -28,9 +28,9 @@ class ProgressEventEmitter {
 
   emit(event: string, data?: ProgressData) {
     if (this.listeners.has(event)) {
-      this.listeners.get(event)!.forEach(callback => callback(data));
+      this.listeners.get(event)!.forEach((callback) => callback(data));
     }
   }
 }
 
-export const progressEvents = new ProgressEventEmitter(); 
+export const progressEvents = new ProgressEventEmitter();

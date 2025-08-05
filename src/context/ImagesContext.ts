@@ -4,8 +4,8 @@ export type GoogleImageData = {
   id?: string;
   name?: string;
   mimeType?: string;
-  url?: string
-}
+  url?: string;
+};
 
 export type Image = {
   uuid: string;
@@ -27,7 +27,7 @@ export type ImagesContextValue = {
   loadedLocalImageIds: Set<string>;
   isLoadingLocalImages: boolean;
   loadedLocalImageCount: number;
-}
+};
 
 export const ImagesContext = createContext<ImagesContextValue>({
   isFetching: false,
