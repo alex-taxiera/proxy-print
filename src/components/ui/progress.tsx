@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+
 import * as StyledProgress from "./styled/progress";
 
 export interface ProgressProps extends StyledProgress.RootProps {

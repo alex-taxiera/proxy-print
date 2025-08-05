@@ -1,5 +1,10 @@
 import { type SemanticTokens, definePreset } from "@pandacss/dev";
 
+import { recipes, slotRecipes } from "../styled/_recipes";
+import blue from "./colors/blue";
+import green from "./colors/green";
+import red from "./colors/red";
+import yellow from "./colors/yellow";
 import type { PresetOptions } from "./options";
 import { breakpoints } from "./theme/breakpoints";
 import { conditions } from "./theme/conditions";
@@ -8,12 +13,7 @@ import { keyframes } from "./theme/keyframes";
 import { semanticTokens } from "./theme/semantic-tokens";
 import { textStyles } from "./theme/text-styles";
 import { tokens } from "./theme/tokens";
-import red from "./colors/red";
-import yellow from "./colors/yellow";
-import blue from "./colors/blue";
-import green from "./colors/green";
 import { createRadii } from "./utils/create-radii";
-import { recipes, slotRecipes } from "../styled/_recipes";
 
 export const createPreset = (options: PresetOptions) => {
   const { accentColor, grayColor, radius } = options;

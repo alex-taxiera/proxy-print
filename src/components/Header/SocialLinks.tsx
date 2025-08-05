@@ -1,11 +1,13 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link } from "../ui/link";
 import {
   faDiscord,
   faGithub,
   faPaypal,
 } from "@fortawesome/free-brands-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import { hstack } from "styled-system/patterns";
+
+import { Link } from "../ui/link";
 
 export const SocialLinks = () => {
   return (

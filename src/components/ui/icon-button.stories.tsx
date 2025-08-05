@@ -1,6 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { IconButton } from "./icon-button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHeart,
   faStar,
@@ -18,6 +15,10 @@ import {
   faSort,
   faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+
+import { IconButton } from "./icon-button";
 
 const meta: Meta<typeof IconButton> = {
   title: "Core Components/IconButton",

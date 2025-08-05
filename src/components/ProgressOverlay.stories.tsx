@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ProgressOverlay } from "./ProgressOverlay";
-import { progressEvents } from "../utils/progress-events";
 import { useState } from "react";
+
+import { css } from "styled-system/css";
+
+import { progressEvents } from "../utils/progress-events";
+import { ProgressOverlay } from "./ProgressOverlay";
 import { Button } from "./ui/button";
-import { css } from "../../styled-system/css";
 
 const meta: Meta<typeof ProgressOverlay> = {
   title: "Components/ProgressOverlay",

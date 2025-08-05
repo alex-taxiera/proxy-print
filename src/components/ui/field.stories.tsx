@@ -1,9 +1,11 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Field } from "./field";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+
 import { css } from "styled-system/css";
 import { grid, stack } from "styled-system/patterns";
+
+import { Field } from "./field";
 
 const meta: Meta<typeof Field.Root> = {
   title: "Core Components/Field",

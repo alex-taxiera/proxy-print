@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+
+import { css } from "styled-system/css";
+
 import { Kbd } from "./kbd";
 import { Menu } from "./menu";
-import { css } from "styled-system/css";
 
 const meta: Meta<typeof Kbd> = {
   title: "Core Components/Kbd",

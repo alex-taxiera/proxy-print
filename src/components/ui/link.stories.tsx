@@ -1,6 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Link } from "./link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faExternalLinkAlt,
   faArrowRight,
@@ -23,6 +20,10 @@ import {
   faCheck,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+
+import { Link } from "./link";
 
 const meta: Meta<typeof Link> = {
   title: "Core Components/Link",

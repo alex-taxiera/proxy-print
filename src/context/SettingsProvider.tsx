@@ -1,11 +1,12 @@
 import { ComponentProps, useCallback, useMemo, useState } from "react";
+
+import { invertHexColor } from "../utils/invert-hex-color";
 import {
   DEFAULT_SETTINGS,
   Settings,
   SettingsContext,
   SettingsSchema,
 } from "./SettingsContext";
-import { invertHexColor } from "../utils/invert-hex-color";
 
 export const SettingsProvider = (
   props: Omit<ComponentProps<typeof SettingsContext.Provider>, "value">,

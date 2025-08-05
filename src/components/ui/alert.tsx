@@ -3,12 +3,14 @@ import {
   faExclamationTriangle,
   faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
-import type { OverrideProperties } from "type-fest";
-import * as Styled from "./styled/alert";
-import { ComponentProps, forwardRef } from "react";
-import { AlertProvider, useAlertContext } from "./alert-context";
-import { AlertVariant, AlertVariantProps } from "styled-system/recipes";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ComponentProps, forwardRef } from "react";
+import type { OverrideProperties } from "type-fest";
+
+import { AlertVariant, AlertVariantProps } from "styled-system/recipes";
+
+import { AlertProvider, useAlertContext } from "./alert-context";
+import * as Styled from "./styled/alert";
 
 export type RootProps = React.PropsWithChildren<
   OverrideProperties<AlertVariantProps, AlertVariant>

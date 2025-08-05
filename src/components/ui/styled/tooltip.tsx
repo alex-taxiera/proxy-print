@@ -1,13 +1,16 @@
 "use client";
+
 import type { Assign } from "@ark-ui/react";
 import { Tooltip } from "@ark-ui/react/tooltip";
+
+import { tooltip } from "styled-system/recipes";
 import type {
   ComponentProps,
   HTMLStyledProps,
   RecipeVariantProps,
 } from "styled-system/types";
+
 import { createStyleContext } from "./utils/create-style-context";
-import { tooltip } from "styled-system/recipes";
 
 export type TooltipVariants = RecipeVariantProps<typeof tooltip>;
 

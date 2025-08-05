@@ -1,9 +1,12 @@
 "use client";
+
 import type { Assign } from "@ark-ui/react";
 import { Progress } from "@ark-ui/react/progress";
-import type { ComponentProps, HTMLStyledProps } from "styled-system/types";
-import { createStyleContext } from "./utils/create-style-context";
+
 import { progress, type ProgressVariantProps } from "styled-system/recipes";
+import type { ComponentProps, HTMLStyledProps } from "styled-system/types";
+
+import { createStyleContext } from "./utils/create-style-context";
 
 const { withProvider, withContext } = createStyleContext(progress);
 

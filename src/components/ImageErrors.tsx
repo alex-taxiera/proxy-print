@@ -1,7 +1,8 @@
-import { Alert } from "./ui/alert";
-import { Image } from "../context/ImagesContext";
-import { flex } from "styled-system/patterns";
 import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
+
+import { Image } from "../context/ImagesContext";
+import { Alert } from "./ui/alert";
 
 export type ImageErrorsProps = {
   onDismiss: () => void;

@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Checkbox } from "./checkbox";
+import { CheckedChangeDetails } from "node_modules/@ark-ui/react/dist/components/checkbox/checkbox";
 import { useState } from "react";
+
 import { css } from "styled-system/css";
 import { stack, flex } from "styled-system/patterns";
-import { CheckedChangeDetails } from "node_modules/@ark-ui/react/dist/components/checkbox/checkbox";
+
+import { Checkbox } from "./checkbox";
 
 const meta: Meta<typeof Checkbox> = {
   title: "Core Components/Checkbox",

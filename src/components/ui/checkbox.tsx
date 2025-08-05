@@ -1,7 +1,8 @@
-import { forwardRef } from "react";
-import * as StyledCheckbox from "./styled/checkbox";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faMinus } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { forwardRef } from "react";
+
+import * as StyledCheckbox from "./styled/checkbox";
 
 export type CheckboxProps = StyledCheckbox.RootProps;
 

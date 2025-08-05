@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+
+import { center, visuallyHidden } from "styled-system/patterns";
+
 import { ProgressData, progressEvents } from "../utils/progress-events";
 import { Dialog } from "./ui/dialog";
-import { center, visuallyHidden } from "../../styled-system/patterns";
 import { Progress } from "./ui/progress";
 
 export const ProgressOverlay = () => {

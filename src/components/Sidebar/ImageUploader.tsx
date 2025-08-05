@@ -1,9 +1,11 @@
+import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
 import { useCallback, useContext, useEffect, useState } from "react";
+
+import { css } from "styled-system/css";
+import { center } from "styled-system/patterns";
+
 import { GoogleImageData, ImagesContext } from "../../context/ImagesContext";
 import { FileUpload } from "../ui/file-upload";
-import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
-import { center } from "styled-system/patterns";
-import { css } from "styled-system/css";
 
 const parseXML = (file: File): Promise<GoogleImageData[]> => {
   return new Promise((resolve, reject) => {

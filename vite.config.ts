@@ -1,11 +1,11 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import react from "@vitejs/plugin-react";
-import path from "path";
-
 // https://vite.dev/config/
 import { fileURLToPath } from "node:url";
-import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
+import path from "path";
+import { defineConfig } from "vite";
+
 const dirname =
   typeof __dirname !== "undefined"
     ? __dirname

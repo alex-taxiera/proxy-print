@@ -1,9 +1,11 @@
+import { SelectValueChangeDetails } from "@ark-ui/react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Select, createListCollection } from "./select";
 import { useState } from "react";
+
 import { css } from "styled-system/css";
 import { stack } from "styled-system/patterns";
-import { SelectValueChangeDetails } from "@ark-ui/react";
+
+import { Select, createListCollection } from "./select";
 
 const meta: Meta<typeof Select.Root> = {
   title: "Core Components/Select",

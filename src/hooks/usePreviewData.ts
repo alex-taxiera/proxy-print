@@ -1,6 +1,7 @@
 import { useContext, useMemo } from "react";
-import { SettingsContext } from "../context/SettingsContext";
+
 import { type Image, ImagesContext } from "../context/ImagesContext";
+import { SettingsContext } from "../context/SettingsContext";
 
 const MAX_PREVIEW_CARDS = 108;
 

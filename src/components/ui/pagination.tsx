@@ -1,13 +1,15 @@
 "use client";
-import { forwardRef } from "react";
-import { Button } from "./button";
-import { IconButton } from "./icon-button";
-import * as StyledPagination from "./styled/pagination";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { forwardRef } from "react";
+
+import { Button } from "./button";
+import { IconButton } from "./icon-button";
+import * as StyledPagination from "./styled/pagination";
 
 export type PaginationProps = StyledPagination.RootProps;
 

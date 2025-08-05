@@ -1,13 +1,13 @@
-import { PrintableImages } from "./PrintableImages";
-import { SettingsProvider } from "./context/SettingsProvider";
-import { ImagesProvider } from "./context/ImagesProvider";
-
 import { hstack } from "styled-system/patterns";
-import { Toaster } from "./components/ui/styled/toast";
-import { AlertToast } from "./components/ui/toast";
-import { toaster } from "./utils/toaster";
+
+import { PrintableImages } from "./PrintableImages";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
+import { Toaster } from "./components/ui/styled/toast";
+import { AlertToast } from "./components/ui/toast";
+import { ImagesProvider } from "./context/ImagesProvider";
+import { SettingsProvider } from "./context/SettingsProvider";
+import { toaster } from "./utils/toaster";
 
 function App() {
   return (

@@ -1,14 +1,3 @@
-import { useCallback, useContext } from "react";
-import {
-  DEFAULT_SETTINGS,
-  Settings,
-  SettingsContext,
-} from "../../context/SettingsContext";
-
-import { ImagesContext } from "../../context/ImagesContext";
-import { Field } from "../ui/field";
-import { vstack } from "styled-system/patterns";
-import { Checkbox } from "../ui/checkbox";
 import {
   CheckboxCheckedChangeDetails,
   ColorPickerValueChangeDetails,
@@ -16,9 +5,21 @@ import {
   parseColor,
   SelectValueChangeDetails,
 } from "@ark-ui/react";
-import { Select, createListCollection } from "../ui/select";
+import { useCallback, useContext } from "react";
+
+import { vstack } from "styled-system/patterns";
+
+import { ImagesContext } from "../../context/ImagesContext";
+import {
+  DEFAULT_SETTINGS,
+  Settings,
+  SettingsContext,
+} from "../../context/SettingsContext";
+import { Checkbox } from "../ui/checkbox";
 import { ColorPicker } from "../ui/color-picker";
+import { Field } from "../ui/field";
 import { NumberInput } from "../ui/number-input";
+import { Select, createListCollection } from "../ui/select";
 
 const getMaxGuideWidth = (settings: Settings) => {
   const bleedEdge = Number(settings.bleedEdge);

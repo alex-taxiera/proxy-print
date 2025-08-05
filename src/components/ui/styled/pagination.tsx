@@ -1,8 +1,11 @@
 "use client";
+
 import type { Assign } from "@ark-ui/react";
 import { Pagination } from "@ark-ui/react/pagination";
+
 import { type PaginationVariantProps, pagination } from "styled-system/recipes";
 import type { ComponentProps, HTMLStyledProps } from "styled-system/types";
+
 import { createStyleContext } from "./utils/create-style-context";
 
 const { withProvider, withContext } = createStyleContext(pagination);

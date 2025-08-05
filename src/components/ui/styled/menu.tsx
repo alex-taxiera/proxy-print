@@ -1,9 +1,12 @@
 "use client";
+
 import type { Assign } from "@ark-ui/react";
 import { Menu } from "@ark-ui/react/menu";
-import type { ComponentProps, HTMLStyledProps } from "styled-system/types";
-import { createStyleContext } from "./utils/create-style-context";
+
 import { menu, type MenuVariantProps } from "styled-system/recipes";
+import type { ComponentProps, HTMLStyledProps } from "styled-system/types";
+
+import { createStyleContext } from "./utils/create-style-context";
 
 const { withRootProvider, withContext } = createStyleContext(menu);
 

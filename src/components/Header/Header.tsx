@@ -1,8 +1,9 @@
-import { center, hstack } from "styled-system/patterns";
-import { CommunityBanner } from "./CommunityBanner";
 import { css } from "styled-system/css";
-import { SocialLinks } from "./SocialLinks";
+import { center, hstack } from "styled-system/patterns";
+
 import { Link } from "../ui/link";
+import { CommunityBanner } from "./CommunityBanner";
+import { SocialLinks } from "./SocialLinks";
 
 export const Header = () => {
   return (

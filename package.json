@@ -14,6 +14,16 @@
     "storybook": "npm run watch-css & storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
+  "prettier": {
+    "plugins": [
+      "@trivago/prettier-plugin-sort-imports"
+    ],
+    "importOrder": [
+      "^styled-system/(.*)$",
+      "^[./]"
+    ],
+    "importOrderSeparation": true
+  },
   "dependencies": {
     "@ark-ui/react": "^5.18.2",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
@@ -37,6 +47,7 @@
     "@storybook/addon-themes": "^9.1.0",
     "@storybook/addon-vitest": "^9.1.0",
     "@storybook/react-vite": "^9.1.0",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

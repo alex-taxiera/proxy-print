@@ -1,8 +1,10 @@
 import type { Assign } from "@ark-ui/react";
-import type { ComponentProps } from "styled-system/types";
+
 import { alert, type AlertVariantProps } from "styled-system/recipes";
-import { createStyleContext } from "./utils/create-style-context";
+import type { ComponentProps } from "styled-system/types";
+
 import { Alert } from "../custom/alert";
+import { createStyleContext } from "./utils/create-style-context";
 
 const { withProvider, withContext } = createStyleContext(alert);
 

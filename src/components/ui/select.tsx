@@ -1,15 +1,17 @@
-export { createListCollection } from "@ark-ui/react/select";
-import {
-  FontAwesomeIcon,
-  FontAwesomeIconProps,
-} from "@fortawesome/react-fontawesome";
-import * as Styled from "./styled/select";
 import {
   faCheck,
   faChevronDown,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  FontAwesomeIcon,
+  FontAwesomeIconProps,
+} from "@fortawesome/react-fontawesome";
 import { forwardRef } from "react";
+
+import * as Styled from "./styled/select";
+
+export { createListCollection } from "@ark-ui/react/select";
 
 const IndicatorIcon = forwardRef<
   SVGSVGElement,

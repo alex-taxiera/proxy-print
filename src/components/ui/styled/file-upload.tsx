@@ -1,9 +1,12 @@
 "use client";
+
 import type { Assign } from "@ark-ui/react";
 import { FileUpload } from "@ark-ui/react/file-upload";
-import type { ComponentProps, HTMLStyledProps } from "styled-system/types";
-import { createStyleContext } from "./utils/create-style-context";
+
 import { fileUpload, type FileUploadVariantProps } from "styled-system/recipes";
+import type { ComponentProps, HTMLStyledProps } from "styled-system/types";
+
+import { createStyleContext } from "./utils/create-style-context";
 
 const { withProvider, withContext } = createStyleContext(fileUpload);
 

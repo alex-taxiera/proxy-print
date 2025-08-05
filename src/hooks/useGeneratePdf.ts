@@ -1,11 +1,12 @@
 import { useCallback, useContext } from "react";
-import { progressEvents } from "../utils/progress-events";
-import { SettingsContext } from "../context/SettingsContext";
+
 import { ImagesContext } from "../context/ImagesContext";
-import PdfWorker from "../workers/pdf-worker?worker";
-import { usePreviewData } from "./usePreviewData";
-import { useCardPositionMeta } from "./useCardClassNames";
+import { SettingsContext } from "../context/SettingsContext";
 import { invertHexColor } from "../utils/invert-hex-color";
+import { progressEvents } from "../utils/progress-events";
+import PdfWorker from "../workers/pdf-worker?worker";
+import { useCardPositionMeta } from "./useCardClassNames";
+import { usePreviewData } from "./usePreviewData";
 
 const doTimeout = (fn: () => void, timeout?: number) => {
   if (window.requestIdleCallback) {

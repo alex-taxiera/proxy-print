@@ -1,4 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
+
 import { ImageErrors } from "./ImageErrors";
 
 const meta: Meta<typeof ImageErrors> = {
