@@ -5,36 +5,23 @@ import { css } from "styled-system/css";
 import { vstack } from "styled-system/patterns";
 import { ImageUploader } from "./ImageUploader";
 import { SettingsForm } from "./SettingsForm";
-import { useCollapsible } from "@ark-ui/react";
 import { Button } from "../ui/button";
 
 export const Sidebar = () => {
-  const collapse = useCollapsible({ defaultOpen: true });
   return (
-    <Collapsible.RootProvider
+    <Collapsible.Root
+      defaultOpen
       direction="right"
-      value={collapse}
       className={css({
         boxShadow: "sm",
         backgroundColor: "bg.subtle",
         zIndex: "2",
         gap: "1",
-        // position: "relative",
       })}
     >
-      <Collapsible.Trigger
-        asChild
-        className={css({
-          // position: "absolute",
-          // top: "3",
-          // left: "-4",
-          // transform: !collapse.open ? 'translateX(-50%)' : 'translateX(0)',
-          // transition: 'transform 0.2s ease-in-out',
-        })}
-      >
+      <Collapsible.Trigger asChild>
         <Button
           aria-label="Settings"
-          // variant={collapse.open ? 'solid' : 'ghost'}
           variant="ghost"
           size="xs"
           colorPalette="gray"
@@ -44,24 +31,27 @@ export const Sidebar = () => {
             height: "full",
             alignItems: "flex-start",
             borderRadius: "0",
+            _open: {
+              "& svg": {
+                transform: "rotate(180deg)",
+              },
+            },
           })}
         >
           <FontAwesomeIcon
             icon={faChevronLeft}
             className={css({
-              transform: collapse.open ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 0.2s ease-in-out",
             })}
             size="lg"
           />
         </Button>
       </Collapsible.Trigger>
-      <Collapsible.Content zIndex="2" overflow="auto">
+      <Collapsible.Content>
         <aside
           className={css({
-            // backgroundColor: "bg.subtle",
-            // boxShadow: "sm",
-            minHeight: "100%",
+            height: "full",
+            overflowY: "auto",
             paddingBottom: "12", // dont let edge go to bottom of page
           })}
         >
@@ -82,6 +72,6 @@ export const Sidebar = () => {
           </div>
         </aside>
       </Collapsible.Content>
-    </Collapsible.RootProvider>
+    </Collapsible.Root>
   );
 };
