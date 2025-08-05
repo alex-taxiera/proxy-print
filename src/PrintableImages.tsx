@@ -216,6 +216,7 @@ export const PrintableImages = () => {
                 width: "var(--page-width, 8.5 var(--page-unit, in))",
                 background: "white",
                 overflow: "hidden",
+                boxShadow: 'md'
               }),
             )}
           >

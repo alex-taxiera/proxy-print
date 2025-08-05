@@ -28,27 +28,6 @@ function App() {
           <PrintableImages />
           <Sidebar />
         </main>
-        {/* <footer className={center()}>
-          <Link asChild>
-            <a href="https://github.com/alex-taxiera/proxy-print">
-              {"<Code />"}
-            </a>
-          </Link>
-          &nbsp;by&nbsp;
-          <Link asChild>
-            <a href="https://github.com/alex-taxiera">Alex Taxiera</a>
-          </Link>
-          &nbsp;|&nbsp;
-          <Link asChild>
-            <a
-              href="https://discord.gg/A5AkkyP8CU"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FontAwesomeIcon icon={faDiscord} style={{ color: "inherit" }} />
-            </a>
-          </Link>
-        </footer> */}
       </ImagesProvider>
     </SettingsProvider>
   );
