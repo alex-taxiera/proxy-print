@@ -1,15 +1,13 @@
-import { ImageUploader } from "./ImageUploader";
 import { PrintableImages } from "./PrintableImages";
-import { SettingsForm } from "./SettingsForm";
 import { SettingsProvider } from "./context/SettingsProvider";
 import { ImagesProvider } from "./context/ImagesProvider";
 
-import { hstack, vstack } from "styled-system/patterns";
+import { hstack } from "styled-system/patterns";
 import { Toaster } from "./components/ui/styled/toast";
 import { AlertToast } from "./components/ui/toast";
 import { toaster } from "./utils/toaster";
 import { Header } from "./components/Header";
-import { css } from "styled-system/css";
+import { Sidebar } from "./components/Sidebar";
 
 function App() {
   return (
@@ -28,29 +26,7 @@ function App() {
           })}
         >
           <PrintableImages />
-          <aside
-            className={css({
-              backgroundColor: "bg.subtle",
-              boxShadow: "sm",
-              zIndex: "2",
-              overflow: 'auto'
-            })}
-          >
-            <div
-              className={vstack({
-                gap: "4",
-                paddingY: "2",
-                paddingX: "4",
-                lg: {
-                  paddingY: "4",
-                  paddingX: "8",
-                }
-              })}
-            >
-              <ImageUploader />
-              <SettingsForm />
-            </div>
-          </aside>
+          <Sidebar />
         </main>
         {/* <footer className={center()}>
           <Link asChild>

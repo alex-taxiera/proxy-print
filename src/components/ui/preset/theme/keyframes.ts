@@ -41,6 +41,22 @@ export const keyframes = defineKeyframes({
     '0%': { height: 'var(--height)' },
     '100%': { height: '0' },
   },
+  'collapse-in-left': {
+    '0%': { width: '0' },
+    '100%': { width: 'var(--width)' },
+  },
+  'collapse-out-left': {
+    '0%': { width: 'var(--width)' },
+    '100%': { width: '0' },
+  },
+  'collapse-in-right': {
+    '0%': { width: '0' },
+    '100%': { width: 'var(--width)' },
+  },
+  'collapse-out-right': {
+    '0%': { width: 'var(--width)' },
+    '100%': { width: '0' },
+  },
   fadeIn: {
     '0%': { opacity: '0', transform: 'translateY(-4px)' },
     '100%': { opacity: '1', transform: 'translateY(0)' },

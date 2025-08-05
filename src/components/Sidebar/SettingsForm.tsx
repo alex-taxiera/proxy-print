@@ -3,12 +3,12 @@ import {
   DEFAULT_SETTINGS,
   Settings,
   SettingsContext,
-} from "./context/SettingsContext";
+} from "../../context/SettingsContext";
 
-import { ImagesContext } from "./context/ImagesContext";
-import { Field } from "./components/ui/field";
-import { grid } from "styled-system/patterns";
-import { Checkbox } from "./components/ui/checkbox";
+import { ImagesContext } from "../../context/ImagesContext";
+import { Field } from "../ui/field";
+import { vstack } from "styled-system/patterns";
+import { Checkbox } from "../ui/checkbox";
 import {
   CheckboxCheckedChangeDetails,
   ColorPickerValueChangeDetails,
@@ -16,9 +16,9 @@ import {
   parseColor,
   SelectValueChangeDetails,
 } from "@ark-ui/react";
-import { Select, createListCollection } from "./components/ui/select";
-import { ColorPicker } from "./components/ui/color-picker";
-import { NumberInput } from "./components/ui/number-input";
+import { Select, createListCollection } from "../ui/select";
+import { ColorPicker } from "../ui/color-picker";
+import { NumberInput } from "../ui/number-input";
 
 const getMaxGuideWidth = (settings: Settings) => {
   const bleedEdge = Number(settings.bleedEdge);
@@ -100,8 +100,9 @@ export const SettingsForm = () => {
 
   return (
     <form
-      className={grid({
-        gridTemplateColumns: "repeat(auto-fit, 165px)",
+      className={vstack({
+        width: 'full',
+        alignItems: 'stretch',
         gap: "2",
         alignSelf: "stretch",
         justifyContent: "center",

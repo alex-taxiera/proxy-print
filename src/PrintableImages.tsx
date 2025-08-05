@@ -148,7 +148,7 @@ export const PrintableImages = () => {
               </Tooltip.Positioner>
             </Tooltip.Root>
           </div>
-          <div className={vstack({ alignItems: "center", gap: "2" })}>
+          <div className={vstack({ alignItems: "center", gap: "2", visibility: imageMatrix.length > 1 ? "visible" : "hidden" })}>
             <span className={css({ fontSize: "xs", color: "fg.muted" })}>
               Showing {currentPage * cardsPerPage - cardsPerPage + 1} -{" "}
               {Math.min(

@@ -37,6 +37,18 @@ export const animations = defineTokens.animations({
   'collapse-out': {
     value: 'collapse-out 200ms {easings.emphasized-out}',
   },
+  'collapse-in-left': {
+    value: 'collapse-in-left 250ms {easings.emphasized-in}',
+  },
+  'collapse-out-left': {
+    value: 'collapse-out-left 200ms {easings.emphasized-out}',
+  },
+  'collapse-in-right': {
+    value: 'collapse-in-right 250ms {easings.emphasized-in}',
+  },
+  'collapse-out-right': {
+    value: 'collapse-out-right 200ms {easings.emphasized-out}',
+  },
   spin: {
     value: 'spin 1s linear infinite',
   },

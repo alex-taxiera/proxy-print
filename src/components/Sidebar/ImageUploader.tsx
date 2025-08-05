@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { GoogleImageData, ImagesContext } from "./context/ImagesContext";
-import { FileUpload } from "./components/ui/file-upload";
+import { GoogleImageData, ImagesContext } from "../../context/ImagesContext";
+import { FileUpload } from "../ui/file-upload";
 import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
 import { center } from "styled-system/patterns";
 import { css } from "styled-system/css";

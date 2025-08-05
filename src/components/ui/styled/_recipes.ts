@@ -1,6 +1,7 @@
-import { button } from "./button.recipe";
 import { alert } from "./alert.recipe";
+import { button } from "./button.recipe";
 import { checkbox } from "./checkbox.recipe";
+import { collapsible } from "./collapsible.recipe";
 import { colorPicker } from "./color-picker.recipe";
 import { dialog } from "./dialog.recipe";
 import { field, input, textarea } from "./field.recipe";
@@ -26,6 +27,7 @@ export const recipes = {
 export const slotRecipes = {
   alert,
   checkbox,
+  collapsible,
   colorPicker,
   dialog,
   field,

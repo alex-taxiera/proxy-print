@@ -5,10 +5,10 @@ import { hstack } from "styled-system/patterns";
 
 export const SocialLinks = () => {
   return (
-    <div className={hstack({ gap: "4" })}>
+    <div className={hstack({ gap: "4", color: 'fg.default' })}>
       <Link
         asChild
-        color="colorPalette.fg"
+        color="inherit"
         aria-label="View the Proxy Print Setup GitHub repository"
       >
         <a
@@ -21,7 +21,7 @@ export const SocialLinks = () => {
       </Link>
       <Link
         asChild
-        color="colorPalette.fg"
+        color="inherit"
         aria-label="Join the Proxy Community Discord"
       >
         <a
@@ -32,7 +32,7 @@ export const SocialLinks = () => {
           <FontAwesomeIcon icon={faDiscord} />
         </a>
       </Link>
-      <Link asChild color="colorPalette.fg" aria-label="Donate via PayPal">
+      <Link asChild color="inherit" aria-label="Donate via PayPal">
         <a
           href="https://www.paypal.me/alextaxiera"
           target="_blank"
