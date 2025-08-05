@@ -2,31 +2,31 @@ import { createContext } from "react";
 import zod from "zod";
 
 export const SettingsSchema = zod.object({
+  filename: zod.string(),
+  unit: zod.enum(["in", "mm"]),
+  pageWidth: zod.string(),
+  pageHeight: zod.string(),
+  numberOfColumns: zod.string(),
   enableBleedEdge: zod.boolean(),
   bleedEdge: zod.string(),
-  guides: zod.boolean(),
   guidesColor: zod.string(),
   guidesThickness: zod.string(),
   guidesAtBleedEdge: zod.boolean(),
-  pageHeight: zod.string(),
-  pageWidth: zod.string(),
-  numberOfColumns: zod.string(),
-  unit: zod.enum(["in", "mm"]),
 });
 
 export type Settings = zod.infer<typeof SettingsSchema>;
 
 export const DEFAULT_SETTINGS = {
+  filename: 'cards',
+  unit: "in",
+  pageWidth: "8.5",
+  pageHeight: "11",
+  numberOfColumns: "3",
   enableBleedEdge: true,
   bleedEdge: "0",
-  guides: true,
   guidesColor: "#adff2f",
   guidesThickness: "1",
   guidesAtBleedEdge: false,
-  pageHeight: "11",
-  pageWidth: "8.5",
-  numberOfColumns: "3",
-  unit: "in",
 } as const satisfies Settings;
 
 export type SettingsContextValue = {

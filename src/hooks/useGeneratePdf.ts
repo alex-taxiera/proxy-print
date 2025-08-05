@@ -88,6 +88,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     const unit = settings.unit;
     const guidesThickness = 0.2645833333 * guideBorderWidth;
     const guidesAtBleedEdge = settings.guidesAtBleedEdge;
+    const pdfName = `${settings.filename}.pdf`
 
     const cards = Array.from(
       contentRef.current?.querySelectorAll<HTMLElement>(".card") || [],
@@ -301,7 +302,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = "cards.pdf";
+          a.download = pdfName;
           a.click();
           URL.revokeObjectURL(url);
         }

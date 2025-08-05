@@ -67,6 +67,14 @@ export const SettingsForm = () => {
     [setSettings],
   );
 
+  const buildTextInputChangeHandler = useCallback(
+    (key: keyof typeof settings) =>
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        handle(event.target.value, key)
+      },
+    [handle],
+  );
+
   const buildNumberInputChangeHandler = useCallback(
     (key: keyof typeof settings) =>
       (details: NumberInputValueChangeDetails) => {
@@ -109,6 +117,17 @@ export const SettingsForm = () => {
         justifyContent: "center",
       })}
     >
+      <Field.Root disabled={isRendering}>
+        <Field.Label>
+          Filename
+        </Field.Label>
+        <Field.Input
+          minLength={1}
+          maxLength={50}
+          value={settings.filename}
+          onChange={buildTextInputChangeHandler('filename')}
+        />
+      </Field.Root>
       <Field.Root disabled={isRendering}>
         {/* TODO: Make more simple Select */}
         <Select.Root

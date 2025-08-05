@@ -17,7 +17,15 @@ export const SettingsProvider = (
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings) as unknown;
-        return SettingsSchema.parse(parsedSettings);
+        const { data, success } = SettingsSchema.safeParse(parsedSettings);
+        if (success) {
+          return data
+        } else {
+          return SettingsSchema.parse({
+            ...DEFAULT_SETTINGS,
+            ...(parsedSettings as any)
+          })
+        }
       } catch (error) {
         localStorage.removeItem("settings");
         console.error(error);
@@ -62,18 +70,18 @@ export const SettingsProvider = (
       : 1;
     const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0;
     return {
-      "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
-      "--image-container-buffer": `${imageContainerBuffer}px`,
+      "--page-unit": value.unit,
+      "--page-width": `${value.pageWidth}${value.unit}`,
+      "--page-height": `${value.pageHeight}${value.unit}`,
+      "--grid-columns": value.numberOfColumns,
       "--bleed-edge": `${value.enableBleedEdge ? value.bleedEdge : 0}mm`,
-      "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
       "--guides-color": value.guidesColor,
       "--guides-color-inverted": invertHexColor(value.guidesColor),
       "--guides-thickness": `${guideThickness}px`,
       "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
-      "--page-unit": value.unit,
-      "--page-height": `${value.pageHeight}${value.unit}`,
-      "--page-width": `${value.pageWidth}${value.unit}`,
-      "--grid-columns": value.numberOfColumns,
+      "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
+      "--image-container-buffer": `${imageContainerBuffer}px`,
+      "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
     };
   }, [value]);
 
