@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:ci": "prettier --check .",
     "preview": "vite preview",
     "prepare": "panda codegen",
     "watch-css": "panda codegen --watch",

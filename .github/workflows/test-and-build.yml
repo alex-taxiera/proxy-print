@@ -77,7 +77,7 @@ jobs:
           key: ${{ hashFiles('**/package-lock.json') }}
 
       - name: Format project
-        run: npm run format
+        run: npm run format:ci
 
   build:
     runs-on: ubuntu-latest
