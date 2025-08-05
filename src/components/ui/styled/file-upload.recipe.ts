@@ -31,13 +31,13 @@ export const fileUpload = defineSlotRecipe({
       px: "6",
       py: "4",
       _hover: {
-        backgroundColor: "bg.info",
+        backgroundColor: "accent.4",
       },
       _active: {
-        backgroundColor: "border.info",
+        backgroundColor: "accent.5",
       },
       '&[data-dragging="true"]': {
-        backgroundColor: "border.info",
+        backgroundColor: "accent.5",
       },
     },
     item: {
