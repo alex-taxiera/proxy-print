@@ -412,7 +412,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     contentRef,
     settings,
     cardsPerPage,
-    imageMatrix.length,
+    imageMatrix,
     images,
     cardPositionMeta,
     setIsRendering,

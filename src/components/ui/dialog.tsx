@@ -27,4 +27,4 @@ CloseButton.displayName = "CloseButton";
 export const Dialog = {
   ...Styled,
   CloseButton,
-};
+} as const;

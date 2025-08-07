@@ -46,4 +46,4 @@ export const Alert = {
   Icon,
   Title,
   DismissButton,
-};
+} as const;

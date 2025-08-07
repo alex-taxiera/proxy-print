@@ -23,7 +23,7 @@ export const SettingsProvider = (
         } else {
           return SettingsSchema.parse({
             ...DEFAULT_SETTINGS,
-            ...(parsedSettings as any),
+            ...(parsedSettings as Settings),
           });
         }
       } catch (error) {

@@ -41,4 +41,4 @@ export const Select = {
   IndicatorIcon,
   ClearIcon,
   ItemIndicatorIcon,
-};
+} as const;

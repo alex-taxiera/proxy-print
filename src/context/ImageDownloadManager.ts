@@ -134,7 +134,7 @@ export function useImageDownloadManager({
           }
         });
     }
-  }, [maxInflight, loadingToastId]);
+  }, [maxInflight, raiseToast]);
 
   const add = useCallback(
     (id: string): Promise<{ mimeType: string; url: string }> => {

@@ -55,4 +55,4 @@ export const Alert = {
   ...Styled,
   Root,
   StatusIcon,
-};
+} as const;
