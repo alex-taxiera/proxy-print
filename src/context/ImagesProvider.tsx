@@ -1,8 +1,6 @@
 import { nanoid } from "nanoid";
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 
-import { MAX_PREVIEW_CARDS } from "../const/preview";
-import { usePreviewData } from "../hooks/usePreviewData";
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import { GoogleImageData, Image, ImagesContext } from "./ImagesContext";
 
@@ -14,11 +12,6 @@ export const ImagesProvider = (
   const [images, setImages] = useState<Image[]>([]);
   const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
   const [isRendering, setIsRendering] = useState(false);
-  const [loadedLocalImageIds, setLoadedLocalImageIds] = useState<Set<string>>(
-    new Set(),
-  );
-
-  const { cardsPerPage } = usePreviewData();
 
   const onError = useCallback((image: Image) => {
     const uuid = image.uuid;
@@ -37,14 +30,6 @@ export const ImagesProvider = (
     setImagesWithError([]);
   }, []);
 
-  const onLocalImageLoaded = useCallback((uuid: string) => {
-    setLoadedLocalImageIds((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(uuid);
-      return newSet;
-    });
-  }, []);
-
   const onRemove = useCallback(
     (uuid: string) => {
       remove(uuid);
@@ -57,17 +42,7 @@ export const ImagesProvider = (
     removeAll();
     onClearErrors();
     setImages([]);
-    setLoadedLocalImageIds(new Set());
   }, [removeAll, onClearErrors]);
-
-  // Calculate local image loading state
-  const loadedLocalImageCount = loadedLocalImageIds.size;
-  const isLoadingLocalImages =
-    loadedLocalImageCount <
-    Math.min(
-      images.length,
-      MAX_PREVIEW_CARDS - (MAX_PREVIEW_CARDS % cardsPerPage),
-    );
 
   const downloadImage = useCallback(
     async (image: Image) => {
@@ -121,10 +96,6 @@ export const ImagesProvider = (
       isRendering,
       setIsRendering,
       getCachedImage,
-      loadedLocalImageIds,
-      onLocalImageLoaded,
-      isLoadingLocalImages,
-      loadedLocalImageCount,
     }),
     [
       isFetching,
@@ -137,10 +108,6 @@ export const ImagesProvider = (
       isRendering,
       setIsRendering,
       getCachedImage,
-      loadedLocalImageIds,
-      onLocalImageLoaded,
-      isLoadingLocalImages,
-      loadedLocalImageCount,
     ],
   );
 

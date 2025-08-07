@@ -55,6 +55,34 @@ export function useImageDownloadManager({
   const loadingToastId = useRef<string>();
   const [isFetching, setIsFetching] = useState(false);
 
+  const raiseToast = useCallback(() => {
+    if (!loadingToastId.current) {
+      loadingToastId.current = toaster.create({
+        title: "Downloading images from MPC Autofill",
+        description: "This may take a while...",
+        duration: Infinity,
+        closable: false,
+        meta: {
+          progress: null,
+          totalProgressAmount:
+            queueRef.current.length +
+            inflightRef.current.length +
+            imageCacheRef.current.size,
+        },
+      });
+    } else {
+      toaster.update(loadingToastId.current, {
+        meta: {
+          progress: imageCacheRef.current.size,
+          totalProgressAmount:
+            queueRef.current.length +
+            inflightRef.current.length +
+            imageCacheRef.current.size,
+        },
+      });
+    }
+  }, [loadingToastId]);
+
   const processQueue = useCallback(() => {
     while (
       inflightRef.current.length < maxInflight &&
@@ -62,31 +90,7 @@ export function useImageDownloadManager({
     ) {
       const item = queueRef.current.shift()!;
       inflightRef.current.push(item);
-      if (!loadingToastId.current) {
-        loadingToastId.current = toaster.create({
-          title: "Downloading images from MPC Autofill",
-          description: "This may take a while...",
-          duration: Infinity,
-          closable: false,
-          meta: {
-            progress: imageCacheRef.current.size,
-            totalProgressAmount:
-              queueRef.current.length +
-              inflightRef.current.length +
-              imageCacheRef.current.size,
-          },
-        });
-      } else {
-        toaster.update(loadingToastId.current, {
-          meta: {
-            progress: imageCacheRef.current.size,
-            totalProgressAmount:
-              queueRef.current.length +
-              inflightRef.current.length +
-              imageCacheRef.current.size,
-          },
-        });
-      }
+      raiseToast();
       setIsFetching((oldIsFetching) => oldIsFetching || true);
       const abortController = abortControllersRef.current.get(item.id);
       fetchImage(item, { signal: abortController?.signal })
@@ -110,6 +114,7 @@ export function useImageDownloadManager({
           item.reject(error);
         })
         .finally(() => {
+          raiseToast();
           abortControllersRef.current.delete(item.id);
           inflightRef.current = inflightRef.current.filter((i) => i !== item);
           if (

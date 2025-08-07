@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useCallback, useRef, useState } from "react";
 
 import { css, cx } from "styled-system/css";
 import { center, flex, grid, hstack, vstack } from "styled-system/patterns";
@@ -26,6 +26,37 @@ const containerStyles = flex.raw({
   overflow: "auto",
 });
 
+const usePagination = () => {
+  const { imageMatrix } = usePreviewData();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
+  const [imageLoadCount, setImageLoadCount] = useState(0);
+
+  const currentCards = imageMatrix[currentPage - 1];
+
+  const changePage = useCallback((page: number) => {
+    setCurrentPage(page);
+    setIsPageLoaded(false);
+    setImageLoadCount(0);
+  }, []);
+
+  const onImageLoad = useCallback(() => {
+    setImageLoadCount((count) => count + 1);
+    if (imageLoadCount === currentCards.length) {
+      setIsPageLoaded(true);
+    }
+  }, [currentCards, imageLoadCount]);
+
+  return {
+    currentPage,
+    currentCards,
+    isPageLoaded,
+    changePage,
+    onImageLoad,
+  };
+};
+
 export const PrintableImages = () => {
   const { cssVars } = useContext(SettingsContext);
 
@@ -35,7 +66,6 @@ export const PrintableImages = () => {
     isRendering,
     setIsRendering,
     isFetching,
-    isLoadingLocalImages,
     onClearErrors,
     imagesWithError,
   } = useContext(ImagesContext);
@@ -43,7 +73,9 @@ export const PrintableImages = () => {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { imageMatrix, cardsPerPage } = usePreviewData();
-  const [currentPage, setCurrentPage] = useState(1);
+
+  const { currentPage, currentCards, isPageLoaded, changePage, onImageLoad } =
+    usePagination();
 
   const generatePdf = useGeneratePdf(contentRef);
 
@@ -119,14 +151,14 @@ export const PrintableImages = () => {
               Remove all cards
             </Button>
             <Tooltip.Root
-              disabled={!isRendering && !isFetching && !isLoadingLocalImages}
+              disabled={!isRendering && !isFetching && !isPageLoaded}
               positioning={{
                 placement: "top",
               }}
             >
               <Tooltip.Trigger asChild>
                 <Button
-                  disabled={isRendering || isFetching || isLoadingLocalImages}
+                  disabled={isRendering || isFetching || isPageLoaded}
                   onClick={() => handleSave()}
                 >
                   Save
@@ -141,7 +173,7 @@ export const PrintableImages = () => {
                     ? "Generating PDF..."
                     : isFetching
                       ? "Downloading images..."
-                      : isLoadingLocalImages
+                      : !isPageLoaded
                         ? "Loading images..."
                         : ""}
                 </Tooltip.Content>
@@ -169,7 +201,7 @@ export const PrintableImages = () => {
               page={currentPage}
               pageSize={cardsPerPage}
               siblingCount={1}
-              onPageChange={({ page }) => setCurrentPage(page)}
+              onPageChange={({ page }) => changePage(page)}
             />
           </div>
         </div>
@@ -231,11 +263,12 @@ export const PrintableImages = () => {
                 textAlign: "center",
               })}
             >
-              {imageMatrix[currentPage - 1].map((image, index) => (
+              {currentCards.map((image, index) => (
                 <Card
                   key={image.uuid || `empty-${index}`}
                   image={image}
                   index={index}
+                  onImageLoad={onImageLoad}
                 />
               ))}
             </div>

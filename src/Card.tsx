@@ -131,14 +131,14 @@ export type CardProps = {
   image: Image;
   index: number;
   showImage?: boolean;
+  onImageLoad?: () => void;
 };
 
 export const Card = ({
-  //  className,
   image,
   index,
   showImage = true,
-  // ...restProps
+  onImageLoad,
 }: CardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -148,8 +148,6 @@ export const Card = ({
     onRemove,
     isRendering,
     getCachedImage,
-    loadedLocalImageIds,
-    onLocalImageLoaded,
   } = useContext(ImagesContext);
 
   const [src, setSrc] = useState<string>("");
@@ -158,15 +156,12 @@ export const Card = ({
     () => !!image.id && !downloadedSrc,
     [image.id, downloadedSrc],
   );
-  const isLoading = useMemo(
-    () => !loadedLocalImageIds.has(image.uuid),
-    [loadedLocalImageIds, image.uuid],
-  );
-  const isPending = isLoading || isFetching;
-
-  const imageSrc = downloadedSrc ?? src;
 
   const isEmpty = !image.file && !image.id;
+  const [isLoading, setIsLoading] = useState(true);
+  const isPending = (isLoading || isFetching) && !isEmpty;
+
+  const imageSrc = downloadedSrc ?? src;
 
   const className = useCardClassName({
     isEmpty,
@@ -280,7 +275,8 @@ export const Card = ({
                     objectFit: "cover",
                   })}
                   onLoad={() => {
-                    onLocalImageLoaded(image.uuid);
+                    setIsLoading(false);
+                    onImageLoad?.();
                   }}
                 />
               </Menu.ContextTrigger>
