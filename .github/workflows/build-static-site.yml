@@ -81,6 +81,8 @@ jobs:
           key: ${{ hashFiles('**/package-lock.json') }}
 
       - name: Build project
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: npm run build
 
       - name: Upload Artifact
