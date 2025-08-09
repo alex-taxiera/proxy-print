@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/react";
+import { PDFDocument } from "pdf-lib";
 import { useCallback, useContext } from "react";
 
 import { ImagesContext } from "../context/ImagesContext";

@@ -19,7 +19,7 @@ export const usePageLimits = () => {
     const CARD_HEIGHT = {
       standard: 88, // Standard card height in mm
       japanese: 86, // Japanese card height in mm
-    };
+    } as const;
 
     // Adjust card height based on card size
     const cardHeight =

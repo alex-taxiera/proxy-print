@@ -69,6 +69,8 @@ export const SettingsProvider = (
       ? Number(value.guidesThickness)
       : 1;
     const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0;
+    const cardWidth = value.cardSize === "japanese" ? "59mm" : "63mm";
+    const cardHeight = value.cardSize === "japanese" ? "86mm" : "88mm";
     return {
       "--page-unit": value.unit,
       "--page-width": `${value.pageWidth}${value.unit}`,
@@ -82,6 +84,8 @@ export const SettingsProvider = (
       "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
       "--image-container-buffer": `${imageContainerBuffer}px`,
       "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
+      "--card-width": cardWidth,
+      "--card-height": cardHeight,
     };
   }, [value]);
 

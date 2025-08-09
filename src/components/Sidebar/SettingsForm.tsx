@@ -46,6 +46,13 @@ const unitsCollection = createListCollection({
   ],
 });
 
+const cardSizeCollection = createListCollection({
+  items: [
+    { label: "Standard", value: "standard" },
+    { label: "Japanese", value: "japanese" },
+  ],
+});
+
 export const SettingsForm = () => {
   const { settings, setSettings } = useContext(SettingsContext);
   const { isRendering } = useContext(ImagesContext);
@@ -125,6 +132,37 @@ export const SettingsForm = () => {
           value={settings.filename}
           onChange={buildTextInputChangeHandler("filename")}
         />
+      </Field.Root>
+      <Field.Root disabled={isRendering}>
+        <Select.Root
+          collection={cardSizeCollection}
+          value={[settings.cardSize]}
+          onValueChange={buildSelectChangeHandler("cardSize")}
+        >
+          <Select.Label>Card Size</Select.Label>
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText />
+              <Select.Indicator asChild>
+                <Select.IndicatorIcon />
+              </Select.Indicator>
+            </Select.Trigger>
+          </Select.Control>
+          <Select.Positioner>
+            <Select.Content>
+              <Select.List>
+                {cardSizeCollection.items.map((item) => (
+                  <Select.Item key={item.value} item={item}>
+                    <Select.ItemText>{item.label}</Select.ItemText>
+                    <Select.ItemIndicator asChild>
+                      <Select.ItemIndicatorIcon />
+                    </Select.ItemIndicator>
+                  </Select.Item>
+                ))}
+              </Select.List>
+            </Select.Content>
+          </Select.Positioner>
+        </Select.Root>
       </Field.Root>
       <Field.Root disabled={isRendering}>
         {/* TODO: Make more simple Select */}

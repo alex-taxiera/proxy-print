@@ -142,13 +142,8 @@ export const Card = ({
 }: CardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const {
-    images,
-    onAdd,
-    onRemove,
-    isRendering,
-    getCachedImage,
-  } = useContext(ImagesContext);
+  const { images, onAdd, onRemove, isRendering, getCachedImage } =
+    useContext(ImagesContext);
 
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
@@ -162,12 +157,6 @@ export const Card = ({
   const isPending = (isLoading || isFetching) && !isEmpty;
 
   const imageSrc = downloadedSrc ?? src;
-
-  const className = useCardClassName({
-    isEmpty,
-    isPending,
-    index,
-  });
 
   const className = useCardClassName({
     isEmpty,
@@ -246,9 +235,9 @@ export const Card = ({
           center({
             overflow: "hidden",
             width:
-              "calc(63mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+              "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
             height:
-              "calc(88mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+              "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
           }),
         )}
       >
@@ -276,7 +265,8 @@ export const Card = ({
                   src={imageSrc}
                   alt={image.file?.name ?? image.name}
                   className={css({
-                    width: "calc(63mm + var(--image-zoom-width))",
+                    width:
+                      "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
                     maxWidth: "unset",
                     objectFit: "cover",
                   })}

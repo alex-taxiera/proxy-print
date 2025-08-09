@@ -3,6 +3,7 @@ import zod from "zod";
 
 export const SettingsSchema = zod.object({
   filename: zod.string(),
+  cardSize: zod.enum(["standard", "japanese"]),
   unit: zod.enum(["in", "mm"]),
   pageWidth: zod.string(),
   pageHeight: zod.string(),
@@ -17,6 +18,7 @@ export const SettingsSchema = zod.object({
 export type Settings = zod.infer<typeof SettingsSchema>;
 
 export const DEFAULT_SETTINGS = {
+  cardSize: "standard",
   filename: "cards",
   unit: "in",
   pageWidth: "8.5",
