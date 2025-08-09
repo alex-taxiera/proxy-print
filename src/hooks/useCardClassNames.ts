@@ -17,4 +17,4 @@ export const useCardPositionMeta = () => {
       };
     });
   }, [columnsPerPage, rowsPerPage]);
-};
+}

@@ -169,6 +169,12 @@ export const Card = ({
     index,
   });
 
+  const className = useCardClassName({
+    isEmpty,
+    isPending,
+    index,
+  });
+
   const add = useCallback(
     (count: number) => {
       const index = images.indexOf(image);

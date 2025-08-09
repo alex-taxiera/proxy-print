@@ -17,7 +17,6 @@ const doTimeout = (fn: () => void, timeout?: number) => {
 };
 
 async function* mergePDFsBlobs(blobs: Blob[]) {
-  const { PDFDocument } = await import("pdf-lib/es");
   let mergedPdf = await PDFDocument.create();
   // split the blobs into chunks of 2GB -- this is the limit in Chrome
   const maxPdfSize = 2 * 1024 * 1024 * 1024;
@@ -191,6 +190,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           tempImg.src = "";
         } catch (error) {
           console.error("Error processing image for PDF:", error);
+          Sentry.captureException(error);
         }
       }
 
@@ -276,6 +276,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           }
         })
         .catch((error) => {
+          Sentry.captureException(error);
           console.error("Error processing card:", error);
         });
     };
@@ -309,6 +310,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         setIsRendering(false);
         progressEvents.emit("complete");
       } catch (error) {
+        Sentry.captureException(error);
         console.error("Error merging PDFs", error);
         console.timeEnd("save");
         setIsRendering(false);
@@ -373,6 +375,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             break;
           }
           case "error":
+            Sentry.captureException(e.data.error);
             console.error("PDF error:", e.data.error);
             console.timeEnd("save");
             setIsRendering(false);
@@ -382,6 +385,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       };
 
       worker.onerror = (e) => {
+        Sentry.captureException(e.error);
         console.error("Worker error:", e.error);
         console.timeEnd("save");
         setIsRendering(false);
