@@ -37,6 +37,8 @@ Sentry.init({
   environment: SENTRY_ENV,
 });
 
+console.debug(`Sentry environment: ${SENTRY_ENV}`);
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
