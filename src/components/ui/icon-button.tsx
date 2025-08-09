@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+
 import {
   IconButton as StyledIconButton,
   type IconButtonProps as StyledIconButtonProps,
@@ -13,7 +14,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     const { disabled, ...rest } = props;
 
     return <StyledIconButton ref={ref} aria-disabled={disabled} {...rest} />;
-  }
+  },
 );
 
 IconButton.displayName = "IconButton";

@@ -1,45 +1,47 @@
 import { jsPDF } from "jspdf";
+
 import { Settings } from "../context/SettingsContext";
 
 type InitData = {
-  pageHeight: number,
-  pageWidth: number,
-  unit: Settings['unit'],
-}
+  pageHeight: number;
+  pageWidth: number;
+  unit: Settings["unit"];
+};
 
 type CardData = {
   imageDataUrl: string | null;
-    mimeType: string | undefined;
-    pdfX: number;
-    pdfY: number;
-    containerWidth: number;
-    containerHeight: number;
-    scaleX: number;
-    scaleY: number;
-    cardPosition:
-      {
-        isFirstRow: boolean;
-        isLastRow: boolean;
-        isFirstColumn: boolean;
-        isLastColumn: boolean;
-    };
-    cardSize: Settings['cardSize'];
-    guides: {
-      enabled: boolean;
-      thickness: number;
-      bleedEdgeWidth: number;
-      guideColor: string;
-      invertedGuideColor: string;
-      unit: Settings['unit']
-      guidesThickness: number;
-      guidesAtBleedEdge: boolean;
+  mimeType: string | undefined;
+  pdfX: number;
+  pdfY: number;
+  containerWidth: number;
+  containerHeight: number;
+  scaleX: number;
+  scaleY: number;
+  cardPosition: {
+    isFirstRow: boolean;
+    isLastRow: boolean;
+    isFirstColumn: boolean;
+    isLastColumn: boolean;
+  };
+  cardSize: Settings["cardSize"];
+  guides: {
+    enabled: boolean;
+    thickness: number;
+    bleedEdgeWidth: number;
+    guideColor: string;
+    invertedGuideColor: string;
+    unit: Settings["unit"];
+    guidesThickness: number;
+    guidesAtBleedEdge: boolean;
   } | null;
-}
+};
 
-type MessageEventData = {
-  card?: CardData,
-  init?: InitData
-} | undefined;
+type MessageEventData =
+  | {
+      card?: CardData;
+      init?: InitData;
+    }
+  | undefined;
 
 let pdf: jsPDF | undefined;
 let pdfOptions:
@@ -62,7 +64,7 @@ function initPdf(data: InitData) {
 
 function addImage(cardData: CardData) {
   if (!pdfOptions || !pdf) {
-    throw new Error('PDF not yet initialized')
+    throw new Error("PDF not yet initialized");
   }
 
   const [pageWidth, pageHeight] = pdfOptions.format;
@@ -110,7 +112,7 @@ function addImage(cardData: CardData) {
       adjustedContainerWidth,
       adjustedContainerHeight,
       undefined,
-      "FAST"
+      "FAST",
     );
   }
 
@@ -128,8 +130,8 @@ function addImage(cardData: CardData) {
     const bleedEdgeWidthPdf = guides.guidesAtBleedEdge
       ? 0
       : guides.unit === "in"
-      ? guides.bleedEdgeWidth / 25.4
-      : guides.bleedEdgeWidth;
+        ? guides.bleedEdgeWidth / 25.4
+        : guides.bleedEdgeWidth;
 
     const crosshairSize =
       bleedEdgeWidthPdf || (guides.unit === "in" ? 1 / 25.4 : 1);
@@ -154,7 +156,7 @@ function addImage(cardData: CardData) {
 
     // Parse inverted guide color
     const invertedColorMatch = guides.invertedGuideColor.match(
-      /#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i
+      /#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i,
     );
     if (invertedColorMatch) {
       const r = parseInt(invertedColorMatch[1], 16);
@@ -167,7 +169,7 @@ function addImage(cardData: CardData) {
     pdf.setLineWidth(
       guides.unit === "in"
         ? guides.guidesThickness / 24.5
-        : guides.guidesThickness
+        : guides.guidesThickness,
     );
 
     // top left
@@ -175,13 +177,13 @@ function addImage(cardData: CardData) {
       topLeft.x - crosshairSize,
       topLeft.y,
       topLeft.x + crosshairSize,
-      topLeft.y
+      topLeft.y,
     );
     pdf.line(
       topLeft.x,
       topLeft.y - crosshairSize,
       topLeft.x,
-      topLeft.y + crosshairSize
+      topLeft.y + crosshairSize,
     );
 
     // top right
@@ -189,13 +191,13 @@ function addImage(cardData: CardData) {
       topRight.x - crosshairSize,
       topRight.y,
       topRight.x + crosshairSize,
-      topRight.y
+      topRight.y,
     );
     pdf.line(
       topRight.x,
       topRight.y - crosshairSize,
       topRight.x,
-      topRight.y + crosshairSize
+      topRight.y + crosshairSize,
     );
 
     // bottom left
@@ -203,13 +205,13 @@ function addImage(cardData: CardData) {
       bottomLeft.x - crosshairSize,
       bottomLeft.y,
       bottomLeft.x + crosshairSize,
-      bottomLeft.y
+      bottomLeft.y,
     );
     pdf.line(
       bottomLeft.x,
       bottomLeft.y - crosshairSize,
       bottomLeft.x,
-      bottomLeft.y + crosshairSize
+      bottomLeft.y + crosshairSize,
     );
 
     // bottom right
@@ -217,18 +219,18 @@ function addImage(cardData: CardData) {
       bottomRight.x - crosshairSize,
       bottomRight.y,
       bottomRight.x + crosshairSize,
-      bottomRight.y
+      bottomRight.y,
     );
     pdf.line(
       bottomRight.x,
       bottomRight.y - crosshairSize,
       bottomRight.x,
-      bottomRight.y + crosshairSize
+      bottomRight.y + crosshairSize,
     );
 
     // Parse guide color
     const guideColorMatch = guides.guideColor.match(
-      /#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i
+      /#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i,
     );
     if (guideColorMatch) {
       const r = parseInt(guideColorMatch[1], 16);
@@ -243,13 +245,13 @@ function addImage(cardData: CardData) {
       topLeft.x - crosshairSize,
       topLeft.y,
       topLeft.x + crosshairSize,
-      topLeft.y
+      topLeft.y,
     );
     pdf.line(
       topLeft.x,
       topLeft.y - crosshairSize,
       topLeft.x,
-      topLeft.y + crosshairSize
+      topLeft.y + crosshairSize,
     );
 
     // Draw crosshair at top-right corner
@@ -258,13 +260,13 @@ function addImage(cardData: CardData) {
       topRight.x - crosshairSize,
       topRight.y,
       topRight.x + crosshairSize,
-      topRight.y
+      topRight.y,
     );
     pdf.line(
       topRight.x,
       topRight.y - crosshairSize,
       topRight.x,
-      topRight.y + crosshairSize
+      topRight.y + crosshairSize,
     );
 
     // Draw crosshair at bottom-left corner
@@ -273,13 +275,13 @@ function addImage(cardData: CardData) {
       bottomLeft.x - crosshairSize,
       bottomLeft.y,
       bottomLeft.x + crosshairSize,
-      bottomLeft.y
+      bottomLeft.y,
     );
     pdf.line(
       bottomLeft.x,
       bottomLeft.y - crosshairSize,
       bottomLeft.x,
-      bottomLeft.y + crosshairSize
+      bottomLeft.y + crosshairSize,
     );
 
     // Draw crosshair at bottom-right corner
@@ -288,13 +290,13 @@ function addImage(cardData: CardData) {
       bottomRight.x - crosshairSize,
       bottomRight.y,
       bottomRight.x + crosshairSize,
-      bottomRight.y
+      bottomRight.y,
     );
     pdf.line(
       bottomRight.x,
       bottomRight.y - crosshairSize,
       bottomRight.x,
-      bottomRight.y + crosshairSize
+      bottomRight.y + crosshairSize,
     );
 
     pdf.setLineDashPattern([], 0); // reset line dash pattern
@@ -314,13 +316,13 @@ function addImage(cardData: CardData) {
         bottomLeft.x,
         pageHeight,
         bottomLeft.x,
-        bottomLeft.y + crosshairSize
+        bottomLeft.y + crosshairSize,
       );
       pdf.line(
         bottomRight.x,
         pageHeight,
         bottomRight.x,
-        bottomRight.y + crosshairSize
+        bottomRight.y + crosshairSize,
       );
     }
 
@@ -337,7 +339,7 @@ function addImage(cardData: CardData) {
         pageWidth,
         bottomRight.y,
         bottomRight.x + crosshairSize,
-        bottomRight.y
+        bottomRight.y,
       );
     }
   }
@@ -350,7 +352,9 @@ function addImage(cardData: CardData) {
 }
 
 // PDF generation worker
-self.onmessage = function (e: MessageEvent<{ type: string; data: MessageEventData }>) {
+self.onmessage = function (
+  e: MessageEvent<{ type: string; data: MessageEventData }>,
+) {
   const { type, data } = e.data;
 
   switch (type) {
@@ -359,7 +363,7 @@ self.onmessage = function (e: MessageEvent<{ type: string; data: MessageEventDat
         self.postMessage({
           type: "error",
           event: "addImage",
-          error: 'No CardData send',
+          error: "No CardData send",
         });
 
         return;
@@ -380,7 +384,7 @@ self.onmessage = function (e: MessageEvent<{ type: string; data: MessageEventDat
         self.postMessage({
           type: "error",
           event: "addImage",
-          error: error instanceof Error ? error.message : 'Unknown Error',
+          error: error instanceof Error ? error.message : "Unknown Error",
         });
       }
       break;
@@ -390,7 +394,7 @@ self.onmessage = function (e: MessageEvent<{ type: string; data: MessageEventDat
         self.postMessage({
           type: "error",
           event: "save",
-          error: 'PDF not yet initialized',
+          error: "PDF not yet initialized",
         });
         return;
       }
@@ -407,7 +411,7 @@ self.onmessage = function (e: MessageEvent<{ type: string; data: MessageEventDat
         self.postMessage({
           type: "error",
           event: "save",
-          error: error instanceof Error ? error.message : 'Unknown Error',
+          error: error instanceof Error ? error.message : "Unknown Error",
         });
       }
       break;

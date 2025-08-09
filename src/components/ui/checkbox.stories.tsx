@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Checkbox } from "./checkbox";
+import { CheckedChangeDetails } from "node_modules/@ark-ui/react/dist/components/checkbox/checkbox";
 import { useState } from "react";
+
 import { css } from "styled-system/css";
 import { stack, flex } from "styled-system/patterns";
-import { CheckedChangeDetails } from "node_modules/@ark-ui/react/dist/components/checkbox/checkbox";
+
+import { Checkbox } from "./checkbox";
 
 const meta: Meta<typeof Checkbox> = {
   title: "Core Components/Checkbox",
@@ -102,7 +104,7 @@ export const MultipleCheckboxes: Story = {
 
     const handleToggle = (item: string, checked: boolean) => {
       setSelectedItems((prev) =>
-        checked ? [...prev, item] : prev.filter((i) => i !== item)
+        checked ? [...prev, item] : prev.filter((i) => i !== item),
       );
     };
 
@@ -162,7 +164,7 @@ export const SelectAllPattern: Story = {
     const handleToggleItem = (item: string, details: CheckedChangeDetails) => {
       const checked = Boolean(details.checked);
       setSelectedItems((prev) =>
-        checked ? [...prev, item] : prev.filter((i) => i !== item)
+        checked ? [...prev, item] : prev.filter((i) => i !== item),
       );
     };
 

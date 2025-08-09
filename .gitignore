@@ -26,9 +26,6 @@ dist-ssr
 # Docker
 docker-compose.override.yml
 
-# Sentry Config File
-.env.sentry-build-plugin
-
 ## Panda
 styled-system
 styled-system-studio
@@ -37,3 +34,6 @@ storybook-static
 
 ## copied part recipes
 src/components/ui/preset/theme/recipes/**
+
+# Sentry Config File
+.env.sentry-build-plugin

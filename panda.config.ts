@@ -1,4 +1,5 @@
 import { defineConfig } from "@pandacss/dev";
+
 import { createPreset } from "./src/components/ui/preset";
 import iris from "./src/components/ui/preset/colors/iris";
 import slate from "./src/components/ui/preset/colors/slate";
@@ -12,7 +13,7 @@ export default defineConfig({
       accentColor: iris,
       grayColor: slate,
       radius: "sm",
-    })
+    }),
   ],
 
   // Where to look for your css declarations

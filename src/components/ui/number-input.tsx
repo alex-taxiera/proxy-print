@@ -1,7 +1,8 @@
-import { forwardRef } from "react";
-import * as StyledNumberInput from "./styled/number-input";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronUp, faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { forwardRef } from "react";
+
+import * as StyledNumberInput from "./styled/number-input";
 
 export type NumberInputProps = StyledNumberInput.RootProps;
 
@@ -24,7 +25,7 @@ export const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(
         </StyledNumberInput.Control>
       </StyledNumberInput.Root>
     );
-  }
+  },
 );
 
 NumberInput.displayName = "NumberInput";

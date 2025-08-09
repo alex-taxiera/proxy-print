@@ -1,4 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
+
 import { ImageErrors } from "./ImageErrors";
 
 const meta: Meta<typeof ImageErrors> = {
@@ -19,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     onDismiss: () => {
-      alert('Dismissed Errors')
+      alert("Dismissed Errors");
     },
     imagesWithError: [
       {
@@ -34,7 +35,7 @@ export const Default: Story = {
 export const NoErrors: Story = {
   args: {
     onDismiss: () => {
-      alert('Dismissed Errors')
+      alert("Dismissed Errors");
     },
     imagesWithError: [],
   },
@@ -43,7 +44,7 @@ export const NoErrors: Story = {
 export const ManyErrors: Story = {
   args: {
     onDismiss: () => {
-      alert('Dismissed Errors')
+      alert("Dismissed Errors");
     },
     imagesWithError: Array.from({ length: 10 }, (_, i) => ({
       uuid: `error-${i}`,

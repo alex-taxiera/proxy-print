@@ -1,10 +1,11 @@
-import { ComponentProps } from "react";
-import * as Toast from "./styled/toast";
-import { Toaster } from "./styled/toast";
-import { IconButton } from "./icon-button";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ComponentProps } from "react";
+
+import { IconButton } from "./icon-button";
 import { Progress } from "./progress";
+import * as Toast from "./styled/toast";
+import { Toaster } from "./styled/toast";
 
 type ToastOptions = Parameters<ComponentProps<typeof Toaster>["children"]>[0];
 

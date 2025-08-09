@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+
 import { toaster } from "../utils/toaster";
 
 type Item = {
@@ -48,11 +49,39 @@ export function useImageDownloadManager({
   const inflightRef = useRef<Item[]>([]);
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
   const imageCacheRef = useRef<Map<string, { url: string; mimeType: string }>>(
-    new Map()
+    new Map(),
   );
 
   const loadingToastId = useRef<string>();
   const [isFetching, setIsFetching] = useState(false);
+
+  const raiseToast = useCallback(() => {
+    if (!loadingToastId.current) {
+      loadingToastId.current = toaster.create({
+        title: "Downloading images from MPC Autofill",
+        description: "This may take a while...",
+        duration: Infinity,
+        closable: false,
+        meta: {
+          progress: null,
+          totalProgressAmount:
+            queueRef.current.length +
+            inflightRef.current.length +
+            imageCacheRef.current.size,
+        },
+      });
+    } else {
+      toaster.update(loadingToastId.current, {
+        meta: {
+          progress: imageCacheRef.current.size,
+          totalProgressAmount:
+            queueRef.current.length +
+            inflightRef.current.length +
+            imageCacheRef.current.size,
+        },
+      });
+    }
+  }, [loadingToastId]);
 
   const processQueue = useCallback(() => {
     while (
@@ -61,31 +90,7 @@ export function useImageDownloadManager({
     ) {
       const item = queueRef.current.shift()!;
       inflightRef.current.push(item);
-      if (!loadingToastId.current) {
-        loadingToastId.current = toaster.create({
-          title: "Downloading images from MPC Autofill",
-          description: "This may take a while...",
-          duration: Infinity,
-          closable: false,
-          meta: {
-            progress: imageCacheRef.current.size,
-            totalProgressAmount:
-              queueRef.current.length +
-              inflightRef.current.length +
-              imageCacheRef.current.size,
-          },
-        });
-      } else {
-        toaster.update(loadingToastId.current, {
-          meta: {
-            progress: imageCacheRef.current.size,
-            totalProgressAmount:
-              queueRef.current.length +
-              inflightRef.current.length +
-              imageCacheRef.current.size,
-          },
-        });
-      }
+      raiseToast();
       setIsFetching((oldIsFetching) => oldIsFetching || true);
       const abortController = abortControllersRef.current.get(item.id);
       fetchImage(item, { signal: abortController?.signal })
@@ -109,6 +114,7 @@ export function useImageDownloadManager({
           item.reject(error);
         })
         .finally(() => {
+          raiseToast();
           abortControllersRef.current.delete(item.id);
           inflightRef.current = inflightRef.current.filter((i) => i !== item);
           if (
@@ -128,7 +134,7 @@ export function useImageDownloadManager({
           }
         });
     }
-  }, [maxInflight, loadingToastId]);
+  }, [maxInflight, raiseToast]);
 
   const add = useCallback(
     (id: string): Promise<{ mimeType: string; url: string }> => {
@@ -166,7 +172,7 @@ export function useImageDownloadManager({
         }
       });
     },
-    [maxInflight, processQueue]
+    [maxInflight, processQueue],
   );
 
   /**
@@ -194,7 +200,7 @@ export function useImageDownloadManager({
 
   const getCachedImage = useCallback(
     (id: string) => imageCacheRef.current.get(id)?.url,
-    []
+    [],
   );
 
   return {

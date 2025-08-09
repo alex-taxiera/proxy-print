@@ -1,14 +1,3 @@
-import { useCallback, useContext } from "react";
-import {
-  DEFAULT_SETTINGS,
-  Settings,
-  SettingsContext,
-} from "./context/SettingsContext";
-
-import { ImagesContext } from "./context/ImagesContext";
-import { Field } from "./components/ui/field";
-import { grid } from "styled-system/patterns";
-import { Checkbox } from "./components/ui/checkbox";
 import {
   CheckboxCheckedChangeDetails,
   ColorPickerValueChangeDetails,
@@ -16,9 +5,21 @@ import {
   parseColor,
   SelectValueChangeDetails,
 } from "@ark-ui/react";
-import { Select, createListCollection } from "./components/ui/select";
-import { ColorPicker } from "./components/ui/color-picker";
-import { NumberInput } from "./components/ui/number-input";
+import { useCallback, useContext } from "react";
+
+import { vstack } from "styled-system/patterns";
+
+import { ImagesContext } from "../../context/ImagesContext";
+import {
+  DEFAULT_SETTINGS,
+  Settings,
+  SettingsContext,
+} from "../../context/SettingsContext";
+import { Checkbox } from "../ui/checkbox";
+import { ColorPicker } from "../ui/color-picker";
+import { Field } from "../ui/field";
+import { NumberInput } from "../ui/number-input";
+import { Select, createListCollection } from "../ui/select";
 
 const getMaxGuideWidth = (settings: Settings) => {
   const bleedEdge = Number(settings.bleedEdge);
@@ -70,7 +71,15 @@ export const SettingsForm = () => {
         return updatedSettings;
       });
     },
-    [setSettings]
+    [setSettings],
+  );
+
+  const buildTextInputChangeHandler = useCallback(
+    (key: keyof typeof settings) =>
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        handle(event.target.value, key);
+      },
+    [handle],
   );
 
   const buildNumberInputChangeHandler = useCallback(
@@ -78,21 +87,21 @@ export const SettingsForm = () => {
       (details: NumberInputValueChangeDetails) => {
         handle(details.value, key);
       },
-    [handle]
+    [handle],
   );
 
   const buildCheckboxChangeHandler = useCallback(
     (key: keyof typeof settings) => (details: CheckboxCheckedChangeDetails) => {
       handle(details.checked, key);
     },
-    [handle]
+    [handle],
   );
 
   const buildSelectChangeHandler = useCallback(
     (key: keyof typeof settings) => (details: SelectValueChangeDetails) => {
       handle(details.value[0] ?? DEFAULT_SETTINGS[key], key);
     },
-    [handle]
+    [handle],
   );
 
   const buildColorPickerChangeHandler = useCallback(
@@ -100,32 +109,30 @@ export const SettingsForm = () => {
       (details: ColorPickerValueChangeDetails) => {
         handle(details.value.toString("hex"), key);
       },
-    [handle]
+    [handle],
   );
 
   const maxGuideWidth = getMaxGuideWidth(settings);
 
   return (
     <form
-      className={grid({
-        gridTemplateColumns: "repeat(auto-fit, 165px)",
+      className={vstack({
+        width: "full",
+        alignItems: "stretch",
         gap: "2",
-        margin: "1",
         alignSelf: "stretch",
         justifyContent: "center",
       })}
     >
-      {/* <label>
-        Card Size
-        <select
-          disabled={isRendering}
-          value={settings.cardSize}
-          onChange={handleChange("cardSize")}
-        >
-          <option value="standard">Standard</option>
-          <option value="japanese">Japanese</option>
-        </select>
-      </label> */}
+      <Field.Root disabled={isRendering}>
+        <Field.Label>Filename</Field.Label>
+        <Field.Input
+          minLength={1}
+          maxLength={50}
+          value={settings.filename}
+          onChange={buildTextInputChangeHandler("filename")}
+        />
+      </Field.Root>
       <Field.Root disabled={isRendering}>
         <Select.Root
           collection={cardSizeCollection}

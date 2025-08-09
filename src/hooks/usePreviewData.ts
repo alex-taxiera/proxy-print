@@ -1,6 +1,7 @@
 import { useContext, useMemo } from "react";
-import { SettingsContext } from "../context/SettingsContext";
+
 import { type Image, ImagesContext } from "../context/ImagesContext";
+import { SettingsContext } from "../context/SettingsContext";
 
 const MAX_PREVIEW_CARDS = 108;
 
@@ -18,7 +19,7 @@ export const usePageLimits = () => {
     const CARD_HEIGHT = {
       standard: 88, // Standard card height in mm
       japanese: 86, // Japanese card height in mm
-    };
+    } as const;
 
     // Adjust card height based on card size
     const cardHeight =
@@ -33,7 +34,7 @@ export const usePageLimits = () => {
 
   const cardsPerPage = useMemo(
     () => rowsPerPage * columnsPerPage,
-    [rowsPerPage, columnsPerPage]
+    [rowsPerPage, columnsPerPage],
   );
 
   const maxPages = Math.floor(MAX_PREVIEW_CARDS / cardsPerPage);
@@ -49,7 +50,8 @@ export const usePageLimits = () => {
 export const usePreviewData = () => {
   const { images } = useContext(ImagesContext);
 
-  const { cardsPerPage, rowsPerPage, columnsPerPage, maxPages } = usePageLimits();
+  const { cardsPerPage, rowsPerPage, columnsPerPage, maxPages } =
+    usePageLimits();
 
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {

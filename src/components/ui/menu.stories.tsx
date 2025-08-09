@@ -1,8 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Menu } from "./menu";
-import { Button } from "./button";
-import { css } from "styled-system/css";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Portal } from "@ark-ui/react";
 import {
   faEllipsisV,
   faEdit,
@@ -19,7 +15,13 @@ import {
   faCheck,
   faCircle,
 } from "@fortawesome/free-solid-svg-icons";
-import { Portal } from "@ark-ui/react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+
+import { css } from "styled-system/css";
+
+import { Button } from "./button";
+import { Menu } from "./menu";
 
 const meta: Meta<typeof Menu.Root> = {
   title: "Core Components/Menu",

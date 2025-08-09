@@ -1,3 +1,4 @@
+import { Portal } from "@ark-ui/react";
 import React, {
   useCallback,
   useContext,
@@ -6,14 +7,15 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
-import { Menu } from "./components/ui/menu";
-import { Portal } from "@ark-ui/react";
+
+import { css, cx, RecipeVariantProps, Styles, sva } from "styled-system/css";
+import { center } from "styled-system/patterns";
+
 import { Kbd } from "./components/ui/kbd";
-import { css, cx, RecipeVariantProps, Styles, sva } from "../styled-system/css";
-import { center } from "../styled-system/patterns";
-import { useCardPositionMeta } from "./hooks/useCardClassNames";
+import { Menu } from "./components/ui/menu";
 import { Spinner } from "./components/ui/spinner";
+import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
+import { useCardPositionMeta } from "./hooks/useCardClassNames";
 
 const useCardClassName = (props: {
   isEmpty: boolean;
@@ -50,7 +52,7 @@ const useCardClassName = (props: {
           outlineStyle: "solid",
           zIndex: "1",
         },
-      })
+      }),
     );
   }
 
@@ -70,7 +72,7 @@ const useCardClassName = (props: {
           borderTopWidth: "var(--guide-border-width)",
           borderBottomWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
   if (isFirstRow) {
@@ -86,7 +88,7 @@ const useCardClassName = (props: {
           borderLeftWidth: "var(--guide-border-width)",
           borderRightWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
   if (isLastColumn) {
@@ -102,7 +104,7 @@ const useCardClassName = (props: {
           borderTopWidth: "var(--guide-border-width)",
           borderBottomWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
   if (isLastRow) {
@@ -118,7 +120,7 @@ const useCardClassName = (props: {
           borderLeftWidth: "var(--guide-border-width)",
           borderRightWidth: "var(--guide-border-width)",
         },
-      })
+      }),
     );
   }
 
@@ -129,42 +131,32 @@ export type CardProps = {
   image: Image;
   index: number;
   showImage?: boolean;
+  onImageLoad?: () => void;
 };
 
 export const Card = ({
-  //  className,
   image,
   index,
   showImage = true,
-  // ...restProps
+  onImageLoad,
 }: CardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const {
-    images,
-    onAdd,
-    onRemove,
-    isRendering,
-    getCachedImage,
-    loadedLocalImageIds,
-    onLocalImageLoaded,
-  } = useContext(ImagesContext);
+  const { images, onAdd, onRemove, isRendering, getCachedImage } =
+    useContext(ImagesContext);
 
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
   const isFetching = useMemo(
     () => !!image.id && !downloadedSrc,
-    [image.id, downloadedSrc]
+    [image.id, downloadedSrc],
   );
-  const isLoading = useMemo(
-    () => !loadedLocalImageIds.has(image.uuid),
-    [loadedLocalImageIds, image.uuid]
-  );
-  const isPending = isLoading || isFetching;
-
-  const imageSrc = downloadedSrc ?? src;
 
   const isEmpty = !image.file && !image.id;
+  const [isLoading, setIsLoading] = useState(true);
+  const isPending = (isLoading || isFetching) && !isEmpty;
+
+  const imageSrc = downloadedSrc ?? src;
 
   const className = useCardClassName({
     isEmpty,
@@ -180,19 +172,19 @@ export const Card = ({
           image.file ?? {
             id: image.id,
             name: image.name,
-          }
+          },
         ),
-        index + 1
+        index + 1,
       );
     },
-    [image, images, onAdd]
+    [image, images, onAdd],
   );
 
   const buildOnAddClick = useCallback(
     (count: number) => () => {
       add(count);
     },
-    [add]
+    [add],
   );
 
   const onRemoveClick = useCallback(() => {
@@ -211,7 +203,7 @@ export const Card = ({
         add(1);
       }
     },
-    [isEmpty, isPending, isRendering, onRemove, image.uuid, add]
+    [isEmpty, isPending, isRendering, onRemove, image.uuid, add],
   );
 
   useEffect(() => {
@@ -246,7 +238,7 @@ export const Card = ({
               "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
             height:
               "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
-          })
+          }),
         )}
       >
         <>
@@ -273,12 +265,14 @@ export const Card = ({
                   src={imageSrc}
                   alt={image.file?.name ?? image.name}
                   className={css({
-                    width: "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
+                    width:
+                      "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
                     maxWidth: "unset",
                     objectFit: "cover",
                   })}
                   onLoad={() => {
-                    onLocalImageLoaded(image.uuid);
+                    setIsLoading(false);
+                    onImageLoad?.();
                   }}
                 />
               </Menu.ContextTrigger>

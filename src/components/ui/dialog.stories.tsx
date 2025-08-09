@@ -1,7 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Dialog } from "./dialog";
-import { Button } from "./button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faInfoCircle,
   faExclamationTriangle,
@@ -10,8 +6,13 @@ import {
   faCog,
   faSpaceShuttle,
 } from "@fortawesome/free-solid-svg-icons";
-import { IconButton } from "./icon-button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+
 import { Alert } from "./alert";
+import { Button } from "./button";
+import { Dialog } from "./dialog";
+import { IconButton } from "./icon-button";
 
 const meta: Meta<typeof Dialog.Root> = {
   title: "Core Components/Dialog",

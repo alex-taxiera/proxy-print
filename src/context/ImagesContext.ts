@@ -4,8 +4,8 @@ export type GoogleImageData = {
   id?: string;
   name?: string;
   mimeType?: string;
-  url?: string
-}
+  url?: string;
+};
 
 export type Image = {
   uuid: string;
@@ -23,11 +23,7 @@ export type ImagesContextValue = {
   onRemove: (uuid: string) => void;
   onClear: () => void;
   onClearErrors: () => void;
-  onLocalImageLoaded: (uuid: string) => void;
-  loadedLocalImageIds: Set<string>;
-  isLoadingLocalImages: boolean;
-  loadedLocalImageCount: number;
-}
+};
 
 export const ImagesContext = createContext<ImagesContextValue>({
   isFetching: false,
@@ -40,8 +36,4 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onRemove: () => {},
   onClear: () => {},
   onClearErrors: () => {},
-  onLocalImageLoaded: () => {},
-  loadedLocalImageIds: new Set(),
-  isLoadingLocalImages: false,
-  loadedLocalImageCount: 0,
 });

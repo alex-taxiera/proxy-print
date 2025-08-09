@@ -1,4 +1,4 @@
-export { createPreset } from './create-preset'
+export { createPreset } from "./create-preset";
 export {
   accentColors,
   grayColors,
@@ -7,4 +7,4 @@ export {
   type ColorPalette,
   type GrayColor,
   type Radius,
-} from './options'
+} from "./options";

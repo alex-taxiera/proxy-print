@@ -7,11 +7,23 @@
     "dev": "npm run watch-css & vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:ci": "prettier --check .",
     "preview": "vite preview",
     "prepare": "panda codegen",
     "watch-css": "panda codegen --watch",
     "storybook": "npm run watch-css & storybook dev -p 6006",
     "build-storybook": "storybook build"
+  },
+  "prettier": {
+    "plugins": [
+      "@trivago/prettier-plugin-sort-imports"
+    ],
+    "importOrder": [
+      "^styled-system/(.*)$",
+      "^[./]"
+    ],
+    "importOrderSeparation": true
   },
   "dependencies": {
     "@ark-ui/react": "^5.18.2",
@@ -32,13 +44,13 @@
     "@chromatic-com/storybook": "^4.1.0",
     "@eslint/js": "^9.15.0",
     "@pandacss/dev": "^0.54.0",
-    "@park-ui/panda-preset": "^0.42.0",
     "@storybook/addon-a11y": "^9.1.0",
     "@storybook/addon-docs": "^9.1.0",
     "@storybook/addon-onboarding": "^9.1.0",
     "@storybook/addon-themes": "^9.1.0",
     "@storybook/addon-vitest": "^9.1.0",
     "@storybook/react-vite": "^9.1.0",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -46,6 +58,7 @@
     "@vitest/coverage-v8": "^3.2.4",
     "effect": "^3.17.2",
     "eslint": "^9.15.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
@@ -53,6 +66,7 @@
     "globals": "^15.12.0",
     "pdf-lib": "^1.17.1",
     "playwright": "^1.54.1",
+    "prettier": "3.6.2",
     "storybook": "^9.1.0",
     "type-fest": "^4.41.0",
     "typescript": "~5.6.2",

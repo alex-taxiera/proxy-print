@@ -1,11 +1,13 @@
-import { forwardRef } from "react";
-import * as Styled from "./styled/color-picker";
-import { Field } from "./field";
-import { IconButton } from "./icon-button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeDropper } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { forwardRef } from "react";
+
 import { css } from "styled-system/css";
 import { stack, hstack } from "styled-system/patterns";
+
+import { Field } from "./field";
+import { IconButton } from "./icon-button";
+import * as Styled from "./styled/color-picker";
 
 const presets = [
   "hsl(10, 81%, 59%)",
@@ -100,6 +102,6 @@ export const ColorPicker = forwardRef<HTMLDivElement, Styled.RootProps>(
       </Styled.Context>
       <Styled.HiddenInput />
     </Styled.Root>
-  )
+  ),
 );
 ColorPicker.displayName = "ColorPicker";

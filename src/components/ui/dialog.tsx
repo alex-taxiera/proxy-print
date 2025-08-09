@@ -1,8 +1,9 @@
-import { forwardRef } from "react";
-import * as Styled from "./styled/dialog";
-import { IconButton, type IconButtonProps } from "./icon-button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { forwardRef } from "react";
+
+import { IconButton, type IconButtonProps } from "./icon-button";
+import * as Styled from "./styled/dialog";
 
 const CloseButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   (props, ref) => (
@@ -18,7 +19,7 @@ const CloseButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         <FontAwesomeIcon size="xl" icon={faXmark} />
       </IconButton>
     </Styled.CloseTrigger>
-  )
+  ),
 );
 
 CloseButton.displayName = "CloseButton";
@@ -26,4 +27,4 @@ CloseButton.displayName = "CloseButton";
 export const Dialog = {
   ...Styled,
   CloseButton,
-};
+} as const;

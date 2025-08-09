@@ -1,11 +1,13 @@
 import type { Assign, PolymorphicProps } from "@ark-ui/react";
 import { ark } from "@ark-ui/react/factory";
-import type { HTMLStyledProps } from "styled-system/types";
-import { IconButton, IconButtonProps } from "../../icon-button";
-import { forwardRef } from "react";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { forwardRef } from "react";
 import { OverrideProperties } from "type-fest";
+
+import type { HTMLStyledProps } from "styled-system/types";
+
+import { IconButton, IconButtonProps } from "../../icon-button";
 
 export type RootProps = Assign<HTMLStyledProps<"div">, PolymorphicProps>;
 export const Root = ark.div;
@@ -33,7 +35,7 @@ export const DismissButton = forwardRef<HTMLButtonElement, DismissButtonProps>(
         <FontAwesomeIcon icon={faXmark} size="lg" />
       </IconButton>
     );
-  }
+  },
 );
 DismissButton.displayName = "DismissButton";
 
@@ -44,4 +46,4 @@ export const Alert = {
   Icon,
   Title,
   DismissButton,
-};
+} as const;

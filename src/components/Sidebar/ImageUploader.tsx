@@ -1,9 +1,11 @@
-import { useCallback, useContext, useEffect, useState } from "react";
-import { GoogleImageData, ImagesContext } from "./context/ImagesContext";
-import { FileUpload } from "./components/ui/file-upload";
 import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
-import { center } from "styled-system/patterns";
+import { useCallback, useContext, useEffect, useState } from "react";
+
 import { css } from "styled-system/css";
+import { center } from "styled-system/patterns";
+
+import { GoogleImageData, ImagesContext } from "../../context/ImagesContext";
+import { FileUpload } from "../ui/file-upload";
 
 const parseXML = (file: File): Promise<GoogleImageData[]> => {
   return new Promise((resolve, reject) => {
@@ -12,7 +14,7 @@ const parseXML = (file: File): Promise<GoogleImageData[]> => {
       const parser = new DOMParser();
       const xml = parser.parseFromString(
         event.target?.result as string,
-        "text/xml"
+        "text/xml",
       );
       const cards: GoogleImageData[] = [];
       const frontsSection = xml.querySelector("fronts");
@@ -64,7 +66,7 @@ export function ImageUploader() {
         .catch(console.error)
         .finally(() => setIsProcessing(false));
     },
-    [onAdd]
+    [onAdd],
   );
 
   const fileUpload = useFileUpload({
@@ -85,18 +87,21 @@ export function ImageUploader() {
   return (
     <FileUpload.RootProvider value={fileUpload}>
       <FileUpload.Trigger asChild>
-        <FileUpload.Dropzone className={css({ cursor: "pointer" })}>
+        <FileUpload.Dropzone
+          className={css({ cursor: "pointer" })}
+          onClick={(e) => e.preventDefault()}
+        >
           <FileUpload.Label className={center({ flexDirection: "column" })}>
-            {fileUpload.dragging ? (
-              "Drop!"
-            ) : (
-              <>
-                <span>Drop files here</span>
-                <span className={css({ color: "fg.muted", fontSize: "xs" })}>
-                  or click to browse
-                </span>
-              </>
-            )}
+            <span>{fileUpload.dragging ? "Drop!" : "Drop files here"}</span>
+            <span
+              className={css({
+                color: "fg.muted",
+                fontSize: "xs",
+                visibility: fileUpload.dragging ? "hidden" : "visible",
+              })}
+            >
+              or click to browse
+            </span>
           </FileUpload.Label>
         </FileUpload.Dropzone>
       </FileUpload.Trigger>

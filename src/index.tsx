@@ -19,11 +19,7 @@ Sentry.init({
   enableLogs: true,
   integrations: [
     Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration({
-      maskAllText: false,
-      blockAllMedia: false,
-      maskAllInputs: false,
-    }),
+    Sentry.replayIntegration(),
     // send console.log, console.error, and console.warn calls as logs to Sentry
     Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
   ],
@@ -47,4 +43,4 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)
+);

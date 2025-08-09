@@ -1,10 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Link } from './link'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { 
-  faExternalLinkAlt, 
-  faArrowRight, 
-  faDownload, 
+import {
+  faExternalLinkAlt,
+  faArrowRight,
+  faDownload,
   faHeart,
   faStar,
   faShare,
@@ -21,42 +18,46 @@ import {
   faPlus,
   faMinus,
   faCheck,
-  faTimes
-} from '@fortawesome/free-solid-svg-icons'
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+
+import { Link } from "./link";
 
 const meta: Meta<typeof Link> = {
-  title: 'Core Components/Link',
+  title: "Core Components/Link",
   component: Link,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     size: {
-      control: { type: 'select' },
-      options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'],
-      description: 'The size of the link',
+      control: { type: "select" },
+      options: ["xs", "sm", "md", "lg", "xl", "2xl"],
+      description: "The size of the link",
     },
     colorPalette: {
-      control: { type: 'select' },
-      options: ['gray', 'blue', 'green', 'red', 'yellow'],
-      description: 'The color palette of the link',
+      control: { type: "select" },
+      options: ["gray", "blue", "green", "red", "yellow"],
+      description: "The color palette of the link",
     },
     disabled: {
-      control: { type: 'boolean' },
-      description: 'Whether the link is disabled',
+      control: { type: "boolean" },
+      description: "Whether the link is disabled",
     },
   },
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    children: 'Default Link',
+    children: "Default Link",
   },
-}
+};
 
 export const WithIcon: Story = {
   args: {
@@ -67,18 +68,25 @@ export const WithIcon: Story = {
       </>
     ),
   },
-}
+};
 
 export const IconOnly: Story = {
   args: {
-    'aria-label': 'Settings',
+    "aria-label": "Settings",
     children: <FontAwesomeIcon icon={faCog} />,
   },
-}
+};
 
 export const AllSizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Link size="xs">Extra Small Link</Link>
       <Link size="sm">Small Link</Link>
       <Link size="md">Medium Link</Link>
@@ -87,11 +95,18 @@ export const AllSizes: Story = {
       <Link size="2xl">2XL Link</Link>
     </div>
   ),
-}
+};
 
 export const ColorPalettes: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Link colorPalette="gray">Gray Link</Link>
       <Link colorPalette="blue">Blue Link</Link>
       <Link colorPalette="green">Green Link</Link>
@@ -101,11 +116,18 @@ export const ColorPalettes: Story = {
       <Link colorPalette="orange">Orange Link</Link>
     </div>
   ),
-}
+};
 
 export const NavigationLinks: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Link>
         <FontAwesomeIcon icon={faArrowRight} />
         Continue Reading
@@ -128,11 +150,18 @@ export const NavigationLinks: Story = {
       </Link>
     </div>
   ),
-}
+};
 
 export const SocialLinks: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Link colorPalette="red">
         <FontAwesomeIcon icon={faHeart} />
         Like
@@ -155,11 +184,18 @@ export const SocialLinks: Story = {
       </Link>
     </div>
   ),
-}
+};
 
 export const ActionLinks: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
       <Link>
         <FontAwesomeIcon icon={faEdit} />
         Edit
@@ -182,11 +218,18 @@ export const ActionLinks: Story = {
       </Link>
     </div>
   ),
-}
+};
 
 export const ToolbarLinks: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "1rem",
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
       <Link size="sm">
         <FontAwesomeIcon icon={faSearch} />
         Search
@@ -209,11 +252,18 @@ export const ToolbarLinks: Story = {
       </Link>
     </div>
   ),
-}
+};
 
 export const FormActions: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "1rem",
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
       <Link colorPalette="green">
         <FontAwesomeIcon icon={faCheck} />
         Save
@@ -232,12 +282,18 @@ export const FormActions: Story = {
       </Link>
     </div>
   ),
-}
-
+};
 
 export const LinkGroup: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "1rem",
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
       <Link size="sm">Previous</Link>
       <Link size="sm">1</Link>
       <Link size="sm">2</Link>
@@ -245,34 +301,45 @@ export const LinkGroup: Story = {
       <Link size="sm">Next</Link>
     </div>
   ),
-}
+};
 
 export const BreadcrumbExample: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "0.5rem",
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
       <Link size="sm">Home</Link>
-      <span style={{ color: '#666' }}>/</span>
+      <span style={{ color: "#666" }}>/</span>
       <Link size="sm">Products</Link>
-      <span style={{ color: '#666' }}>/</span>
+      <span style={{ color: "#666" }}>/</span>
       <Link size="sm">Electronics</Link>
-      <span style={{ color: '#666' }}>/</span>
-      <Link size="sm" disabled>Smartphones</Link>
+      <span style={{ color: "#666" }}>/</span>
+      <Link size="sm" disabled>
+        Smartphones
+      </Link>
     </div>
   ),
-}
+};
 
 export const FooterLinks: Story = {
   render: () => (
-    <div style={{ 
-      display: 'flex', 
-      gap: '2rem', 
-      alignItems: 'center', 
-      flexWrap: 'wrap',
-      padding: '2rem',
-      border: '1px solid #e2e8f0',
-      borderRadius: '0.5rem',
-      backgroundColor: '#f8fafc'
-    }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "2rem",
+        alignItems: "center",
+        flexWrap: "wrap",
+        padding: "2rem",
+        border: "1px solid #e2e8f0",
+        borderRadius: "0.5rem",
+        backgroundColor: "#f8fafc",
+      }}
+    >
       <Link size="sm">About Us</Link>
       <Link size="sm">Contact</Link>
       <Link size="sm">Privacy Policy</Link>
@@ -281,20 +348,22 @@ export const FooterLinks: Story = {
       <Link size="sm">Support</Link>
     </div>
   ),
-}
+};
 
 export const SidebarNavigation: Story = {
   render: () => (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: '0.5rem', 
-      maxWidth: '250px',
-      padding: '1rem',
-      border: '1px solid #e2e8f0',
-      borderRadius: '0.5rem',
-      backgroundColor: '#f8fafc'
-    }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.5rem",
+        maxWidth: "250px",
+        padding: "1rem",
+        border: "1px solid #e2e8f0",
+        borderRadius: "0.5rem",
+        backgroundColor: "#f8fafc",
+      }}
+    >
       <Link>
         <FontAwesomeIcon icon={faCog} />
         Dashboard
@@ -321,34 +390,44 @@ export const SidebarNavigation: Story = {
       </Link>
     </div>
   ),
-}
+};
 
 export const Accessibility: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
-      <Link 
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        maxWidth: "400px",
+      }}
+    >
+      <Link
         aria-label="Visit our documentation"
-        onClick={() => alert('Documentation link clicked')}
+        onClick={() => alert("Documentation link clicked")}
       >
         Documentation
       </Link>
-      <Link 
+      <Link
         aria-describedby="external-link-desc"
-        onClick={() => alert('External link clicked')}
+        onClick={() => alert("External link clicked")}
       >
         <FontAwesomeIcon icon={faExternalLinkAlt} />
         External Resource
       </Link>
-      <div id="external-link-desc" style={{ fontSize: '0.875rem', color: '#666' }}>
+      <div
+        id="external-link-desc"
+        style={{ fontSize: "0.875rem", color: "#666" }}
+      >
         This link will open in a new tab
       </div>
-      <Link 
+      <Link
         aria-label="Download user manual"
-        onClick={() => alert('Download link clicked')}
+        onClick={() => alert("Download link clicked")}
       >
         <FontAwesomeIcon icon={faDownload} />
         Download Manual
       </Link>
     </div>
   ),
-} 
+};

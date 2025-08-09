@@ -1,14 +1,15 @@
 import { ComponentProps, useCallback, useMemo, useState } from "react";
+
+import { invertHexColor } from "../utils/invert-hex-color";
 import {
   DEFAULT_SETTINGS,
   Settings,
   SettingsContext,
   SettingsSchema,
 } from "./SettingsContext";
-import { invertHexColor } from "../utils/invert-hex-color";
 
 export const SettingsProvider = (
-  props: Omit<ComponentProps<typeof SettingsContext.Provider>, "value">
+  props: Omit<ComponentProps<typeof SettingsContext.Provider>, "value">,
 ) => {
   const savedSettings = localStorage.getItem("settings");
 
@@ -16,7 +17,15 @@ export const SettingsProvider = (
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings) as unknown;
-        return SettingsSchema.parse(parsedSettings);
+        const { data, success } = SettingsSchema.safeParse(parsedSettings);
+        if (success) {
+          return data;
+        } else {
+          return SettingsSchema.parse({
+            ...DEFAULT_SETTINGS,
+            ...(parsedSettings as Settings),
+          });
+        }
       } catch (error) {
         localStorage.removeItem("settings");
         console.error(error);
@@ -30,7 +39,8 @@ export const SettingsProvider = (
   const [value, setter] = useState<Settings>(defaultSettings);
 
   const calculatePageDimensions = (value: string, unit: "in" | "mm") => {
-    const convertedValue = unit === "in" ? Number(value) / 25.4 : (Number(value) * 25.4);
+    const convertedValue =
+      unit === "in" ? Number(value) / 25.4 : Number(value) * 25.4;
     return convertedValue.toFixed(2).toString();
   };
 
@@ -39,8 +49,14 @@ export const SettingsProvider = (
       const updated = updater(old);
 
       if (updated.unit !== old.unit) {
-        updated.pageHeight = calculatePageDimensions(updated.pageHeight, updated.unit);
-        updated.pageWidth = calculatePageDimensions(updated.pageWidth, updated.unit);
+        updated.pageHeight = calculatePageDimensions(
+          updated.pageHeight,
+          updated.unit,
+        );
+        updated.pageWidth = calculatePageDimensions(
+          updated.pageWidth,
+          updated.unit,
+        );
       }
 
       localStorage.setItem("settings", JSON.stringify(updated));
@@ -49,24 +65,25 @@ export const SettingsProvider = (
   }, []);
 
   const cssVars = useMemo(() => {
-    const guideThickness = value.enableBleedEdge ? Number(value.guidesThickness) : 1
-    const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0
+    const guideThickness = value.enableBleedEdge
+      ? Number(value.guidesThickness)
+      : 1;
+    const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0;
     const cardWidth = value.cardSize === "japanese" ? "59mm" : "63mm";
     const cardHeight = value.cardSize === "japanese" ? "86mm" : "88mm";
-
     return {
-      "--image-zoom": value.enableBleedEdge ? '6.2mm' : '0mm',
-      "--image-container-buffer": `${imageContainerBuffer}px`,
+      "--page-unit": value.unit,
+      "--page-width": `${value.pageWidth}${value.unit}`,
+      "--page-height": `${value.pageHeight}${value.unit}`,
+      "--grid-columns": value.numberOfColumns,
       "--bleed-edge": `${value.enableBleedEdge ? value.bleedEdge : 0}mm`,
-      "--guides-display": value.guidesThickness !== '0' ? "block" : "none",
       "--guides-color": value.guidesColor,
       "--guides-color-inverted": invertHexColor(value.guidesColor),
       "--guides-thickness": `${guideThickness}px`,
       "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
-      "--page-unit": value.unit,
-      "--page-height": `${value.pageHeight}${value.unit}`,
-      "--page-width": `${value.pageWidth}${value.unit}`,
-      "--grid-columns": value.numberOfColumns,
+      "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
+      "--image-container-buffer": `${imageContainerBuffer}px`,
+      "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
       "--card-width": cardWidth,
       "--card-height": cardHeight,
     };
@@ -74,7 +91,7 @@ export const SettingsProvider = (
 
   const contextValue = useMemo(
     () => ({ settings: value, setSettings, cssVars }),
-    [value, setSettings, cssVars]
+    [value, setSettings, cssVars],
   );
 
   return <SettingsContext.Provider {...props} value={contextValue} />;

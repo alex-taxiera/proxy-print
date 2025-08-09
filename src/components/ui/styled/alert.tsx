@@ -1,8 +1,10 @@
 import type { Assign } from "@ark-ui/react";
-import type { ComponentProps } from "styled-system/types";
+
 import { alert, type AlertVariantProps } from "styled-system/recipes";
-import { createStyleContext } from "./utils/create-style-context";
+import type { ComponentProps } from "styled-system/types";
+
 import { Alert } from "../custom/alert";
+import { createStyleContext } from "./utils/create-style-context";
 
 const { withProvider, withContext } = createStyleContext(alert);
 
@@ -14,22 +16,22 @@ export const Root = withProvider<
 
 export const Content = withContext<HTMLDivElement, Alert.ContentProps>(
   Alert.Content,
-  "content"
+  "content",
 );
 
 export const Description = withContext<HTMLDivElement, Alert.DescriptionProps>(
   Alert.Description,
-  "description"
+  "description",
 );
 
 export const Icon = withContext<HTMLOrSVGElement, Alert.IconProps>(
   Alert.Icon,
-  "icon"
+  "icon",
 );
 
 export const Title = withContext<HTMLHeadingElement, Alert.TitleProps>(
   Alert.Title,
-  "title"
+  "title",
 );
 
 export const DismissButton = withContext<

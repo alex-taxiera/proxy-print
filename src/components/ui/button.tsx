@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
+
 import { Center, styled } from "styled-system/jsx";
+
 import { Spinner } from "./spinner";
 import {
   Button as StyledButton,
@@ -33,7 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </StyledButton>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

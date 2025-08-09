@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+
 import { usePreviewData } from "./usePreviewData";
 
 export const useCardPositionMeta = () => {
@@ -16,4 +17,4 @@ export const useCardPositionMeta = () => {
       };
     });
   }, [columnsPerPage, rowsPerPage]);
-}
+};
