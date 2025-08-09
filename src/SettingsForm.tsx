@@ -52,6 +52,17 @@ export const SettingsForm = () => {
   return (
     <form>
       <label>
+        Card Size
+        <select
+          disabled={isRendering}
+          value={settings.cardSize}
+          onChange={handleChange("cardSize")}
+        >
+          <option value="standard">Standard</option>
+          <option value="japanese">Japanese</option>
+        </select>
+      </label>
+      <label>
         Unit
         <select
           disabled={isRendering}

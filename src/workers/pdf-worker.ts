@@ -23,6 +23,7 @@ type CardData = {
         isFirstColumn: boolean;
         isLastColumn: boolean;
     };
+    cardSize: Settings['cardSize'];
     guides: {
       enabled: boolean;
       thickness: number;
@@ -78,6 +79,9 @@ function addImage(cardData: CardData) {
     guides,
   } = cardData;
 
+  const adjustedContainerWidth = containerWidth * scaleX;
+  const adjustedContainerHeight = containerHeight * scaleY;
+
   // Add image to PDF
   if (imageDataUrl) {
     let detectedPdfFormat = "PNG"; // default
@@ -103,8 +107,8 @@ function addImage(cardData: CardData) {
       detectedPdfFormat,
       pdfX,
       pdfY,
-      containerWidth * scaleX,
-      containerHeight * scaleY,
+      adjustedContainerWidth,
+      adjustedContainerHeight,
       undefined,
       "FAST"
     );
@@ -112,8 +116,8 @@ function addImage(cardData: CardData) {
 
   // Add guides if needed
   if (guides && guides.enabled) {
-    const pdfContainerWidth = containerWidth * scaleX;
-    const pdfContainerHeight = containerHeight * scaleY;
+    const pdfContainerWidth = adjustedContainerWidth;
+    const pdfContainerHeight = adjustedContainerHeight;
 
     // Set line color and style
     pdf.setDrawColor(0, 0, 0); // Black for guides
