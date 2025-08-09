@@ -157,12 +157,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: calc(63mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width));
-  height: calc(88mm + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width));
+  width: calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width));
+  height: calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width));
 }
 
 .image {
-  width: calc(63mm + var(--image-zoom-width));
+  width: calc(var(--card-width, 63mm) + var(--image-zoom-width));
   object-fit: cover;
 }
 

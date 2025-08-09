@@ -12,6 +12,7 @@ export const SettingsSchema = zod.object({
   pageWidth: zod.string(),
   numberOfColumns: zod.string(),
   unit: zod.enum(["in", "mm"]),
+  cardSize: zod.enum(["standard", "japanese"]),
 });
 
 export type Settings = zod.infer<typeof SettingsSchema>;
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS = {
   pageWidth: "8.5",
   numberOfColumns: "3",
   unit: "in",
+  cardSize: "standard",
 } as const satisfies Settings;
 
 export type SettingsContextValue = {

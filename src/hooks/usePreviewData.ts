@@ -13,8 +13,17 @@ export const usePageLimits = () => {
       parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1);
     const guidesThickness = parseFloat(settings.guidesThickness) * 0.265; // convert px to mm
     const bleedEdge = parseFloat(settings.bleedEdge); // mm
-    // card height is 88mm + 2 * bleedEdge + guidesThickness
-    const cardHeight = 88 + 2 * bleedEdge + guidesThickness; // mm
+
+    // Define card height constants
+    const CARD_HEIGHT = {
+      standard: 88, // Standard card height in mm
+      japanese: 86, // Japanese card height in mm
+    };
+
+    // Adjust card height based on card size
+    const cardHeight =
+      CARD_HEIGHT[settings.cardSize] + 2 * bleedEdge + guidesThickness;
+
     return Math.floor(pageHeight / cardHeight);
   }, [settings]);
 
@@ -35,7 +44,7 @@ export const usePageLimits = () => {
     cardsPerPage,
     maxPages,
   };
-}
+};
 
 export const usePreviewData = () => {
   const { images } = useContext(ImagesContext);

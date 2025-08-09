@@ -51,6 +51,9 @@ export const SettingsProvider = (
   const cssVars = useMemo(() => {
     const guideThickness = value.enableBleedEdge ? Number(value.guidesThickness) : 1
     const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0
+    const cardWidth = value.cardSize === "japanese" ? "59mm" : "63mm";
+    const cardHeight = value.cardSize === "japanese" ? "86mm" : "88mm";
+
     return {
       "--image-zoom": value.enableBleedEdge ? '6.2mm' : '0mm',
       "--image-container-buffer": `${imageContainerBuffer}px`,
@@ -64,6 +67,8 @@ export const SettingsProvider = (
       "--page-height": `${value.pageHeight}${value.unit}`,
       "--page-width": `${value.pageWidth}${value.unit}`,
       "--grid-columns": value.numberOfColumns,
+      "--card-width": cardWidth,
+      "--card-height": cardHeight,
     } as React.CSSProperties;
   }, [value]);
 
