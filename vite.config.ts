@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 /// <reference types="vitest/config" />
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import react from "@vitejs/plugin-react";
@@ -13,7 +14,13 @@ const dirname =
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    sentryVitePlugin({
+      org: "proxy-print",
+      project: "proxy-print",
+    }),
+  ],
   worker: {
     format: "es",
   },
@@ -30,6 +37,8 @@ export default defineConfig({
         },
       },
     },
+
+    sourcemap: true,
   },
   test: {
     projects: [

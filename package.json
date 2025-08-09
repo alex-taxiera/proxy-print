@@ -32,6 +32,8 @@
     "@fortawesome/free-regular-svg-icons": "^7.0.0",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "@fortawesome/react-fontawesome": "^0.2.3",
+    "@sentry/react": "^10.3.0",
+    "@sentry/vite-plugin": "^4.0.2",
     "jspdf": "github:laucheukhim/jsPDF",
     "nanoid": "^5.1.0",
     "react": "^18.3.1",
