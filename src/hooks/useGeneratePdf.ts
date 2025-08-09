@@ -6,6 +6,7 @@ import PdfWorker from "../workers/pdf-worker?worker";
 import { usePreviewData } from "./usePreviewData";
 import { useCardClassNames } from "./useCardClassNames";
 import { invertHexColor } from "../utils/invert-hex-color";
+import * as Sentry from "@sentry/react";
 
 const doTimeout = (fn: () => void, timeout?: number) => {
   if (window.requestIdleCallback) {
@@ -204,6 +205,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           tempImg.src = "";
         } catch (error) {
           console.error("Error processing image for PDF:", error);
+          Sentry.captureException(error);
         }
       }
 
@@ -283,6 +285,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           }
         })
         .catch((error) => {
+          Sentry.captureException(error);
           console.error("Error processing card:", error);
         });
     };
@@ -317,6 +320,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         setIsRendering(false);
         progressEvents.emit("complete");
       } catch (error) {
+        Sentry.captureException(error);
         console.error("Error merging PDFs", error);
         console.timeEnd("save");
         setIsRendering(false);
@@ -383,6 +387,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             break;
           }
           case "error":
+            Sentry.captureException(e.data.error);
             console.error("PDF error:", e.data.error);
             console.timeEnd("save");
             setIsRendering(false);
@@ -392,6 +397,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       };
 
       worker.onerror = (e) => {
+        Sentry.captureException(e.error);
         console.error("Worker error:", e.error);
         console.timeEnd("save");
         setIsRendering(false);
