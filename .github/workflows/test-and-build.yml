@@ -30,7 +30,29 @@ jobs:
 
       - name: npm ci
         if: steps.deps.outputs.cache-hit != 'true'
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+  generate-css:
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: CSS Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/styled-system
+          key: ${{ hashFiles('**/src/**/*.tsx') }}
+
+      - name: Generate CSS
+        run: npm run prepare
 
   lint:
     runs-on: ubuntu-latest
@@ -52,6 +74,13 @@ jobs:
             **/node_modules
             ~/.npm
           key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: CSS Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/styled-system
+          key: ${{ hashFiles('**/src/**/*.tsx') }}
 
       - name: Lint project
         run: npm run lint
@@ -99,6 +128,13 @@ jobs:
             **/node_modules
             ~/.npm
           key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: CSS Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/styled-system
+          key: ${{ hashFiles('**/src/**/*.tsx') }}
 
       - name: Build project
         run: npm run build
