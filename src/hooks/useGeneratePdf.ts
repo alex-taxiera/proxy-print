@@ -7,6 +7,7 @@ import { usePreviewData } from "./usePreviewData";
 import { useCardClassNames } from "./useCardClassNames";
 import { invertHexColor } from "../utils/invert-hex-color";
 import * as Sentry from "@sentry/react";
+import { PDFDocument } from "pdf-lib";
 
 const doTimeout = (fn: () => void, timeout?: number) => {
   if (window.requestIdleCallback) {
@@ -17,7 +18,6 @@ const doTimeout = (fn: () => void, timeout?: number) => {
 };
 
 async function* mergePDFsBlobs(blobs: Blob[]) {
-  const { PDFDocument } = await import("pdf-lib/es");
   let mergedPdf = await PDFDocument.create();
   // split the blobs into chunks of 2GB -- this is the limit in Chrome
   const maxPdfSize = 2 * 1024 * 1024 * 1024;

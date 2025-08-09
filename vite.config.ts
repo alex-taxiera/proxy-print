@@ -16,6 +16,13 @@ export default defineConfig({
     format: 'es',
   },
   build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "pdf-lib": ["pdf-lib"],
+        },
+      },
+    },
     sourcemap: true,
   },
 });
