@@ -44,6 +44,14 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Dependency Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
       - name: CSS Cache
         uses: actions/cache@v3
         with:
