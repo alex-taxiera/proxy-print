@@ -1,8 +1,13 @@
 import { useCallback, useContext } from "react";
-import { DEFAULT_SETTINGS, Settings, SettingsContext } from "./context/SettingsContext";
+import {
+  DEFAULT_SETTINGS,
+  Settings,
+  SettingsContext,
+} from "./context/SettingsContext";
 
 import "./SettingsForm.css";
 import { ImagesContext } from "./context/ImagesContext";
+import { isSettingValueEmpty } from "./context/SettingsProvider";
 
 const getMaxGuideWidth = (settings: Settings) => {
   const bleedEdge = Number(settings.bleedEdge);
@@ -30,14 +35,18 @@ export const SettingsForm = () => {
     (key: keyof typeof settings, eventKey: "value" | "checked" = "value") =>
       (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setSettings((old) => {
+          const value =
+            e.target instanceof HTMLInputElement
+              ? e.target[eventKey]
+              : e.target.value;
+
           const updatedSettings = {
             ...old,
-            [key]:
-            (e.target instanceof HTMLInputElement
-              ? e.target[eventKey]
-              : e.target.value) ?? DEFAULT_SETTINGS[key],
+            [key]: isSettingValueEmpty(value) ? DEFAULT_SETTINGS[key] : value,
           };
+
           const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
+
           if (parseInt(updatedSettings.guidesThickness) > newMaxGuideWidth) {
             updatedSettings.guidesThickness = newMaxGuideWidth.toString();
           }
