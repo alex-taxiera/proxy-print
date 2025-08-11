@@ -49,7 +49,7 @@ export const SettingsSchema = zod.object({
     .min(1)
     .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
   unit: zod.enum(["in", "mm"]),
-  cardSize: zod.enum(["standard", "japanese"]),
+  cardSize: zod.enum(["standard", "japanese", "tarot"]),
 }).superRefine((data, ctx) => {
   const { pageWidth, pageHeight } = data;
   const minPageWidth = getMinSize(data, "pageWidth");
@@ -75,6 +75,10 @@ export const CARD_DIMENSIONS = {
     width: 59,
     height: 86,
   },
+  tarot:{
+    width: 70,
+    height: 120
+  }
 } as const satisfies Record<
   Settings["cardSize"],
   { width: number; height: number }
