@@ -63,12 +63,21 @@ export const SettingsProvider = (
   }, []);
 
   const cssVars = useMemo(() => {
-    const guideThickness = value.enableBleedEdge
-      ? Number(value.guidesThickness)
-      : 1;
+    const guideThickness = value.enableBleedEdge ? Number(value.guidesThickness) : 1;
     const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0;
-    const cardWidth = `${CARD_DIMENSIONS[value.cardSize].width}mm`;
-    const cardHeight = `${CARD_DIMENSIONS[value.cardSize].height}mm`;
+
+    const getCardDimensions = (size: string): { width: string; height: string } => {
+      switch (size) {
+        case "japanese":
+          return { width: "59mm", height: "86mm" };
+        case "tarot":
+          return { width: "70mm", height: "120mm" };
+        default:
+          return { width: "63mm", height: "88mm" };
+      }
+    };
+
+    const { width: cardWidth, height: cardHeight } = getCardDimensions(value.cardSize);
 
     return {
       "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
