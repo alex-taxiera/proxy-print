@@ -149,7 +149,19 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           // Wait for the image to load
           await new Promise((resolve, reject) => {
             tempImg.onload = resolve;
-            tempImg.onerror = reject;
+            tempImg.onerror = (event, source, lineno, colno, error) => {
+              console.debug("Image load error:", {
+                imageSrc,
+                fileType: image?.file?.type,
+                fileSize: image?.file?.size,
+                event,
+                source,
+                lineno,
+                colno,
+                error,
+              });
+              reject(error ?? new Error("Image load error"));
+            };
             tempImg.src = imageSrc;
           });
 
