@@ -77,6 +77,7 @@ export const SettingsForm = () => {
         >
           <option value="standard">Standard</option>
           <option value="japanese">Japanese</option>
+          <option value="tarot">Tarot</option>
         </select>
       </label>
       <label>
