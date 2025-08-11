@@ -1,5 +1,6 @@
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 import {
+  CARD_DIMENSIONS,
   DEFAULT_SETTINGS,
   Settings,
   SettingsContext,
@@ -66,8 +67,8 @@ export const SettingsProvider = (
       ? Number(value.guidesThickness)
       : 1;
     const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0;
-    const cardWidth = value.cardSize === "japanese" ? "59mm" : "63mm";
-    const cardHeight = value.cardSize === "japanese" ? "86mm" : "88mm";
+    const cardWidth = `${CARD_DIMENSIONS[value.cardSize].width}mm`;
+    const cardHeight = `${CARD_DIMENSIONS[value.cardSize].height}mm`;
 
     return {
       "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",

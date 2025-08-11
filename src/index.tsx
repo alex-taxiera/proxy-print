@@ -28,7 +28,7 @@ Sentry.init({
     Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
   ],
 
-  replaysSessionSampleRate: SENTRY_ENV === "production" ? 0.1 : 1,
+  replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1,
 
   tracesSampleRate: SENTRY_ENV === "production" ? 0.1 : 1,

@@ -1,6 +1,7 @@
 import { useCallback, useContext } from "react";
 import {
   DEFAULT_SETTINGS,
+  getMinSize,
   Settings,
   SettingsContext,
 } from "./context/SettingsContext";
@@ -40,9 +41,16 @@ export const SettingsForm = () => {
               ? e.target[eventKey]
               : e.target.value;
 
+          let nextValue = isSettingValueEmpty(value) ? DEFAULT_SETTINGS[key] : value;
+
+          if (key === "pageWidth" || key === "pageHeight") {
+            const minSize = getMinSize(old, key);
+            nextValue = Math.max(Number(nextValue), Number(minSize)).toString();
+          }
+
           const updatedSettings = {
             ...old,
-            [key]: isSettingValueEmpty(value) ? DEFAULT_SETTINGS[key] : value,
+            [key]: nextValue,
           };
 
           const newMaxGuideWidth = getMaxGuideWidth(updatedSettings);
