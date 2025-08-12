@@ -101,11 +101,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     const pdfPages = new Map<number, Blob>();
 
     // sort cards into separate lists per worker
-    const assignments = splitIntoChunks(
-      cards,
-      numberOfPages,
-      cardsPerPage
-    );
+    const assignments = splitIntoChunks(cards, numberOfPages, cardsPerPage);
 
     const processCard = async (cardElement: HTMLElement) => {
       const index = cards.indexOf(cardElement);
@@ -328,6 +324,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           URL.revokeObjectURL(url);
         }
         console.debug("done!");
+        Sentry.captureMessage("PDF generation complete", "info");
         console.timeEnd("save");
         setIsRendering(false);
         progressEvents.emit("complete");
@@ -394,16 +391,19 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
             if (pdfPages.size === numberOfPages) {
               // done, moving to save logic
-              void Sentry.startSpan({
-                name: "savePDF",
-                op: "pdf.save",
-                attributes: {
-                  numberOfPages,
-                  cardsPerPage,
+              void Sentry.startSpan(
+                {
+                  name: "savePDF",
+                  op: "pdf.save",
+                  attributes: {
+                    numberOfPages,
+                    cardsPerPage,
+                  },
                 },
-              }, async () => {
-                await savePDF();
-              });
+                async () => {
+                  await savePDF();
+                }
+              );
             }
             break;
           }
@@ -455,15 +455,18 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   ]);
 
   return useCallback(() => {
-    Sentry.startSpan({
-      name: "generatePdf",
-      op: "pdf.generate",
-      attributes: {
-        numberOfPages: imageMatrix.length,
-        cardsPerPage,
+    Sentry.startSpan(
+      {
+        name: "generatePdf",
+        op: "pdf.generate",
+        attributes: {
+          numberOfPages: imageMatrix.length,
+          cardsPerPage,
+        },
       },
-    }, () => {
-      generatePdf();
-    });
+      () => {
+        generatePdf();
+      }
+    );
   }, [generatePdf, imageMatrix.length, cardsPerPage]);
 };
