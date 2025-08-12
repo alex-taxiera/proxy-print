@@ -52,368 +52,399 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const { imageMatrix, cardsPerPage } = usePreviewData();
   const cardPositionMeta = useCardPositionMeta();
 
-  return useCallback(() => {
-    // grab reference html elements
-    const referencePage = contentRef.current?.querySelector<HTMLElement>(
-      ".page",
-    ) as HTMLElement;
-    const referencePageRect = referencePage.getBoundingClientRect();
-    const referenceCards = Array.from(
-      referencePage.querySelectorAll<HTMLElement>(".card"),
-    );
-    const referenceImageContainer = referenceCards[0].querySelector(
-      ".image-container",
-    ) as HTMLElement;
-    const imageContainerRect = referenceImageContainer.getBoundingClientRect();
-    const containerWidth = imageContainerRect.width;
-    const containerHeight = imageContainerRect.height;
-    const referenceImg = referenceCards[0].querySelector<HTMLImageElement>(
-      "img",
-    ) as HTMLImageElement;
-    const imageRect = referenceImg.getBoundingClientRect();
-    const imageWidth = imageRect.width;
-    const imageHeight = imageRect.height;
-
-    // read settings
-    const pageHeight = Number(settings.pageHeight);
-    const pageWidth = Number(settings.pageWidth);
-    const guideBorderWidth = Number(settings.guidesThickness);
-    const bleedEdgeWidth = Number(
-      settings.enableBleedEdge ? settings.bleedEdge : 0,
-    );
-    const guideColor = settings.guidesColor;
-    const invertedGuideColor = invertHexColor(settings.guidesColor);
-    const unit = settings.unit;
-    const guidesThickness = 0.2645833333 * guideBorderWidth;
-    const guidesAtBleedEdge = settings.guidesAtBleedEdge;
-    const pdfName = `${settings.filename}.pdf`;
-
-    let progress = 0;
-    const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
-    const numberOfPages = imageMatrix.length;
-    const maxWorkers = Math.min(Math.floor(numberOfPages / 2) || 1, 34);
-    const cardsDone = new Map<number, number>();
-    const pdfPages = new Map<number, Blob>();
-
-    // sort cards into separate lists per worker
-    const assignments = imageMatrix.map((page) =>
-      page.map((image) => image.uuid),
-    );
-
-    const processCard = async ({
-      imageUuid,
-      relativeIndex,
-    }: {
-      imageUuid?: string;
-      relativeIndex: number;
-    }) => {
-      const index = imageUuid
-        ? images.findIndex((image) => image.uuid === imageUuid)
-        : relativeIndex + (imageMatrix.length - 1) * cardsPerPage;
-      const image = images[index];
-      console.debug(
-        `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processing`,
+  const generatePdf = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      const referencePage = contentRef.current?.querySelector<HTMLElement>(
+        ".page",
+      ) as HTMLElement;
+      const referencePageRect = referencePage.getBoundingClientRect();
+      const referenceCards = Array.from(
+        referencePage.querySelectorAll<HTMLElement>(".card"),
       );
-      const referenceCard = referenceCards[relativeIndex];
-      const cardRect = referenceCard.getBoundingClientRect();
+      const referenceImageContainer = referenceCards[0].querySelector(
+        ".image-container",
+      ) as HTMLElement;
+      const imageContainerRect =
+        referenceImageContainer.getBoundingClientRect();
+      const containerWidth = imageContainerRect.width;
+      const containerHeight = imageContainerRect.height;
+      const referenceImg = referenceCards[0].querySelector<HTMLImageElement>(
+        "img",
+      ) as HTMLImageElement;
+      const imageRect = referenceImg.getBoundingClientRect();
+      const imageWidth = imageRect.width;
+      const imageHeight = imageRect.height;
 
-      const scaleX = pageWidth / referencePageRect.width;
-      const scaleY = pageHeight / referencePageRect.height;
-      const pdfGuideBorderWidth = guideBorderWidth * scaleX;
+      // read settings
+      const pageHeight = Number(settings.pageHeight);
+      const pageWidth = Number(settings.pageWidth);
+      const guideBorderWidth = Number(settings.guidesThickness);
+      const bleedEdgeWidth = Number(
+        settings.enableBleedEdge ? settings.bleedEdge : 0,
+      );
+      const guideColor = settings.guidesColor;
+      const invertedGuideColor = invertHexColor(settings.guidesColor);
+      const unit = settings.unit;
+      const guidesThickness = 0.2645833333 * guideBorderWidth;
+      const guidesAtBleedEdge = settings.guidesAtBleedEdge;
+      const pdfName = `${settings.filename}.pdf`;
 
-      const cardX = cardRect.left - referencePageRect.left;
-      const cardY = cardRect.top - referencePageRect.top;
-      const pdfX = cardX * scaleX;
-      const pdfY = cardY * scaleY;
+      let progress = 0;
+      const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
+      const numberOfPages = imageMatrix.length;
+      const maxWorkers = Math.min(Math.floor(numberOfPages / 2) || 1, 34);
+      const cardsDone = new Map<number, number>();
+      const pdfPages = new Map<number, Blob>();
 
-      let imageDataUrl = null;
+      // sort cards into separate lists per worker
+      const assignments = imageMatrix.map((page) =>
+        page.map((image) => image.uuid),
+      );
 
-      if (image) {
-        try {
-          // Get the image source URL (could be blob URL or data URL)
-          const imageSrc = image.url ?? URL.createObjectURL(image.file!);
+      const processCard = async ({
+        imageUuid,
+        relativeIndex,
+      }: {
+        imageUuid?: string;
+        relativeIndex: number;
+      }) => {
+        const index = imageUuid
+          ? images.findIndex((image) => image.uuid === imageUuid)
+          : relativeIndex + (imageMatrix.length - 1) * cardsPerPage;
+        const image = images[index];
+        console.debug(
+          `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processing`,
+        );
+        const referenceCard = referenceCards[relativeIndex];
+        const cardRect = referenceCard.getBoundingClientRect();
 
-          // Create a new image element to get natural dimensions
-          const tempImg = new Image();
-          tempImg.crossOrigin = "anonymous";
+        const scaleX = pageWidth / referencePageRect.width;
+        const scaleY = pageHeight / referencePageRect.height;
+        const pdfGuideBorderWidth = guideBorderWidth * scaleX;
 
-          // Wait for the image to load
-          await new Promise((resolve, reject) => {
-            tempImg.onload = resolve;
-            tempImg.onerror = reject;
-            tempImg.src = imageSrc;
-          });
+        const cardX = cardRect.left - referencePageRect.left;
+        const cardY = cardRect.top - referencePageRect.top;
+        const pdfX = cardX * scaleX;
+        const pdfY = cardY * scaleY;
 
-          const sourceWidth =
-            (containerWidth / imageWidth) * tempImg.naturalWidth;
-          const sourceHeight =
-            (containerHeight / imageHeight) * tempImg.naturalHeight;
-          const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
-          const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
+        let imageDataUrl = null;
 
-          // Use full resolution - no max width/height constraints
-          const targetWidth = Math.round(sourceWidth);
-          const targetHeight = Math.round(sourceHeight);
+        if (image) {
+          try {
+            // Get the image source URL (could be blob URL or data URL)
+            const imageSrc = image.url ?? URL.createObjectURL(image.file!);
 
-          const cropCanvas = document.createElement("canvas");
-          const cropCtx = cropCanvas.getContext("2d");
+            // Create a new image element to get natural dimensions
+            const tempImg = new Image();
+            tempImg.crossOrigin = "anonymous";
 
-          if (cropCtx) {
-            cropCanvas.width = targetWidth;
-            cropCanvas.height = targetHeight;
+            // Wait for the image to load
+            await new Promise((resolve, reject) => {
+              tempImg.onload = resolve;
+              tempImg.onerror = (event, source, lineno, colno, error) => {
+                console.debug("Image load error:", {
+                  imageSrc,
+                  fileType: image?.file?.type,
+                  fileSize: image?.file?.size,
+                  event,
+                  source,
+                  lineno,
+                  colno,
+                  error,
+                });
+                reject(error ?? new Error("Image load error"));
+              };
+              tempImg.src = imageSrc;
+            });
 
-            cropCtx.drawImage(
-              tempImg,
-              sourceX,
-              sourceY,
-              sourceWidth,
-              sourceHeight,
-              0,
-              0,
-              targetWidth,
-              targetHeight,
-            );
+            const sourceWidth =
+              (containerWidth / imageWidth) * tempImg.naturalWidth;
+            const sourceHeight =
+              (containerHeight / imageHeight) * tempImg.naturalHeight;
+            const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
+            const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
 
-            imageDataUrl = cropCanvas.toDataURL(
-              image.mimeType ?? image.file!.type,
-              1,
-            );
+            // Use full resolution - no max width/height constraints
+            const targetWidth = Math.round(sourceWidth);
+            const targetHeight = Math.round(sourceHeight);
 
-            // Clear canvas immediately to free memory
-            cropCanvas.width = 0;
-            cropCanvas.height = 0;
-            cropCtx.clearRect(0, 0, 0, 0);
-            if (image.file) {
-              URL.revokeObjectURL(imageSrc);
+            const cropCanvas = document.createElement("canvas");
+            const cropCtx = cropCanvas.getContext("2d");
+
+            if (cropCtx) {
+              cropCanvas.width = targetWidth;
+              cropCanvas.height = targetHeight;
+
+              cropCtx.drawImage(
+                tempImg,
+                sourceX,
+                sourceY,
+                sourceWidth,
+                sourceHeight,
+                0,
+                0,
+                targetWidth,
+                targetHeight,
+              );
+
+              imageDataUrl = cropCanvas.toDataURL(
+                image.mimeType ?? image.file!.type,
+                1,
+              );
+
+              // Clear canvas immediately to free memory
+              cropCanvas.width = 0;
+              cropCanvas.height = 0;
+              cropCtx.clearRect(0, 0, 0, 0);
+              if (image.file) {
+                URL.revokeObjectURL(imageSrc);
+              }
             }
+
+            // Clear tempImg reference to help GC
+            tempImg.onload = null;
+            tempImg.onerror = null;
+            tempImg.src = "";
+          } catch (error) {
+            console.error("Error processing image for PDF:", error);
+            reject(error as Error);
           }
-
-          // Clear tempImg reference to help GC
-          tempImg.src = "";
-        } catch (error) {
-          console.error("Error processing image for PDF:", error);
-          Sentry.captureException(error);
         }
-      }
 
-      progress++;
-      console.debug(
-        `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processed`,
-      );
+        progress++;
+        console.debug(
+          `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processed`,
+        );
 
-      // Get card classes to determine guide types
-      const { isFirstRow, isLastRow, isFirstColumn, isLastColumn } =
-        cardPositionMeta[relativeIndex];
+        const { isFirstRow, isLastRow, isFirstColumn, isLastColumn } =
+          cardPositionMeta[relativeIndex];
 
-      return {
-        imageDataUrl,
-        mimeType: image?.mimeType ?? image?.file!.type,
-        pdfX,
-        pdfY,
-        containerWidth,
-        containerHeight,
-        scaleX,
-        scaleY,
-        cardPosition: {
-          isFirstRow,
-          isLastRow,
-          isFirstColumn,
-          isLastColumn,
-        },
-        guides: guidesThickness
-          ? {
-              enabled: true,
-              thickness: pdfGuideBorderWidth,
-              bleedEdgeWidth,
-              guideColor,
-              invertedGuideColor,
-              unit,
-              guidesThickness,
-              guidesAtBleedEdge,
-            }
-          : null,
+        return {
+          imageDataUrl,
+          mimeType: image?.mimeType ?? image?.file!.type,
+          pdfX,
+          pdfY,
+          containerWidth,
+          containerHeight,
+          scaleX,
+          scaleY,
+          cardPosition: {
+            isFirstRow,
+            isLastRow,
+            isFirstColumn,
+            isLastColumn,
+          },
+          guides: guidesThickness
+            ? {
+                enabled: true,
+                thickness: pdfGuideBorderWidth,
+                bleedEdgeWidth,
+                guideColor,
+                invertedGuideColor,
+                unit,
+                guidesThickness,
+                guidesAtBleedEdge,
+              }
+            : null,
+        };
       };
-    };
 
-    const requestNextCard = (
-      data: [string, Worker],
-      cards: [string, Worker][],
-      relativeIndex: number,
-    ) => {
-      const [imageUuid, worker] = data;
+      const requestNextCard = (
+        data: [string, Worker],
+        cards: [string, Worker][],
+        relativeIndex: number,
+      ) => {
+        const [imageUuid, worker] = data;
 
+        progressEvents.emit("progress", {
+          progress: progress,
+          totalProgressAmount,
+          phase: "Building PDF",
+        });
+
+        processCard({
+          imageUuid,
+          relativeIndex,
+        })
+          .then((card) => {
+            progressEvents.emit("progress", {
+              progress: progress,
+              totalProgressAmount,
+              phase: "Building PDF",
+            });
+            worker.postMessage({
+              type: "addImage",
+              data: {
+                card,
+                init: {
+                  pageHeight: Number(settings.pageHeight),
+                  pageWidth: Number(settings.pageWidth),
+                  unit: settings.unit,
+                },
+              },
+            });
+
+            if (cards.length > 0) {
+              doTimeout(
+                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1),
+                50,
+              );
+            }
+          })
+          .catch((error) => {
+            reject(error as Error);
+            console.error("Error processing card:", error);
+          });
+      };
+
+      const savePDF = async () => {
+        progressEvents.emit("progress", {
+          progress: null,
+          totalProgressAmount,
+          phase: "Saving PDF",
+        });
+
+        // combine pdfs
+        const pdfGenerator = mergePDFsBlobs(
+          Array.from(pdfPages.entries())
+            .sort((a, b) => a[0] - b[0])
+            .map(([, blob]) => blob),
+        );
+
+        try {
+          for await (const blob of pdfGenerator) {
+            console.debug("saving pdf", blob);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = pdfName;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+          console.debug("done!");
+          Sentry.captureMessage("PDF generation complete", "info");
+          console.timeEnd("save");
+          setIsRendering(false);
+          progressEvents.emit("complete");
+          resolve(void 0);
+        } catch (error) {
+          console.error("Error merging PDFs", error);
+          reject(error as Error);
+          console.timeEnd("save");
+          setIsRendering(false);
+          progressEvents.emit("complete");
+        }
+      };
+
+      const startWorker = () => {
+        const cards = assignments.shift()!;
+        const workerIndex = numberOfPages - assignments.length;
+        const worker = new PdfWorker({ name: `PDF Worker ${workerIndex}` });
+
+        // set up handlers
+        worker.onmessage = (
+          e: MessageEvent<{
+            type: string;
+            success: boolean;
+            error?: string;
+            blob?: Blob;
+          }>,
+        ) => {
+          switch (e.data.type) {
+            case "cardProcessed": {
+              progress++;
+              cardsDone.set(workerIndex, (cardsDone.get(workerIndex) || 0) + 1);
+
+              console.debug(
+                `PDF Worker ${workerIndex}: card ${cardsDone.get(
+                  workerIndex,
+                )} of ${cardsPerPage} processed`,
+              );
+
+              progressEvents.emit("progress", {
+                progress: progress,
+                totalProgressAmount,
+                phase: "Building PDF",
+              });
+
+              const done = cardsDone.get(workerIndex) === cardsPerPage;
+              if (done) {
+                worker.postMessage({
+                  type: "save",
+                });
+              }
+              break;
+            }
+            case "save": {
+              console.debug(
+                `PDF Worker ${workerIndex}: saved pdf size ${
+                  e.data.blob?.size
+                }`,
+              );
+              worker.terminate();
+              if (assignments.length > 0) {
+                startWorker();
+              }
+              // cleanup worker and start any sleeping workers
+              pdfPages.set(workerIndex, e.data.blob!);
+
+              if (pdfPages.size === numberOfPages) {
+                // done, moving to save logic
+                void Sentry.startSpan(
+                  {
+                    name: "savePDF",
+                    op: "pdf.save",
+                    attributes: {
+                      numberOfPages,
+                      cardsPerPage,
+                    },
+                  },
+                  async () => {
+                    await savePDF();
+                  },
+                );
+              }
+              break;
+            }
+            case "error":
+              reject(new Error(e.data.error));
+              console.error("PDF error:", e.data.error);
+              console.timeEnd("save");
+              setIsRendering(false);
+              progressEvents.emit("complete");
+              break;
+          }
+        };
+
+        worker.onerror = (e) => {
+          console.error("Worker error:", e.error);
+          reject(e.error as Error);
+          console.timeEnd("save");
+          setIsRendering(false);
+          progressEvents.emit("complete");
+        };
+
+        // start the worker
+        doTimeout(() => {
+          requestNextCard(
+            [cards.shift()!, worker],
+            cards.map((card) => [card, worker]),
+            0,
+          );
+        });
+      };
+
+      // Finally start the process
       progressEvents.emit("progress", {
         progress: progress,
         totalProgressAmount,
         phase: "Building PDF",
       });
 
-      processCard({
-        imageUuid,
-        relativeIndex,
-      })
-        .then((card) => {
-          progressEvents.emit("progress", {
-            progress: progress,
-            totalProgressAmount,
-            phase: "Building PDF",
-          });
-          worker.postMessage({
-            type: "addImage",
-            data: {
-              card,
-              init: {
-                pageHeight: Number(settings.pageHeight),
-                pageWidth: Number(settings.pageWidth),
-                unit: settings.unit,
-              },
-            },
-          });
-
-          if (cards.length > 0) {
-            doTimeout(
-              () => requestNextCard(cards.shift()!, cards, relativeIndex + 1),
-              50,
-            );
-          }
-        })
-        .catch((error) => {
-          Sentry.captureException(error);
-          console.error("Error processing card:", error);
-        });
-    };
-
-    const savePDF = async () => {
-      progressEvents.emit("progress", {
-        progress: null,
-        totalProgressAmount,
-        phase: "Saving PDF",
-      });
-
-      // combine pdfs
-      const pdfGenerator = mergePDFsBlobs(
-        Array.from(pdfPages.entries())
-          .sort((a, b) => a[0] - b[0])
-          .map(([, blob]) => blob),
-      );
-
-      try {
-        for await (const blob of pdfGenerator) {
-          console.debug("saving pdf", blob);
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = pdfName;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-        console.debug("done!");
-        console.timeEnd("save");
-        setIsRendering(false);
-        progressEvents.emit("complete");
-      } catch (error) {
-        Sentry.captureException(error);
-        console.error("Error merging PDFs", error);
-        console.timeEnd("save");
-        setIsRendering(false);
-        progressEvents.emit("complete");
+      for (let i = 0; i < maxWorkers; i++) {
+        startWorker();
       }
-    };
-
-    const startWorker = () => {
-      const cards = assignments.shift()!;
-      const workerIndex = numberOfPages - assignments.length;
-      const worker = new PdfWorker({ name: `PDF Worker ${workerIndex}` });
-
-      // set up handlers
-      worker.onmessage = (
-        e: MessageEvent<{
-          type: string;
-          success: boolean;
-          error?: string;
-          blob?: Blob;
-        }>,
-      ) => {
-        switch (e.data.type) {
-          case "cardProcessed": {
-            progress++;
-            cardsDone.set(workerIndex, (cardsDone.get(workerIndex) || 0) + 1);
-
-            console.debug(
-              `PDF Worker ${workerIndex}: card ${cardsDone.get(
-                workerIndex,
-              )} of ${cardsPerPage} processed`,
-            );
-
-            progressEvents.emit("progress", {
-              progress: progress,
-              totalProgressAmount,
-              phase: "Building PDF",
-            });
-
-            const done = cardsDone.get(workerIndex) === cardsPerPage;
-            if (done) {
-              worker.postMessage({
-                type: "save",
-              });
-            }
-            break;
-          }
-          case "save": {
-            console.debug(
-              `PDF Worker ${workerIndex}: saved pdf size ${e.data.blob?.size}`,
-            );
-            worker.terminate();
-            if (assignments.length > 0) {
-              startWorker();
-            }
-            // cleanup worker and start any sleeping workers
-            pdfPages.set(workerIndex, e.data.blob!);
-
-            if (pdfPages.size === numberOfPages) {
-              // done, moving to save logic
-              void savePDF();
-            }
-            break;
-          }
-          case "error":
-            Sentry.captureException(e.data.error);
-            console.error("PDF error:", e.data.error);
-            console.timeEnd("save");
-            setIsRendering(false);
-            progressEvents.emit("complete");
-            break;
-        }
-      };
-
-      worker.onerror = (e) => {
-        Sentry.captureException(e.error);
-        console.error("Worker error:", e.error);
-        console.timeEnd("save");
-        setIsRendering(false);
-        progressEvents.emit("complete");
-      };
-
-      // start the worker
-      doTimeout(() => {
-        requestNextCard(
-          [cards.shift()!, worker],
-          cards.map((card) => [card, worker]),
-          0,
-        );
-      });
-    };
-
-    // Finally start the process
-    progressEvents.emit("progress", {
-      progress: progress,
-      totalProgressAmount,
-      phase: "Building PDF",
     });
-
-    for (let i = 0; i < maxWorkers; i++) {
-      startWorker();
-    }
   }, [
     contentRef,
     settings,
@@ -423,4 +454,18 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     cardPositionMeta,
     setIsRendering,
   ]);
+
+  return useCallback(() => {
+    void Sentry.startSpan(
+      {
+        name: "generatePdf",
+        op: "pdf.generate",
+        attributes: {
+          numberOfPages: imageMatrix.length,
+          cardsPerPage,
+        },
+      },
+      generatePdf,
+    );
+  }, [generatePdf, imageMatrix.length, cardsPerPage]);
 };

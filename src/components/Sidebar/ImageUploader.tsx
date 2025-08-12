@@ -11,6 +11,7 @@ const parseXML = (file: File): Promise<GoogleImageData[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (event) => {
+      console.debug("Parsing XML", event.target?.result);
       const parser = new DOMParser();
       const xml = parser.parseFromString(
         event.target?.result as string,

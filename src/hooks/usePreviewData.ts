@@ -1,36 +1,38 @@
 import { useContext, useMemo } from "react";
 
 import { type Image, ImagesContext } from "../context/ImagesContext";
-import { SettingsContext } from "../context/SettingsContext";
+import { CARD_DIMENSIONS, SettingsContext } from "../context/SettingsContext";
 
 const MAX_PREVIEW_CARDS = 108;
 
 export const usePageLimits = () => {
   const { settings } = useContext(SettingsContext);
 
+  const guidesThickness = parseFloat(settings.guidesThickness) * 0.265; // convert px to mm
+  const bleedEdge = parseFloat(settings.bleedEdge); // mm
+
+  // Adjust card height based on card size
+  const cardHeight =
+    CARD_DIMENSIONS[settings.cardSize].height + 2 * bleedEdge + guidesThickness;
+  const cardWidth =
+    CARD_DIMENSIONS[settings.cardSize].width + 2 * bleedEdge + guidesThickness;
+
   const rowsPerPage = useMemo(() => {
     // convert in to mm when settings.unit is set to "in"
     const pageHeight =
       parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1);
-    const guidesThickness = parseFloat(settings.guidesThickness) * 0.265; // convert px to mm
-    const bleedEdge = parseFloat(settings.bleedEdge); // mm
-
-    // Define card height constants
-    const CARD_HEIGHT = {
-      standard: 88, // Standard card height in mm
-      japanese: 86, // Japanese card height in mm
-    } as const;
-
-    // Adjust card height based on card size
-    const cardHeight =
-      CARD_HEIGHT[settings.cardSize] + 2 * bleedEdge + guidesThickness;
 
     return Math.floor(pageHeight / cardHeight);
-  }, [settings]);
+  }, [settings, cardHeight]);
 
   const columnsPerPage = useMemo(() => {
-    return parseInt(settings.numberOfColumns);
-  }, [settings]);
+    const pageWidth =
+      parseFloat(settings.pageWidth) * (settings.unit === "in" ? 25.4 : 1);
+
+    const colNum = parseInt(settings.numberOfColumns);
+
+    return Math.min(colNum, Math.floor(pageWidth / cardWidth));
+  }, [settings, cardWidth]);
 
   const cardsPerPage = useMemo(
     () => rowsPerPage * columnsPerPage,
