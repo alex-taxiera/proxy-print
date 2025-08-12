@@ -67,7 +67,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const { imageMatrix, cardsPerPage } = usePreviewData();
   const cardClassNames = useCardClassNames();
 
-  return useCallback(() => {
+  const generatePdf = useCallback(() => {
     const referencePage = contentRef.current?.querySelector<HTMLElement>(
       ".page"
     ) as HTMLElement;
@@ -394,7 +394,16 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
             if (pdfPages.size === numberOfPages) {
               // done, moving to save logic
-              void savePDF();
+              void Sentry.startSpan({
+                name: "savePDF",
+                op: "pdf.save",
+                attributes: {
+                  numberOfPages,
+                  cardsPerPage,
+                },
+              }, async () => {
+                await savePDF();
+              });
             }
             break;
           }
@@ -444,4 +453,17 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     cardClassNames,
     setIsRendering,
   ]);
+
+  return useCallback(() => {
+    Sentry.startSpan({
+      name: "generatePdf",
+      op: "pdf.generate",
+      attributes: {
+        numberOfPages: imageMatrix.length,
+        cardsPerPage,
+      },
+    }, () => {
+      generatePdf();
+    });
+  }, [generatePdf, imageMatrix.length, cardsPerPage]);
 };
