@@ -1,6 +1,7 @@
 import { useCallback, useContext } from "react";
 import {
   DEFAULT_SETTINGS,
+  getMaxSize,
   getMinSize,
   Settings,
   SettingsContext,
@@ -41,11 +42,15 @@ export const SettingsForm = () => {
               ? e.target[eventKey]
               : e.target.value;
 
-          let nextValue = isSettingValueEmpty(value) ? DEFAULT_SETTINGS[key] : value;
+          const nextValue = isSettingValueEmpty(value) ? DEFAULT_SETTINGS[key] : value;
 
           if (key === "pageWidth" || key === "pageHeight") {
             const minSize = getMinSize(old, key);
-            nextValue = Math.max(Number(nextValue), Number(minSize)).toString();
+            const maxSize = getMaxSize(old, key);
+            if (Number(nextValue) < Number(minSize) || Number(nextValue) > Number(maxSize)) {
+              return old;
+            }
+            // nextValue = Math.max(Number(nextValue), Number(minSize)).toString();
           }
 
           const updatedSettings = {
@@ -96,7 +101,7 @@ export const SettingsForm = () => {
           disabled={isRendering}
           type="number"
           min="0"
-          value={settings.pageWidth}
+          defaultValue={settings.pageWidth}
           onChange={handleChange("pageWidth")}
         />
       </label>
@@ -106,7 +111,7 @@ export const SettingsForm = () => {
           disabled={isRendering}
           type="number"
           min="0"
-          value={settings.pageHeight}
+          defaultValue={settings.pageHeight}
           onChange={handleChange("pageHeight")}
         />
       </label>

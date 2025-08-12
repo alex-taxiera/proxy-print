@@ -16,6 +16,19 @@ export const getMinSize = (settings: Settings, key: "pageWidth" | "pageHeight") 
   return (Math.ceil(minSize * 1000) / 1000).toFixed(3);
 };
 
+export const getMaxSize = (settings: Settings, key: "pageWidth" | "pageHeight") => {
+  if (key === "pageWidth") {
+    return Infinity;
+  }
+
+  const maxSize = 3000 // mm
+  if (settings.unit === "in") {
+    return (Math.floor((maxSize / 25.4) * 1000) / 1000).toFixed(3);
+  }
+
+  return (Math.floor(maxSize * 1000) / 1000).toFixed(3);
+}
+
 export const SettingsSchema = zod.object({
   enableBleedEdge: zod.boolean(),
   bleedEdge: zod
