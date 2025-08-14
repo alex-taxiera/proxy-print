@@ -58,6 +58,13 @@ export const numberInput = defineSlotRecipe({
         opacity: 0.4,
         cursor: "not-allowed",
       },
+      _invalid: {
+        borderColor: "fg.error",
+        _focusWithin: {
+          borderColor: "fg.error",
+          boxShadow: "0 0 0 1px var(--colors-border-error)",
+        },
+      },
     },
     input: {
       background: "transparent",
