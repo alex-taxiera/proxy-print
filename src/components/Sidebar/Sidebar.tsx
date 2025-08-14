@@ -54,6 +54,7 @@ export const Sidebar = () => {
           className={css({
             height: "full",
             overflowY: "auto",
+            overflowX: "hidden",
             paddingBottom: "12", // dont let edge go to bottom of page
             paddingLeft: "1",
           })}
