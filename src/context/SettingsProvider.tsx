@@ -45,26 +45,9 @@ export const SettingsProvider = (
 
   const [value, setter] = useState<Settings>(defaultSettings);
 
-  const calculatePageDimensions = (value: string, unit: "in" | "mm") => {
-    const convertedValue =
-      unit === "in" ? Number(value) / 25.4 : Number(value) * 25.4;
-    return convertedValue.toFixed(2).toString();
-  };
-
   const setSettings = useCallback((updater: (old: Settings) => Settings) => {
     setter((old) => {
       const updated = updater(old);
-
-      if (updated.unit !== old.unit) {
-        updated.pageHeight = calculatePageDimensions(
-          updated.pageHeight,
-          updated.unit,
-        );
-        updated.pageWidth = calculatePageDimensions(
-          updated.pageWidth,
-          updated.unit,
-        );
-      }
 
       localStorage.setItem("settings", JSON.stringify(updated));
       return updated;

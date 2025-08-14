@@ -45,34 +45,34 @@ export const SettingsSchema = zod
     bleedEdge: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(1)
+      .min(0)
+      .max(3)
       .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater"),
     guidesColor: zod.string().min(1),
     guidesThickness: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(1)
-      .refine((val) => parseFloat(val) > 0, "Must be greater than 0"),
+      .min(0)
+      .max(3)
+      .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater"),
     guidesAtBleedEdge: zod.boolean(),
     pageHeight: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
       .min(1)
       .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
-    // .superRefine(buildValidatePageSize("pageHeight")),
     pageWidth: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
       .min(1)
       .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
-    // .superRefine(buildValidatePageSize("pageWidth")),
     numberOfColumns: zod
       .string()
       .regex(/^\d+$/, "Must be a whole number")
       .min(1)
       .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
     unit: zod.enum(["in", "mm"]),
-    cardSize: zod.enum(["standard", "japanese"]),
+    cardSize: zod.enum(["standard", "japanese", "tarot"]),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight } = data;
@@ -81,15 +81,17 @@ export const SettingsSchema = zod
 
     if (Number(pageWidth) < Number(minPageWidth)) {
       ctx.addIssue({
-        code: zod.ZodIssueCode.custom,
-        message: "Must be greater than or equal to the minimum page width",
+        code: 'custom',
+        message: `Must be greater than or equal to ${minPageWidth}`,
+        path: ["pageWidth"]
       });
     }
 
     if (Number(pageHeight) < Number(minPageHeight)) {
       ctx.addIssue({
-        code: zod.ZodIssueCode.custom,
-        message: "Must be greater than or equal to the minimum page height",
+        code: 'custom',
+        message: `Must be greater than or equal to ${minPageHeight}`,
+        path: ["pageHeight"]
       });
     }
   });
@@ -105,6 +107,10 @@ export const CARD_DIMENSIONS = {
     width: 59,
     height: 86,
   },
+  tarot: {
+    width: 70,
+    height: 120,
+  }
 } as const satisfies Record<
   Settings["cardSize"],
   { width: number; height: number }
