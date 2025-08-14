@@ -84,6 +84,19 @@ export const ImagesProvider = (
     [downloadImage],
   );
 
+  const onReorder = useCallback((imageUuid: string, newIndex: number) => {
+    setImages((old) => {
+      const currentIndex = old.findIndex((image) => image.uuid === imageUuid);
+      if (currentIndex === -1 || newIndex < 0 || newIndex >= old.length) {
+        return old;
+      }
+      const updated = [...old];
+      const [moved] = updated.splice(currentIndex, 1);
+      updated.splice(newIndex, 0, moved);
+      return updated;
+    });
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       isFetching,
@@ -96,6 +109,7 @@ export const ImagesProvider = (
       isRendering,
       setIsRendering,
       getCachedImage,
+      onReorder,
     }),
     [
       isFetching,
@@ -108,6 +122,7 @@ export const ImagesProvider = (
       isRendering,
       setIsRendering,
       getCachedImage,
+      onReorder,
     ],
   );
 

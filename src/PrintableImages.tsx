@@ -1,3 +1,11 @@
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, SortableData } from "@dnd-kit/sortable";
 import { useContext, useCallback, useRef, useState } from "react";
 
 import { css, cx } from "styled-system/css";
@@ -68,6 +76,7 @@ export const PrintableImages = () => {
     isFetching,
     onClearErrors,
     imagesWithError,
+    onReorder,
   } = useContext(ImagesContext);
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -88,6 +97,23 @@ export const PrintableImages = () => {
     });
     generatePdf();
   };
+
+  const onDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const imageUuid = event.active.id as string;
+      const newIndex =
+        (currentPage - 1) * cardsPerPage +
+        (event.over?.data.current as SortableData).sortable.index;
+      if (imageUuid && newIndex !== undefined) {
+        onReorder(imageUuid, newIndex);
+      }
+    },
+    [onReorder, currentPage, cardsPerPage],
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
   if (images.length === 0) {
     return (
@@ -263,14 +289,20 @@ export const PrintableImages = () => {
                 textAlign: "center",
               })}
             >
-              {currentCards.map((image, index) => (
-                <Card
-                  key={image.uuid || `empty-${index}`}
-                  image={image}
-                  index={index}
-                  onImageLoad={onImageLoad}
-                />
-              ))}
+              <DndContext onDragEnd={onDragEnd} sensors={sensors}>
+                <SortableContext
+                  items={currentCards.map((image) => image.uuid)}
+                >
+                  {currentCards.map((image, index) => (
+                    <Card
+                      key={image.uuid || `empty-${index}`}
+                      image={image}
+                      index={index}
+                      onImageLoad={onImageLoad}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
             </div>
           </div>
         </div>

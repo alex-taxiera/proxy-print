@@ -1,10 +1,11 @@
 import { Portal } from "@ark-ui/react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import React, {
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
@@ -16,6 +17,7 @@ import { Menu } from "./components/ui/menu";
 import { Spinner } from "./components/ui/spinner";
 import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
 import { useCardPositionMeta } from "./hooks/useCardClassNames";
+import { usePreviewData } from "./hooks/usePreviewData";
 
 const useCardClassName = (props: {
   isEmpty: boolean;
@@ -140,10 +142,40 @@ export const Card = ({
   showImage = true,
   onImageLoad,
 }: CardProps) => {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: image.uuid });
 
-  const { images, onAdd, onRemove, isRendering, getCachedImage } =
+  const sortableStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const { images, onAdd, onRemove, isRendering, getCachedImage, onReorder } =
     useContext(ImagesContext);
+
+  const absoluteIndex = useMemo(() => {
+    return images.findIndex((img) => img.uuid === image.uuid);
+  }, [images, image.uuid]);
+
+  const { cardsPerPage, imageMatrix } = usePreviewData();
+
+  const isOnLastPage = useMemo(() => {
+    return absoluteIndex >= (imageMatrix.length - 1) * cardsPerPage;
+  }, [absoluteIndex, cardsPerPage, imageMatrix]);
+
+  const isOnFirstPage = useMemo(() => {
+    return absoluteIndex < cardsPerPage;
+  }, [absoluteIndex, cardsPerPage]);
+
+  const onMoveToNextPage = useCallback(() => {
+    const newIndex = absoluteIndex + cardsPerPage - index;
+    onReorder(image.uuid, newIndex);
+  }, [image.uuid, absoluteIndex, index, cardsPerPage, onReorder]);
+
+  const onMoveToPreviousPage = useCallback(() => {
+    const newIndex = absoluteIndex - index - 1;
+    onReorder(image.uuid, newIndex);
+  }, [image.uuid, absoluteIndex, index, onReorder]);
 
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
@@ -225,9 +257,11 @@ export const Card = ({
   return (
     <div
       className={className}
-      ref={cardRef}
-      onClick={handleClick}
+      ref={setNodeRef}
       id={image.uuid}
+      style={sortableStyle}
+      {...attributes}
+      {...listeners}
     >
       <div
         className={cx(
@@ -270,6 +304,7 @@ export const Card = ({
                     maxWidth: "unset",
                     objectFit: "cover",
                   })}
+                  onClick={handleClick}
                   onLoad={() => {
                     setIsLoading(false);
                     onImageLoad?.();
@@ -278,7 +313,10 @@ export const Card = ({
               </Menu.ContextTrigger>
               <Portal>
                 <Menu.Positioner>
-                  <Menu.Content onClick={(e) => e.stopPropagation()}>
+                  <Menu.Content
+                    onDragStart={(e) => e.preventDefault()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Menu.Item
                       value="edit"
                       color="fg.error"
@@ -303,6 +341,24 @@ export const Card = ({
                     >
                       <Menu.ItemText>Add 5</Menu.ItemText>
                     </Menu.Item>
+                    {!isOnLastPage ? (
+                      <Menu.Item
+                        onSelect={onMoveToNextPage}
+                        value="move-to-next-page"
+                        justifyContent="space-between"
+                      >
+                        <Menu.ItemText>Move to next page</Menu.ItemText>
+                      </Menu.Item>
+                    ) : null}
+                    {!isOnFirstPage ? (
+                      <Menu.Item
+                        onSelect={onMoveToPreviousPage}
+                        value="move-to-previous-page"
+                        justifyContent="space-between"
+                      >
+                        <Menu.ItemText>Move to previous page</Menu.ItemText>
+                      </Menu.Item>
+                    ) : null}
                   </Menu.Content>
                 </Menu.Positioner>
               </Portal>
@@ -349,7 +405,7 @@ const guide = sva({
     root: {
       position: "absolute",
       display: "var(--guide-display)",
-      zIndex: "2",
+      zIndex: "1",
     },
     horizontal: {
       position: "absolute",

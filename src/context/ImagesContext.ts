@@ -18,6 +18,7 @@ export type ImagesContextValue = {
   imagesWithError: Image[];
   isRendering: boolean;
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
+  onReorder: (imageUuid: string, newIndex: number) => void;
   getCachedImage: (id: string) => string | undefined;
   onAdd: (files: (File | GoogleImageData)[], index?: number) => void;
   onRemove: (uuid: string) => void;
@@ -31,6 +32,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   imagesWithError: [],
   isRendering: false,
   setIsRendering: () => {},
+  onReorder: () => {},
   getCachedImage: () => undefined,
   onAdd: () => {},
   onRemove: () => {},
