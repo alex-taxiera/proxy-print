@@ -6,7 +6,6 @@ import {
   SelectValueChangeDetails,
 } from "@ark-ui/react";
 import { useCallback, useContext, useMemo, useState } from "react";
-import { $ZodIssue } from "zod/v4/core";
 
 import { vstack } from "styled-system/patterns";
 
@@ -53,18 +52,12 @@ export const SettingsForm = () => {
     const { error } = SettingsSchema.safeParse(formState);
     const keys = Object.keys(settings) as Array<keyof Settings>;
 
-    const defaultErrorMap = Object.fromEntries(
-      Object.entries(settings).map(
-        ([key]) => [key, []] as [keyof Settings, $ZodIssue[]],
-      ),
-    ) as Record<keyof Settings, $ZodIssue[]>;
-
     return keys.reduce(
       (errorMap, key) => ({
         ...errorMap,
         [key]: error?.issues.filter((issue) => issue.path.includes(key)) ?? [],
       }),
-      defaultErrorMap,
+      {} as Record<keyof Settings, NonNullable<typeof error>["issues"]>,
     );
   }, [formState, settings]);
 
@@ -202,7 +195,9 @@ export const SettingsForm = () => {
               <Select.List>
                 {cardSizeCollection.items.map((item) => (
                   <Select.Item key={item.value} item={item}>
-                    <Select.ItemText textTransform="capitalize">{item.label}</Select.ItemText>
+                    <Select.ItemText textTransform="capitalize">
+                      {item.label}
+                    </Select.ItemText>
                     <Select.ItemIndicator asChild>
                       <Select.ItemIndicatorIcon />
                     </Select.ItemIndicator>

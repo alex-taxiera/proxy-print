@@ -35,6 +35,7 @@ export default defineConfig({
         manualChunks: {
           "ark-ui": ["@ark-ui/react"],
           "pdf-lib": ["pdf-lib"],
+          sentry: ["@sentry/react"],
         },
       },
     },

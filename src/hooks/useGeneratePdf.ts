@@ -29,7 +29,7 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
     if (pdfSize + blob.size > maxPdfSize) {
       console.debug("pdf is too large, saving the current pdf");
       const mergedBytes = await mergedPdf.save();
-      yield new Blob([mergedBytes], { type: "application/pdf" });
+      yield new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
       mergedPdf = await PDFDocument.create();
       pdfSize = 0;
     }
@@ -43,7 +43,7 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
 
   console.debug("saving the final pdf");
   const mergedBytes = await mergedPdf.save();
-  yield new Blob([mergedBytes], { type: "application/pdf" });
+  yield new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
 }
 
 export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {

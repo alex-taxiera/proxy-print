@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import zod from "zod";
+import * as zod from "zod";
 
 export const getMinSize = (
   settings: Settings,
@@ -81,17 +81,17 @@ export const SettingsSchema = zod
 
     if (Number(pageWidth) < Number(minPageWidth)) {
       ctx.addIssue({
-        code: 'custom',
+        code: "custom",
         message: `Must be greater than or equal to ${minPageWidth}`,
-        path: ["pageWidth"]
+        path: ["pageWidth"],
       });
     }
 
     if (Number(pageHeight) < Number(minPageHeight)) {
       ctx.addIssue({
-        code: 'custom',
+        code: "custom",
         message: `Must be greater than or equal to ${minPageHeight}`,
-        path: ["pageHeight"]
+        path: ["pageHeight"],
       });
     }
   });
@@ -110,7 +110,7 @@ export const CARD_DIMENSIONS = {
   tarot: {
     width: 70,
     height: 120,
-  }
+  },
 } as const satisfies Record<
   Settings["cardSize"],
   { width: number; height: number }
