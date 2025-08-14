@@ -322,7 +322,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             URL.revokeObjectURL(url);
           }
           console.debug("done!");
-          Sentry.captureMessage("PDF generation complete", "info");
+          Sentry.addBreadcrumb({
+            category: "pdf",
+            message: "PDF generation complete",
+            level: "info",
+          });
           console.timeEnd("save");
           setIsRendering(false);
           progressEvents.emit("complete");
