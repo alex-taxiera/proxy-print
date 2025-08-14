@@ -19,7 +19,10 @@ Sentry.init({
   enableLogs: true,
   integrations: [
     Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: false,
+      maskAllInputs: false,
+    }),
     // send console.log, console.error, and console.warn calls as logs to Sentry
     Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
   ],
