@@ -12,10 +12,14 @@ import { vstack } from "styled-system/patterns";
 import { ImagesContext } from "../../context/ImagesContext";
 import {
   CARD_DIMENSIONS,
+  cardSizeToNameMap,
   DEFAULT_SETTINGS,
+  PAGE_DIMENSIONS,
+  pageSizeToNameMap,
   Settings,
   SettingsContext,
   SettingsSchema,
+  Unit,
 } from "../../context/SettingsContext";
 import { Checkbox } from "../ui/checkbox";
 import { ColorPicker } from "../ui/color-picker";
@@ -23,25 +27,21 @@ import { Field } from "../ui/field";
 import { NumberInput } from "../ui/number-input";
 import { Select, createListCollection } from "../ui/select";
 
-const unitsCollection = createListCollection({
-  items: [
-    { label: "in", value: "in" },
-    { label: "mm", value: "mm" },
-  ],
-});
-
-const cardSizeCollection = createListCollection({
-  items: Object.keys(CARD_DIMENSIONS).map((cardSize) => ({
-    label: cardSize,
-    value: cardSize,
-  })),
-});
-
 const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
   const convertedValue =
     unit === "in" ? Number(value) / 25.4 : Number(value) * 25.4;
-  return convertedValue.toFixed(2).toString();
+  const rounded = Math.round(convertedValue * 100) / 100;
+  return rounded.toString();
 };
+
+const unitsCollection = createListCollection({
+  items: Array.from(
+    new Set(Object.values(PAGE_DIMENSIONS).map(({ unit }) => unit)),
+  ).map((unit) => ({
+    value: unit,
+    label: unit,
+  })),
+});
 
 export const SettingsForm = () => {
   const { settings, setSettings } = useContext(SettingsContext);
@@ -62,13 +62,24 @@ export const SettingsForm = () => {
   }, [formState, settings]);
 
   const handle = useCallback(
-    (value: string | boolean, key: keyof Settings) => {
+    (updates: Partial<Settings>) => {
       const nextState = {
         ...formState,
-        [key]: value ?? DEFAULT_SETTINGS[key],
+        ...Object.fromEntries(
+          Object.entries(updates).map(([key, value]) => [
+            key,
+            value ?? DEFAULT_SETTINGS[key as keyof Settings],
+          ]),
+        ),
       };
 
-      if (nextState.unit !== formState.unit) {
+      const updatedKeys = Object.keys(updates);
+
+      if (
+        nextState.unit !== formState.unit &&
+        !updatedKeys.includes("pageHeight") &&
+        !updatedKeys.includes("pageWidth")
+      ) {
         nextState.pageHeight = calculatePageDimensions(
           nextState.pageHeight,
           nextState.unit,
@@ -114,38 +125,100 @@ export const SettingsForm = () => {
 
   const buildTextInputChangeHandler = useCallback(
     (key: keyof Settings) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      handle(event.target.value, key);
+      handle({ [key]: event.target.value });
     },
     [handle],
   );
 
   const buildNumberInputChangeHandler = useCallback(
     (key: keyof Settings) => (details: NumberInputValueChangeDetails) => {
-      handle(details.value, key);
+      handle({ [key]: details.value });
     },
     [handle],
   );
 
   const buildCheckboxChangeHandler = useCallback(
     (key: keyof Settings) => (details: CheckboxCheckedChangeDetails) => {
-      handle(details.checked, key);
+      handle({ [key]: details.checked });
     },
     [handle],
   );
 
   const buildSelectChangeHandler = useCallback(
     (key: keyof Settings) => (details: SelectValueChangeDetails) => {
-      handle(details.value[0], key);
+      handle({ [key]: details.value[0] });
+    },
+    [handle],
+  );
+
+  const cardSizeChangeHandler = useCallback(
+    (details: SelectValueChangeDetails) => {
+      const value = details.value[0] as `${number}-${number}`;
+      const cardSize = cardSizeToNameMap[value];
+
+      handle({
+        cardHeight: CARD_DIMENSIONS[cardSize].height.toString(),
+        cardWidth: CARD_DIMENSIONS[cardSize].width.toString(),
+      });
+    },
+    [handle],
+  );
+
+  const pageSizeChangeHandler = useCallback(
+    (details: SelectValueChangeDetails) => {
+      const value = details.value[0] as `${number}${Unit}-${number}${Unit}`;
+      const pageSize = pageSizeToNameMap[value];
+
+      handle({
+        pageWidth: PAGE_DIMENSIONS[pageSize].width.toString(),
+        pageHeight: PAGE_DIMENSIONS[pageSize].height.toString(),
+        unit: PAGE_DIMENSIONS[pageSize].unit,
+      });
     },
     [handle],
   );
 
   const buildColorPickerChangeHandler = useCallback(
     (key: keyof Settings) => (details: ColorPickerValueChangeDetails) => {
-      handle(details.value.toString("hex"), key);
+      handle({ [key]: details.value.toString("hex") });
     },
     [handle],
   );
+
+  const cardSizeValue = `${formState.cardWidth}-${formState.cardHeight}`;
+
+  const cardSizeCollection = createListCollection({
+    items: Object.entries(CARD_DIMENSIONS)
+      .map(([label, dimensions]) => ({
+        label,
+        value: `${dimensions.width}-${dimensions.height}`,
+        hidden: false,
+      }))
+      .concat({
+        label: "Custom",
+        value: cardSizeValue,
+        hidden: true,
+      }),
+  });
+
+  const pageSizeValue = `${formState.pageWidth}${formState.unit}-${formState.pageHeight}${formState.unit}`;
+
+  const pageSizeCollection = createListCollection({
+    groupBy: (item) => item.unit,
+    items: Object.entries(PAGE_DIMENSIONS)
+      .map(([label, dimensions]) => ({
+        label,
+        unit: dimensions.unit,
+        value: `${dimensions.width}${dimensions.unit}-${dimensions.height}${dimensions.unit}`,
+        hidden: false,
+      }))
+      .concat({
+        label: "Custom",
+        unit: formState.unit,
+        value: pageSizeValue,
+        hidden: true,
+      }),
+  });
 
   return (
     <form
@@ -172,14 +245,11 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.cardSize.length > 0}
-      >
+      <Field.Root disabled={isRendering}>
         <Select.Root
           collection={cardSizeCollection}
-          value={[formState.cardSize]}
-          onValueChange={buildSelectChangeHandler("cardSize")}
+          value={[cardSizeValue]}
+          onValueChange={cardSizeChangeHandler}
         >
           <Select.Label>Card Size</Select.Label>
           <Select.Control>
@@ -193,23 +263,106 @@ export const SettingsForm = () => {
           <Select.Positioner>
             <Select.Content>
               <Select.List>
-                {cardSizeCollection.items.map((item) => (
-                  <Select.Item key={item.value} item={item}>
-                    <Select.ItemText textTransform="capitalize">
-                      {item.label}
-                    </Select.ItemText>
-                    <Select.ItemIndicator asChild>
-                      <Select.ItemIndicatorIcon />
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                ))}
+                {cardSizeCollection.items
+                  .filter((item) => !item.hidden)
+                  .map((item) => (
+                    <Select.Item key={item.value} item={item}>
+                      <Select.ItemText textTransform="capitalize">
+                        {item.label}
+                      </Select.ItemText>
+                      <Select.ItemIndicator asChild>
+                        <Select.ItemIndicatorIcon />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                  ))}
               </Select.List>
             </Select.Content>
           </Select.Positioner>
         </Select.Root>
-        {formErrors.cardSize.map((issue, i) => (
+      </Field.Root>
+      <Field.Root
+        disabled={isRendering}
+        invalid={formErrors.cardWidth.length > 0}
+      >
+        <NumberInput
+          min={1}
+          value={formState.cardWidth}
+          onValueChange={buildNumberInputChangeHandler("cardWidth")}
+        >
+          Card Width (mm)
+        </NumberInput>
+        {formErrors.cardWidth.map((issue, i) => (
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
+      </Field.Root>
+      <Field.Root
+        disabled={isRendering}
+        invalid={formErrors.cardHeight.length > 0}
+      >
+        <NumberInput
+          min={1}
+          value={formState.cardHeight}
+          onValueChange={buildNumberInputChangeHandler("cardHeight")}
+        >
+          Card Height (mm)
+        </NumberInput>
+        {formErrors.cardHeight.map((issue, i) => (
+          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+        ))}
+      </Field.Root>
+      <Field.Root disabled={isRendering}>
+        <Select.Root
+          collection={pageSizeCollection}
+          value={[pageSizeValue]}
+          onValueChange={pageSizeChangeHandler}
+        >
+          <Select.Label>Page Size</Select.Label>
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText textTransform="capitalize" />
+              <Select.Indicator asChild>
+                <Select.IndicatorIcon />
+              </Select.Indicator>
+            </Select.Trigger>
+          </Select.Control>
+          <Select.Positioner>
+            <Select.Content>
+              {pageSizeCollection.group().map(([type, group]) => (
+                <Select.ItemGroup key={type}>
+                  <Select.ItemGroupLabel>
+                    {type === "mm" ? "ISO" : "US"}
+                  </Select.ItemGroupLabel>
+                  {group
+                    .filter((item) => !item.hidden)
+                    .map((item) => (
+                      <Select.Item key={item.value} item={item}>
+                        <Select.ItemText textTransform="capitalize">
+                          {item.label}
+                        </Select.ItemText>
+                        <Select.ItemIndicator asChild>
+                          <Select.ItemIndicatorIcon />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
+                </Select.ItemGroup>
+              ))}
+              {/* <Select.List>
+                {pageSizeCollection.items
+                  .filter((item) => !item.hidden)
+                  .map((item) => (
+                    <Select.Item key={item.value} item={item}>
+                      <Select.ItemText textTransform="capitalize">
+                        {item.label}
+                      </Select.ItemText>
+                      <Select.ItemIndicator asChild>
+                        <Select.ItemIndicatorIcon />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                  ))}
+              </Select.List> */}
+            </Select.Content>
+          </Select.Positioner>
+        </Select.Root>
       </Field.Root>
       <Field.Root disabled={isRendering} invalid={formErrors.unit.length > 0}>
         {/* TODO: Make more simple Select */}
@@ -218,7 +371,7 @@ export const SettingsForm = () => {
           value={[formState.unit]}
           onValueChange={buildSelectChangeHandler("unit")}
         >
-          <Select.Label>Unit</Select.Label>
+          <Select.Label>Page Unit</Select.Label>
           <Select.Control>
             <Select.Trigger>
               <Select.ValueText />

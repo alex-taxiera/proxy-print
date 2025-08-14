@@ -11,6 +11,9 @@ export const select = defineSlotRecipe({
       gap: "1.5",
       width: "full",
     },
+    positioner: {
+      width: "var(--reference-width)",
+    },
     content: {
       background: "bg.default",
       borderRadius: "l2",
@@ -65,6 +68,7 @@ export const select = defineSlotRecipe({
     itemGroupLabel: {
       fontWeight: "semibold",
       textStyle: "sm",
+      color: "fg.subtle",
     },
     itemIndicator: {
       color: "colorPalette.default",

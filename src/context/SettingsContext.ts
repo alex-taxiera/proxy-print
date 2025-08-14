@@ -1,17 +1,85 @@
 import { createContext } from "react";
 import * as zod from "zod";
 
+export const CARD_DIMENSIONS = {
+  standard: {
+    width: 63,
+    height: 88,
+  },
+  japanese: {
+    width: 59,
+    height: 86,
+  },
+  tarot: {
+    width: 70,
+    height: 120,
+  },
+} as const satisfies Record<string, { width: number; height: number }>;
+
+export type CardSize = keyof typeof CARD_DIMENSIONS;
+
+export const cardSizeToNameMap = Object.fromEntries(
+  Object.entries(CARD_DIMENSIONS).map(([key, dimensions]) => [
+    `${dimensions.width}-${dimensions.height}`,
+    key,
+  ]),
+) as Record<`${number}-${number}`, CardSize>;
+
+export type Unit = "in" | "mm";
+
+export const PAGE_DIMENSIONS = {
+  letter: {
+    width: 8.5,
+    height: 11,
+    unit: "in",
+  },
+  legal: {
+    width: 8.5,
+    height: 14,
+    unit: "in",
+  },
+  tabloid: {
+    width: 11,
+    height: 17,
+    unit: "in",
+  },
+  a4: {
+    width: 210,
+    height: 297,
+    unit: "mm",
+  },
+  a3: {
+    width: 297,
+    height: 420,
+    unit: "mm",
+  },
+  "a3+": {
+    width: 329,
+    height: 483,
+    unit: "mm",
+  },
+} as const satisfies Record<
+  string,
+  { width: number; height: number; unit: Unit }
+>;
+
+export type PageSize = keyof typeof PAGE_DIMENSIONS;
+
+export const pageSizeToNameMap = Object.fromEntries(
+  Object.entries(PAGE_DIMENSIONS).map(([key, dimensions]) => [
+    `${dimensions.width}${dimensions.unit}-${dimensions.height}${dimensions.unit}`,
+    key,
+  ]),
+) as Record<`${number}${Unit}-${number}${Unit}`, PageSize>;
+
 export const getMinSize = (
   settings: Settings,
   key: "pageWidth" | "pageHeight",
 ) => {
-  const cardSize =
-    CARD_DIMENSIONS[settings.cardSize][
-      key === "pageWidth" ? "width" : "height"
-    ]; // mm
+  const cardSize = settings[key === "pageWidth" ? "cardWidth" : "cardHeight"]; // mm
   const bleedEdge = Number(settings.bleedEdge); // mm
   const guidesThickness = Number(settings.guidesThickness) * 0.264583;
-  const minSize = cardSize + 2 * bleedEdge + guidesThickness;
+  const minSize = Number(cardSize) + 2 * bleedEdge + guidesThickness;
 
   if (settings.unit === "in") {
     // Round up to 3 decimal places: multiply by 1000, round up, divide by 1000
@@ -72,7 +140,17 @@ export const SettingsSchema = zod
       .min(1)
       .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
     unit: zod.enum(["in", "mm"]),
-    cardSize: zod.enum(["standard", "japanese", "tarot"]),
+    // cardSize: zod.enum(["standard", "japanese", "tarot"]),
+    cardWidth: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .min(1)
+      .max(250),
+    cardHeight: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .min(1)
+      .max(250),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight } = data;
@@ -98,30 +176,13 @@ export const SettingsSchema = zod
 
 export type Settings = zod.infer<typeof SettingsSchema>;
 
-export const CARD_DIMENSIONS = {
-  standard: {
-    width: 63,
-    height: 88,
-  },
-  japanese: {
-    width: 59,
-    height: 86,
-  },
-  tarot: {
-    width: 70,
-    height: 120,
-  },
-} as const satisfies Record<
-  Settings["cardSize"],
-  { width: number; height: number }
->;
-
 export const DEFAULT_SETTINGS = {
-  cardSize: "standard",
+  cardHeight: CARD_DIMENSIONS.standard.height.toString(),
+  cardWidth: CARD_DIMENSIONS.standard.width.toString(),
   filename: "cards",
-  unit: "in",
-  pageWidth: "8.5",
-  pageHeight: "11",
+  unit: PAGE_DIMENSIONS.letter.unit,
+  pageWidth: PAGE_DIMENSIONS.letter.width.toString(),
+  pageHeight: PAGE_DIMENSIONS.letter.height.toString(),
   numberOfColumns: "3",
   enableBleedEdge: true,
   bleedEdge: "0",

@@ -2,7 +2,6 @@ import { ComponentProps, useCallback, useMemo, useState } from "react";
 
 import { invertHexColor } from "../utils/invert-hex-color";
 import {
-  CARD_DIMENSIONS,
   DEFAULT_SETTINGS,
   Settings,
   SettingsContext,
@@ -59,8 +58,6 @@ export const SettingsProvider = (
       ? Number(value.guidesThickness)
       : 1;
     const imageContainerBuffer = value.enableBleedEdge ? guideThickness : 0;
-    const cardWidth = `${CARD_DIMENSIONS[value.cardSize].width}mm`;
-    const cardHeight = `${CARD_DIMENSIONS[value.cardSize].height}mm`;
 
     return {
       "--page-unit": value.unit,
@@ -75,8 +72,8 @@ export const SettingsProvider = (
       "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
       "--image-container-buffer": `${imageContainerBuffer}px`,
       "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
-      "--card-width": cardWidth,
-      "--card-height": cardHeight,
+      "--card-width": `${value.cardWidth}mm`,
+      "--card-height": `${value.cardHeight}mm`,
     };
   }, [value]);
 

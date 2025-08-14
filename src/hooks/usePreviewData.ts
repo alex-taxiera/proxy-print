@@ -1,7 +1,7 @@
 import { useContext, useMemo } from "react";
 
 import { type Image, ImagesContext } from "../context/ImagesContext";
-import { CARD_DIMENSIONS, SettingsContext } from "../context/SettingsContext";
+import { SettingsContext } from "../context/SettingsContext";
 
 const MAX_PREVIEW_CARDS = 108;
 
@@ -13,9 +13,9 @@ export const usePageLimits = () => {
 
   // Adjust card height based on card size
   const cardHeight =
-    CARD_DIMENSIONS[settings.cardSize].height + 2 * bleedEdge + guidesThickness;
+    Number(settings.cardHeight) + 2 * bleedEdge + guidesThickness;
   const cardWidth =
-    CARD_DIMENSIONS[settings.cardSize].width + 2 * bleedEdge + guidesThickness;
+    Number(settings.cardWidth) + 2 * bleedEdge + guidesThickness;
 
   const rowsPerPage = useMemo(() => {
     // convert in to mm when settings.unit is set to "in"
