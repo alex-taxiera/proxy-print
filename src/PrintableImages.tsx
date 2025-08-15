@@ -6,7 +6,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { SortableContext, SortableData } from "@dnd-kit/sortable";
-import { useContext, useCallback, useRef, useState } from "react";
+import { useContext, useCallback, useRef, useState, useMemo } from "react";
 
 import { css, cx } from "styled-system/css";
 import { center, flex, grid, hstack, vstack } from "styled-system/patterns";
@@ -41,7 +41,10 @@ const usePagination = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [imageLoadCount, setImageLoadCount] = useState(0);
 
-  const currentCards = imageMatrix[currentPage - 1];
+  const currentCards = useMemo(
+    () => imageMatrix[currentPage - 1] ?? [],
+    [imageMatrix, currentPage],
+  );
 
   const changePage = useCallback((page: number) => {
     setCurrentPage(page);
