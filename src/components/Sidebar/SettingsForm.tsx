@@ -277,7 +277,7 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
-      <Field.Root
+      {/* <Field.Root
         disabled={isRendering}
         invalid={formErrors.numberOfColumns.length > 0}
       >
@@ -291,7 +291,7 @@ export const SettingsForm = () => {
         {formErrors.numberOfColumns.map((issue, i) => (
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
-      </Field.Root>
+      </Field.Root> */}
       <Collapsible.Root
         className={vstack({
           width: "full",
@@ -425,7 +425,7 @@ export const SettingsForm = () => {
               <Select.Trigger>
                 <Select.ValueText textTransform="capitalize" />
                 <div>
-                  <Tooltip.Root>
+                  <Tooltip.Root openDelay={100} closeDelay={200}>
                     <Tooltip.Trigger asChild>
                       <IconButton
                         type="button"
