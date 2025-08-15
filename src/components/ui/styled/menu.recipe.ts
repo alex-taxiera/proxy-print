@@ -49,7 +49,9 @@ export const menu = defineSlotRecipe({
       flexDirection: "column",
       outline: "none",
       width: "calc(100% + 2rem)",
-      zIndex: "var(--layer-index)",
+      maxHeight: "95vh",
+      overflowY: "auto",
+      zIndex: "calc(var(--layer-index) + var(--z-index-popover))",
       _hidden: {
         display: "none",
       },
@@ -63,9 +65,6 @@ export const menu = defineSlotRecipe({
     itemGroup: {
       display: "flex",
       flexDirection: "column",
-    },
-    positioner: {
-      zIndex: "var(--layer-index)",
     },
     item: itemStyle,
     triggerItem: itemStyle,
@@ -89,7 +88,7 @@ export const menu = defineSlotRecipe({
           gap: "1",
         },
         item: {
-          h: "8",
+          minH: "8",
           px: "1.5",
           mx: "1",
           "& :where(svg)": {
@@ -98,7 +97,7 @@ export const menu = defineSlotRecipe({
           },
         },
         optionItem: {
-          h: "8",
+          minH: "8",
           px: "1.5",
           mx: "1",
           "& :where(svg)": {
@@ -107,7 +106,7 @@ export const menu = defineSlotRecipe({
           },
         },
         triggerItem: {
-          h: "8",
+          minH: "8",
           px: "1.5",
           mx: "1",
           "& :where(svg)": {
@@ -130,7 +129,7 @@ export const menu = defineSlotRecipe({
           gap: "1",
         },
         item: {
-          h: "9",
+          minH: "9",
           px: "2",
           mx: "1",
           "& :where(svg)": {
@@ -139,7 +138,7 @@ export const menu = defineSlotRecipe({
           },
         },
         optionItem: {
-          h: "9",
+          minH: "9",
           px: "2",
           mx: "1",
           "& :where(svg)": {
@@ -148,7 +147,7 @@ export const menu = defineSlotRecipe({
           },
         },
         triggerItem: {
-          h: "9",
+          minH: "9",
           px: "2",
           mx: "1.5",
           "& :where(svg)": {
@@ -171,7 +170,7 @@ export const menu = defineSlotRecipe({
           gap: "1",
         },
         item: {
-          h: "10",
+          minH: "10",
           px: "2.5",
           mx: "1",
           "& :where(svg)": {
@@ -180,7 +179,7 @@ export const menu = defineSlotRecipe({
           },
         },
         optionItem: {
-          h: "10",
+          minH: "10",
           px: "2.5",
           mx: "1",
           "& :where(svg)": {
@@ -189,7 +188,7 @@ export const menu = defineSlotRecipe({
           },
         },
         triggerItem: {
-          h: "10",
+          minH: "10",
           px: "2.5",
           mx: "1.5",
           "& :where(svg)": {
@@ -212,7 +211,7 @@ export const menu = defineSlotRecipe({
           gap: "1",
         },
         item: {
-          h: "11",
+          minH: "11",
           px: "2.5",
           mx: "1",
           "& :where(svg)": {
@@ -221,7 +220,7 @@ export const menu = defineSlotRecipe({
           },
         },
         optionItem: {
-          h: "11",
+          minH: "11",
           px: "2.5",
           mx: "1",
           "& :where(svg)": {
@@ -230,7 +229,7 @@ export const menu = defineSlotRecipe({
           },
         },
         triggerItem: {
-          h: "11",
+          minH: "11",
           px: "2.5",
           mx: "1.5",
           "& :where(svg)": {
