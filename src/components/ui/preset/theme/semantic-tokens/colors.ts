@@ -3,14 +3,14 @@ import { defineSemanticTokens } from "@pandacss/dev";
 export const colors = defineSemanticTokens.colors({
   bg: {
     canvas: { value: { _light: "{colors.gray.1}", _dark: "{colors.gray.1}" } },
-    default: { value: { _light: "white", _dark: "{colors.gray.2}" } },
-    subtle: { value: { _light: "{colors.gray.2}", _dark: "{colors.gray.3}" } },
-    muted: { value: { _light: "{colors.gray.3}", _dark: "{colors.gray.4}" } },
+    default: { value: { _light: "{colors.gray.2}", _dark: "{colors.gray.2}" } },
+    subtle: { value: { _light: "{colors.gray.3}", _dark: "{colors.gray.3}" } },
+    muted: { value: { _light: "{colors.gray.4}", _dark: "{colors.gray.4}" } },
     emphasized: {
-      value: { _light: "{colors.gray.4}", _dark: "{colors.gray.5}" },
+      value: { _light: "{colors.gray.5}", _dark: "{colors.gray.5}" },
     },
     disabled: {
-      value: { _light: "{colors.gray.5}", _dark: "{colors.gray.6}" },
+      value: { _light: "{colors.gray.6}", _dark: "{colors.gray.6}" },
     },
     error: { value: { _light: "{colors.red.3}", _dark: "{colors.red.3}" } },
 
