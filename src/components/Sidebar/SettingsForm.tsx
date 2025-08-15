@@ -170,18 +170,24 @@ export const SettingsForm = () => {
     [handle],
   );
 
+  const isLandscape =
+    Number(formState.pageWidth) > Number(formState.pageHeight);
+
   const pageSizeChangeHandler = useCallback(
     (details: SelectValueChangeDetails) => {
       const value = details.value[0] as `${number}${Unit}-${number}${Unit}`;
       const pageSize = pageSizeToNameMap[value];
 
+      const pageWidth = PAGE_DIMENSIONS[pageSize].width;
+      const pageHeight = PAGE_DIMENSIONS[pageSize].height;
+
       handle({
-        pageWidth: PAGE_DIMENSIONS[pageSize].width.toString(),
-        pageHeight: PAGE_DIMENSIONS[pageSize].height.toString(),
+        pageWidth: isLandscape ? pageHeight.toString() : pageWidth.toString(),
+        pageHeight: isLandscape ? pageWidth.toString() : pageHeight.toString(),
         unit: PAGE_DIMENSIONS[pageSize].unit,
       });
     },
-    [handle],
+    [handle, isLandscape],
   );
 
   const buildColorPickerChangeHandler = useCallback(
@@ -206,9 +212,6 @@ export const SettingsForm = () => {
         hidden: true,
       }),
   });
-
-  const isLandscape =
-    Number(formState.pageWidth) > Number(formState.pageHeight);
 
   const pageSizeValue = isLandscape
     ? `${formState.pageHeight}${formState.unit}-${formState.pageWidth}${formState.unit}`

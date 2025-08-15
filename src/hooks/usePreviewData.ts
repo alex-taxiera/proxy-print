@@ -29,9 +29,10 @@ export const usePageLimits = () => {
     const pageWidth =
       parseFloat(settings.pageWidth) * (settings.unit === "in" ? 25.4 : 1);
 
-    const colNum = parseInt(settings.numberOfColumns);
+    // const colNum = parseInt(settings.numberOfColumns);
 
-    return Math.min(colNum, Math.floor(pageWidth / cardWidth));
+    // return Math.min(colNum, Math.floor(pageWidth / cardWidth));
+    return Math.floor(pageWidth / cardWidth)
   }, [settings, cardWidth]);
 
   const cardsPerPage = useMemo(
