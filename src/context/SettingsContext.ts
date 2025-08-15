@@ -77,7 +77,7 @@ export const getMinSize = (
   key: "pageWidth" | "pageHeight",
 ) => {
   const cardSize = settings[key === "pageWidth" ? "cardWidth" : "cardHeight"]; // mm
-  const bleedEdge = Number(settings.bleedEdge); // mm
+  const bleedEdge = settings.enableBleedEdge ? Number(settings.bleedEdge) : 0; // mm
   const guidesThickness = Number(settings.guidesThickness) * 0.264583;
   const minSize = Number(cardSize) + 2 * bleedEdge + guidesThickness;
 

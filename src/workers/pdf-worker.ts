@@ -23,7 +23,6 @@ type CardData = {
     isFirstColumn: boolean;
     isLastColumn: boolean;
   };
-  cardSize: Settings["cardSize"];
   guides: {
     enabled: boolean;
     thickness: number;

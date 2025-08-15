@@ -79,9 +79,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const pageHeight = Number(settings.pageHeight);
       const pageWidth = Number(settings.pageWidth);
       const guideBorderWidth = Number(settings.guidesThickness);
-      const bleedEdgeWidth = Number(
-        settings.enableBleedEdge ? settings.bleedEdge : 0,
-      );
+      const bleedEdgeWidth = settings.enableBleedEdge
+        ? Number(settings.bleedEdge)
+        : 0;
       const guideColor = settings.guidesColor;
       const invertedGuideColor = invertHexColor(settings.guidesColor);
       const unit = settings.unit;
