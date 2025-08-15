@@ -23,12 +23,12 @@ const presets = [
 ];
 
 export const ColorPicker = forwardRef<HTMLDivElement, Styled.RootProps>(
-  (props, ref) => (
+  ({ children, ...props }, ref) => (
     <Styled.Root {...props} ref={ref}>
       <Styled.Context>
         {(api) => (
           <>
-            <Styled.Label>Color Picker</Styled.Label>
+            <Styled.Label>{children ?? "Color Picker"}</Styled.Label>
             <Styled.Control>
               <Styled.ChannelInput channel="hex" asChild>
                 <Field.Input />
