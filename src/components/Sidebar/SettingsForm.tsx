@@ -207,7 +207,8 @@ export const SettingsForm = () => {
       }),
   });
 
-  const isLandscape = Number(formState.pageWidth) > Number(formState.pageHeight);
+  const isLandscape =
+    Number(formState.pageWidth) > Number(formState.pageHeight);
 
   const pageSizeValue = isLandscape
     ? `${formState.pageHeight}${formState.unit}-${formState.pageWidth}${formState.unit}`
