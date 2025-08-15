@@ -1,6 +1,5 @@
-import { Portal } from "@ark-ui/react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { MenuSelectionDetails, Portal } from "@ark-ui/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import React, {
   useCallback,
   useContext,
@@ -40,6 +39,10 @@ const useCardClassName = (props: {
       position: "relative",
       transition: "outline-color 0.1s ease-in-out",
       outlineColor: "transparent",
+      "--horizontal-guide-length":
+        "calc(calc(var(--page-width) - calc(var(--item-width) * var(--columns-per-page))) / 2)",
+      "--vertical-guide-length":
+        "calc(calc(var(--page-height) - calc(var(--item-height) * var(--rows-per-page))) / 2)",
       _before: beforeAfterBase,
       _after: beforeAfterBase,
     }),
@@ -67,7 +70,7 @@ const useCardClassName = (props: {
         _before: {
           content: '""',
           position: "absolute",
-          width: "100%",
+          width: "var(--horizontal-guide-length)",
           right: "100%",
           top: "var(--guide-corner-offset)",
           bottom: "var(--guide-corner-offset)",
@@ -83,7 +86,7 @@ const useCardClassName = (props: {
         _after: {
           content: '""',
           position: "absolute",
-          height: "100%",
+          height: "var(--vertical-guide-length)",
           bottom: "100%",
           left: "var(--guide-corner-offset)",
           right: "var(--guide-corner-offset)",
@@ -99,7 +102,7 @@ const useCardClassName = (props: {
         _before: {
           content: '""',
           position: "absolute",
-          width: "100%",
+          width: "var(--horizontal-guide-length)",
           left: "100%",
           top: "var(--guide-corner-offset)",
           bottom: "var(--guide-corner-offset)",
@@ -115,7 +118,7 @@ const useCardClassName = (props: {
         _after: {
           content: '""',
           position: "absolute",
-          height: "100%",
+          height: "var(--vertical-guide-length)",
           top: "100%",
           left: "var(--guide-corner-offset)",
           right: "var(--guide-corner-offset)",
@@ -142,13 +145,12 @@ export const Card = ({
   showImage = true,
   onImageLoad,
 }: CardProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: image.uuid });
-
-  const sortableStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const sortable = useSortable({
+    id: image.uuid,
+    index,
+    type: "card",
+    accept: "card",
+  });
 
   const { images, onAdd, onRemove, isRendering, getCachedImage, onReorder } =
     useContext(ImagesContext);
@@ -159,13 +161,15 @@ export const Card = ({
 
   const { cardsPerPage, imageMatrix } = usePreviewData();
 
+  const currentPage = Math.floor(absoluteIndex / cardsPerPage) + 1;
+
   const isOnLastPage = useMemo(() => {
-    return absoluteIndex >= (imageMatrix.length - 1) * cardsPerPage;
-  }, [absoluteIndex, cardsPerPage, imageMatrix]);
+    return currentPage === imageMatrix.length;
+  }, [currentPage, imageMatrix.length]);
 
   const isOnFirstPage = useMemo(() => {
-    return absoluteIndex < cardsPerPage;
-  }, [absoluteIndex, cardsPerPage]);
+    return currentPage === 1;
+  }, [currentPage]);
 
   const onMoveToNextPage = useCallback(() => {
     const newIndex = absoluteIndex + cardsPerPage - index;
@@ -176,6 +180,18 @@ export const Card = ({
     const newIndex = absoluteIndex - index - 1;
     onReorder(image.uuid, newIndex);
   }, [image.uuid, absoluteIndex, index, onReorder]);
+
+  const onMoveToPage = useCallback(
+    (details: MenuSelectionDetails) => {
+      const page = parseInt(details.value);
+      const newIndex =
+        page > currentPage
+          ? (page - 1) * cardsPerPage
+          : page * cardsPerPage - 1;
+      onReorder(image.uuid, newIndex);
+    },
+    [image.uuid, currentPage, cardsPerPage, onReorder],
+  );
 
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
@@ -255,23 +271,14 @@ export const Card = ({
   }, [image.file]);
 
   return (
-    <div
-      className={className}
-      ref={setNodeRef}
-      id={image.uuid}
-      style={sortableStyle}
-      {...attributes}
-      {...listeners}
-    >
+    <div className={className} ref={sortable.ref} id={image.uuid}>
       <div
         className={cx(
           "image-container",
           center({
             overflow: "hidden",
-            width:
-              "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
-            height:
-              "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+            width: "var(--item-width, 63mm)",
+            height: "var(--item-height, 88mm)",
           }),
         )}
       >
@@ -358,6 +365,29 @@ export const Card = ({
                       >
                         <Menu.ItemText>Move to previous page</Menu.ItemText>
                       </Menu.Item>
+                    ) : null}
+                    {imageMatrix.length > 1 ? (
+                      <Menu.Root
+                        onSelect={onMoveToPage}
+                        positioning={{ gutter: 10, placement: "right-start" }}
+                      >
+                        <Menu.TriggerItem>Move to ...</Menu.TriggerItem>
+                        <Portal>
+                          <Menu.Positioner>
+                            <Menu.Content>
+                              {imageMatrix.map((_, index) => (
+                                <Menu.Item
+                                  key={index}
+                                  disabled={index + 1 === currentPage}
+                                  value={(index + 1).toString()}
+                                >
+                                  Page {index + 1}
+                                </Menu.Item>
+                              ))}
+                            </Menu.Content>
+                          </Menu.Positioner>
+                        </Portal>
+                      </Menu.Root>
                     ) : null}
                   </Menu.Content>
                 </Menu.Positioner>

@@ -1,11 +1,12 @@
 import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { SortableContext, SortableData } from "@dnd-kit/sortable";
+  DragDropProvider,
+  DragDropEventHandlers,
+  useDroppable,
+  useDragDropMonitor,
+} from "@dnd-kit/react";
+import { isSortable } from "@dnd-kit/react/sortable";
+import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useCallback, useRef, useState, useMemo } from "react";
 
 import { css, cx } from "styled-system/css";
@@ -68,6 +69,47 @@ const usePagination = () => {
   };
 };
 
+const PageDrop = ({
+  id,
+  disabled,
+  children,
+}: React.PropsWithChildren<{ id: string; disabled?: boolean }>) => {
+  const [isDragging, setIsDragging] = useState(false);
+  useDragDropMonitor({
+    onDragStart: () => setIsDragging(true),
+    onDragEnd: () => setIsDragging(false),
+  });
+  const { isDropTarget, ref } = useDroppable({
+    id,
+    type: "page",
+    accept: "card",
+    disabled,
+  });
+
+  return (
+    <div
+      ref={ref}
+      className={css({
+        visibility: !disabled && isDragging ? "visible" : "hidden",
+        bg: isDropTarget
+          ? "accent.5"
+          : isDragging
+            ? "bg.default"
+            : "transparent",
+        borderColor: "border.default",
+        borderStyle: "solid",
+        borderWidth: "1px",
+        borderRadius: "l2",
+        width: "24",
+        height: "var(--page-height, 11 var(--page-unit, in))",
+        paddingY: "4",
+      })}
+    >
+      {children}
+    </div>
+  );
+};
+
 export const PrintableImages = () => {
   const { cssVars } = useContext(SettingsContext);
 
@@ -84,10 +126,17 @@ export const PrintableImages = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { imageMatrix, cardsPerPage } = usePreviewData();
+  const { imageMatrix, cardsPerPage, rowsPerPage, columnsPerPage } =
+    usePreviewData();
 
   const { currentPage, currentCards, isPageLoaded, changePage, onImageLoad } =
     usePagination();
+
+  const isFirstPage = useMemo(() => currentPage === 1, [currentPage]);
+  const isLastPage = useMemo(
+    () => currentPage === imageMatrix.length,
+    [currentPage, imageMatrix.length],
+  );
 
   const generatePdf = useGeneratePdf(contentRef);
 
@@ -101,21 +150,43 @@ export const PrintableImages = () => {
     generatePdf();
   };
 
-  const onDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const imageUuid = event.active.id as string;
-      const newIndex =
-        (currentPage - 1) * cardsPerPage +
-        (event.over?.data.current as SortableData).sortable.index;
-      if (imageUuid && newIndex !== undefined) {
-        onReorder(imageUuid, newIndex);
+  const onDragEnd: DragDropEventHandlers["onDragEnd"] = useCallback(
+    (event) => {
+      const { source, target } = event.operation;
+
+      if (isSortable(source)) {
+        if (target?.type === "page") {
+          const absoluteIndex = images.findIndex(
+            (img) => img.uuid === source.id,
+          );
+          switch (target.id) {
+            case "prev-page":
+              onReorder(
+                source.id as string,
+                absoluteIndex - source.sortable.initialIndex - 1,
+              );
+              changePage(currentPage - 1);
+              break;
+            case "next-page":
+              onReorder(
+                source.id as string,
+                absoluteIndex + cardsPerPage - source.sortable.initialIndex,
+              );
+              changePage(currentPage + 1);
+              break;
+          }
+        } else {
+          // normal reordering
+          const imageUuid = source.id as string;
+          const newIndex =
+            (currentPage - 1) * cardsPerPage + source.sortable.index;
+          if (imageUuid && newIndex !== undefined) {
+            onReorder(imageUuid, newIndex);
+          }
+        }
       }
     },
-    [onReorder, currentPage, cardsPerPage],
-  );
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    [images, onReorder, changePage, currentPage, cardsPerPage],
   );
 
   if (images.length === 0) {
@@ -151,165 +222,244 @@ export const PrintableImages = () => {
   }
 
   return (
-    <div className={css(containerStyles)} style={cssVars}>
-      <ProgressOverlay />
-      <div
-        className={vstack({
-          gap: "2",
-          width: "max(var(--page-width), 8.5in)",
-          minWidth: "max",
-          maxWidth: "full",
-          alignItems: "stretch",
-          position: "sticky",
-          left: "0",
-        })}
-      >
+    <DragDropProvider onDragEnd={onDragEnd}>
+      <div className={css(containerStyles)} style={cssVars}>
+        <ProgressOverlay />
         <div
           className={hstack({
-            gap: "2",
-            justifyContent: "space-between",
+            direction: "row",
             alignItems: "flex-end",
+            justifyContent: "center",
+            gap: "8",
           })}
         >
-          <div className={hstack({ gap: "2" })}>
-            <Button
-              colorPalette="gray"
-              disabled={isRendering}
-              onClick={() => onClear()}
+          <PageDrop id="prev-page" disabled={isFirstPage}>
+            <div
+              className={vstack({
+                height: "full",
+                fontWeight: "semibold",
+                justifyContent: "space-between",
+                alignItems: "center",
+              })}
             >
-              Remove all cards
-            </Button>
-            <Tooltip.Root
-              disabled={!isRendering && !isFetching && !isPageLoaded}
-              positioning={{
-                placement: "top",
-              }}
-            >
-              <Tooltip.Trigger asChild>
-                <Button
-                  disabled={isRendering || isFetching || isPageLoaded}
-                  onClick={() => handleSave()}
+              <div className={vstack({ gap: "2", alignItems: "center" })}>
+                <div
+                  className={vstack({ gap: "0", textTransform: "uppercase" })}
                 >
-                  Save
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Positioner>
-                <Tooltip.Arrow>
-                  <Tooltip.ArrowTip />
-                </Tooltip.Arrow>
-                <Tooltip.Content>
-                  {isRendering
-                    ? "Generating PDF..."
-                    : isFetching
-                      ? "Downloading images..."
-                      : !isPageLoaded
-                        ? "Loading images..."
-                        : ""}
-                </Tooltip.Content>
-              </Tooltip.Positioner>
-            </Tooltip.Root>
-          </div>
+                  <span>Prev</span>
+                  <span>Page</span>
+                </div>
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </div>
+              <div className={vstack({ gap: "2", alignItems: "center" })}>
+                <FontAwesomeIcon icon={faArrowLeft} />
+                <div
+                  className={vstack({ gap: "0", textTransform: "uppercase" })}
+                >
+                  <span>Prev</span>
+                  <span>Page</span>
+                </div>
+              </div>
+            </div>
+          </PageDrop>
           <div
             className={vstack({
               alignItems: "center",
-              gap: "2",
-              visibility: imageMatrix.length > 1 ? "visible" : "hidden",
+              gap: "8",
             })}
           >
-            <span className={css({ fontSize: "xs", color: "fg.muted" })}>
-              Showing {currentPage * cardsPerPage - cardsPerPage + 1} -{" "}
-              {Math.min(
-                currentPage * cardsPerPage,
-                imageMatrix.length * cardsPerPage,
-                images.length,
-              )}{" "}
-              of {Math.min(imageMatrix.length * cardsPerPage, images.length)}
-            </span>
-            <Pagination
-              count={imageMatrix.length * cardsPerPage}
-              page={currentPage}
-              pageSize={cardsPerPage}
-              siblingCount={1}
-              onPageChange={({ page }) => changePage(page)}
-            />
-          </div>
-        </div>
-        <ImageErrors
-          onDismiss={onClearErrors}
-          imagesWithError={imagesWithError}
-        />
-      </div>
-      <div
-        ref={contentRef}
-        className={vstack({
-          marginY: "2.5",
-          rowGap: "5",
-          maxWidth: "100%",
-          // overflowX: "auto",
-          "--bleed-edge-width": "var(--bleed-edge, 0mm)",
-          "--image-zoom-width": "var(--image-zoom, 6.2mm)",
-          "--guide-display": "var(--guides-display, block)",
-          "--guide-border-color": "var(--guides-color, #adff2f)",
-          "--guide-border-color-inverted":
-            "var(--guides-color-inverted, #ff0000)",
-          "--guide-border-width": "var(--guides-thickness, 1px)",
-          "--image-container-buffer-width":
-            "var(--image-container-buffer, var(--guide-border-width))",
-          "--guide-corner-offset":
-            "calc(calc(-0.5 * var(--guide-border-width)) + calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1)))",
-        })}
-      >
-        <div
-          className={css(
-            {
-              position: "relative",
-              width: "100%",
-            },
-            isRendering ? { pointerEvents: "none" } : {},
-          )}
-        >
-          <div
-            className={cx(
-              "page",
-              center({
-                flexDirection: "column",
-                height: "var(--page-height, 11 var(--page-unit, in))",
-                width: "var(--page-width, 8.5 var(--page-unit, in))",
-                background: "white",
-                overflow: "hidden",
-                boxShadow: "md",
-              }),
-            )}
-          >
             <div
-              className={grid({
-                gap: "0",
-                gridTemplateColumns:
-                  "repeat(var(--grid-columns, 3), min-content)",
-                pageBreakAfter: "always",
-                justifyContent: "center",
-                alignItems: "center",
-                textAlign: "center",
+              className={vstack({
+                gap: "2",
+                width: "max(var(--page-width), 8.5in)",
+                minWidth: "max",
+                maxWidth: "full",
+                alignItems: "stretch",
+                position: "sticky",
+                left: "0",
               })}
             >
-              <DndContext onDragEnd={onDragEnd} sensors={sensors}>
-                <SortableContext
-                  items={currentCards.map((image) => image.uuid)}
+              <div
+                className={hstack({
+                  gap: "2",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                })}
+              >
+                <div className={hstack({ gap: "2" })}>
+                  <Button
+                    colorPalette="gray"
+                    disabled={isRendering}
+                    onClick={() => onClear()}
+                  >
+                    Remove all cards
+                  </Button>
+                  <Tooltip.Root
+                    disabled={!isRendering && !isFetching && !isPageLoaded}
+                    positioning={{
+                      placement: "top",
+                    }}
+                  >
+                    <Tooltip.Trigger asChild>
+                      <Button
+                        disabled={isRendering || isFetching || isPageLoaded}
+                        onClick={() => handleSave()}
+                      >
+                        Save
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Positioner>
+                      <Tooltip.Arrow>
+                        <Tooltip.ArrowTip />
+                      </Tooltip.Arrow>
+                      <Tooltip.Content>
+                        {isRendering
+                          ? "Generating PDF..."
+                          : isFetching
+                            ? "Downloading images..."
+                            : !isPageLoaded
+                              ? "Loading images..."
+                              : ""}
+                      </Tooltip.Content>
+                    </Tooltip.Positioner>
+                  </Tooltip.Root>
+                </div>
+                <div
+                  className={vstack({
+                    alignItems: "center",
+                    gap: "2",
+                    visibility: imageMatrix.length > 1 ? "visible" : "hidden",
+                  })}
                 >
-                  {currentCards.map((image, index) => (
-                    <Card
-                      key={image.uuid || `empty-${index}`}
-                      image={image}
-                      index={index}
-                      onImageLoad={onImageLoad}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
+                  <span className={css({ fontSize: "xs", color: "fg.muted" })}>
+                    Showing {currentPage * cardsPerPage - cardsPerPage + 1} -{" "}
+                    {Math.min(
+                      currentPage * cardsPerPage,
+                      imageMatrix.length * cardsPerPage,
+                      images.length,
+                    )}{" "}
+                    of{" "}
+                    {Math.min(imageMatrix.length * cardsPerPage, images.length)}
+                  </span>
+                  <Pagination
+                    count={imageMatrix.length * cardsPerPage}
+                    page={currentPage}
+                    pageSize={cardsPerPage}
+                    siblingCount={1}
+                    onPageChange={({ page }) => changePage(page)}
+                  />
+                </div>
+              </div>
+              <ImageErrors
+                onDismiss={onClearErrors}
+                imagesWithError={imagesWithError}
+              />
+            </div>
+            <div
+              ref={contentRef}
+              style={
+                {
+                  "--rows-per-page": rowsPerPage.toString(),
+                  "--columns-per-page": columnsPerPage.toString(),
+                  "--grid-columns": columnsPerPage.toString(),
+                } as Record<string, string>
+              }
+              className={vstack({
+                maxWidth: "100%",
+                "--bleed-edge-width": "var(--bleed-edge, 0mm)",
+                "--image-zoom-width": "var(--image-zoom, 6.2mm)",
+                "--guide-display": "var(--guides-display, block)",
+                "--guide-border-color": "var(--guides-color, #adff2f)",
+                "--guide-border-color-inverted":
+                  "var(--guides-color-inverted, #ff0000)",
+                "--guide-border-width": "var(--guides-thickness, 1px)",
+                "--image-container-buffer-width":
+                  "var(--image-container-buffer, var(--guide-border-width))",
+                "--guide-corner-offset":
+                  "calc(calc(-0.5 * var(--guide-border-width)) + calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1)))",
+              })}
+            >
+              {}
+              <div
+                className={css(
+                  {
+                    position: "relative",
+                    width: "100%",
+                  },
+                  isRendering ? { pointerEvents: "none" } : {},
+                )}
+              >
+                <div
+                  className={cx(
+                    "page",
+                    center({
+                      flexDirection: "column",
+                      height: "var(--page-height, 11 var(--page-unit, in))",
+                      width: "var(--page-width, 8.5 var(--page-unit, in))",
+                      background: "white",
+                      boxShadow: "md",
+                      "--item-width":
+                        "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+                      "--item-height":
+                        "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+                    }),
+                  )}
+                >
+                  <div
+                    className={grid({
+                      gap: "0",
+                      gridTemplateColumns:
+                        "repeat(var(--grid-columns, 3), min-content)",
+                      pageBreakAfter: "always",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      textAlign: "center",
+                    })}
+                  >
+                    {currentCards.map((image, index) => (
+                      <Card
+                        key={image.uuid || `empty-${index}`}
+                        image={image}
+                        index={index}
+                        onImageLoad={onImageLoad}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+          <PageDrop id="next-page" disabled={isLastPage}>
+            <div
+              className={vstack({
+                height: "full",
+                fontWeight: "semibold",
+                justifyContent: "space-between",
+                alignItems: "center",
+              })}
+            >
+              <div className={vstack({ gap: "2", alignItems: "center" })}>
+                <div
+                  className={vstack({ gap: "0", textTransform: "uppercase" })}
+                >
+                  <span>Next</span>
+                  <span>Page</span>
+                </div>
+                <FontAwesomeIcon icon={faArrowRight} />
+              </div>
+              <div className={vstack({ gap: "2", alignItems: "center" })}>
+                <FontAwesomeIcon icon={faArrowRight} />
+                <div
+                  className={vstack({ gap: "0", textTransform: "uppercase" })}
+                >
+                  <span>Next</span>
+                  <span>Page</span>
+                </div>
+              </div>
+            </div>
+          </PageDrop>
         </div>
       </div>
-    </div>
+    </DragDropProvider>
   );
 };
