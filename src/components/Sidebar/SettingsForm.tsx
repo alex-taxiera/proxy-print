@@ -5,9 +5,11 @@ import {
   parseColor,
   SelectValueChangeDetails,
 } from "@ark-ui/react";
+import { faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useContext, useMemo, useState } from "react";
 
-import { vstack } from "styled-system/patterns";
+import { hstack, vstack } from "styled-system/patterns";
 
 import { ImagesContext } from "../../context/ImagesContext";
 import {
@@ -21,11 +23,15 @@ import {
   SettingsSchema,
   Unit,
 } from "../../context/SettingsContext";
+import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
+import { Collapsible } from "../ui/collapsible";
 import { ColorPicker } from "../ui/color-picker";
 import { Field } from "../ui/field";
+import { IconButton } from "../ui/icon-button";
 import { NumberInput } from "../ui/number-input";
 import { Select, createListCollection } from "../ui/select";
+import { Tooltip } from "../ui/tooltip";
 
 const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
   const convertedValue =
@@ -201,7 +207,11 @@ export const SettingsForm = () => {
       }),
   });
 
-  const pageSizeValue = `${formState.pageWidth}${formState.unit}-${formState.pageHeight}${formState.unit}`;
+  const isLandscape = Number(formState.pageWidth) > Number(formState.pageHeight);
+
+  const pageSizeValue = isLandscape
+    ? `${formState.pageHeight}${formState.unit}-${formState.pageWidth}${formState.unit}`
+    : `${formState.pageWidth}${formState.unit}-${formState.pageHeight}${formState.unit}`;
 
   const pageSizeCollection = createListCollection({
     groupBy: (item) => item.unit,
@@ -219,6 +229,13 @@ export const SettingsForm = () => {
         hidden: true,
       }),
   });
+
+  const rotatePage = useCallback(() => {
+    handle({
+      pageWidth: formState.pageHeight,
+      pageHeight: formState.pageWidth,
+    });
+  }, [formState.pageHeight, formState.pageWidth, handle]);
 
   return (
     <form
@@ -245,187 +262,17 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
-      <Field.Root disabled={isRendering}>
-        <Select.Root
-          collection={cardSizeCollection}
-          value={[cardSizeValue]}
-          onValueChange={cardSizeChangeHandler}
-        >
-          <Select.Label>Card Size</Select.Label>
-          <Select.Control>
-            <Select.Trigger>
-              <Select.ValueText textTransform="capitalize" />
-              <Select.Indicator asChild>
-                <Select.IndicatorIcon />
-              </Select.Indicator>
-            </Select.Trigger>
-          </Select.Control>
-          <Select.Positioner>
-            <Select.Content>
-              <Select.List>
-                {cardSizeCollection.items
-                  .filter((item) => !item.hidden)
-                  .map((item) => (
-                    <Select.Item key={item.value} item={item}>
-                      <Select.ItemText textTransform="capitalize">
-                        {item.label}
-                      </Select.ItemText>
-                      <Select.ItemIndicator asChild>
-                        <Select.ItemIndicatorIcon />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-              </Select.List>
-            </Select.Content>
-          </Select.Positioner>
-        </Select.Root>
-      </Field.Root>
       <Field.Root
         disabled={isRendering}
-        invalid={formErrors.cardWidth.length > 0}
+        invalid={formErrors.guidesColor.length > 0}
       >
-        <NumberInput
-          min={1}
-          value={formState.cardWidth}
-          onValueChange={buildNumberInputChangeHandler("cardWidth")}
+        <ColorPicker
+          value={parseColor(formState.guidesColor)}
+          onValueChange={buildColorPickerChangeHandler("guidesColor")}
         >
-          Card Width (mm)
-        </NumberInput>
-        {formErrors.cardWidth.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.cardHeight.length > 0}
-      >
-        <NumberInput
-          min={1}
-          value={formState.cardHeight}
-          onValueChange={buildNumberInputChangeHandler("cardHeight")}
-        >
-          Card Height (mm)
-        </NumberInput>
-        {formErrors.cardHeight.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
-      <Field.Root disabled={isRendering}>
-        <Select.Root
-          collection={pageSizeCollection}
-          value={[pageSizeValue]}
-          onValueChange={pageSizeChangeHandler}
-        >
-          <Select.Label>Page Size</Select.Label>
-          <Select.Control>
-            <Select.Trigger>
-              <Select.ValueText textTransform="capitalize" />
-              <Select.Indicator asChild>
-                <Select.IndicatorIcon />
-              </Select.Indicator>
-            </Select.Trigger>
-          </Select.Control>
-          <Select.Positioner>
-            <Select.Content>
-              {pageSizeCollection.group().map(([type, group]) => (
-                <Select.ItemGroup key={type}>
-                  <Select.ItemGroupLabel>
-                    {type === "mm" ? "ISO" : "US"}
-                  </Select.ItemGroupLabel>
-                  {group
-                    .filter((item) => !item.hidden)
-                    .map((item) => (
-                      <Select.Item key={item.value} item={item}>
-                        <Select.ItemText textTransform="capitalize">
-                          {item.label}
-                        </Select.ItemText>
-                        <Select.ItemIndicator asChild>
-                          <Select.ItemIndicatorIcon />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                    ))}
-                </Select.ItemGroup>
-              ))}
-              {/* <Select.List>
-                {pageSizeCollection.items
-                  .filter((item) => !item.hidden)
-                  .map((item) => (
-                    <Select.Item key={item.value} item={item}>
-                      <Select.ItemText textTransform="capitalize">
-                        {item.label}
-                      </Select.ItemText>
-                      <Select.ItemIndicator asChild>
-                        <Select.ItemIndicatorIcon />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-              </Select.List> */}
-            </Select.Content>
-          </Select.Positioner>
-        </Select.Root>
-      </Field.Root>
-      <Field.Root disabled={isRendering} invalid={formErrors.unit.length > 0}>
-        {/* TODO: Make more simple Select */}
-        <Select.Root
-          collection={unitsCollection}
-          value={[formState.unit]}
-          onValueChange={buildSelectChangeHandler("unit")}
-        >
-          <Select.Label>Page Unit</Select.Label>
-          <Select.Control>
-            <Select.Trigger>
-              <Select.ValueText />
-              <Select.Indicator asChild>
-                <Select.IndicatorIcon />
-              </Select.Indicator>
-            </Select.Trigger>
-          </Select.Control>
-          <Select.Positioner>
-            <Select.Content>
-              <Select.List>
-                {unitsCollection.items.map((item) => (
-                  <Select.Item key={item.value} item={item}>
-                    <Select.ItemText>{item.label}</Select.ItemText>
-                    <Select.ItemIndicator asChild>
-                      <Select.ItemIndicatorIcon />
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                ))}
-              </Select.List>
-            </Select.Content>
-          </Select.Positioner>
-        </Select.Root>
-        {formErrors.unit.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.pageWidth.length > 0}
-      >
-        <NumberInput
-          min={1}
-          value={formState.pageWidth}
-          onValueChange={buildNumberInputChangeHandler("pageWidth")}
-        >
-          Page Width ({formState.unit})
-        </NumberInput>
-        {formErrors.pageWidth.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.pageHeight.length > 0}
-      >
-        <NumberInput
-          min={1}
-          value={formState.pageHeight}
-          onValueChange={buildNumberInputChangeHandler("pageHeight")}
-        >
-          Page Height ({formState.unit})
-        </NumberInput>
-        {formErrors.pageHeight.map((issue, i) => (
+          Guides Color
+        </ColorPicker>
+        {formErrors.guidesColor.map((issue, i) => (
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
@@ -444,6 +291,271 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
+      <Collapsible.Root
+        className={vstack({
+          width: "full",
+          alignItems: "stretch",
+          alignSelf: "stretch",
+        })}
+      >
+        <Field.Root disabled={isRendering}>
+          <Select.Root
+            collection={cardSizeCollection}
+            value={[cardSizeValue]}
+            onValueChange={cardSizeChangeHandler}
+          >
+            <div
+              className={hstack({
+                width: "full",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+              })}
+            >
+              <Select.Label>Card Size</Select.Label>
+              <Collapsible.Trigger asChild>
+                <Button variant="link" size="xs" colorPalette="gray">
+                  Customize
+                </Button>
+              </Collapsible.Trigger>
+            </div>
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText textTransform="capitalize" />
+                <Select.Indicator asChild>
+                  <Select.IndicatorIcon />
+                </Select.Indicator>
+              </Select.Trigger>
+            </Select.Control>
+            <Select.Positioner>
+              <Select.Content>
+                <Select.List>
+                  {cardSizeCollection.items
+                    .filter((item) => !item.hidden)
+                    .map((item) => (
+                      <Select.Item key={item.value} item={item}>
+                        <Select.ItemText textTransform="capitalize">
+                          {item.label}
+                        </Select.ItemText>
+                        <Select.ItemIndicator asChild>
+                          <Select.ItemIndicatorIcon />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
+                </Select.List>
+              </Select.Content>
+            </Select.Positioner>
+          </Select.Root>
+        </Field.Root>
+        <Collapsible.Content
+          className={vstack({
+            width: "full",
+            alignItems: "stretch",
+            gap: "2",
+            alignSelf: "stretch",
+            justifyContent: "center",
+            paddingLeft: "4",
+          })}
+        >
+          <Field.Root
+            disabled={isRendering}
+            invalid={formErrors.cardWidth.length > 0}
+          >
+            <NumberInput
+              min={1}
+              value={formState.cardWidth}
+              onValueChange={buildNumberInputChangeHandler("cardWidth")}
+            >
+              Card Width (mm)
+            </NumberInput>
+            {formErrors.cardWidth.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+          <Field.Root
+            disabled={isRendering}
+            invalid={formErrors.cardHeight.length > 0}
+          >
+            <NumberInput
+              min={1}
+              value={formState.cardHeight}
+              onValueChange={buildNumberInputChangeHandler("cardHeight")}
+            >
+              Card Height (mm)
+            </NumberInput>
+            {formErrors.cardHeight.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+        </Collapsible.Content>
+      </Collapsible.Root>
+      <Collapsible.Root
+        className={vstack({
+          width: "full",
+          alignItems: "stretch",
+          alignSelf: "stretch",
+        })}
+      >
+        <Field.Root disabled={isRendering}>
+          <Select.Root
+            collection={pageSizeCollection}
+            value={[pageSizeValue]}
+            onValueChange={pageSizeChangeHandler}
+          >
+            <div
+              className={hstack({
+                width: "full",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+              })}
+            >
+              <Select.Label>Page Size</Select.Label>
+              <Collapsible.Trigger asChild>
+                <Button
+                  alignSelf="flex-end"
+                  variant="link"
+                  size="xs"
+                  colorPalette="gray"
+                >
+                  Customize
+                </Button>
+              </Collapsible.Trigger>
+            </div>
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText textTransform="capitalize" />
+                <div>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <IconButton
+                        type="button"
+                        size="xs"
+                        aria-label="Rotate Page"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          rotatePage();
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faArrowsRotate} size="lg" />
+                      </IconButton>
+                    </Tooltip.Trigger>
+                    <Tooltip.Positioner>
+                      <Tooltip.Arrow>
+                        <Tooltip.ArrowTip />
+                      </Tooltip.Arrow>
+                      <Tooltip.Content>Rotate Page</Tooltip.Content>
+                    </Tooltip.Positioner>
+                  </Tooltip.Root>
+                  <Select.Indicator asChild>
+                    <Select.IndicatorIcon />
+                  </Select.Indicator>
+                </div>
+              </Select.Trigger>
+            </Select.Control>
+            <Select.Positioner>
+              <Select.Content>
+                {pageSizeCollection.group().map(([type, group]) => (
+                  <Select.ItemGroup key={type}>
+                    <Select.ItemGroupLabel>
+                      {type === "mm" ? "ISO" : "US"}
+                    </Select.ItemGroupLabel>
+                    {group
+                      .filter((item) => !item.hidden)
+                      .map((item) => (
+                        <Select.Item key={item.value} item={item}>
+                          <Select.ItemText textTransform="capitalize">
+                            {item.label}
+                          </Select.ItemText>
+                          <Select.ItemIndicator asChild>
+                            <Select.ItemIndicatorIcon />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                      ))}
+                  </Select.ItemGroup>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Select.Root>
+        </Field.Root>
+        <Collapsible.Content
+          className={vstack({
+            width: "full",
+            alignItems: "stretch",
+            gap: "2",
+            alignSelf: "stretch",
+            justifyContent: "center",
+            paddingLeft: "4",
+          })}
+        >
+          <Field.Root
+            disabled={isRendering}
+            invalid={formErrors.unit.length > 0}
+          >
+            {/* TODO: Make more simple Select */}
+            <Select.Root
+              collection={unitsCollection}
+              value={[formState.unit]}
+              onValueChange={buildSelectChangeHandler("unit")}
+            >
+              <Select.Label>Page Unit</Select.Label>
+              <Select.Control>
+                <Select.Trigger>
+                  <Select.ValueText />
+                  <Select.Indicator asChild>
+                    <Select.IndicatorIcon />
+                  </Select.Indicator>
+                </Select.Trigger>
+              </Select.Control>
+              <Select.Positioner>
+                <Select.Content>
+                  <Select.List>
+                    {unitsCollection.items.map((item) => (
+                      <Select.Item key={item.value} item={item}>
+                        <Select.ItemText>{item.label}</Select.ItemText>
+                        <Select.ItemIndicator asChild>
+                          <Select.ItemIndicatorIcon />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
+                  </Select.List>
+                </Select.Content>
+              </Select.Positioner>
+            </Select.Root>
+            {formErrors.unit.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+          <Field.Root
+            disabled={isRendering}
+            invalid={formErrors.pageWidth.length > 0}
+          >
+            <NumberInput
+              min={1}
+              value={formState.pageWidth}
+              onValueChange={buildNumberInputChangeHandler("pageWidth")}
+            >
+              Page Width ({formState.unit})
+            </NumberInput>
+            {formErrors.pageWidth.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+          <Field.Root
+            disabled={isRendering}
+            invalid={formErrors.pageHeight.length > 0}
+          >
+            <NumberInput
+              min={1}
+              value={formState.pageHeight}
+              onValueChange={buildNumberInputChangeHandler("pageHeight")}
+            >
+              Page Height ({formState.unit})
+            </NumberInput>
+            {formErrors.pageHeight.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+        </Collapsible.Content>
+      </Collapsible.Root>
       <Field.Root
         disabled={isRendering}
         invalid={formErrors.enableBleedEdge.length > 0}
@@ -459,7 +571,7 @@ export const SettingsForm = () => {
         ))}
       </Field.Root>
       <Field.Root
-        disabled={isRendering}
+        disabled={isRendering || !formState.enableBleedEdge}
         invalid={formErrors.bleedEdge.length > 0}
       >
         <NumberInput
@@ -471,18 +583,6 @@ export const SettingsForm = () => {
           Bleed Edge (mm)
         </NumberInput>
         {formErrors.bleedEdge.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.guidesColor.length > 0}
-      >
-        <ColorPicker
-          value={parseColor(formState.guidesColor)}
-          onValueChange={buildColorPickerChangeHandler("guidesColor")}
-        />
-        {formErrors.guidesColor.map((issue, i) => (
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
