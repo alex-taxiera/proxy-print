@@ -230,7 +230,7 @@ export const PrintableImages = () => {
             direction: "row",
             alignItems: "flex-end",
             justifyContent: "center",
-            gap: "8",
+            gap: "6",
           })}
         >
           <PageDrop id="prev-page" disabled={isFirstPage}>
@@ -265,7 +265,7 @@ export const PrintableImages = () => {
           <div
             className={vstack({
               alignItems: "center",
-              gap: "8",
+              gap: "3",
             })}
           >
             <div

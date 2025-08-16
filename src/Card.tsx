@@ -22,15 +22,22 @@ const useCardClassName = (props: {
   isEmpty: boolean;
   isPending: boolean;
   index: number;
+  isDragging: boolean;
 }) => {
-  const { isEmpty, isPending, index } = props;
+  const { isEmpty, isPending, index, isDragging } = props;
   const positions = useCardPositionMeta();
   const beforeAfterBase: Styles = {
     pointerEvents: "none",
-    display: "var(--guide-display)",
+    display: isDragging ? "none" : "var(--guide-display)",
     borderColor: "black",
     borderStyle: "solid",
     borderWidth: "0",
+  };
+
+  const highlightStyles: Styles = {
+    outlineWidth: "4",
+    outlineColor: "colorPalette.default",
+    outlineStyle: "solid",
   };
 
   const classes: string[] = [
@@ -48,13 +55,15 @@ const useCardClassName = (props: {
     }),
   ];
 
+  if (isDragging) {
+    classes.push(css(highlightStyles));
+  }
+
   if (!isEmpty && !isPending) {
     classes.push(
       css({
         _hover: {
-          outlineWidth: "4",
-          outlineColor: "colorPalette.default",
-          outlineStyle: "solid",
+          ...highlightStyles,
           zIndex: "1",
         },
       }),
@@ -211,6 +220,7 @@ export const Card = ({
     isEmpty,
     isPending,
     index,
+    isDragging: sortable.isDragging,
   });
 
   const add = useCallback(
@@ -425,7 +435,7 @@ export const Card = ({
           )}
         </>
       </div>
-      <Guides />
+      {sortable.isDragging ? null : <Guides />}
     </div>
   );
 };
