@@ -10,7 +10,7 @@
     "format": "prettier --write .",
     "format:ci": "prettier --check .",
     "preview": "vite preview",
-    "prebuild": "npx panda codegen",
+    "prepare": "npx panda codegen",
     "watch-css": "npx panda codegen --watch",
     "storybook": "npm run watch-css & storybook dev -p 6006",
     "build-storybook": "storybook build"
