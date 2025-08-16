@@ -78,6 +78,21 @@ export const select = defineSlotRecipe({
       color: "fg.default",
       fontWeight: "medium",
     },
+    control: {
+      _placeholderShown: {
+        color: "fg.subtle",
+      },
+      _disabled: {
+        color: "fg.disabled",
+        cursor: "not-allowed",
+        "& :where(svg)": {
+          color: "fg.disabled",
+        },
+      },
+      "& :where(svg)": {
+        color: "fg.subtle",
+      },
+    },
     trigger: {
       appearance: "none",
       alignItems: "center",
@@ -93,19 +108,6 @@ export const select = defineSlotRecipe({
       transitionProperty: "background, box-shadow, border-color",
       transitionTimingFunction: "default",
       width: "full",
-      _placeholderShown: {
-        color: "fg.subtle",
-      },
-      _disabled: {
-        color: "fg.disabled",
-        cursor: "not-allowed",
-        "& :where(svg)": {
-          color: "fg.disabled",
-        },
-      },
-      "& :where(svg)": {
-        color: "fg.subtle",
-      },
     },
     clearTrigger: {
       cursor: "pointer",

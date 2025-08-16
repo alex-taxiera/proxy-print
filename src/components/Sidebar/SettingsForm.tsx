@@ -424,36 +424,45 @@ export const SettingsForm = () => {
                 </Button>
               </Collapsible.Trigger>
             </div>
-            <Select.Control>
+            <Select.Control position="relative">
               <Select.Trigger>
                 <Select.ValueText textTransform="capitalize" />
-                <div>
-                  <Tooltip.Root openDelay={100} closeDelay={200}>
-                    <Tooltip.Trigger asChild>
-                      <IconButton
-                        type="button"
-                        size="xs"
-                        aria-label="Rotate Page"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          rotatePage();
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faArrowsRotate} size="lg" />
-                      </IconButton>
-                    </Tooltip.Trigger>
-                    <Tooltip.Positioner>
-                      <Tooltip.Arrow>
-                        <Tooltip.ArrowTip />
-                      </Tooltip.Arrow>
-                      <Tooltip.Content>Rotate Page</Tooltip.Content>
-                    </Tooltip.Positioner>
-                  </Tooltip.Root>
-                  <Select.Indicator asChild>
-                    <Select.IndicatorIcon />
-                  </Select.Indicator>
-                </div>
               </Select.Trigger>
+              <div
+                className={hstack({
+                  position: "absolute",
+                  right: "3",
+                  top: "0",
+                  height: "full",
+                  pointerEvents: "none",
+                })}
+              >
+                <Tooltip.Root openDelay={100} closeDelay={200}>
+                  <Tooltip.Trigger asChild>
+                    <IconButton
+                      type="button"
+                      pointerEvents="auto"
+                      size="xs"
+                      aria-label="Rotate Page"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        rotatePage();
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faArrowsRotate} size="lg" />
+                    </IconButton>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Arrow>
+                      <Tooltip.ArrowTip />
+                    </Tooltip.Arrow>
+                    <Tooltip.Content>Rotate Page</Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
+                <Select.Indicator asChild>
+                  <Select.IndicatorIcon />
+                </Select.Indicator>
+              </div>
             </Select.Control>
             <Select.Positioner>
               <Select.Content>
