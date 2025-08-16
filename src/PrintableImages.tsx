@@ -39,8 +39,7 @@ const usePagination = () => {
   const { imageMatrix } = usePreviewData();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [isPageLoaded, setIsPageLoaded] = useState(false);
-  const [imageLoadCount, setImageLoadCount] = useState(0);
+  const [isReferenceCardLoaded, setIsReferenceCardLoaded] = useState(false);
 
   const currentCards = useMemo(
     () => imageMatrix[currentPage - 1] ?? [],
@@ -49,21 +48,17 @@ const usePagination = () => {
 
   const changePage = useCallback((page: number) => {
     setCurrentPage(page);
-    setIsPageLoaded(false);
-    setImageLoadCount(0);
+    setIsReferenceCardLoaded(false);
   }, []);
 
   const onImageLoad = useCallback(() => {
-    setImageLoadCount((count) => count + 1);
-    if (imageLoadCount === currentCards.length) {
-      setIsPageLoaded(true);
-    }
-  }, [currentCards, imageLoadCount]);
+    setIsReferenceCardLoaded(true);
+  }, []);
 
   return {
     currentPage,
     currentCards,
-    isPageLoaded,
+    isReferenceCardLoaded,
     changePage,
     onImageLoad,
   };
@@ -129,8 +124,13 @@ export const PrintableImages = () => {
   const { imageMatrix, cardsPerPage, rowsPerPage, columnsPerPage } =
     usePreviewData();
 
-  const { currentPage, currentCards, isPageLoaded, changePage, onImageLoad } =
-    usePagination();
+  const {
+    currentPage,
+    currentCards,
+    isReferenceCardLoaded,
+    changePage,
+    onImageLoad,
+  } = usePagination();
 
   const isFirstPage = useMemo(() => currentPage === 1, [currentPage]);
   const isLastPage = useMemo(
@@ -295,14 +295,18 @@ export const PrintableImages = () => {
                     Remove all cards
                   </Button>
                   <Tooltip.Root
-                    disabled={!isRendering && !isFetching && !isPageLoaded}
+                    disabled={
+                      !isRendering && !isFetching && isReferenceCardLoaded
+                    }
                     positioning={{
                       placement: "top",
                     }}
                   >
                     <Tooltip.Trigger asChild>
                       <Button
-                        disabled={isRendering || isFetching || isPageLoaded}
+                        disabled={
+                          isRendering || isFetching || !isReferenceCardLoaded
+                        }
                         onClick={() => handleSave()}
                       >
                         Save
@@ -317,7 +321,7 @@ export const PrintableImages = () => {
                           ? "Generating PDF..."
                           : isFetching
                             ? "Downloading images..."
-                            : !isPageLoaded
+                            : !isReferenceCardLoaded
                               ? "Loading images..."
                               : ""}
                       </Tooltip.Content>
@@ -421,7 +425,7 @@ export const PrintableImages = () => {
                         key={image.uuid || `empty-${index}`}
                         image={image}
                         index={index}
-                        onImageLoad={onImageLoad}
+                        onImageLoad={index === 0 ? onImageLoad : undefined}
                       />
                     ))}
                   </div>

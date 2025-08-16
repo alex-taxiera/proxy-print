@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { useContext, useMemo } from "react";
 
 import { type Image, ImagesContext } from "../context/ImagesContext";
@@ -32,7 +33,7 @@ export const usePageLimits = () => {
     // const colNum = parseInt(settings.numberOfColumns);
 
     // return Math.min(colNum, Math.floor(pageWidth / cardWidth));
-    return Math.floor(pageWidth / cardWidth)
+    return Math.floor(pageWidth / cardWidth);
   }, [settings, cardWidth]);
 
   const cardsPerPage = useMemo(
@@ -67,9 +68,13 @@ export const usePreviewData = () => {
     }
     const paddingItems = rows.at(-1)!.length % cardsPerPage;
     if (paddingItems > 0) {
-      const filler = Array.from({ length: cardsPerPage - paddingItems }).fill({
-        name: "empty",
-      }) as (typeof rows)[0];
+      const filler = Array.from<never, Image>(
+        { length: cardsPerPage - paddingItems },
+        () => ({
+          name: "empty",
+          uuid: nanoid(),
+        }),
+      );
       rows.at(-1)!.push(...filler);
     }
     return rows;

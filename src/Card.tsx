@@ -147,6 +147,7 @@ export const Card = ({
 }: CardProps) => {
   const sortable = useSortable({
     id: image.uuid,
+    disabled: image.name === "empty",
     index,
     type: "card",
     accept: "card",

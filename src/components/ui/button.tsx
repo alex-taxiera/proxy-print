@@ -17,12 +17,29 @@ export interface ButtonProps extends StyledButtonProps, ButtonLoadingProps {}
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (props, ref) => {
-    const { loading, disabled, loadingText, children, ...rest } = props;
+    const {
+      loading,
+      disabled,
+      loadingText,
+      children,
+      onClick: onClickProp,
+      ...rest
+    } = props;
 
     const trulyDisabled = loading || disabled;
 
+    const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (trulyDisabled) return;
+      onClickProp?.(e);
+    };
+
     return (
-      <StyledButton aria-disabled={trulyDisabled} ref={ref} {...rest}>
+      <StyledButton
+        aria-disabled={trulyDisabled}
+        onClick={onClick}
+        ref={ref}
+        {...rest}
+      >
         {loading && !loadingText ? (
           <>
             <ButtonSpinner />
