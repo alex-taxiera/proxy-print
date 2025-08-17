@@ -62,6 +62,10 @@ const useCardClassName = (props: {
   if (!isEmpty && !isPending) {
     classes.push(
       css({
+        _focusVisible: {
+          ...highlightStyles,
+          zIndex: "1",
+        },
         _hover: {
           ...highlightStyles,
           zIndex: "1",
@@ -144,24 +148,10 @@ const useCardClassName = (props: {
 export type CardProps = {
   image: Image;
   index: number;
-  showImage?: boolean;
   onImageLoad?: () => void;
 };
 
-export const Card = ({
-  image,
-  index,
-  showImage = true,
-  onImageLoad,
-}: CardProps) => {
-  const sortable = useSortable({
-    id: image.uuid,
-    disabled: image.name === "empty",
-    index,
-    type: "card",
-    accept: "card",
-  });
-
+export const Card = ({ image, index, onImageLoad }: CardProps) => {
   const { images, onAdd, onRemove, isRendering, getCachedImage, onReorder } =
     useContext(ImagesContext);
 
@@ -215,6 +205,14 @@ export const Card = ({
   const isPending = (isLoading || isFetching) && !isEmpty;
 
   const imageSrc = downloadedSrc ?? src;
+
+  const sortable = useSortable({
+    id: image.uuid,
+    disabled: isEmpty || isPending || !imageSrc,
+    index,
+    type: "card",
+    accept: "card",
+  });
 
   const className = useCardClassName({
     isEmpty,
@@ -282,7 +280,12 @@ export const Card = ({
   }, [image.file]);
 
   return (
-    <div className={className} ref={sortable.ref} id={image.uuid}>
+    <div
+      className={className}
+      ref={sortable.ref}
+      id={image.uuid}
+      tabIndex={isEmpty || isPending || isRendering ? -1 : 0}
+    >
       <div
         className={cx(
           "image-container",
@@ -310,9 +313,9 @@ export const Card = ({
                 },
               })}
             />
-          ) : imageSrc && showImage ? (
+          ) : imageSrc ? (
             <Menu.Root>
-              <Menu.ContextTrigger>
+              <Menu.ContextTrigger tabIndex={-1}>
                 <img
                   src={imageSrc}
                   alt={image.file?.name ?? image.name}

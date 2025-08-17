@@ -435,6 +435,7 @@ export const SettingsForm = () => {
                   top: "0",
                   height: "full",
                   pointerEvents: "none",
+                  gap: "1",
                 })}
               >
                 <Tooltip.Root openDelay={100} closeDelay={200}>

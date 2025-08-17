@@ -58,6 +58,7 @@ export const Sidebar = () => {
             paddingBottom: "12", // dont let edge go to bottom of page
             paddingLeft: "1",
           })}
+          tabIndex={-1}
         >
           <div
             className={vstack({

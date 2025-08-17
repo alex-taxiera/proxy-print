@@ -117,12 +117,10 @@ export const button = defineRecipe({
         userSelect: "text",
         verticalAlign: "baseline",
         color: "colorPalette.emphasized",
-        '&[aria-disabled="true"]': {
-          color: "border.disabled",
-          cursor: "not-allowed",
-          _hover: {
-            color: "border.disabled",
-          },
+        _focusVisible: {
+          outline: "2px solid",
+          outlineColor: "colorPalette.default",
+          outlineOffset: "2px",
         },
         _hover: {
           color: "colorPalette.default",
@@ -131,6 +129,13 @@ export const button = defineRecipe({
         height: "auto!",
         px: "0!",
         minW: "0 !important",
+        '&[aria-disabled="true"]': {
+          color: "border.disabled",
+          cursor: "not-allowed",
+          _hover: {
+            color: "border.disabled",
+          },
+        },
       },
       subtle: {
         background: "colorPalette.a3",
