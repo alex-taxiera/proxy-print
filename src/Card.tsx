@@ -334,7 +334,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
             />
           ) : imageSrc ? (
             <Menu.Root>
-              <Menu.ContextTrigger tabIndex={-1}>
+              <Menu.ContextTrigger cursor="grab" tabIndex={-1}>
                 <img
                   src={imageSrc}
                   alt={getIsLocalImage(image) ? image.file?.name : image.name}
