@@ -1,10 +1,16 @@
-import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
+import {
+  Dialog,
+  useFileUpload,
+  type FileUploadFileAcceptDetails,
+} from "@ark-ui/react";
 import { useCallback, useContext, useEffect, useState } from "react";
 
 import { css } from "styled-system/css";
-import { center } from "styled-system/patterns";
+import { center, vstack } from "styled-system/patterns";
 
 import { GoogleImageData, ImagesContext } from "../../context/ImagesContext";
+import { DecklistDialog } from "../DecklistDialog";
+import { Button } from "../ui/button";
 import { FileUpload } from "../ui/file-upload";
 
 const parseXML = (file: File): Promise<GoogleImageData[]> => {
@@ -86,27 +92,38 @@ export function ImageUploader() {
   }, [acceptedFiles, fileUpload]);
 
   return (
-    <FileUpload.RootProvider value={fileUpload}>
-      <FileUpload.Trigger asChild>
-        <FileUpload.Dropzone
-          className={css({ cursor: "pointer" })}
-          onClick={(e) => e.preventDefault()}
-        >
-          <FileUpload.Label className={center({ flexDirection: "column" })}>
-            <span>{fileUpload.dragging ? "Drop!" : "Drop files here"}</span>
-            <span
-              className={css({
-                color: "fg.muted",
-                fontSize: "xs",
-                visibility: fileUpload.dragging ? "hidden" : "visible",
-              })}
-            >
-              or click to browse
-            </span>
-          </FileUpload.Label>
-        </FileUpload.Dropzone>
-      </FileUpload.Trigger>
-      <FileUpload.HiddenInput />
-    </FileUpload.RootProvider>
+    <div
+      className={vstack({ gap: "2", alignItems: "flex-start", width: "full" })}
+    >
+      <FileUpload.RootProvider value={fileUpload}>
+        <FileUpload.Trigger asChild>
+          <FileUpload.Dropzone
+            className={css({ cursor: "pointer" })}
+            onClick={(e) => e.preventDefault()}
+          >
+            <FileUpload.Label className={center({ flexDirection: "column" })}>
+              <span>{fileUpload.dragging ? "Drop!" : "Drop files here"}</span>
+              <span
+                className={css({
+                  color: "fg.muted",
+                  fontSize: "xs",
+                  visibility: fileUpload.dragging ? "hidden" : "visible",
+                })}
+              >
+                or click to browse
+              </span>
+            </FileUpload.Label>
+          </FileUpload.Dropzone>
+        </FileUpload.Trigger>
+        <FileUpload.HiddenInput />
+      </FileUpload.RootProvider>
+      <DecklistDialog>
+        <Dialog.Trigger asChild>
+          <Button variant="link" size="xs" colorPalette="gray">
+            Import from Decklist
+          </Button>
+        </Dialog.Trigger>
+      </DecklistDialog>
+    </div>
   );
 }

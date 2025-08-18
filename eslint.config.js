@@ -1,5 +1,6 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import js from "@eslint/js";
+import pluginQuery from "@tanstack/eslint-plugin-query";
 import eslintConfigPrettier from "eslint-config-prettier";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
@@ -37,6 +38,7 @@ export default tseslint.config(
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
       react,
+      "@tanstack/query": pluginQuery,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -48,6 +50,7 @@ export default tseslint.config(
       ...react.configs.recommended.rules,
       ...react.configs["jsx-runtime"].rules,
       ...eslintConfigPrettier.rules,
+      ...pluginQuery.configs.recommended.rules,
     },
   },
   storybook.configs["flat/recommended"],

@@ -47,7 +47,7 @@ export const ProgressOverlay = () => {
   if (!isVisible) return null;
 
   return (
-    <Dialog.Root open={isVisible}>
+    <Dialog.Root open={isVisible} size="sm">
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content>

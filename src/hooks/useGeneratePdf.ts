@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/react";
 import { PDFDocument } from "pdf-lib";
 import { useCallback, useContext } from "react";
 
-import { ImagesContext } from "../context/ImagesContext";
+import { getIsLocalImage, ImagesContext } from "../context/ImagesContext";
 import { SettingsContext } from "../context/SettingsContext";
 import { invertHexColor } from "../utils/invert-hex-color";
 import { progressEvents } from "../utils/progress-events";
@@ -130,9 +130,12 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         let imageDataUrl = null;
 
         if (image) {
+          const isLocalImage = getIsLocalImage(image);
           try {
             // Get the image source URL (could be blob URL or data URL)
-            const imageSrc = image.url ?? URL.createObjectURL(image.file!);
+            const imageSrc = isLocalImage
+              ? URL.createObjectURL(image.file)
+              : image.url!;
 
             // Create a new image element to get natural dimensions
             const tempImg = new Image();
@@ -144,8 +147,6 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               tempImg.onerror = (event, source, lineno, colno, error) => {
                 console.debug("Image load error:", {
                   imageSrc,
-                  fileType: image?.file?.type,
-                  fileSize: image?.file?.size,
                   event,
                   source,
                   lineno,
@@ -188,7 +189,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               );
 
               imageDataUrl = cropCanvas.toDataURL(
-                image.mimeType ?? image.file!.type,
+                isLocalImage
+                  ? image.file.type
+                  : (image.mimeType ?? "image/png"),
                 1,
               );
 
@@ -196,7 +199,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               cropCanvas.width = 0;
               cropCanvas.height = 0;
               cropCtx.clearRect(0, 0, 0, 0);
-              if (image.file) {
+              if (isLocalImage) {
                 URL.revokeObjectURL(imageSrc);
               }
             }
@@ -221,7 +224,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
         return {
           imageDataUrl,
-          mimeType: image?.mimeType ?? image?.file!.type,
+          mimeType: getIsLocalImage(image) ? image.file.type : image.mimeType,
           pdfX,
           pdfY,
           containerWidth,

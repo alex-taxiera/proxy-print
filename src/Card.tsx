@@ -14,7 +14,14 @@ import { center } from "styled-system/patterns";
 import { Kbd } from "./components/ui/kbd";
 import { Menu } from "./components/ui/menu";
 import { Spinner } from "./components/ui/spinner";
-import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
+import {
+  getIsLocalImage,
+  ScryfallImageData,
+  GoogleImageData,
+  Image,
+  ImagesContext,
+  getIsDownloadableImage,
+} from "./context/ImagesContext";
 import { useCardPositionMeta } from "./hooks/useCardClassNames";
 import { usePreviewData } from "./hooks/usePreviewData";
 
@@ -194,13 +201,17 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   );
 
   const [src, setSrc] = useState<string>("");
-  const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
+  const downloadedSrc = getIsDownloadableImage(image)
+    ? getCachedImage(image.uuid)
+    : undefined;
   const isFetching = useMemo(
-    () => !!image.id && !downloadedSrc,
-    [image.id, downloadedSrc],
+    () => getIsDownloadableImage(image) && !downloadedSrc,
+    [image, downloadedSrc],
   );
 
-  const isEmpty = !image.file && !image.id;
+  const isEmpty =
+    (getIsLocalImage(image) && !image.file) ||
+    (getIsDownloadableImage(image) && !image.url);
   const [isLoading, setIsLoading] = useState(true);
   const isPending = (isLoading || isFetching) && !isEmpty;
 
@@ -225,11 +236,20 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     (count: number) => {
       const index = images.indexOf(image);
       onAdd(
-        new Array<File | GoogleImageData>(count).fill(
-          image.file ?? {
-            id: image.id,
-            name: image.name,
-          },
+        new Array<File | GoogleImageData | ScryfallImageData>(count).fill(
+          getIsLocalImage(image)
+            ? image.file
+            : "id" in image
+              ? {
+                  id: image.id,
+                  name: image.name,
+                  mimeType: image.mimeType,
+                }
+              : {
+                  uri: image.uri,
+                  name: image.name,
+                  mimeType: image.mimeType,
+                },
         ),
         index + 1,
       );
@@ -266,7 +286,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   useEffect(() => {
     let url: string | undefined;
 
-    if (image.file) {
+    if (getIsLocalImage(image)) {
       url = URL.createObjectURL(image.file);
       setSrc(url);
     }
@@ -277,7 +297,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [image.file]);
+  }, [image]);
 
   return (
     <div
@@ -318,7 +338,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
               <Menu.ContextTrigger tabIndex={-1}>
                 <img
                   src={imageSrc}
-                  alt={image.file?.name ?? image.name}
+                  alt={getIsLocalImage(image) ? image.file?.name : image.name}
                   className={css({
                     width:
                       "calc(var(--card-width, 63mm) + var(--image-zoom-width))",

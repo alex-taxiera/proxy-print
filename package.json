@@ -13,7 +13,10 @@
     "prepare": "npx panda codegen",
     "watch-css": "npx panda codegen --watch",
     "storybook": "npm run watch-css & storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
   },
   "prettier": {
     "plugins": [
@@ -34,8 +37,10 @@
     "@fortawesome/free-regular-svg-icons": "^7.0.0",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "@fortawesome/react-fontawesome": "^0.2.3",
+    "@scryfall/api-types": "^1.0.0-alpha.4",
     "@sentry/react": "^10.5.0",
     "@sentry/vite-plugin": "^4.1.1",
+    "@tanstack/react-query": "^5.85.3",
     "jspdf": "github:laucheukhim/jsPDF",
     "nanoid": "^5.1.5",
     "react": "^18.3.1",
@@ -52,6 +57,7 @@
     "@storybook/addon-themes": "^9.1.2",
     "@storybook/addon-vitest": "^9.1.2",
     "@storybook/react-vite": "^9.1.2",
+    "@tanstack/eslint-plugin-query": "^5.83.1",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",

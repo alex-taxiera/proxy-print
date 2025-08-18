@@ -3,10 +3,15 @@ import { useCallback, useRef, useState } from "react";
 import { toaster } from "../utils/toaster";
 
 type Item = {
-  id: string;
+  uuid: string;
+  uri: string;
   resolve: (value: { mimeType: string; url: string }) => void;
   reject: (reason?: unknown) => void;
 };
+
+export function getMpcImageUri(id: string) {
+  return `https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec?id=${id}`;
+}
 
 /**
  * Converts a Base64 string to a Blob.
@@ -31,19 +36,43 @@ function base64ToBlob(base64String: string, contentType: string): Blob {
   return new Blob([byteArray], { type: contentType });
 }
 
-async function fetchImage({ id }: Item, init?: RequestInit): Promise<string> {
-  const url =
-    "https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec";
-  const params = new URLSearchParams({ id });
+async function fetchImage(
+  { uri }: Item,
+  init?: RequestInit,
+): Promise<{ data: Blob; mimeType: string }> {
   // FIXME: this signal doesn't work because script.google.com redirects to script.googleusercontent.com
-  const response = await fetch(`${url}?${params}`, init);
-  return await response.text();
+  const response = await fetch(uri, init);
+  // read headers and parse correctly
+  const contentType = response.headers.get("content-type");
+  if (contentType?.includes("image/")) {
+    const data = await response.blob();
+    return { data, mimeType: contentType };
+  }
+
+  const text = await response.text();
+  let mimeType = "image/png";
+
+  // Check for JPEG signature (base64 starts with /9j/ for JFIF)
+  if (text.startsWith("/9j/")) {
+    mimeType = "image/jpeg";
+  }
+  // Check for WebP signature (UklGRiI)
+  else if (text.startsWith("UklGRiI")) {
+    mimeType = "image/webp";
+  }
+  const data = base64ToBlob(text, mimeType);
+
+  return { data, mimeType };
 }
 
 export function useImageDownloadManager({
   maxInflight = 20,
+  toastTitle = "Downloading images",
+  toastDescription,
 }: {
   maxInflight?: number;
+  toastTitle?: string;
+  toastDescription?: string;
 } = {}) {
   const queueRef = useRef<Item[]>([]);
   const inflightRef = useRef<Item[]>([]);
@@ -58,8 +87,8 @@ export function useImageDownloadManager({
   const raiseToast = useCallback(() => {
     if (!loadingToastId.current) {
       loadingToastId.current = toaster.create({
-        title: "Downloading images from MPC Autofill",
-        description: "This may take a while...",
+        title: toastTitle,
+        description: toastDescription,
         duration: Infinity,
         closable: false,
         meta: {
@@ -81,7 +110,7 @@ export function useImageDownloadManager({
         },
       });
     }
-  }, [loadingToastId]);
+  }, [toastDescription, toastTitle]);
 
   const processQueue = useCallback(() => {
     while (
@@ -92,22 +121,12 @@ export function useImageDownloadManager({
       inflightRef.current.push(item);
       raiseToast();
       setIsFetching((oldIsFetching) => oldIsFetching || true);
-      const abortController = abortControllersRef.current.get(item.id);
-      fetchImage(item, { signal: abortController?.signal })
-        .then((data) => {
-          let mimeType = "image/png";
+      const abortController = abortControllersRef.current.get(item.uuid);
 
-          // Check for JPEG signature (base64 starts with /9j/ for JFIF)
-          if (data.startsWith("/9j/")) {
-            mimeType = "image/jpeg";
-          }
-          // Check for WebP signature (UklGRiI)
-          else if (data.startsWith("UklGRiI")) {
-            mimeType = "image/webp";
-          }
-          const blob = base64ToBlob(data, mimeType);
-          const url = URL.createObjectURL(blob);
-          imageCacheRef.current.set(item.id, { url, mimeType });
+      fetchImage(item, { signal: abortController?.signal })
+        .then(({ data, mimeType }) => {
+          const url = URL.createObjectURL(data);
+          imageCacheRef.current.set(item.uuid, { url, mimeType });
           item.resolve({ mimeType, url });
         })
         .catch((error) => {
@@ -115,7 +134,7 @@ export function useImageDownloadManager({
         })
         .finally(() => {
           raiseToast();
-          abortControllersRef.current.delete(item.id);
+          abortControllersRef.current.delete(item.uuid);
           inflightRef.current = inflightRef.current.filter((i) => i !== item);
           if (
             inflightRef.current.length < maxInflight &&
@@ -137,19 +156,25 @@ export function useImageDownloadManager({
   }, [maxInflight, raiseToast]);
 
   const add = useCallback(
-    (id: string): Promise<{ mimeType: string; url: string }> => {
+    ({
+      uuid,
+      uri,
+    }: Pick<Item, "uuid" | "uri">): Promise<{
+      mimeType: string;
+      url: string;
+    }> => {
       return new Promise((resolve, reject) => {
-        if (imageCacheRef.current.has(id)) {
+        if (imageCacheRef.current.has(uuid)) {
           // resolve with cached image
-          resolve(imageCacheRef.current.get(id)!);
+          resolve(imageCacheRef.current.get(uuid)!);
           return;
         }
 
         // check if inflight or queue contains the id
         // combine resolve and reject with the existing item
         const existingItem =
-          inflightRef.current.find((i) => i.id === id) ||
-          queueRef.current.find((i) => i.id === id);
+          inflightRef.current.find((i) => i.uuid === uuid) ||
+          queueRef.current.find((i) => i.uuid === uuid);
         if (existingItem) {
           const originalResolve = existingItem.resolve;
           const originalReject = existingItem.reject;
@@ -165,8 +190,8 @@ export function useImageDownloadManager({
         }
 
         const abortController = new AbortController();
-        abortControllersRef.current.set(id, abortController);
-        queueRef.current.push({ id, resolve, reject });
+        abortControllersRef.current.set(uuid, abortController);
+        queueRef.current.push({ uuid, uri, resolve, reject });
         if (inflightRef.current.length < maxInflight) {
           processQueue();
         }
@@ -183,9 +208,9 @@ export function useImageDownloadManager({
    * @remarks If the download is cached, it will be remain
    */
   const remove = useCallback((id: string) => {
-    const queueItem = queueRef.current.find((i) => i.id === id);
+    const queueItem = queueRef.current.find((i) => i.uuid === id);
     if (queueItem) {
-      queueRef.current = queueRef.current.filter((i) => i.id !== id);
+      queueRef.current = queueRef.current.filter((i) => i.uuid !== id);
     }
   }, []);
 

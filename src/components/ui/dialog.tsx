@@ -24,6 +24,8 @@ const CloseButton = forwardRef<HTMLButtonElement, IconButtonProps>(
 
 CloseButton.displayName = "CloseButton";
 
+export type * as DialogType from "./styled/dialog";
+
 export const Dialog = {
   ...Styled,
   CloseButton,
