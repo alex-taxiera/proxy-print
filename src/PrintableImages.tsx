@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useCallback, useRef, useState, useMemo } from "react";
 
 import { css, cx } from "styled-system/css";
-import { center, flex, grid, hstack, vstack } from "styled-system/patterns";
+import { center, grid, hstack, vstack } from "styled-system/patterns";
 
 import { Card } from "./Card";
 import { ImageErrors } from "./components/ImageErrors";
@@ -25,11 +25,7 @@ import { useGeneratePdf } from "./hooks/useGeneratePdf";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { progressEvents } from "./utils/progress-events";
 
-const containerStyles = flex.raw({
-  direction: "column",
-  alignItems: "center",
-  paddingY: "6",
-  paddingX: "2",
+const containerStyles = css.raw({
   flex: 1,
   minWidth: 0,
   overflow: "auto",
@@ -191,32 +187,38 @@ export const PrintableImages = () => {
 
   if (images.length === 0) {
     return (
-      <div
-        className={css(containerStyles, {
-          alignSelf: "stretch",
-          justifyContent: "center",
-          gap: "6",
-        })}
-      >
-        <p>Add images to get started.</p>
-        <p>
-          Upload an XML from{" "}
-          <Link asChild>
-            <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
-              MPC Autofill
-            </a>
-          </Link>{" "}
-          &quot;Download XML&quot; option.
-        </p>
-        <p>
-          You can download images from your{" "}
-          <Link asChild>
-            <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
-              MPC Autofill
-            </a>
-          </Link>{" "}
-          project with their &quot;Download Card Images&quot; option.
-        </p>
+      <div className={css(containerStyles)}>
+        <div
+          className={vstack({
+            paddingY: "6",
+            paddingX: "2",
+            gap: "6",
+            justifyContent: "center",
+            alignItems: "center",
+            flex: 1,
+            height: "full",
+          })}
+        >
+          <p>Add images to get started.</p>
+          <p>
+            Upload an XML from{" "}
+            <Link asChild>
+              <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
+                MPC Autofill
+              </a>
+            </Link>{" "}
+            &quot;Download XML&quot; option.
+          </p>
+          <p>
+            You can download images from your{" "}
+            <Link asChild>
+              <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
+                MPC Autofill
+              </a>
+            </Link>{" "}
+            project with their &quot;Download Card Images&quot; option.
+          </p>
+        </div>
       </div>
     );
   }
@@ -227,10 +229,13 @@ export const PrintableImages = () => {
         <ProgressOverlay />
         <div
           className={hstack({
-            direction: "row",
+            minWidth: "max",
+            width: "full",
             alignItems: "flex-end",
             justifyContent: "center",
             gap: "6",
+            paddingY: "6",
+            paddingX: "2",
           })}
         >
           <PageDrop id="prev-page" disabled={isFirstPage}>
