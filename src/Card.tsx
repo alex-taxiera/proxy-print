@@ -209,11 +209,10 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     [image, downloadedSrc],
   );
 
-  const isEmpty =
-    (getIsLocalImage(image) && !image.file) ||
-    (getIsDownloadableImage(image) && !image.url);
+  const isEmpty = !getIsLocalImage(image) && !getIsDownloadableImage(image);
+
   const [isLoading, setIsLoading] = useState(true);
-  const isPending = (isLoading || isFetching) && !isEmpty;
+  const isPending = isLoading || isFetching;
 
   const imageSrc = downloadedSrc ?? src;
 

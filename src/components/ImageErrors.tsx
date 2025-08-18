@@ -1,12 +1,12 @@
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 
-import { Image } from "../context/ImagesContext";
+import { DownloadableImage, getIsGoogleImage } from "../context/ImagesContext";
 import { Alert } from "./ui/alert";
 
 export type ImageErrorsProps = {
   onDismiss: () => void;
-  imagesWithError: Image[];
+  imagesWithError: DownloadableImage[];
 };
 
 export const ImageErrors = ({
@@ -44,7 +44,7 @@ export const ImageErrors = ({
                 <strong>{image.name}</strong>
                 &nbsp;
                 <span className={css({ fontFamily: "mono" })}>
-                  ({image.id})
+                  ({getIsGoogleImage(image) ? image.id : image.uri})
                 </span>
               </li>
             ))}

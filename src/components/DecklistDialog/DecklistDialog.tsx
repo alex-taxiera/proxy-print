@@ -1,8 +1,7 @@
 import { vstack } from "styled-system/patterns";
 
 import { Dialog, type DialogType } from "../ui/dialog";
-
-const { DecklistForm } = await import("./DecklistForm");
+import { DecklistForm } from "./DecklistForm";
 
 export type DecklistDialogProps = DialogType.RootProps;
 

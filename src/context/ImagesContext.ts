@@ -45,7 +45,7 @@ export const getIsScryfallImage = (image: Image) => {
 export type ImagesContextValue = {
   isFetching: boolean;
   images: Image[];
-  imagesWithError: Image[];
+  imagesWithError: DownloadableImage[];
   isRendering: boolean;
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
   onReorder: (imageUuid: string, newIndex: number) => void;

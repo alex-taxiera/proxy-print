@@ -27,10 +27,12 @@ export const ImagesProvider = (
     maxInflight: Infinity,
   });
   const [images, setImages] = useState<Image[]>([]);
-  const [imagesWithError, setImagesWithError] = useState<Image[]>([]);
+  const [imagesWithError, setImagesWithError] = useState<DownloadableImage[]>(
+    [],
+  );
   const [isRendering, setIsRendering] = useState(false);
 
-  const onError = useCallback((image: Image) => {
+  const onError = useCallback((image: DownloadableImage) => {
     const uuid = image.uuid;
     setImages((old) => old.filter((i) => i.uuid !== uuid));
     setImagesWithError((old) => {
