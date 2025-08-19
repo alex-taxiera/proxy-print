@@ -1,6 +1,7 @@
 import { UseDialogContext } from "@ark-ui/react";
 import { ScryfallCard } from "@scryfall/api-types";
 import { useIsMutating } from "@tanstack/react-query";
+import { nanoid } from "nanoid";
 import { useCallback, useContext } from "react";
 
 import { hstack, vstack, visuallyHidden } from "styled-system/patterns";
@@ -16,7 +17,7 @@ import { Dialog } from "../ui/dialog";
 import { Field } from "../ui/field";
 
 export const DecklistForm = () => {
-  const { onAdd } = useContext(ImagesContext);
+  const { onAdd, onError } = useContext(ImagesContext);
   const { mutateAsync: getCards } = useScryfallCardsCollection();
   const isMutating = useIsMutating({
     mutationKey: getScryfallCardsCollectionQueryKey(),
@@ -65,6 +66,15 @@ export const DecklistForm = () => {
             fullList.push(
               ...Array.from({ length: parsed.cards[i].quantity }, () => card),
             );
+          } else {
+            onError({
+              uuid: nanoid(),
+              uri: "",
+              id: [identifiers[i].set, identifiers[i].collector_number]
+                .filter(Boolean)
+                .join(" "),
+              name: identifiers[i].name,
+            });
           }
         }
 
@@ -93,7 +103,7 @@ export const DecklistForm = () => {
         dialog.setOpen(false);
       }
     },
-    [getCards, onAdd],
+    [getCards, onAdd, onError],
   );
 
   const isSubmitting = !!isMutating;

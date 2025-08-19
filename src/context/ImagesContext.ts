@@ -54,6 +54,7 @@ export type ImagesContextValue = {
     files: (File | GoogleImageData | ScryfallImageData)[],
     index?: number,
   ) => void;
+  onError: (image: DownloadableImage) => void;
   onRemove: (uuid: string) => void;
   onClear: () => void;
   onClearErrors: () => void;
@@ -68,6 +69,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onReorder: () => {},
   getCachedImage: () => undefined,
   onAdd: () => {},
+  onError: () => {},
   onRemove: () => {},
   onClear: () => {},
   onClearErrors: () => {},
