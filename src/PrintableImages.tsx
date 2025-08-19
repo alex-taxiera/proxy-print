@@ -34,7 +34,6 @@ import { useGeneratePdf } from "./hooks/useGeneratePdf";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { getIsSortableCardData } from "./hooks/useSortableCard";
 import { progressEvents } from "./utils/progress-events";
-import { isSortable } from "@dnd-kit/react/sortable";
 
 const containerStyles = css.raw({
   flex: 1,
