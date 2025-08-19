@@ -6,6 +6,7 @@ import {
   useDragDropMonitor,
   DragOverlay,
 } from "@dnd-kit/react";
+import { isSortable } from "@dnd-kit/react/sortable";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -257,19 +258,39 @@ export const PrintableImages = () => {
         return;
       }
 
-      if (
-        getIsSortableCardData(source.data) &&
-        getIsSortableCardData(target.data)
-      ) {
-        const imageUuid = source.id as string;
-        const newIndex = target.data.absoluteIndex;
+      if (isSortable(source) && getIsSortableCardData(source.data)) {
+        if (getIsSortableCardData(target.data)) {
+          // normal reorder
+          const imageUuid = source.id as string;
+          const newIndex = target.data.absoluteIndex;
 
-        if (imageUuid && newIndex !== undefined) {
-          onReorder(imageUuid, newIndex);
+          if (imageUuid && newIndex !== undefined) {
+            onReorder(imageUuid, newIndex);
+          }
+        } else if (target.type === "page") {
+          // move to page
+          switch (target.id) {
+            case "prev-page":
+              onReorder(
+                source.id as string,
+                source.data.absoluteIndex - source.sortable.initialIndex - 1,
+              );
+              changePage(currentPage - 1);
+              break;
+            case "next-page":
+              onReorder(
+                source.id as string,
+                source.data.absoluteIndex +
+                  cardsPerPage -
+                  source.sortable.initialIndex,
+              );
+              changePage(currentPage + 1);
+              break;
+          }
         }
       }
     },
-    [onReorder],
+    [onReorder, cardsPerPage, changePage, currentPage],
   );
 
   if (images.length === 0) {
