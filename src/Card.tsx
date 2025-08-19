@@ -17,9 +17,8 @@ const useCardClassName = (props: {
   isPending: boolean;
   index: number;
   isDragging: boolean;
-  isDropTarget: boolean;
 }) => {
-  const { isEmpty, isPending, index, isDragging, isDropTarget } = props;
+  const { isEmpty, isPending, index, isDragging } = props;
   const positions = useCardPositionMeta();
   const beforeAfterBase: Styles = {
     pointerEvents: "none",
@@ -53,17 +52,6 @@ const useCardClassName = (props: {
 
   if (isDragging) {
     classes.push(css({ opacity: 0.5 }));
-  }
-
-  if (isDropTarget && !isDragging) {
-    classes.push(
-      css({
-        ...highlightStyles,
-        "& img": {
-          opacity: 0.75,
-        },
-      }),
-    );
   }
 
   if (!isEmpty && !isPending) {
@@ -221,7 +209,6 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     isPending,
     index,
     isDragging: sortable.isDragging,
-    isDropTarget: sortable.isDropTarget,
   });
 
   const add = useCallback(
@@ -296,6 +283,22 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
             overflow: "hidden",
             width: "var(--item-width, 63mm)",
             height: "var(--item-height, 88mm)",
+            ...(sortable.isDropTarget &&
+            !sortable.isDragging &&
+            !sortable.isDropping
+              ? {
+                  _after: {
+                    content: "''",
+                    position: "absolute",
+                    top: "0",
+                    left: "0",
+                    height: "full",
+                    width: "full",
+                    background: "accent.a4",
+                    zIndex: 5,
+                  },
+                }
+              : null),
           }),
         )}
       >
@@ -318,7 +321,12 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
             />
           ) : imageSrc ? (
             <Menu.Root>
-              <Menu.ContextTrigger cursor="grab" tabIndex={-1}>
+              <Menu.ContextTrigger
+                cursor="grab"
+                tabIndex={-1}
+                width="full"
+                height="full"
+              >
                 <img
                   src={imageSrc}
                   alt={image.file?.name ?? image.name}
@@ -326,7 +334,10 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
                     width:
                       "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
                     maxWidth: "unset",
+                    minWidth: "full",
+                    minHeight: "full",
                     objectFit: "cover",
+                    position: "relative",
                   })}
                   onClick={handleClick}
                   onLoad={() => {
