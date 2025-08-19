@@ -55,7 +55,7 @@ export const DecklistForm = () => {
 
         const maps = await Promise.all(chunks.map((chunk) => getCards(chunk)));
 
-        const cards = new Map(maps.flatMap(Array.from));
+        const cards = new Map(maps.flatMap((map) => Array.from(map)));
 
         // duplicate entries that have more than one quantity
         const fullList: ScryfallCard.Any[] = [];
