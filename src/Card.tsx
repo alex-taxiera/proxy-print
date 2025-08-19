@@ -1,12 +1,5 @@
 import { MenuSelectionDetails, Portal } from "@ark-ui/react";
-import { useSortable } from "@dnd-kit/react/sortable";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { css, cx, RecipeVariantProps, Styles, sva } from "styled-system/css";
 import { center } from "styled-system/patterns";
@@ -17,14 +10,16 @@ import { Spinner } from "./components/ui/spinner";
 import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
 import { useCardPositionMeta } from "./hooks/useCardClassNames";
 import { usePreviewData } from "./hooks/usePreviewData";
+import { useSortableCard } from "./hooks/useSortableCard";
 
 const useCardClassName = (props: {
   isEmpty: boolean;
   isPending: boolean;
   index: number;
   isDragging: boolean;
+  isDropTarget: boolean;
 }) => {
-  const { isEmpty, isPending, index, isDragging } = props;
+  const { isEmpty, isPending, index, isDragging, isDropTarget } = props;
   const positions = useCardPositionMeta();
   const beforeAfterBase: Styles = {
     pointerEvents: "none",
@@ -38,6 +33,7 @@ const useCardClassName = (props: {
     outlineWidth: "4",
     outlineColor: "colorPalette.default",
     outlineStyle: "solid",
+    zIndex: "1",
   };
 
   const classes: string[] = [
@@ -56,20 +52,25 @@ const useCardClassName = (props: {
   ];
 
   if (isDragging) {
-    classes.push(css(highlightStyles));
+    classes.push(css({ opacity: 0.5 }));
+  }
+
+  if (isDropTarget && !isDragging) {
+    classes.push(
+      css({
+        ...highlightStyles,
+        "& img": {
+          opacity: 0.75,
+        },
+      }),
+    );
   }
 
   if (!isEmpty && !isPending) {
     classes.push(
       css({
-        _focusVisible: {
-          ...highlightStyles,
-          zIndex: "1",
-        },
-        _hover: {
-          ...highlightStyles,
-          zIndex: "1",
-        },
+        _focusVisible: highlightStyles,
+        _hover: highlightStyles,
       }),
     );
   }
@@ -206,12 +207,13 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
 
   const imageSrc = downloadedSrc ?? src;
 
-  const sortable = useSortable({
-    id: image.uuid,
-    disabled: isEmpty || isPending || !imageSrc,
+  const sortable = useSortableCard({
+    image,
     index,
-    type: "card",
-    accept: "card",
+    isEmpty,
+    isPending,
+    imageSrc,
+    absoluteIndex,
   });
 
   const className = useCardClassName({
@@ -219,6 +221,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     isPending,
     index,
     isDragging: sortable.isDragging,
+    isDropTarget: sortable.isDropTarget,
   });
 
   const add = useCallback(
@@ -438,7 +441,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
           )}
         </>
       </div>
-      {sortable.isDragging ? null : <Guides />}
+      <Guides />
     </div>
   );
 };

@@ -1,13 +1,21 @@
+import { pointerIntersection } from "@dnd-kit/collision";
 import {
   DragDropProvider,
   DragDropEventHandlers,
   useDroppable,
   useDragDropMonitor,
+  DragOverlay,
 } from "@dnd-kit/react";
-import { isSortable } from "@dnd-kit/react/sortable";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useContext, useCallback, useRef, useState, useMemo } from "react";
+import {
+  useContext,
+  useCallback,
+  useRef,
+  useState,
+  useMemo,
+  useEffect,
+} from "react";
 
 import { css, cx } from "styled-system/css";
 import { center, grid, hstack, vstack } from "styled-system/patterns";
@@ -23,6 +31,7 @@ import { ImagesContext } from "./context/ImagesContext";
 import { SettingsContext } from "./context/SettingsContext";
 import { useGeneratePdf } from "./hooks/useGeneratePdf";
 import { usePreviewData } from "./hooks/usePreviewData";
+import { getIsSortableCardData } from "./hooks/useSortableCard";
 import { progressEvents } from "./utils/progress-events";
 
 const containerStyles = css.raw({
@@ -51,6 +60,12 @@ const usePagination = () => {
     setIsReferenceCardLoaded(true);
   }, []);
 
+  useEffect(() => {
+    if (currentPage > imageMatrix.length) {
+      changePage(imageMatrix.length || 1);
+    }
+  }, [currentPage, imageMatrix.length, changePage]);
+
   return {
     currentPage,
     currentCards,
@@ -64,18 +79,81 @@ const PageDrop = ({
   id,
   disabled,
   children,
-}: React.PropsWithChildren<{ id: string; disabled?: boolean }>) => {
+  onHoverTimeout,
+  hoverTimeoutMs = 200,
+}: React.PropsWithChildren<{
+  id: string;
+  disabled?: boolean;
+  onHoverTimeout?: () => void;
+  hoverTimeoutMs?: number;
+}>) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useDragDropMonitor({
     onDragStart: () => setIsDragging(true),
-    onDragEnd: () => setIsDragging(false),
+    onDragEnd: () => {
+      setIsDragging(false);
+      setIsHovering(false);
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = null;
+      }
+    },
   });
+
   const { isDropTarget, ref } = useDroppable({
     id,
     type: "page",
     accept: "card",
     disabled,
+    collisionDetector: pointerIntersection,
   });
+
+  // Handle hover timeout logic
+  const handleHoverStart = useCallback(() => {
+    if (disabled || !onHoverTimeout) return;
+
+    setIsHovering(true);
+
+    // Clear any existing timer
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+    }
+
+    // Set new timer
+    hoverTimerRef.current = setTimeout(() => {
+      onHoverTimeout();
+    }, hoverTimeoutMs);
+  }, [disabled, onHoverTimeout, hoverTimeoutMs]);
+
+  const handleHoverEnd = useCallback(() => {
+    setIsHovering(false);
+
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }, []);
+
+  // Monitor when we become a drop target (hovering over)
+  useEffect(() => {
+    if (isDropTarget && !isHovering) {
+      handleHoverStart();
+    } else if (!isDropTarget && isHovering) {
+      handleHoverEnd();
+    }
+  }, [isDropTarget, isHovering, handleHoverStart, handleHoverEnd]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div
@@ -146,43 +224,52 @@ export const PrintableImages = () => {
     generatePdf();
   };
 
+  const [dragOverlayOffset, setDragOverlayOffset] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const onDragStart: DragDropEventHandlers["onDragStart"] = useCallback(
+    (event) => {
+      const coordinates = event.operation.position.initial;
+      // Get the mouse position relative to the viewport
+      const mouseX = coordinates?.x ?? 0;
+      const mouseY = coordinates?.y ?? 0;
+
+      // Get the overlay's position in the viewport
+      const overlayRect =
+        event.operation.source?.element?.getBoundingClientRect();
+
+      // Calculate the offset from the overlay's top-left corner to the mouse position
+      // This gives us the relative position within the overlay
+      const relativeX = overlayRect ? mouseX - overlayRect.x : 0;
+      const relativeY = overlayRect ? mouseY - overlayRect.y : 0;
+      setDragOverlayOffset({ x: relativeX, y: relativeY });
+    },
+    [],
+  );
+
   const onDragEnd: DragDropEventHandlers["onDragEnd"] = useCallback(
     (event) => {
       const { source, target } = event.operation;
 
-      if (isSortable(source)) {
-        if (target?.type === "page") {
-          const absoluteIndex = images.findIndex(
-            (img) => img.uuid === source.id,
-          );
-          switch (target.id) {
-            case "prev-page":
-              onReorder(
-                source.id as string,
-                absoluteIndex - source.sortable.initialIndex - 1,
-              );
-              changePage(currentPage - 1);
-              break;
-            case "next-page":
-              onReorder(
-                source.id as string,
-                absoluteIndex + cardsPerPage - source.sortable.initialIndex,
-              );
-              changePage(currentPage + 1);
-              break;
-          }
-        } else {
-          // normal reordering
-          const imageUuid = source.id as string;
-          const newIndex =
-            (currentPage - 1) * cardsPerPage + source.sortable.index;
-          if (imageUuid && newIndex !== undefined) {
-            onReorder(imageUuid, newIndex);
-          }
+      if (!source || !target) {
+        return;
+      }
+
+      if (
+        getIsSortableCardData(source.data) &&
+        getIsSortableCardData(target.data)
+      ) {
+        const imageUuid = source.id as string;
+        const newIndex = target.data.absoluteIndex;
+
+        if (imageUuid && newIndex !== undefined) {
+          onReorder(imageUuid, newIndex);
         }
       }
     },
-    [images, onReorder, changePage, currentPage, cardsPerPage],
+    [onReorder],
   );
 
   if (images.length === 0) {
@@ -224,7 +311,13 @@ export const PrintableImages = () => {
   }
 
   return (
-    <DragDropProvider onDragEnd={onDragEnd}>
+    <DragDropProvider
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={(event) => {
+        event.preventDefault();
+      }}
+    >
       <div className={css(containerStyles)} style={cssVars}>
         <ProgressOverlay />
         <div
@@ -238,7 +331,11 @@ export const PrintableImages = () => {
             paddingX: "2",
           })}
         >
-          <PageDrop id="prev-page" disabled={isFirstPage}>
+          <PageDrop
+            id="prev-page"
+            disabled={isFirstPage}
+            onHoverTimeout={() => changePage(currentPage - 1)}
+          >
             <div
               className={vstack({
                 height: "full",
@@ -438,7 +535,11 @@ export const PrintableImages = () => {
               </div>
             </div>
           </div>
-          <PageDrop id="next-page" disabled={isLastPage}>
+          <PageDrop
+            id="next-page"
+            disabled={isLastPage}
+            onHoverTimeout={() => changePage(currentPage + 1)}
+          >
             <div
               className={vstack({
                 height: "full",
@@ -467,6 +568,45 @@ export const PrintableImages = () => {
               </div>
             </div>
           </PageDrop>
+          <DragOverlay>
+            {(source) => {
+              return (
+                <div
+                  className={css({
+                    height: "full",
+                    position: "relative",
+                    width: "100%",
+                    overflow: "visible",
+                  })}
+                >
+                  <div
+                    style={{
+                      left: `${dragOverlayOffset?.x}px`,
+                      top: `${dragOverlayOffset?.y}px`,
+                    }}
+                    className={css({
+                      background: "accent.default",
+                      borderRadius: "l2",
+                      color: "accent.fg",
+                      padding: "2",
+                      fontSize: "sm",
+                      textAlign: "center",
+                      width: "max",
+                      maxWidth: "var(--card-width)",
+                      wordBreak: "break-all",
+                      position: "absolute",
+                      zIndex: "1",
+                      pointerEvents: "none",
+                    })}
+                  >
+                    {getIsSortableCardData(source.data)
+                      ? (source.data.image.name ?? source.data.image.file?.name)
+                      : "unknown"}
+                  </div>
+                </div>
+              );
+            }}
+          </DragOverlay>
         </div>
       </div>
     </DragDropProvider>
