@@ -1,27 +1,23 @@
 import { UseDialogContext } from "@ark-ui/react";
-import { ScryfallCard } from "@scryfall/api-types";
 import { useIsMutating } from "@tanstack/react-query";
-import { nanoid } from "nanoid";
 import { useCallback, useContext } from "react";
 
 import { hstack, vstack, visuallyHidden } from "styled-system/patterns";
 
-import { ImagesContext, ScryfallImageData } from "../../context/ImagesContext";
-import {
-  getScryfallCardsCollectionQueryKey,
-  useScryfallCardsCollection,
-} from "../../queries/useScryfallCardsCollection";
-import { parseDecklist } from "../../utils/parseDecklist";
+import { ImagesContext } from "../../context/ImagesContext";
+import { useGetCardsForDecklist } from "../../hooks/useGetCardsForDecklist";
+import { getScryfallCardsCollectionQueryKey } from "../../queries/useScryfallCardsCollection";
 import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import { Field } from "../ui/field";
 
 export const DecklistForm = () => {
   const { onAdd, onError } = useContext(ImagesContext);
-  const { mutateAsync: getCards } = useScryfallCardsCollection();
   const isMutating = useIsMutating({
     mutationKey: getScryfallCardsCollectionQueryKey(),
   });
+
+  const getCardsForDecklist = useGetCardsForDecklist();
 
   const handleSubmit = useCallback(
     async (
@@ -35,75 +31,15 @@ export const DecklistForm = () => {
       const form = event.target as HTMLFormElement;
 
       if (decklist) {
-        const parsed = parseDecklist(decklist);
+        const result = await getCardsForDecklist(decklist);
 
-        // Log any parsing errors
-        if (parsed.errors.length > 0) {
-          console.warn("Parsing errors:", parsed.errors);
-        }
-
-        const identifiers = parsed.cards.map((card) => ({
-          name: card.name,
-          set: card.setCode,
-          collector_number: card.cardNumber,
-        }));
-
-        // split cards into chunks of 75 cards
-        const chunks = [];
-        for (let i = 0; i < identifiers.length; i += 75) {
-          chunks.push(identifiers.slice(i, i + 75));
-        }
-
-        const maps = await Promise.all(chunks.map((chunk) => getCards(chunk)));
-
-        const cards = new Map(maps.flatMap((map) => Array.from(map)));
-
-        // duplicate entries that have more than one quantity
-        const fullList: ScryfallCard.Any[] = [];
-        for (let i = 0; i < identifiers.length; i++) {
-          const card = cards.get(identifiers[i]);
-          if (card) {
-            fullList.push(
-              ...Array.from({ length: parsed.cards[i].quantity }, () => card),
-            );
-          } else {
-            onError({
-              uuid: nanoid(),
-              uri: "",
-              id: [identifiers[i].set, identifiers[i].collector_number]
-                .filter(Boolean)
-                .join(" "),
-              name: identifiers[i].name,
-            });
-          }
-        }
-
-        const items = fullList
-          .flatMap((card) => {
-            if ("image_uris" in card) {
-              return {
-                uri: card?.image_uris?.png,
-                name: card?.name,
-              };
-            } else if ("card_faces" in card) {
-              return card.card_faces.map((face) => {
-                if ("image_uris" in face) {
-                  return {
-                    uri: face.image_uris?.png,
-                    name: face.name,
-                  };
-                }
-              });
-            }
-          })
-          .filter((c): c is ScryfallImageData => c !== undefined);
-
-        onAdd(items);
+        onAdd(result.items);
+        result.errors.forEach(onError);
         form.reset();
         dialog.setOpen(false);
       }
     },
-    [getCards, onAdd, onError],
+    [onAdd, onError, getCardsForDecklist],
   );
 
   const isSubmitting = !!isMutating;

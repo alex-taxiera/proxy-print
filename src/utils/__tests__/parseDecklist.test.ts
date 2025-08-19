@@ -339,9 +339,19 @@ abc Green Goblin`;
 
       expect(result.cards).toHaveLength(2);
       expect(result.cards[0].name).toBe("D'Avenant Archer");
-      expect(result.cards[1].name).toBe(
-        "Strength of the Harvest // Haven of the Harvest",
-      );
+      expect(result.cards[1].name).toBe("Strength of the Harvest");
+    });
+
+    it("should extract only the first name when card has // separator", () => {
+      const input =
+        "1 Strength of the Harvest // Haven of the Harvest (MH3) 258";
+      const result = parseDecklist(input);
+
+      expect(result.cards).toHaveLength(1);
+      expect(result.cards[0].name).toBe("Strength of the Harvest");
+      expect(result.cards[0].setCode).toBe("MH3");
+      expect(result.cards[0].cardNumber).toBe("258");
+      expect(result.cards[0].quantity).toBe(1);
     });
   });
 

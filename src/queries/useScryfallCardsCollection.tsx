@@ -13,24 +13,11 @@ export const getScryfallCardsQueryKey = () =>
 export const getScryfallCardsCollectionQueryKey = () =>
   [...getScryfallCardsQueryKey(), "collection"] as const;
 
-type NameIdentifier = {
+export type ScryfallCardsCollectionIdentifier = {
   name: string;
+  collector_number?: string;
+  set?: string;
 };
-
-type NameSetIdentifier = {
-  name: string;
-  set: string;
-};
-
-type CollectorNumberSetIdentifier = {
-  collector_number: string;
-  set: string;
-};
-
-export type ScryfallCardsCollectionIdentifier =
-  | NameIdentifier
-  | NameSetIdentifier
-  | CollectorNumberSetIdentifier;
 
 export type UseScryfallCardsCollectionOptions = Omit<
   UseMutationOptions<

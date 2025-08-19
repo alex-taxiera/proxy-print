@@ -88,11 +88,14 @@ export const parseDecklist = (decklistText: string): ParsedDecklist => {
         return;
       }
 
+      // Handle // separator - extract only the first name
+      const cleanNameWithoutSeparator = cleanName.split(" // ")[0].trim();
+
       // Parse extra info for foil indicators - look for foil indicators in the entire line
       const isFoil = /[*★]F[*★]|\*F\*/.test(trimmedLine);
 
       // Clean up card name by removing foil indicators
-      const cleanNameWithoutFoil = cleanName
+      const cleanNameWithoutFoil = cleanNameWithoutSeparator
         .replace(/[*★]F[*★]|\*F\*/g, "")
         .trim();
 
