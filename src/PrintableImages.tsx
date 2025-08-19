@@ -34,6 +34,7 @@ import { useGeneratePdf } from "./hooks/useGeneratePdf";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { getIsSortableCardData } from "./hooks/useSortableCard";
 import { progressEvents } from "./utils/progress-events";
+import { isSortable } from "@dnd-kit/react/sortable";
 
 const containerStyles = css.raw({
   flex: 1,
@@ -621,7 +622,9 @@ export const PrintableImages = () => {
                     })}
                   >
                     {getIsSortableCardData(source.data)
-                      ? (source.data.image.name ?? source.data.image.file?.name)
+                      ? "name" in source.data.image
+                        ? source.data.image.name
+                        : source.data.image.file.name
                       : "unknown"}
                   </div>
                 </div>
