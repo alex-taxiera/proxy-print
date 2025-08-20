@@ -53,7 +53,17 @@ const usePagination = () => {
   );
 
   const changePage = useCallback((page: number) => {
-    setCurrentPage(page);
+    setCurrentPage(Math.max(1, Math.min(page, imageMatrix.length)));
+    setIsReferenceCardLoaded(false);
+  }, [imageMatrix.length]);
+
+  const nextPage = useCallback(() => {
+    setCurrentPage((old) => Math.min(old + 1, imageMatrix.length));
+    setIsReferenceCardLoaded(false);
+  }, [imageMatrix.length]);
+
+  const previousPage = useCallback(() => {
+    setCurrentPage((old) => Math.max(old - 1, 1));
     setIsReferenceCardLoaded(false);
   }, []);
 
@@ -72,6 +82,8 @@ const usePagination = () => {
     currentCards,
     isReferenceCardLoaded,
     changePage,
+    nextPage,
+    previousPage,
     onImageLoad,
   };
 };
@@ -112,6 +124,16 @@ const PageDrop = ({
     collisionDetector: pointerIntersection,
   });
 
+  const setHoverTimeout = useCallback(
+    (timeout?: number) => {
+      hoverTimerRef.current = setTimeout(() => {
+        onHoverTimeout?.();
+        setHoverTimeout(hoverTimeoutMs * 4);
+      }, timeout ?? hoverTimeoutMs);
+    },
+    [onHoverTimeout, hoverTimeoutMs],
+  );
+
   // Handle hover timeout logic
   const handleHoverStart = useCallback(() => {
     if (disabled || !onHoverTimeout) return;
@@ -124,10 +146,8 @@ const PageDrop = ({
     }
 
     // Set new timer
-    hoverTimerRef.current = setTimeout(() => {
-      onHoverTimeout();
-    }, hoverTimeoutMs);
-  }, [disabled, onHoverTimeout, hoverTimeoutMs]);
+    setHoverTimeout();
+  }, [disabled, onHoverTimeout, setHoverTimeout]);
 
   const handleHoverEnd = useCallback(() => {
     setIsHovering(false);
@@ -204,6 +224,8 @@ export const PrintableImages = () => {
     currentCards,
     isReferenceCardLoaded,
     changePage,
+    nextPage,
+    previousPage,
     onImageLoad,
   } = usePagination();
 
@@ -355,7 +377,7 @@ export const PrintableImages = () => {
           <PageDrop
             id="prev-page"
             disabled={isFirstPage}
-            onHoverTimeout={() => changePage(currentPage - 1)}
+            onHoverTimeout={previousPage}
           >
             <div
               className={vstack({
@@ -559,7 +581,7 @@ export const PrintableImages = () => {
           <PageDrop
             id="next-page"
             disabled={isLastPage}
-            onHoverTimeout={() => changePage(currentPage + 1)}
+            onHoverTimeout={nextPage}
           >
             <div
               className={vstack({

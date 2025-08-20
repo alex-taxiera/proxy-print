@@ -18,9 +18,13 @@ export type ScryfallImageData = {
   url?: string;
 };
 
+export type EmptyImageData = {
+  name: "empty";
+};
+
 export type Image = {
   uuid: string;
-} & (GoogleImageData | LocalImageData | ScryfallImageData);
+} & (EmptyImageData |GoogleImageData | LocalImageData | ScryfallImageData);
 
 export type DownloadableImage = {
   uuid: string;

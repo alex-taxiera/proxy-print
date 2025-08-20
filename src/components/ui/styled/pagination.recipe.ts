@@ -17,6 +17,7 @@ export const pagination = defineSlotRecipe({
       color: "fg.default",
       display: "inline-flex",
       fontWeight: "semibold",
+      userSelect: "none",
       px: "3.5",
     },
   },

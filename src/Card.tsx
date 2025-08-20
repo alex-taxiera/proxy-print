@@ -224,6 +224,10 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   const add = useCallback(
     (count: number) => {
       const index = images.indexOf(image);
+      if (isEmpty) {
+        return;
+      }
+
       onAdd(
         new Array<File | GoogleImageData | ScryfallImageData>(count).fill(
           getIsLocalImage(image)
@@ -243,7 +247,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
         index + 1,
       );
     },
-    [image, images, onAdd],
+    [image, images, onAdd, isEmpty],
   );
 
   const buildOnAddClick = useCallback(
