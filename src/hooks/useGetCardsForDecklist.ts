@@ -7,7 +7,7 @@ import {
   ScryfallCardsCollectionIdentifier,
   useScryfallCardsCollection,
 } from "../queries/useScryfallCardsCollection";
-import { parseDecklist } from "../utils/parseDecklist";
+import { parseDecklist } from "../utils/parse-decklist";
 
 /**
  * Converts a decklist string to Scryfall card image data

@@ -5,6 +5,7 @@ import { toaster } from "../utils/toaster";
 type Item = {
   uuid: string;
   uri: string;
+  postProcess?: (data: Blob, mimeType: string) => Promise<Blob>;
   resolve: (value: { mimeType: string; url: string }) => void;
   reject: (reason?: unknown) => void;
 };
@@ -37,7 +38,7 @@ function base64ToBlob(base64String: string, contentType: string): Blob {
 }
 
 async function fetchImage(
-  { uri }: Item,
+  { uri, postProcess }: Item,
   init?: RequestInit,
 ): Promise<{ data: Blob; mimeType: string }> {
   // FIXME: this signal doesn't work because script.google.com redirects to script.googleusercontent.com
@@ -46,6 +47,10 @@ async function fetchImage(
   const contentType = response.headers.get("content-type");
   if (contentType?.includes("image/")) {
     const data = await response.blob();
+    if (postProcess) {
+      const processed = await postProcess(data, contentType);
+      return { data: processed, mimeType: contentType };
+    }
     return { data, mimeType: contentType };
   }
 
@@ -62,6 +67,11 @@ async function fetchImage(
   }
   const data = base64ToBlob(text, mimeType);
 
+  if (postProcess) {
+    const processed = await postProcess(data, mimeType);
+    return { data: processed, mimeType };
+  }
+
   return { data, mimeType };
 }
 
@@ -69,10 +79,12 @@ export function useImageDownloadManager({
   maxInflight = 20,
   toastTitle = "Downloading images",
   toastDescription,
+  postProcess,
 }: {
   maxInflight?: number;
   toastTitle?: string;
   toastDescription?: string;
+  postProcess?: (data: Blob, mimeType: string) => Promise<Blob>;
 } = {}) {
   const queueRef = useRef<Item[]>([]);
   const inflightRef = useRef<Item[]>([]);
@@ -159,7 +171,7 @@ export function useImageDownloadManager({
     ({
       uuid,
       uri,
-    }: Pick<Item, "uuid" | "uri">): Promise<{
+    }: Pick<Item, "uuid" | "uri" | "postProcess">): Promise<{
       mimeType: string;
       url: string;
     }> => {
@@ -191,13 +203,13 @@ export function useImageDownloadManager({
 
         const abortController = new AbortController();
         abortControllersRef.current.set(uuid, abortController);
-        queueRef.current.push({ uuid, uri, resolve, reject });
+        queueRef.current.push({ uuid, uri, resolve, reject, postProcess, });
         if (inflightRef.current.length < maxInflight) {
           processQueue();
         }
       });
     },
-    [maxInflight, processQueue],
+    [maxInflight, postProcess, processQueue],
   );
 
   /**

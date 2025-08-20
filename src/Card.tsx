@@ -343,8 +343,6 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
               <Menu.ContextTrigger
                 cursor="grab"
                 tabIndex={-1}
-                width="full"
-                height="full"
               >
                 <img
                   src={imageSrc}
@@ -353,8 +351,6 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
                     width:
                       "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
                     maxWidth: "unset",
-                    minWidth: "full",
-                    minHeight: "full",
                     objectFit: "cover",
                     position: "relative",
                   })}

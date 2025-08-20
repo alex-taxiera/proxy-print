@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseDecklist } from "../parseDecklist";
+import { parseDecklist } from "../parse-decklist";
 
 describe("parseDecklist", () => {
   describe("basic parsing", () => {

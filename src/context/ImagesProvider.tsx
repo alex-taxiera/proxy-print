@@ -13,6 +13,7 @@ import {
   ImagesContext,
   ScryfallImageData,
 } from "./ImagesContext";
+import { addBleedEdge } from "../utils/add-bleed";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,
@@ -25,7 +26,9 @@ export const ImagesProvider = (
     toastTitle: "Downloading images from Scryfall",
     toastDescription: "This should be quick.",
     maxInflight: Infinity,
+    postProcess: addBleedEdge,
   });
+
   const [images, setImages] = useState<Image[]>([]);
   const [imagesWithError, setImagesWithError] = useState<DownloadableImage[]>(
     [],
