@@ -1,10 +1,8 @@
 import { nanoid } from "nanoid";
 import { useContext, useMemo } from "react";
 
-import { type Image, ImagesContext } from "../context/ImagesContext";
+import { ImagesContext, PossiblyEmptyImage } from "../context/ImagesContext";
 import { SettingsContext } from "../context/SettingsContext";
-
-const MAX_PREVIEW_CARDS = 108;
 
 export const usePageLimits = () => {
   const { settings } = useContext(SettingsContext);
@@ -41,34 +39,30 @@ export const usePageLimits = () => {
     [rowsPerPage, columnsPerPage],
   );
 
-  const maxPages = Math.floor(MAX_PREVIEW_CARDS / cardsPerPage);
-
   return {
     rowsPerPage,
     columnsPerPage,
     cardsPerPage,
-    maxPages,
   };
 };
 
 export const usePreviewData = () => {
   const { images } = useContext(ImagesContext);
 
-  const { cardsPerPage, rowsPerPage, columnsPerPage, maxPages } =
-    usePageLimits();
+  const { cardsPerPage, rowsPerPage, columnsPerPage } = usePageLimits();
 
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {
       return [];
     }
 
-    const rows: Image[][] = [];
+    const rows: PossiblyEmptyImage[][] = [];
     for (let i = 0; i < images.length; i += cardsPerPage) {
       rows.push(images.slice(i, i + cardsPerPage));
     }
     const paddingItems = rows.at(-1)!.length % cardsPerPage;
     if (paddingItems > 0) {
-      const filler = Array.from<never, Image>(
+      const filler = Array.from<never, PossiblyEmptyImage>(
         { length: cardsPerPage - paddingItems },
         () => ({
           name: "empty",
@@ -84,7 +78,6 @@ export const usePreviewData = () => {
     rowsPerPage,
     columnsPerPage,
     cardsPerPage,
-    maxPages,
     imageMatrix,
   };
 };

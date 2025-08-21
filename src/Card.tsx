@@ -11,9 +11,10 @@ import {
   getIsLocalImage,
   ScryfallImageData,
   GoogleImageData,
-  Image,
   ImagesContext,
   getIsDownloadableImage,
+  PossiblyEmptyImage,
+  getIsEmptyImage,
 } from "./context/ImagesContext";
 import { useCardPositionMeta } from "./hooks/useCardClassNames";
 import { usePreviewData } from "./hooks/usePreviewData";
@@ -142,7 +143,7 @@ const useCardClassName = (props: {
 };
 
 export type CardProps = {
-  image: Image;
+  image: PossiblyEmptyImage;
   index: number;
   onImageLoad?: () => void;
 };
@@ -198,7 +199,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     [image, downloadedSrc],
   );
 
-  const isEmpty = !getIsLocalImage(image) && !getIsDownloadableImage(image);
+  const isEmpty = getIsEmptyImage(image);
 
   const [isLoading, setIsLoading] = useState(true);
   const isPending = isLoading || isFetching;
@@ -223,10 +224,11 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
 
   const add = useCallback(
     (count: number) => {
-      const index = images.indexOf(image);
       if (isEmpty) {
         return;
       }
+
+      const index = images.indexOf(image);
 
       onAdd(
         new Array<File | GoogleImageData | ScryfallImageData>(count).fill(

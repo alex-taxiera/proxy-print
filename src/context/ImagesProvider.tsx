@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 
+import { addBleedEdge } from "../utils/add-bleed";
 import {
   getMpcImageUri,
   useImageDownloadManager,
@@ -13,7 +14,6 @@ import {
   ImagesContext,
   ScryfallImageData,
 } from "./ImagesContext";
-import { addBleedEdge } from "../utils/add-bleed";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,

@@ -52,10 +52,13 @@ const usePagination = () => {
     [imageMatrix, currentPage],
   );
 
-  const changePage = useCallback((page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, imageMatrix.length)));
-    setIsReferenceCardLoaded(false);
-  }, [imageMatrix.length]);
+  const changePage = useCallback(
+    (page: number) => {
+      setCurrentPage(Math.max(1, Math.min(page, imageMatrix.length)));
+      setIsReferenceCardLoaded(false);
+    },
+    [imageMatrix.length],
+  );
 
   const nextPage = useCallback(() => {
     setCurrentPage((old) => Math.min(old + 1, imageMatrix.length));

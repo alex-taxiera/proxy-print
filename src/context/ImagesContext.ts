@@ -22,28 +22,44 @@ export type EmptyImageData = {
   name: "empty";
 };
 
-export type Image = {
+export type ImageData = GoogleImageData | LocalImageData | ScryfallImageData;
+
+export type BaseImage = {
   uuid: string;
-} & (EmptyImageData |GoogleImageData | LocalImageData | ScryfallImageData);
+};
+
+export type Image = BaseImage & ImageData;
+
+export type PossiblyEmptyImage = BaseImage & (ImageData | EmptyImageData);
 
 export type DownloadableImage = {
   uuid: string;
 } & (GoogleImageData | ScryfallImageData);
 
-export const getIsLocalImage = (image: Image) => {
+export const getIsLocalImage = (image: PossiblyEmptyImage) => {
   return "file" in image;
 };
 
-export const getIsDownloadableImage = (image: Image) => {
+export const getIsDownloadableImage = (image: PossiblyEmptyImage) => {
   return "id" in image || "uri" in image;
 };
 
-export const getIsGoogleImage = (image: Image) => {
+export const getIsGoogleImage = (image: PossiblyEmptyImage) => {
   return "id" in image;
 };
 
-export const getIsScryfallImage = (image: Image) => {
+export const getIsScryfallImage = (image: PossiblyEmptyImage) => {
   return "uri" in image;
+};
+
+export const getIsEmptyImage = (
+  image: PossiblyEmptyImage,
+): image is BaseImage & EmptyImageData => {
+  return "name" in image && image.name === "empty";
+};
+
+export const getIsImage = (image: PossiblyEmptyImage): image is Image => {
+  return !getIsEmptyImage(image);
 };
 
 export type ImagesContextValue = {

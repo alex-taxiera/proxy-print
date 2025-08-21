@@ -203,7 +203,7 @@ export function useImageDownloadManager({
 
         const abortController = new AbortController();
         abortControllersRef.current.set(uuid, abortController);
-        queueRef.current.push({ uuid, uri, resolve, reject, postProcess, });
+        queueRef.current.push({ uuid, uri, resolve, reject, postProcess });
         if (inflightRef.current.length < maxInflight) {
           processQueue();
         }

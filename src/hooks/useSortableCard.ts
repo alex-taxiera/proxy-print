@@ -1,7 +1,7 @@
 import { pointerIntersection } from "@dnd-kit/collision";
 import { useSortable } from "@dnd-kit/react/sortable";
 
-import { Image } from "../context/ImagesContext";
+import { PossiblyEmptyImage } from "../context/ImagesContext";
 
 export type SortableCardData = ReturnType<
   typeof useSortableCard
@@ -26,7 +26,7 @@ export const useSortableCard = ({
   imageSrc,
   absoluteIndex,
 }: {
-  image: Image;
+  image: PossiblyEmptyImage;
   index: number;
   isEmpty: boolean;
   isPending: boolean;
