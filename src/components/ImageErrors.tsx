@@ -34,20 +34,28 @@ export const ImageErrors = ({
               paddingY: "2",
             })}
           >
-            {imagesWithError.map((image) => (
-              <li
-                key={image.uuid}
-                className={css({
-                  fontSize: "0.875rem",
-                })}
-              >
-                <strong>{image.name}</strong>
-                &nbsp;
-                <span className={css({ fontFamily: "mono" })}>
-                  ({getIsGoogleImage(image) ? image.id : image.uri})
-                </span>
-              </li>
-            ))}
+            {imagesWithError.map((image) => {
+              const id = getIsGoogleImage(image) ? image.id : image.uri;
+
+              return (
+                <li
+                  key={image.uuid}
+                  className={css({
+                    fontSize: "0.875rem",
+                  })}
+                >
+                  <strong>{image.name}</strong>
+                  {id ? (
+                    <>
+                      &nbsp;
+                      <span className={css({ fontFamily: "mono" })}>
+                        ({id})
+                      </span>
+                    </>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </Alert.Description>
       </Alert.Content>

@@ -37,10 +37,22 @@ export const useGetCardsForDecklist = () => {
         quantityMap.set(identifier, card.quantity);
       }
 
+      const exactIdentifiers = identifiers.map((identifier) =>
+        "collector_number" in identifier && identifier.collector_number != null
+          ? {
+              set: identifier.set,
+              collector_number: identifier.collector_number,
+            }
+          : {
+              name: identifier.name,
+              set: identifier.set,
+            },
+      ) as ScryfallCardsCollectionIdentifier[];
+
       // split cards into chunks of 75 cards
       const chunks = [];
-      for (let i = 0; i < identifiers.length; i += 75) {
-        chunks.push(identifiers.slice(i, i + 75));
+      for (let i = 0; i < exactIdentifiers.length; i += 75) {
+        chunks.push(exactIdentifiers.slice(i, i + 75));
       }
 
       const maps = await Promise.all(chunks.map((chunk) => getCards(chunk)));
@@ -51,25 +63,26 @@ export const useGetCardsForDecklist = () => {
 
       // duplicate entries that have more than one quantity
       const fullList: ScryfallCard.Any[] = [];
-      const retryList: ScryfallCardsCollectionIdentifier[] = [];
-      for (const identifier of identifiers) {
+      const retryList: typeof identifiers = [];
+      for (let i = 0; i < exactIdentifiers.length; i++) {
+        const fullIdentifier = identifiers[i];
+        const identifier = exactIdentifiers[i];
         const card = cards.get(identifier);
+
         if (card) {
           fullList.push(
             ...Array.from(
-              { length: quantityMap.get(identifier) ?? 0 },
+              { length: quantityMap.get(fullIdentifier) ?? 0 },
               () => card,
             ),
           );
-        } else if (identifier.collector_number || identifier.set) {
-          retryList.push(identifier);
+        } else if ("collector_number" in identifier || identifier.set) {
+          retryList.push(fullIdentifier);
         } else {
           errors.push({
             uuid: nanoid(),
             uri: "",
-            id: [identifier.set, identifier.collector_number]
-              .filter(Boolean)
-              .join(" "),
+            id: identifier.set,
             name: identifier.name,
           });
         }
@@ -78,7 +91,7 @@ export const useGetCardsForDecklist = () => {
       if (retryList.length > 0) {
         // try various identifiers for each, linking back to the original identifier
         const retryIdentifierMap = new Map<
-          ScryfallCardsCollectionIdentifier,
+          (typeof identifiers)[number],
           ScryfallCardsCollectionIdentifier[]
         >();
 
@@ -86,12 +99,12 @@ export const useGetCardsForDecklist = () => {
           const identifier = retryList[i];
           const newIdentifiers: ScryfallCardsCollectionIdentifier[] = [];
 
-          if (identifier.collector_number) {
-            const collectorNumberIdentifier = {
+          if (identifier.collector_number != null) {
+            const setIdentifier = {
               name: identifier.name,
-              collector_number: identifier.collector_number,
+              set: identifier.set,
             };
-            newIdentifiers.push(collectorNumberIdentifier);
+            newIdentifiers.push(setIdentifier);
           }
 
           newIdentifiers.push({ name: identifier.name });
@@ -132,10 +145,15 @@ export const useGetCardsForDecklist = () => {
             errors.push({
               uuid: nanoid(),
               uri: "",
-              id: [identifier.set, identifier.collector_number]
+              id: [
+                identifier.set,
+                "collector_number" in identifier
+                  ? identifier.collector_number
+                  : undefined,
+              ]
                 .filter(Boolean)
                 .join(" "),
-              name: identifier.name,
+              name: identifier.name ?? "",
             });
           }
         }
