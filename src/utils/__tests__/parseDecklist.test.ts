@@ -96,13 +96,32 @@ describe("parseDecklist", () => {
 
     it("should reject invalid quantities", () => {
       const input = `0 Red Dragon
--1 Blue Elemental
-abc Green Goblin`;
+-1 Blue Elemental`;
       const result = parseDecklist(input);
 
-      expect(result.errors).toHaveLength(3);
+      expect(result.errors).toHaveLength(2);
       expect(result.cards).toHaveLength(0);
       expect(result.totalCards).toBe(0);
+    });
+
+    it("should handle cards without quantities (assume quantity 1)", () => {
+      const input = `Sol Ring (PIP)
+2 Lightning Bolt
+Counterspell`;
+      const result = parseDecklist(input);
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.cards).toHaveLength(3);
+      expect(result.totalCards).toBe(4);
+      
+      const solRing = result.cards.find(c => c.name === "Sol Ring");
+      const lightningBolt = result.cards.find(c => c.name === "Lightning Bolt");
+      const counterspell = result.cards.find(c => c.name === "Counterspell");
+      
+      expect(solRing?.quantity).toBe(1);
+      expect(solRing?.setCode).toBe("PIP");
+      expect(lightningBolt?.quantity).toBe(2);
+      expect(counterspell?.quantity).toBe(1);
     });
   });
 
@@ -363,9 +382,16 @@ Invalid line
 Another invalid line`;
       const result = parseDecklist(input);
 
-      expect(result.errors).toHaveLength(2);
-      expect(result.cards).toHaveLength(2);
-      expect(result.totalCards).toBe(3);
+      // With the new behavior, "Invalid line" and "Another invalid line" are treated as cards with quantity 1
+      expect(result.errors).toHaveLength(0);
+      expect(result.cards).toHaveLength(4);
+      expect(result.totalCards).toBe(5);
+      
+      // Check that the malformed lines are treated as cards
+      const invalidLine = result.cards.find(c => c.name === "Invalid line");
+      const anotherInvalidLine = result.cards.find(c => c.name === "Another invalid line");
+      expect(invalidLine?.quantity).toBe(1);
+      expect(anotherInvalidLine?.quantity).toBe(1);
     });
 
     it("should handle lines with missing card names", () => {

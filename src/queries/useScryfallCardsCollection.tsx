@@ -68,14 +68,3 @@ export const useScryfallCardsCollection = (
     },
   });
 };
-
-// Example of how to add new throttled Scryfall API calls:
-// export const useScryfallCardByName = () => {
-//   return useMutation<ScryfallCard.Any, ScryfallError, string>({
-//     mutationKey: [...getScryfallCardsQueryKey(), "by-name"],
-//     mutationFn: async (cardName: string) => {
-//       const response = await scryfallThrottler.throttledGet(`${SCRYFALL_API_URL}/cards/named?fuzzy=${encodeURIComponent(cardName)}`);
-//       return response.json();
-//     },
-//   });
-// };
