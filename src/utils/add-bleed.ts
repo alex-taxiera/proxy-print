@@ -299,7 +299,7 @@ export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
           ctx.scale(-1, 1);
           ctx.drawImage(
             scaledImg,
-            targetCardWidth - bleed - overscan,
+            targetCardWidth - bleed - overscan * 2,
             0,
             bleed + overscan,
             targetCardHeight,
@@ -332,7 +332,7 @@ export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
           ctx.drawImage(
             scaledImg,
             0,
-            targetCardHeight - bleed - overscan,
+            targetCardHeight - bleed - overscan * 2,
             targetCardWidth,
             bleed + overscan,
             bleed,
