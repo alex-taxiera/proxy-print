@@ -275,79 +275,86 @@ export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
             bleed,
           ); // BR
         } else {
+          // Overscan by 4 pixels to blend extension into original image
+          const overscan = 4;
+
+          // Left edge - mirror and blend
           ctx.save();
           ctx.scale(-1, 1);
           ctx.drawImage(
             scaledImg,
+            overscan,
             0,
-            0,
-            bleed,
+            bleed + overscan,
             targetCardHeight,
-            -bleed,
+            -bleed - overscan,
             bleed,
-            bleed,
+            bleed + overscan,
             targetCardHeight,
           );
           ctx.restore();
 
+          // Right edge - mirror and blend
           ctx.save();
           ctx.scale(-1, 1);
           ctx.drawImage(
             scaledImg,
-            targetCardWidth - bleed,
+            targetCardWidth - bleed - overscan,
             0,
-            bleed,
+            bleed + overscan,
             targetCardHeight,
             -finalWidth,
             bleed,
-            bleed,
+            bleed + overscan,
             targetCardHeight,
           );
           ctx.restore();
 
+          // Top edge - mirror and blend
           ctx.save();
           ctx.scale(1, -1);
           ctx.drawImage(
             scaledImg,
             0,
-            0,
+            overscan,
             targetCardWidth,
+            bleed + overscan,
             bleed,
-            bleed,
-            -bleed,
+            -bleed - overscan,
             targetCardWidth,
-            bleed,
+            bleed + overscan,
           );
           ctx.restore();
 
+          // Bottom edge - mirror and blend
           ctx.save();
           ctx.scale(1, -1);
           ctx.drawImage(
             scaledImg,
             0,
-            targetCardHeight - bleed,
+            targetCardHeight - bleed - overscan,
             targetCardWidth,
-            bleed,
+            bleed + overscan,
             bleed,
             -finalHeight,
             targetCardWidth,
-            bleed,
+            bleed + overscan,
           );
           ctx.restore();
 
-          // Corners
+          // Corners - mirror and blend
           ctx.save();
           ctx.scale(-1, -1);
           ctx.drawImage(
             scaledImg,
-            0,
-            0,
-            bleed,
-            bleed,
-            -bleed,
-            -bleed,
-            bleed,
-            bleed,
+            overscan,
+            overscan,
+            bleed + overscan,
+            bleed + overscan,
+            -bleed - overscan,
+            -bleed - overscan,
+            bleed + overscan,
+            bleed + overscan,
           );
           ctx.restore();
 
@@ -355,14 +362,14 @@ export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
           ctx.scale(-1, -1);
           ctx.drawImage(
             scaledImg,
-            targetCardWidth - bleed,
-            0,
-            bleed,
-            bleed,
+            targetCardWidth - bleed - overscan,
+            overscan,
+            bleed + overscan,
+            bleed + overscan,
             -finalWidth,
-            -bleed,
-            bleed,
-            bleed,
+            -bleed - overscan,
+            bleed + overscan,
+            bleed + overscan,
           );
           ctx.restore();
 
@@ -370,14 +377,14 @@ export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
           ctx.scale(-1, -1);
           ctx.drawImage(
             scaledImg,
-            0,
-            targetCardHeight - bleed,
-            bleed,
-            bleed,
-            -bleed,
+            overscan,
+            targetCardHeight - bleed - overscan,
+            bleed + overscan,
+            bleed + overscan,
+            -bleed - overscan,
             -finalHeight,
-            bleed,
-            bleed,
+            bleed + overscan,
+            bleed + overscan,
           );
           ctx.restore();
 
@@ -385,14 +392,14 @@ export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
           ctx.scale(-1, -1);
           ctx.drawImage(
             scaledImg,
-            targetCardWidth - bleed,
-            targetCardHeight - bleed,
-            bleed,
-            bleed,
+            targetCardWidth - bleed - overscan,
+            targetCardHeight - bleed - overscan,
+            bleed + overscan,
+            bleed + overscan,
             -finalWidth,
             -finalHeight,
-            bleed,
-            bleed,
+            bleed + overscan,
+            bleed + overscan,
           );
           ctx.restore();
         }
