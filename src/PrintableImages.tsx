@@ -318,7 +318,7 @@ export const PrintableImages = () => {
     [onReorder, cardsPerPage, changePage, currentPage],
   );
 
-  if (images.length === 0) {
+  if (images.length === 0 && imagesWithError.length === 0) {
     return (
       <div className={css(containerStyles)}>
         <div
