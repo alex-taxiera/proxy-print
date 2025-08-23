@@ -3,8 +3,6 @@ import { createContext } from "react";
 export type GoogleImageData = {
   id: string;
   name: string;
-  mimeType?: string;
-  url?: string;
 };
 
 export type LocalImageData = {
@@ -14,8 +12,6 @@ export type LocalImageData = {
 export type ScryfallImageData = {
   uri: string;
   name: string;
-  mimeType?: "image/png";
-  url?: string;
 };
 
 export type EmptyImageData = {
@@ -63,13 +59,11 @@ export const getIsImage = (image: PossiblyEmptyImage): image is Image => {
 };
 
 export type ImagesContextValue = {
-  isFetching: boolean;
   images: Image[];
   imagesWithError: DownloadableImage[];
   isRendering: boolean;
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
   onReorder: (imageUuid: string, newIndex: number) => void;
-  getCachedImage: (id: string) => string | undefined;
   onAdd: (
     files: (File | GoogleImageData | ScryfallImageData)[],
     index?: number,
@@ -81,13 +75,11 @@ export type ImagesContextValue = {
 };
 
 export const ImagesContext = createContext<ImagesContextValue>({
-  isFetching: false,
   images: [],
   imagesWithError: [],
   isRendering: false,
   setIsRendering: () => {},
   onReorder: () => {},
-  getCachedImage: () => undefined,
   onAdd: () => {},
   onError: () => {},
   onRemove: () => {},

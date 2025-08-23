@@ -15,9 +15,9 @@ export const toast = defineSlotRecipe({
       p: "4",
       display: "grid",
       gridTemplateAreas: `
-        "progress title"
-        "progress description"
-        "progress action"
+        "title"
+        "description"
+        "action"
       `,
       columnGap: "4",
       position: "relative",
@@ -30,6 +30,14 @@ export const toast = defineSlotRecipe({
       transitionTimingFunction: "default",
       '&[data-type="info"], &[data-type="loading"]': {
         background: "bg.info",
+      },
+      '&[data-type="loading"]': {
+        gridTemplateAreas: `
+          "progress title"
+          "progress description"
+          "progress action"
+        `,
+        gridTemplateColumns: "min-content 1fr",
       },
       '&[data-type="success"]': {
         background: "bg.success",

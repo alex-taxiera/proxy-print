@@ -45,7 +45,7 @@ export const parseDecklist = (decklistText: string): ParsedDecklist => {
 
       // Try to parse first part as quantity
       const parsedQuantity = parseInt(firstPart.replace(/x$/i, ""), 10);
-      
+
       if (!isNaN(parsedQuantity)) {
         if (parsedQuantity > 0) {
           // First part is a valid positive quantity

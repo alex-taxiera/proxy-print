@@ -1,9 +1,16 @@
 import * as Sentry from "@sentry/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { PDFDocument } from "pdf-lib";
 import { useCallback, useContext } from "react";
 
-import { getIsLocalImage, ImagesContext } from "../context/ImagesContext";
+import {
+  getIsDownloadableImage,
+  getIsLocalImage,
+  Image as ImageType,
+  ImagesContext,
+} from "../context/ImagesContext";
 import { SettingsContext } from "../context/SettingsContext";
+import { getQueryDataForImage, ImageQueryData } from "../queries/images";
 import { invertHexColor } from "../utils/invert-hex-color";
 import { progressEvents } from "../utils/progress-events";
 import PdfWorker from "../workers/pdf-worker?worker";
@@ -47,6 +54,7 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
 }
 
 export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
+  const queryClient = useQueryClient();
   const { settings } = useContext(SettingsContext);
   const { images, setIsRendering } = useContext(ImagesContext);
   const { imageMatrix, cardsPerPage } = usePreviewData();
@@ -111,7 +119,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const index = imageUuid
           ? images.findIndex((image) => image.uuid === imageUuid)
           : relativeIndex + (imageMatrix.length - 1) * cardsPerPage;
-        const image = images[index];
+        const image: ImageType | undefined = images[index];
         console.debug(
           `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processing`,
         );
@@ -128,6 +136,12 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const pdfY = cardY * scaleY;
 
         let imageDataUrl = null;
+        const downloadableImageData =
+          image && getIsDownloadableImage(image)
+            ? queryClient.getQueryData<ImageQueryData>(
+                getQueryDataForImage(image).queryKey,
+              )
+            : undefined;
 
         if (image) {
           const isLocalImage = getIsLocalImage(image);
@@ -135,7 +149,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             // Get the image source URL (could be blob URL or data URL)
             const imageSrc = isLocalImage
               ? URL.createObjectURL(image.file)
-              : image.url!;
+              : downloadableImageData!.url;
 
             // Create a new image element to get natural dimensions
             const tempImg = new Image();
@@ -191,7 +205,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               imageDataUrl = cropCanvas.toDataURL(
                 isLocalImage
                   ? image.file.type
-                  : (image.mimeType ?? "image/png"),
+                  : (downloadableImageData?.mimeType ?? "image/png"),
                 1,
               );
 
@@ -224,7 +238,10 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
         return {
           imageDataUrl,
-          mimeType: getIsLocalImage(image) ? image.file.type : image.mimeType,
+          mimeType:
+            image && getIsLocalImage(image)
+              ? image.file.type
+              : (downloadableImageData?.mimeType ?? "image/png"),
           pdfX,
           pdfY,
           containerWidth,
@@ -455,10 +472,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   }, [
     contentRef,
     settings,
-    cardsPerPage,
-    imageMatrix,
     images,
+    imageMatrix,
+    cardsPerPage,
     cardPositionMeta,
+    queryClient,
     setIsRendering,
   ]);
 

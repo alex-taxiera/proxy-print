@@ -31,6 +31,7 @@ import { Tooltip } from "./components/ui/tooltip";
 import { ImagesContext } from "./context/ImagesContext";
 import { SettingsContext } from "./context/SettingsContext";
 import { useGeneratePdf } from "./hooks/useGeneratePdf";
+import { useImageLoadingProgress } from "./hooks/useImageLoadingProgress";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { getIsSortableCardData } from "./hooks/useSortableCard";
 import { progressEvents } from "./utils/progress-events";
@@ -211,11 +212,13 @@ export const PrintableImages = () => {
     onClear,
     isRendering,
     setIsRendering,
-    isFetching,
     onClearErrors,
     imagesWithError,
     onReorder,
   } = useContext(ImagesContext);
+
+  // Use the new hook to track image loading progress
+  const imageProgress = useImageLoadingProgress(images);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -444,7 +447,9 @@ export const PrintableImages = () => {
                   </Button>
                   <Tooltip.Root
                     disabled={
-                      !isRendering && !isFetching && isReferenceCardLoaded
+                      !isRendering &&
+                      !imageProgress.isLoading &&
+                      isReferenceCardLoaded
                     }
                     positioning={{
                       placement: "top",
@@ -453,7 +458,9 @@ export const PrintableImages = () => {
                     <Tooltip.Trigger asChild>
                       <Button
                         disabled={
-                          isRendering || isFetching || !isReferenceCardLoaded
+                          isRendering ||
+                          imageProgress.isLoading ||
+                          !isReferenceCardLoaded
                         }
                         onClick={() => handleSave()}
                       >
@@ -467,7 +474,7 @@ export const PrintableImages = () => {
                       <Tooltip.Content>
                         {isRendering
                           ? "Generating PDF..."
-                          : isFetching
+                          : imageProgress.isLoading
                             ? "Downloading images..."
                             : !isReferenceCardLoaded
                               ? "Loading images..."

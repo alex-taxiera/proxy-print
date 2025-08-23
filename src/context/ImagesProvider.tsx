@@ -1,11 +1,8 @@
 import { nanoid } from "nanoid";
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 
-import { addBleedEdge } from "../utils/add-bleed";
-import {
-  getMpcImageUri,
-  useImageDownloadManager,
-} from "./ImageDownloadManager";
+import { getQueryDataForImage } from "../queries/images";
+import { useImageDownloadManager } from "./ImageDownloadManager";
 import {
   DownloadableImage,
   getIsGoogleImage,
@@ -18,15 +15,9 @@ import {
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,
 ) => {
-  const googleDownloadManager = useImageDownloadManager({
-    toastTitle: "Downloading images from MPC Autofill",
-    toastDescription: "This may take a while...",
-  });
+  const googleDownloadManager = useImageDownloadManager();
   const scryfallDownloadManager = useImageDownloadManager({
-    toastTitle: "Downloading images from Scryfall",
-    toastDescription: "This should be quick.",
     maxInflight: Infinity,
-    postProcess: addBleedEdge,
   });
 
   const [images, setImages] = useState<Image[]>([]);
@@ -71,18 +62,13 @@ export const ImagesProvider = (
   const downloadImage = useCallback(
     async (image: DownloadableImage) => {
       const isGoogleImage = getIsGoogleImage(image);
-      const uri = isGoogleImage ? getMpcImageUri(image.id) : image.uri;
+      const queryData = getQueryDataForImage(image);
       try {
-        const { mimeType, url } = await (isGoogleImage
-          ? googleDownloadManager.add({ uuid: image.uuid, uri })
-          : scryfallDownloadManager.add({ uuid: image.uuid, uri }));
-        setImages((old) =>
-          old.map((image) =>
-            image.uuid === image.uuid
-              ? ({ ...image, mimeType, url } as Image)
-              : image,
-          ),
-        );
+        if (isGoogleImage) {
+          await googleDownloadManager.add({ uuid: image.uuid, queryData });
+        } else {
+          await scryfallDownloadManager.add({ uuid: image.uuid, queryData });
+        }
       } catch {
         onError(image);
       }
@@ -126,25 +112,8 @@ export const ImagesProvider = (
     });
   }, []);
 
-  const isFetching = useMemo(() => {
-    return (
-      googleDownloadManager.isFetching || scryfallDownloadManager.isFetching
-    );
-  }, [googleDownloadManager, scryfallDownloadManager]);
-
-  const getCachedImage = useCallback(
-    (uuid: string) => {
-      return (
-        googleDownloadManager.getCachedImage(uuid) ||
-        scryfallDownloadManager.getCachedImage(uuid)
-      );
-    },
-    [googleDownloadManager, scryfallDownloadManager],
-  );
-
   const contextValue = useMemo(
     () => ({
-      isFetching,
       images,
       imagesWithError,
       onClear,
@@ -154,11 +123,9 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      getCachedImage,
       onReorder,
     }),
     [
-      isFetching,
       images,
       imagesWithError,
       onClear,
@@ -168,7 +135,6 @@ export const ImagesProvider = (
       onClearErrors,
       isRendering,
       setIsRendering,
-      getCachedImage,
       onReorder,
     ],
   );

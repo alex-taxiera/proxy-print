@@ -113,11 +113,13 @@ Counterspell`;
       expect(result.errors).toHaveLength(0);
       expect(result.cards).toHaveLength(3);
       expect(result.totalCards).toBe(4);
-      
-      const solRing = result.cards.find(c => c.name === "Sol Ring");
-      const lightningBolt = result.cards.find(c => c.name === "Lightning Bolt");
-      const counterspell = result.cards.find(c => c.name === "Counterspell");
-      
+
+      const solRing = result.cards.find((c) => c.name === "Sol Ring");
+      const lightningBolt = result.cards.find(
+        (c) => c.name === "Lightning Bolt",
+      );
+      const counterspell = result.cards.find((c) => c.name === "Counterspell");
+
       expect(solRing?.quantity).toBe(1);
       expect(solRing?.setCode).toBe("PIP");
       expect(lightningBolt?.quantity).toBe(2);
@@ -386,10 +388,12 @@ Another invalid line`;
       expect(result.errors).toHaveLength(0);
       expect(result.cards).toHaveLength(4);
       expect(result.totalCards).toBe(5);
-      
+
       // Check that the malformed lines are treated as cards
-      const invalidLine = result.cards.find(c => c.name === "Invalid line");
-      const anotherInvalidLine = result.cards.find(c => c.name === "Another invalid line");
+      const invalidLine = result.cards.find((c) => c.name === "Invalid line");
+      const anotherInvalidLine = result.cards.find(
+        (c) => c.name === "Another invalid line",
+      );
       expect(invalidLine?.quantity).toBe(1);
       expect(anotherInvalidLine?.quantity).toBe(1);
     });
