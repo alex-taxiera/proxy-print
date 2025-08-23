@@ -11,7 +11,6 @@ import { useCallback, useContext, useMemo, useState } from "react";
 
 import { hstack, vstack } from "styled-system/patterns";
 
-import { ImagesContext } from "../../context/ImagesContext";
 import {
   CARD_DIMENSIONS,
   cardSizeToNameMap,
@@ -51,7 +50,6 @@ const unitsCollection = createListCollection({
 
 export const SettingsForm = () => {
   const { settings, setSettings } = useContext(SettingsContext);
-  const { isRendering } = useContext(ImagesContext);
   const [formState, setFormState] = useState(settings);
 
   const formErrors = useMemo(() => {
@@ -251,10 +249,7 @@ export const SettingsForm = () => {
         justifyContent: "center",
       })}
     >
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.filename.length > 0}
-      >
+      <Field.Root invalid={formErrors.filename.length > 0}>
         <Field.Label>Filename</Field.Label>
         <Field.Input
           minLength={1}
@@ -266,10 +261,7 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.guidesColor.length > 0}
-      >
+      <Field.Root invalid={formErrors.guidesColor.length > 0}>
         <ColorPicker
           value={parseColor(formState.guidesColor)}
           onValueChange={buildColorPickerChangeHandler("guidesColor")}
@@ -281,7 +273,6 @@ export const SettingsForm = () => {
         ))}
       </Field.Root>
       {/* <Field.Root
-        disabled={isRendering}
         invalid={formErrors.numberOfColumns.length > 0}
       >
         <NumberInput
@@ -302,7 +293,7 @@ export const SettingsForm = () => {
           alignSelf: "stretch",
         })}
       >
-        <Field.Root disabled={isRendering}>
+        <Field.Root>
           <Select.Root
             collection={cardSizeCollection}
             value={[cardSizeValue]}
@@ -360,10 +351,7 @@ export const SettingsForm = () => {
             paddingLeft: "4",
           })}
         >
-          <Field.Root
-            disabled={isRendering}
-            invalid={formErrors.cardWidth.length > 0}
-          >
+          <Field.Root invalid={formErrors.cardWidth.length > 0}>
             <NumberInput
               min={1}
               value={formState.cardWidth}
@@ -375,10 +363,7 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <Field.Root
-            disabled={isRendering}
-            invalid={formErrors.cardHeight.length > 0}
-          >
+          <Field.Root invalid={formErrors.cardHeight.length > 0}>
             <NumberInput
               min={1}
               value={formState.cardHeight}
@@ -399,7 +384,7 @@ export const SettingsForm = () => {
           alignSelf: "stretch",
         })}
       >
-        <Field.Root disabled={isRendering}>
+        <Field.Root>
           <Select.Root
             collection={pageSizeCollection}
             value={[pageSizeValue]}
@@ -500,10 +485,7 @@ export const SettingsForm = () => {
             paddingLeft: "4",
           })}
         >
-          <Field.Root
-            disabled={isRendering}
-            invalid={formErrors.unit.length > 0}
-          >
+          <Field.Root invalid={formErrors.unit.length > 0}>
             {/* TODO: Make more simple Select */}
             <Select.Root
               collection={unitsCollection}
@@ -538,10 +520,7 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <Field.Root
-            disabled={isRendering}
-            invalid={formErrors.pageWidth.length > 0}
-          >
+          <Field.Root invalid={formErrors.pageWidth.length > 0}>
             <NumberInput
               min={1}
               value={formState.pageWidth}
@@ -553,10 +532,7 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <Field.Root
-            disabled={isRendering}
-            invalid={formErrors.pageHeight.length > 0}
-          >
+          <Field.Root invalid={formErrors.pageHeight.length > 0}>
             <NumberInput
               min={1}
               value={formState.pageHeight}
@@ -570,10 +546,7 @@ export const SettingsForm = () => {
           </Field.Root>
         </Collapsible.Content>
       </Collapsible.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.enableBleedEdge.length > 0}
-      >
+      <Field.Root invalid={formErrors.enableBleedEdge.length > 0}>
         <Field.Label>Enable Bleed Edge</Field.Label>
         <Checkbox
           size="lg"
@@ -585,7 +558,7 @@ export const SettingsForm = () => {
         ))}
       </Field.Root>
       <Field.Root
-        disabled={isRendering || !formState.enableBleedEdge}
+        disabled={!formState.enableBleedEdge}
         invalid={formErrors.bleedEdge.length > 0}
       >
         <NumberInput
@@ -600,10 +573,7 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.guidesThickness.length > 0}
-      >
+      <Field.Root invalid={formErrors.guidesThickness.length > 0}>
         <NumberInput
           min={0}
           max={3}
@@ -616,10 +586,7 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
-      <Field.Root
-        disabled={isRendering}
-        invalid={formErrors.guidesAtBleedEdge.length > 0}
-      >
+      <Field.Root invalid={formErrors.guidesAtBleedEdge.length > 0}>
         <Field.Label>Guides at Bleed Edge</Field.Label>
         <Checkbox
           size="lg"

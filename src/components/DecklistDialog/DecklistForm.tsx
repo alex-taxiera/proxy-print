@@ -53,9 +53,19 @@ export const DecklistForm = () => {
           }}
           className={vstack({ gap: "4", width: "full", alignItems: "stretch" })}
         >
-          <Field.Root disabled={isSubmitting}>
+          <Field.Root disabled={isSubmitting} required>
             <Field.Label className={visuallyHidden()}>Decklist</Field.Label>
-            <Field.Textarea name="decklist" />
+            <Field.Textarea
+              name="decklist"
+              rows={4}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && event.shiftKey) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+              placeholder={`1 Black Lotus\n1 Llanowar Elves (FDN) 429\n1 Lava Spike (UMA)\n1 Lightning Bolt (SLP)`}
+            />
           </Field.Root>
           <div
             className={hstack({

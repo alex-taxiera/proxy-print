@@ -62,7 +62,7 @@ const processFiles = async (files: File[]) => {
 };
 
 export function ImageUploader() {
-  const { onAdd, isRendering } = useContext(ImagesContext);
+  const { onAdd } = useContext(ImagesContext);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const onFileAccept = useCallback(
@@ -78,7 +78,7 @@ export function ImageUploader() {
 
   const fileUpload = useFileUpload({
     maxFiles: Infinity,
-    disabled: isRendering || isProcessing,
+    disabled: isProcessing,
     onFileAccept,
     accept: [".jpg", ".jpeg", ".png", ".bmp", ".xml"],
   });

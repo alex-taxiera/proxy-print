@@ -16,11 +16,11 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster toaster={toaster}>
+        {(toast) => <AlertToast toast={toast} />}
+      </Toaster>
       <SettingsProvider>
         <ImagesProvider>
-          <Toaster toaster={toaster}>
-            {(toast) => <AlertToast toast={toast} />}
-          </Toaster>
           <Header />
           <main
             className={hstack({

@@ -217,8 +217,7 @@ export const PrintableImages = () => {
     onReorder,
   } = useContext(ImagesContext);
 
-  // Use the new hook to track image loading progress
-  const imageProgress = useImageLoadingProgress(images);
+  const isLoadingImages = useImageLoadingProgress();
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -345,40 +344,33 @@ export const PrintableImages = () => {
             </Link>{" "}
             &quot;Download XML&quot; option.
           </p>
-          <p>
-            You can download images from your{" "}
-            <Link asChild>
-              <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
-                MPC Autofill
-              </a>
-            </Link>{" "}
-            project with their &quot;Download Card Images&quot; option.
-          </p>
+          <p>Or import a decklist from your favorite deckbuilder!</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DragDropProvider
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragOver={(event) => {
-        event.preventDefault();
-      }}
-    >
-      <div className={css(containerStyles)} style={cssVars}>
-        <ProgressOverlay />
-        <div
-          className={hstack({
-            minWidth: "max",
-            width: "full",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            gap: "6",
-            paddingY: "6",
-            paddingX: "2",
-          })}
+    <div className={css(containerStyles)} style={cssVars}>
+      <ProgressOverlay />
+      <div
+        className={hstack({
+          minWidth: "max",
+          width: "full",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          gap: "6",
+          paddingY: "6",
+          paddingX: "2",
+        })}
+      >
+        {/* TODO: use grid so that actions and pagination don't need to be inside dragdrop provider */}
+        <DragDropProvider
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragOver={(event) => {
+            event.preventDefault();
+          }}
         >
           <PageDrop
             id="prev-page"
@@ -447,9 +439,7 @@ export const PrintableImages = () => {
                   </Button>
                   <Tooltip.Root
                     disabled={
-                      !isRendering &&
-                      !imageProgress.isLoading &&
-                      isReferenceCardLoaded
+                      !isRendering && !isLoadingImages && isReferenceCardLoaded
                     }
                     positioning={{
                       placement: "top",
@@ -459,7 +449,7 @@ export const PrintableImages = () => {
                       <Button
                         disabled={
                           isRendering ||
-                          imageProgress.isLoading ||
+                          isLoadingImages ||
                           !isReferenceCardLoaded
                         }
                         onClick={() => handleSave()}
@@ -474,7 +464,7 @@ export const PrintableImages = () => {
                       <Tooltip.Content>
                         {isRendering
                           ? "Generating PDF..."
-                          : imageProgress.isLoading
+                          : isLoadingImages
                             ? "Downloading images..."
                             : !isReferenceCardLoaded
                               ? "Loading images..."
@@ -662,8 +652,8 @@ export const PrintableImages = () => {
               );
             }}
           </DragOverlay>
-        </div>
+        </DragDropProvider>
       </div>
-    </DragDropProvider>
+    </div>
   );
 };

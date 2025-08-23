@@ -1,11 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  getIsDownloadableImage,
-  getIsGoogleImage,
-} from "../context/ImagesContext";
-import type { Image } from "../context/ImagesContext";
 import { ImageQueryData, imagesQueryKey } from "../queries/images";
 import { toaster } from "../utils/toaster";
 
@@ -21,77 +16,50 @@ interface ImageLoadingProgress {
   loaded: number;
 
   /**
-   * Number of images currently loading
-   */
-  loading: number;
-
-  /**
    * Whether any images are currently loading
    */
   isLoading: boolean;
-
-  /**
-   * Progress percentage (0-100)
-   */
-  progress: number;
-
-  /**
-   * Progress as a fraction (0-1)
-   */
-  progressFraction: number;
 }
 
 /**
  * Hook that manually subscribes to React Query cache updates to track image loading progress
  * and optionally shows a progress toast
  */
-export function useImageLoadingProgress(images: Image[]): ImageLoadingProgress {
+export function useImageLoadingProgress() {
   const queryClient = useQueryClient();
   const toastIdRef = useRef<string | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  // Filter to only downloadable images and ensure uniqueness by UUID
-  const downloadableImages = useMemo(() => {
-    const filtered = images.filter(getIsDownloadableImage);
-    // Remove duplicates by UUID
-    const uniqueMap = new Map<string, Image>();
-    filtered.forEach((image) => {
-      const id = getIsGoogleImage(image) ? image.id : image.uri;
-      if (!uniqueMap.has(id)) {
-        uniqueMap.set(id, image);
-      }
-    });
-    return Array.from(uniqueMap.values());
-  }, [images]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Get current query data from cache
-  const getCurrentProgress = useCallback(() => {
+  const getCurrentProgress = useCallback((): ImageLoadingProgress => {
     const queryData = queryClient.getQueriesData<ImageQueryData>({
       queryKey: imagesQueryKey(),
     });
 
     const loaded = queryData.filter(([, data]) => data !== undefined).length;
-    const total = downloadableImages.length;
-    const loading = total - loaded;
+    const loading = queryData.filter(
+      ([key]) => queryClient.getQueryState(key)?.status === "pending",
+    ).length;
+
+    const isLoading = loading > 0;
+
+    const total = loaded + loading;
 
     return {
       total,
       loaded,
-      loading,
-      isLoading: loading > 0,
-      progress: total > 0 ? Math.round((loaded / total) * 100) : 100,
-      progressFraction: total > 0 ? loaded / total : 1,
+      isLoading,
     };
-  }, [queryClient, downloadableImages]);
-
-  // State for current progress
-  const [progress, setProgress] = useState<ImageLoadingProgress>(() =>
-    getCurrentProgress(),
-  );
+  }, [queryClient]);
 
   // Update progress toast
   const updateProgressToast = useCallback(
     (currentProgress: ImageLoadingProgress) => {
+      if (currentProgress.isLoading !== isLoading) {
+        setIsLoading(currentProgress.isLoading);
+      }
       if (currentProgress.isLoading) {
         if (!toastIdRef.current) {
           // Create new toast
@@ -131,16 +99,11 @@ export function useImageLoadingProgress(images: Image[]): ImageLoadingProgress {
         }, 1000);
       }
     },
-    [],
+    [isLoading],
   );
 
   // Subscribe to cache updates
   useEffect(() => {
-    if (downloadableImages.length === 0) {
-      setProgress(getCurrentProgress());
-      return;
-    }
-
     // Subscribe to cache events, but only care about image-related queries
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       // Check if this event is related to image queries
@@ -160,7 +123,6 @@ export function useImageLoadingProgress(images: Image[]): ImageLoadingProgress {
           event.type === "removed")
       ) {
         const currentProgress = getCurrentProgress();
-        setProgress(currentProgress);
         updateProgressToast(currentProgress);
       }
     });
@@ -169,7 +131,6 @@ export function useImageLoadingProgress(images: Image[]): ImageLoadingProgress {
 
     // Initial progress update
     const initialProgress = getCurrentProgress();
-    setProgress(initialProgress);
     updateProgressToast(initialProgress);
 
     return () => {
@@ -178,12 +139,7 @@ export function useImageLoadingProgress(images: Image[]): ImageLoadingProgress {
         unsubscribeRef.current = null;
       }
     };
-  }, [
-    downloadableImages,
-    queryClient,
-    getCurrentProgress,
-    updateProgressToast,
-  ]);
+  }, [queryClient, getCurrentProgress, updateProgressToast]);
 
   // Cleanup toast on unmount
   useEffect(() => {
@@ -195,12 +151,5 @@ export function useImageLoadingProgress(images: Image[]): ImageLoadingProgress {
     };
   }, []);
 
-  // Update progress when images array changes
-  useEffect(() => {
-    const currentProgress = getCurrentProgress();
-    setProgress(currentProgress);
-    updateProgressToast(currentProgress);
-  }, [images, getCurrentProgress, updateProgressToast]);
-
-  return progress;
+  return isLoading;
 }

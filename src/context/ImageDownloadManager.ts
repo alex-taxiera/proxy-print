@@ -26,7 +26,7 @@ export function useImageDownloadManager({
     ) {
       const item = queueRef.current.shift()!;
       inflightRef.current.push(item);
-      console.log("item.queryData.queryKey :>> ", item.queryData.queryKey);
+
       queryClient
         .fetchQuery(item.queryData)
         .then(item.resolve)
