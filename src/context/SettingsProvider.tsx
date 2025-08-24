@@ -74,6 +74,8 @@ export const SettingsProvider = (
       "--image-zoom": value.enableBleedEdge ? "6.2mm" : "0mm",
       "--card-width": `${value.cardWidth}mm`,
       "--card-height": `${value.cardHeight}mm`,
+      "--row-gap": `${value.rowGap}mm`,
+      "--column-gap": `${value.columnGap}mm`,
     };
   }, [value]);
 

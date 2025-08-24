@@ -546,6 +546,28 @@ export const SettingsForm = () => {
           </Field.Root>
         </Collapsible.Content>
       </Collapsible.Root>
+      <Field.Root invalid={formErrors.rowGap.length > 0}>
+        <Field.Label>Row Gap (mm)</Field.Label>
+        <NumberInput
+          min={0}
+          value={formState.rowGap}
+          onValueChange={buildNumberInputChangeHandler("rowGap")}
+        ></NumberInput>
+        {formErrors.rowGap.map((issue, i) => (
+          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+        ))}
+      </Field.Root>
+      <Field.Root invalid={formErrors.columnGap.length > 0}>
+        <Field.Label>Column Gap (mm)</Field.Label>
+        <NumberInput
+          min={0}
+          value={formState.columnGap}
+          onValueChange={buildNumberInputChangeHandler("columnGap")}
+        ></NumberInput>
+        {formErrors.columnGap.map((issue, i) => (
+          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+        ))}
+      </Field.Root>
       <Field.Root invalid={formErrors.enableBleedEdge.length > 0}>
         <Field.Label>Enable Bleed Edge</Field.Label>
         <Checkbox

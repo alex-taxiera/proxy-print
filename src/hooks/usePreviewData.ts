@@ -21,7 +21,12 @@ export const usePageLimits = () => {
     const pageHeight =
       parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1);
 
-    return Math.floor(pageHeight / cardHeight);
+    const rowsBeforeGap = Math.floor(pageHeight / cardHeight);
+    const amountOfGaps = rowsBeforeGap - 1;
+    const gapHeight = amountOfGaps * Number(settings.rowGap);
+    const availableHeight = pageHeight - gapHeight;
+    const rowsAfterGap = Math.floor(availableHeight / cardHeight);
+    return rowsAfterGap;
   }, [settings, cardHeight]);
 
   const columnsPerPage = useMemo(() => {
@@ -31,7 +36,12 @@ export const usePageLimits = () => {
     // const colNum = parseInt(settings.numberOfColumns);
 
     // return Math.min(colNum, Math.floor(pageWidth / cardWidth));
-    return Math.floor(pageWidth / cardWidth);
+    const columnsBeforeGap = Math.floor(pageWidth / cardWidth);
+    const amountOfGaps = columnsBeforeGap - 1;
+    const gapWidth = amountOfGaps * Number(settings.columnGap);
+    const availableWidth = pageWidth - gapWidth;
+    const columnsAfterGap = Math.floor(availableWidth / cardWidth);
+    return columnsAfterGap;
   }, [settings, cardWidth]);
 
   const cardsPerPage = useMemo(

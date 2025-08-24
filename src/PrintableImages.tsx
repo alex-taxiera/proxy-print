@@ -563,6 +563,8 @@ export const PrintableImages = () => {
                       justifyContent: "center",
                       alignItems: "center",
                       textAlign: "center",
+                      rowGap: "var(--row-gap)",
+                      columnGap: "var(--column-gap)",
                     })}
                   >
                     {currentCards.map((image, index) => (
