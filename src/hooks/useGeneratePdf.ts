@@ -153,7 +153,12 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
             // Create a new image element to get natural dimensions
             const tempImg = new Image();
-            tempImg.crossOrigin = "anonymous";
+            if (
+              !isLocalImage &&
+              downloadableImageData!.url.startsWith("http")
+            ) {
+              tempImg.crossOrigin = "anonymous";
+            }
 
             // Wait for the image to load
             await new Promise((resolve, reject) => {
