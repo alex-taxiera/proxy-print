@@ -5,9 +5,6 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { css, cx, RecipeVariantProps, Styles, sva } from "styled-system/css";
 import { center } from "styled-system/patterns";
 
-import { Kbd } from "./components/ui/kbd";
-import { Menu } from "./components/ui/menu";
-import { Spinner } from "./components/ui/spinner";
 import {
   getIsLocalImage,
   ScryfallImageData,
@@ -16,11 +13,14 @@ import {
   getIsDownloadableImage,
   PossiblyEmptyImage,
   getIsEmptyImage,
-} from "./context/ImagesContext";
-import { useCardPositionMeta } from "./hooks/useCardClassNames";
-import { usePreviewData } from "./hooks/usePreviewData";
-import { useSortableCard } from "./hooks/useSortableCard";
-import { getQueryDataForImage, ImageQueryData } from "./queries/images";
+} from "../../context/ImagesContext";
+import { useCardPositionMeta } from "../../hooks/useCardClassNames";
+import { usePreviewData } from "../../hooks/usePreviewData";
+import { useSortableCard } from "../../hooks/useSortableCard";
+import { getQueryDataForImage, ImageQueryData } from "../../queries/images";
+import { Kbd } from "../ui/kbd";
+import { Menu } from "../ui/menu";
+import { Spinner } from "../ui/spinner";
 
 const useCardClassName = (props: {
   isEmpty: boolean;

@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { hstack } from "styled-system/patterns";
 
-import { PrintableImages } from "./PrintableImages";
 import { Header } from "./components/Header";
+import { Preview } from "./components/Preview";
 import { Sidebar } from "./components/Sidebar";
 import { Toaster } from "./components/ui/styled/toast";
 import { AlertToast } from "./components/ui/toast";
@@ -30,7 +30,7 @@ function App() {
               overflow: "hidden",
             })}
           >
-            <PrintableImages />
+            <Preview />
             <Sidebar />
           </main>
         </ImagesProvider>
