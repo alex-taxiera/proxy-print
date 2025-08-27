@@ -151,6 +151,16 @@ export const SettingsSchema = zod
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
       .min(1)
       .max(250),
+    rowGap: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .min(0)
+      .max(10),
+    columnGap: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .min(0)
+      .max(10),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight } = data;
@@ -189,6 +199,8 @@ export const DEFAULT_SETTINGS = {
   guidesColor: "#adff2f",
   guidesThickness: "1",
   guidesAtBleedEdge: false,
+  rowGap: "0",
+  columnGap: "0",
 } as const satisfies Settings;
 
 export type SettingsContextValue = {

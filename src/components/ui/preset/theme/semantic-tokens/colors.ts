@@ -61,4 +61,18 @@ export const colors = defineSemanticTokens.colors({
     },
     info: { value: { _light: "{colors.blue.9}", _dark: "{colors.blue.9}" } },
   },
+  white: {
+    default: {
+      value: { _light: "white", _dark: "white" },
+    },
+    muted: {
+      value: { _light: "white", _dark: "white" },
+    },
+    subtle: {
+      value: { _light: "white", _dark: "white" },
+    },
+    emphasized: {
+      value: { _light: "white", _dark: "white" },
+    },
+  },
 });

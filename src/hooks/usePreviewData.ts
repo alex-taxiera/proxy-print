@@ -1,10 +1,8 @@
 import { nanoid } from "nanoid";
 import { useContext, useMemo } from "react";
 
-import { type Image, ImagesContext } from "../context/ImagesContext";
+import { ImagesContext, PossiblyEmptyImage } from "../context/ImagesContext";
 import { SettingsContext } from "../context/SettingsContext";
-
-const MAX_PREVIEW_CARDS = 108;
 
 export const usePageLimits = () => {
   const { settings } = useContext(SettingsContext);
@@ -23,7 +21,12 @@ export const usePageLimits = () => {
     const pageHeight =
       parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1);
 
-    return Math.floor(pageHeight / cardHeight);
+    const rowsBeforeGap = Math.floor(pageHeight / cardHeight);
+    const amountOfGaps = rowsBeforeGap - 1;
+    const gapHeight = amountOfGaps * Number(settings.rowGap);
+    const availableHeight = pageHeight - gapHeight;
+    const rowsAfterGap = Math.floor(availableHeight / cardHeight);
+    return rowsAfterGap;
   }, [settings, cardHeight]);
 
   const columnsPerPage = useMemo(() => {
@@ -33,7 +36,12 @@ export const usePageLimits = () => {
     // const colNum = parseInt(settings.numberOfColumns);
 
     // return Math.min(colNum, Math.floor(pageWidth / cardWidth));
-    return Math.floor(pageWidth / cardWidth);
+    const columnsBeforeGap = Math.floor(pageWidth / cardWidth);
+    const amountOfGaps = columnsBeforeGap - 1;
+    const gapWidth = amountOfGaps * Number(settings.columnGap);
+    const availableWidth = pageWidth - gapWidth;
+    const columnsAfterGap = Math.floor(availableWidth / cardWidth);
+    return columnsAfterGap;
   }, [settings, cardWidth]);
 
   const cardsPerPage = useMemo(
@@ -41,34 +49,30 @@ export const usePageLimits = () => {
     [rowsPerPage, columnsPerPage],
   );
 
-  const maxPages = Math.floor(MAX_PREVIEW_CARDS / cardsPerPage);
-
   return {
     rowsPerPage,
     columnsPerPage,
     cardsPerPage,
-    maxPages,
   };
 };
 
 export const usePreviewData = () => {
   const { images } = useContext(ImagesContext);
 
-  const { cardsPerPage, rowsPerPage, columnsPerPage, maxPages } =
-    usePageLimits();
+  const { cardsPerPage, rowsPerPage, columnsPerPage } = usePageLimits();
 
   const imageMatrix = useMemo(() => {
     if (images.length === 0) {
       return [];
     }
 
-    const rows: Image[][] = [];
+    const rows: PossiblyEmptyImage[][] = [];
     for (let i = 0; i < images.length; i += cardsPerPage) {
       rows.push(images.slice(i, i + cardsPerPage));
     }
     const paddingItems = rows.at(-1)!.length % cardsPerPage;
     if (paddingItems > 0) {
-      const filler = Array.from<never, Image>(
+      const filler = Array.from<never, PossiblyEmptyImage>(
         { length: cardsPerPage - paddingItems },
         () => ({
           name: "empty",
@@ -84,7 +88,6 @@ export const usePreviewData = () => {
     rowsPerPage,
     columnsPerPage,
     cardsPerPage,
-    maxPages,
     imageMatrix,
   };
 };

@@ -40,9 +40,9 @@ export const dialog = defineSlotRecipe({
       background: "bg.default",
       borderRadius: "l3",
       boxShadow: "lg",
-      minW: "sm",
       padding: "6",
       position: "relative",
+      maxWidth: "100vw",
       _open: {
         animation: "dialog-in",
       },
@@ -57,6 +57,33 @@ export const dialog = defineSlotRecipe({
     description: {
       color: "fg.muted",
       textStyle: "sm",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+  variants: {
+    size: {
+      sm: {
+        content: {
+          width: "sm",
+        },
+      },
+      md: {
+        content: {
+          width: "md",
+        },
+      },
+      lg: {
+        content: {
+          width: "lg",
+        },
+      },
+      xl: {
+        content: {
+          width: "xl",
+        },
+      },
     },
   },
 });

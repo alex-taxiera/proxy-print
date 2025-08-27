@@ -31,6 +31,7 @@ import { Tooltip } from "./components/ui/tooltip";
 import { ImagesContext } from "./context/ImagesContext";
 import { SettingsContext } from "./context/SettingsContext";
 import { useGeneratePdf } from "./hooks/useGeneratePdf";
+import { useImageLoadingProgress } from "./hooks/useImageLoadingProgress";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { getIsSortableCardData } from "./hooks/useSortableCard";
 import { progressEvents } from "./utils/progress-events";
@@ -52,8 +53,21 @@ const usePagination = () => {
     [imageMatrix, currentPage],
   );
 
-  const changePage = useCallback((page: number) => {
-    setCurrentPage(page);
+  const changePage = useCallback(
+    (page: number) => {
+      setCurrentPage(Math.max(1, Math.min(page, imageMatrix.length)));
+      setIsReferenceCardLoaded(false);
+    },
+    [imageMatrix.length],
+  );
+
+  const nextPage = useCallback(() => {
+    setCurrentPage((old) => Math.min(old + 1, imageMatrix.length));
+    setIsReferenceCardLoaded(false);
+  }, [imageMatrix.length]);
+
+  const previousPage = useCallback(() => {
+    setCurrentPage((old) => Math.max(old - 1, 1));
     setIsReferenceCardLoaded(false);
   }, []);
 
@@ -72,6 +86,8 @@ const usePagination = () => {
     currentCards,
     isReferenceCardLoaded,
     changePage,
+    nextPage,
+    previousPage,
     onImageLoad,
   };
 };
@@ -112,6 +128,16 @@ const PageDrop = ({
     collisionDetector: pointerIntersection,
   });
 
+  const setHoverTimeout = useCallback(
+    (timeout?: number) => {
+      hoverTimerRef.current = setTimeout(() => {
+        onHoverTimeout?.();
+        setHoverTimeout(hoverTimeoutMs * 4);
+      }, timeout ?? hoverTimeoutMs);
+    },
+    [onHoverTimeout, hoverTimeoutMs],
+  );
+
   // Handle hover timeout logic
   const handleHoverStart = useCallback(() => {
     if (disabled || !onHoverTimeout) return;
@@ -124,10 +150,8 @@ const PageDrop = ({
     }
 
     // Set new timer
-    hoverTimerRef.current = setTimeout(() => {
-      onHoverTimeout();
-    }, hoverTimeoutMs);
-  }, [disabled, onHoverTimeout, hoverTimeoutMs]);
+    setHoverTimeout();
+  }, [disabled, onHoverTimeout, setHoverTimeout]);
 
   const handleHoverEnd = useCallback(() => {
     setIsHovering(false);
@@ -188,11 +212,12 @@ export const PrintableImages = () => {
     onClear,
     isRendering,
     setIsRendering,
-    isFetching,
     onClearErrors,
     imagesWithError,
     onReorder,
   } = useContext(ImagesContext);
+
+  const isLoadingImages = useImageLoadingProgress();
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -204,6 +229,8 @@ export const PrintableImages = () => {
     currentCards,
     isReferenceCardLoaded,
     changePage,
+    nextPage,
+    previousPage,
     onImageLoad,
   } = usePagination();
 
@@ -293,7 +320,7 @@ export const PrintableImages = () => {
     [onReorder, cardsPerPage, changePage, currentPage],
   );
 
-  if (images.length === 0) {
+  if (images.length === 0 && imagesWithError.length === 0) {
     return (
       <div className={css(containerStyles)}>
         <div
@@ -317,45 +344,38 @@ export const PrintableImages = () => {
             </Link>{" "}
             &quot;Download XML&quot; option.
           </p>
-          <p>
-            You can download images from your{" "}
-            <Link asChild>
-              <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
-                MPC Autofill
-              </a>
-            </Link>{" "}
-            project with their &quot;Download Card Images&quot; option.
-          </p>
+          <p>Or import a decklist from your favorite deckbuilder!</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DragDropProvider
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragOver={(event) => {
-        event.preventDefault();
-      }}
-    >
-      <div className={css(containerStyles)} style={cssVars}>
-        <ProgressOverlay />
-        <div
-          className={hstack({
-            minWidth: "max",
-            width: "full",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            gap: "6",
-            paddingY: "6",
-            paddingX: "2",
-          })}
+    <div className={css(containerStyles)} style={cssVars}>
+      <ProgressOverlay />
+      <div
+        className={hstack({
+          minWidth: "max",
+          width: "full",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          gap: "6",
+          paddingY: "6",
+          paddingX: "2",
+        })}
+      >
+        {/* TODO: use grid so that actions and pagination don't need to be inside dragdrop provider */}
+        <DragDropProvider
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragOver={(event) => {
+            event.preventDefault();
+          }}
         >
           <PageDrop
             id="prev-page"
             disabled={isFirstPage}
-            onHoverTimeout={() => changePage(currentPage - 1)}
+            onHoverTimeout={previousPage}
           >
             <div
               className={vstack({
@@ -419,7 +439,7 @@ export const PrintableImages = () => {
                   </Button>
                   <Tooltip.Root
                     disabled={
-                      !isRendering && !isFetching && isReferenceCardLoaded
+                      !isRendering && !isLoadingImages && isReferenceCardLoaded
                     }
                     positioning={{
                       placement: "top",
@@ -428,7 +448,9 @@ export const PrintableImages = () => {
                     <Tooltip.Trigger asChild>
                       <Button
                         disabled={
-                          isRendering || isFetching || !isReferenceCardLoaded
+                          isRendering ||
+                          isLoadingImages ||
+                          !isReferenceCardLoaded
                         }
                         onClick={() => handleSave()}
                       >
@@ -442,7 +464,7 @@ export const PrintableImages = () => {
                       <Tooltip.Content>
                         {isRendering
                           ? "Generating PDF..."
-                          : isFetching
+                          : isLoadingImages
                             ? "Downloading images..."
                             : !isReferenceCardLoaded
                               ? "Loading images..."
@@ -541,6 +563,8 @@ export const PrintableImages = () => {
                       justifyContent: "center",
                       alignItems: "center",
                       textAlign: "center",
+                      rowGap: "var(--row-gap)",
+                      columnGap: "var(--column-gap)",
                     })}
                   >
                     {currentCards.map((image, index) => (
@@ -559,7 +583,7 @@ export const PrintableImages = () => {
           <PageDrop
             id="next-page"
             disabled={isLastPage}
-            onHoverTimeout={() => changePage(currentPage + 1)}
+            onHoverTimeout={nextPage}
           >
             <div
               className={vstack({
@@ -621,15 +645,17 @@ export const PrintableImages = () => {
                     })}
                   >
                     {getIsSortableCardData(source.data)
-                      ? (source.data.image.name ?? source.data.image.file?.name)
+                      ? "name" in source.data.image
+                        ? source.data.image.name
+                        : source.data.image.file.name
                       : "unknown"}
                   </div>
                 </div>
               );
             }}
           </DragOverlay>
-        </div>
+        </DragDropProvider>
       </div>
-    </DragDropProvider>
+    </div>
   );
 };

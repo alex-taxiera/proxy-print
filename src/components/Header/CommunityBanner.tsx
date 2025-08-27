@@ -7,13 +7,12 @@ export const CommunityBanner = () => {
     <div
       className={css({
         bg: "colorPalette.default",
-        color: "colorPalette.fg",
         paddingY: "1",
         textAlign: "center",
         alignSelf: "stretch",
       })}
     >
-      <Link asChild color="colorPalette.fg" fontSize="sm">
+      <Link asChild colorPalette="white" fontSize="sm">
         <a
           href="https://discord.gg/A5AkkyP8CU"
           target="_blank"

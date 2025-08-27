@@ -1,4 +1,5 @@
 import { MenuSelectionDetails, Portal } from "@ark-ui/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { css, cx, RecipeVariantProps, Styles, sva } from "styled-system/css";
@@ -7,10 +8,19 @@ import { center } from "styled-system/patterns";
 import { Kbd } from "./components/ui/kbd";
 import { Menu } from "./components/ui/menu";
 import { Spinner } from "./components/ui/spinner";
-import { GoogleImageData, Image, ImagesContext } from "./context/ImagesContext";
+import {
+  getIsLocalImage,
+  ScryfallImageData,
+  GoogleImageData,
+  ImagesContext,
+  getIsDownloadableImage,
+  PossiblyEmptyImage,
+  getIsEmptyImage,
+} from "./context/ImagesContext";
 import { useCardPositionMeta } from "./hooks/useCardClassNames";
 import { usePreviewData } from "./hooks/usePreviewData";
 import { useSortableCard } from "./hooks/useSortableCard";
+import { getQueryDataForImage, ImageQueryData } from "./queries/images";
 
 const useCardClassName = (props: {
   isEmpty: boolean;
@@ -134,14 +144,56 @@ const useCardClassName = (props: {
   return cx(...classes);
 };
 
+const useDownloadedSrc = (image: PossiblyEmptyImage) => {
+  const queryClient = useQueryClient();
+
+  const queryData = useMemo(
+    () => (getIsDownloadableImage(image) ? getQueryDataForImage(image) : null),
+    [image],
+  );
+
+  // Manually subscribe to cache updates without triggering fetches
+  const [downloadedSrc, setDownloadedSrc] = useState<string | undefined>(() => {
+    if (!queryData) return undefined;
+    return queryClient.getQueryData<ImageQueryData>(queryData.queryKey)?.url;
+  });
+
+  useEffect(() => {
+    if (!queryData) return;
+
+    // Subscribe to cache updates for this specific query
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      // Check if this event is related to our specific image query
+      const isOurQuery =
+        event.query &&
+        Array.isArray(event.query.queryKey) &&
+        event.query.queryKey.length > 0 &&
+        // Compare the actual query key arrays, not hash vs string
+        JSON.stringify(event.query.queryKey) ===
+          JSON.stringify(queryData.queryKey);
+
+      if ((event.type === "updated" || event.type === "added") && isOurQuery) {
+        const data = queryClient.getQueryData<ImageQueryData>(
+          queryData.queryKey,
+        );
+        setDownloadedSrc(data?.url);
+      }
+    });
+
+    return unsubscribe;
+  }, [queryClient, queryData]);
+
+  return downloadedSrc;
+};
+
 export type CardProps = {
-  image: Image;
+  image: PossiblyEmptyImage;
   index: number;
   onImageLoad?: () => void;
 };
 
 export const Card = ({ image, index, onImageLoad }: CardProps) => {
-  const { images, onAdd, onRemove, isRendering, getCachedImage, onReorder } =
+  const { images, onAdd, onRemove, isRendering, onReorder } =
     useContext(ImagesContext);
 
   const absoluteIndex = useMemo(() => {
@@ -183,15 +235,17 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   );
 
   const [src, setSrc] = useState<string>("");
-  const downloadedSrc = image.id ? getCachedImage(image.id) : undefined;
+  const downloadedSrc = useDownloadedSrc(image);
+
   const isFetching = useMemo(
-    () => !!image.id && !downloadedSrc,
-    [image.id, downloadedSrc],
+    () => getIsDownloadableImage(image) && !downloadedSrc,
+    [image, downloadedSrc],
   );
 
-  const isEmpty = !image.file && !image.id;
+  const isEmpty = getIsEmptyImage(image);
+
   const [isLoading, setIsLoading] = useState(true);
-  const isPending = (isLoading || isFetching) && !isEmpty;
+  const isPending = isLoading || isFetching;
 
   const imageSrc = downloadedSrc ?? src;
 
@@ -213,18 +267,20 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
 
   const add = useCallback(
     (count: number) => {
+      if (isEmpty) {
+        return;
+      }
+
       const index = images.indexOf(image);
+
       onAdd(
-        new Array<File | GoogleImageData>(count).fill(
-          image.file ?? {
-            id: image.id,
-            name: image.name,
-          },
+        new Array<File | GoogleImageData | ScryfallImageData>(count).fill(
+          getIsLocalImage(image) ? image.file : image,
         ),
         index + 1,
       );
     },
-    [image, images, onAdd],
+    [image, images, onAdd, isEmpty],
   );
 
   const buildOnAddClick = useCallback(
@@ -256,7 +312,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   useEffect(() => {
     let url: string | undefined;
 
-    if (image.file) {
+    if (getIsLocalImage(image)) {
       url = URL.createObjectURL(image.file);
       setSrc(url);
     }
@@ -267,7 +323,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [image.file]);
+  }, [image]);
 
   return (
     <div
@@ -321,21 +377,14 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
             />
           ) : imageSrc ? (
             <Menu.Root>
-              <Menu.ContextTrigger
-                cursor="grab"
-                tabIndex={-1}
-                width="full"
-                height="full"
-              >
+              <Menu.ContextTrigger cursor="grab" tabIndex={-1}>
                 <img
                   src={imageSrc}
-                  alt={image.file?.name ?? image.name}
+                  alt={getIsLocalImage(image) ? image.file?.name : image.name}
                   className={css({
                     width:
                       "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
                     maxWidth: "unset",
-                    minWidth: "full",
-                    minHeight: "full",
                     objectFit: "cover",
                     position: "relative",
                   })}
