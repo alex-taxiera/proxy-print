@@ -1,6 +1,5 @@
 import { MenuSelectionDetails, Portal } from "@ark-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { nanoid } from "nanoid";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { css, cx, RecipeVariantProps, Styles, sva } from "styled-system/css";
