@@ -1,17 +1,128 @@
-import { useContext } from "react";
+import { Portal } from "@ark-ui/react";
+import {
+  faDownload,
+  faEllipsisV,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useContext, useState } from "react";
 
 import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
 
-import { ImagesContext } from "../../context/ImagesContext";
+import { getIsLocalImage, ImagesContext } from "../../context/ImagesContext";
 import { useGeneratePdf } from "../../hooks/useGeneratePdf";
 import { useImageLoadingProgress } from "../../hooks/useImageLoadingProgress";
 import { usePreviewData } from "../../hooks/usePreviewData";
+import { getQueryDataForImage, ImageQueryData } from "../../queries/images";
 import { progressEvents } from "../../utils/progress-events";
+import { toaster } from "../../utils/toaster";
+import ZipWorker from "../../workers/zip-worker?worker";
 import { ImageErrors } from "../ImageErrors";
 import { Button } from "../ui/button";
+import { IconButton } from "../ui/icon-button";
+import { Menu } from "../ui/menu";
 import { Pagination } from "../ui/pagination";
+import { Spinner } from "../ui/spinner";
 import { Tooltip } from "../ui/tooltip";
+
+const getExtensionFromMimeType = (mimeType: string) => {
+  const extension = mimeType.split("/").pop();
+  return extension ? `.${extension}` : "";
+};
+
+const generateDownloadName = (name: string, uuid: string, mimeType: string) => {
+  const nameHasExtension = /\.[a-zA-Z0-9]+$/.test(name);
+  const extension = getExtensionFromMimeType(mimeType);
+  if (nameHasExtension) {
+    // Insert uuid before the extension
+    const lastDotIndex = name.lastIndexOf(".");
+    if (lastDotIndex !== -1) {
+      return `${name.slice(0, lastDotIndex)} (${uuid})${name.slice(lastDotIndex)}`;
+    }
+    // Fallback, should not happen if nameHasExtension is true
+    return `${name} (${uuid})${extension}`;
+  } else {
+    return `${name} (${uuid})${extension}`;
+  }
+};
+
+const useDownloadImages = () => {
+  const { images } = useContext(ImagesContext);
+  const queryClient = useQueryClient();
+
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadImages = useCallback(() => {
+    setIsDownloading(true);
+    const toastId = toaster.create({
+      type: "info",
+      closable: false,
+      duration: Infinity,
+      title: "Downloading images",
+    });
+
+    const imageData = images.map((image) => {
+      if (getIsLocalImage(image)) {
+        return {
+          name: generateDownloadName(
+            image.file.name,
+            image.uuid,
+            image.file.type,
+          ),
+          file: image.file,
+        };
+      }
+
+      const queryData = queryClient.getQueryData<ImageQueryData>(
+        getQueryDataForImage(image).queryKey,
+      )!;
+
+      return {
+        name: generateDownloadName(image.name, image.uuid, queryData.mimeType),
+        url: queryData.url,
+      };
+    });
+
+    const worker = new ZipWorker();
+    worker.postMessage({ type: "zip", data: { imageData } });
+
+    worker.onmessage = (e) => {
+      console.log("e", e);
+      const { type, data } = e.data as {
+        type: string;
+        data: { blob: Blob };
+      };
+
+      if (type === "zip") {
+        toaster.remove(toastId);
+        worker.terminate();
+        setIsDownloading(false);
+        const { blob } = data;
+        console.log("blob", blob);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `proxyprint_download_${Date.now()}.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    worker.onerror = (e) => {
+      console.error("Worker error:", e.error);
+      setIsDownloading(false);
+      toaster.remove(toastId);
+      worker.terminate();
+    };
+  }, [images, queryClient]);
+
+  return {
+    isDownloading,
+    downloadImages,
+  };
+};
 
 export type ActionsProps = {
   isReferenceCardLoaded: boolean;
@@ -51,6 +162,8 @@ export const Actions = ({
     generatePdf();
   };
 
+  const { isDownloading, downloadImages } = useDownloadImages();
+
   return (
     <div
       className={vstack({
@@ -71,13 +184,6 @@ export const Actions = ({
         })}
       >
         <div className={hstack({ gap: "2" })}>
-          <Button
-            colorPalette="gray"
-            disabled={isRendering}
-            onClick={() => onClear()}
-          >
-            Remove all cards
-          </Button>
           <Tooltip.Root
             disabled={!isRendering && !isLoadingImages && isReferenceCardLoaded}
             positioning={{
@@ -109,6 +215,50 @@ export const Actions = ({
               </Tooltip.Content>
             </Tooltip.Positioner>
           </Tooltip.Root>
+          <Menu.Root>
+            <Menu.Trigger asChild>
+              <IconButton
+                variant="outline"
+                colorPalette="gray"
+                aria-label="Actions"
+                type="button"
+              >
+                <FontAwesomeIcon icon={faEllipsisV} size="lg" />
+              </IconButton>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content>
+                  <Menu.ItemGroup>
+                    <Menu.Item
+                      value="clear"
+                      onSelect={() => onClear()}
+                      disabled={isRendering}
+                    >
+                      <Menu.ItemIndicator>
+                        <FontAwesomeIcon icon={faTrash} />
+                      </Menu.ItemIndicator>
+                      <Menu.ItemText>Remove all cards</Menu.ItemText>
+                    </Menu.Item>
+                    <Menu.Item
+                      value="downloadZip"
+                      onSelect={() => downloadImages()}
+                      disabled={isDownloading}
+                    >
+                      <Menu.ItemIndicator>
+                        {isDownloading ? (
+                          <Spinner />
+                        ) : (
+                          <FontAwesomeIcon icon={faDownload} />
+                        )}
+                      </Menu.ItemIndicator>
+                      <Menu.ItemText>Download images (ZIP)</Menu.ItemText>
+                    </Menu.Item>
+                  </Menu.ItemGroup>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
         </div>
         <div
           className={vstack({

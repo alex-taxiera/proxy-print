@@ -6,6 +6,7 @@ const itemStyle = {
   borderRadius: "l1",
   cursor: "pointer",
   display: "flex",
+  gap: "2",
   fontWeight: "medium",
   textStyle: "sm",
   transitionDuration: "fast",
