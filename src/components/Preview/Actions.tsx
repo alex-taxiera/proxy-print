@@ -185,7 +185,7 @@ const NoSelectionActions = ({
             disabled={isRendering || isLoadingImages || !isReferenceCardLoaded}
             onClick={() => handleSave()}
           >
-            Save
+            Generate PDF
           </Button>
         </Tooltip.Trigger>
         <Tooltip.Positioner>
@@ -262,7 +262,7 @@ const SelectionActions = () => {
   const selectedImageCount = selectedImageUuids.length;
 
   return (
-    <div className={hstack({ gap: "2", paddingLeft: "2" })}>
+    <div className={hstack({ gap: "2" })}>
       <Menu.Root onSelect={() => onSelectAllImages(false)}>
         <Menu.Trigger asChild>
           <Button colorPalette="gray" type="button">
@@ -343,6 +343,7 @@ export const Actions = ({
       <div
         className={hstack({
           gap: "2",
+          paddingLeft: "2",
           justifyContent: "space-between",
           alignItems: "flex-end",
           paddingBottom: "3",
