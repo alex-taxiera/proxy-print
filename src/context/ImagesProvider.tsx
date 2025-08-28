@@ -52,12 +52,23 @@ export const ImagesProvider = (
     [googleDownloadManager, scryfallDownloadManager],
   );
 
-  const onClear = useCallback(() => {
-    googleDownloadManager.removeAll();
-    scryfallDownloadManager.removeAll();
-    onClearErrors();
-    setImages([]);
-  }, [googleDownloadManager, scryfallDownloadManager, onClearErrors]);
+  const onClear = useCallback(
+    (uuids?: string[]) => {
+      if (uuids) {
+        setImages((old) => old.filter((image) => !uuids.includes(image.uuid)));
+        for (const uuid of uuids) {
+          googleDownloadManager.remove(uuid);
+          scryfallDownloadManager.remove(uuid);
+        }
+      } else {
+        googleDownloadManager.removeAll();
+        scryfallDownloadManager.removeAll();
+        onClearErrors();
+        setImages([]);
+      }
+    },
+    [googleDownloadManager, scryfallDownloadManager, onClearErrors],
+  );
 
   const downloadImage = useCallback(
     async (image: DownloadableImage) => {

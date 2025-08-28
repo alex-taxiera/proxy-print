@@ -11,6 +11,7 @@ import { useCallback, useContext, useState } from "react";
 import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
 
+import { ImageSelectionContext } from "../../context/ImageSelectionContext";
 import { getIsLocalImage, ImagesContext } from "../../context/ImagesContext";
 import { useGeneratePdf } from "../../hooks/useGeneratePdf";
 import { useImageLoadingProgress } from "../../hooks/useImageLoadingProgress";
@@ -22,6 +23,7 @@ import ZipWorker from "../../workers/zip-worker?worker";
 import { ImageErrors } from "../ImageErrors";
 import { Button } from "../ui/button";
 import { IconButton } from "../ui/icon-button";
+import { Link } from "../ui/link";
 import { Menu } from "../ui/menu";
 import { Pagination } from "../ui/pagination";
 import { Spinner } from "../ui/spinner";
@@ -54,80 +56,258 @@ const useDownloadImages = () => {
 
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const downloadImages = useCallback(() => {
-    setIsDownloading(true);
-    const toastId = toaster.create({
-      type: "info",
-      closable: false,
-      duration: Infinity,
-      title: "Downloading images",
-    });
+  const downloadImages = useCallback(
+    (uuids?: string[]) => {
+      setIsDownloading(true);
+      const toastId = toaster.create({
+        type: "info",
+        closable: false,
+        duration: Infinity,
+        title: "Downloading images",
+      });
 
-    const formattedData = images.map((image) => {
-      if (getIsLocalImage(image)) {
+      const imagesToDownload = uuids
+        ? images.filter((image) => uuids.includes(image.uuid))
+        : images;
+
+      const formattedData = imagesToDownload.map((image) => {
+        if (getIsLocalImage(image)) {
+          return {
+            name: generateDownloadName(
+              image.file.name,
+              image.uuid,
+              image.file.type,
+            ),
+            file: image.file,
+          };
+        }
+
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryDataForImage(image).queryKey,
+        )!;
+
         return {
           name: generateDownloadName(
-            image.file.name,
+            image.name,
             image.uuid,
-            image.file.type,
+            queryData.mimeType,
           ),
-          file: image.file,
+          url: queryData.url,
         };
-      }
+      });
 
-      const queryData = queryClient.getQueryData<ImageQueryData>(
-        getQueryDataForImage(image).queryKey,
-      )!;
+      // remove duplicate data based on url -- optional?
+      const imageData = formattedData.filter(
+        (data, index) =>
+          index ===
+          formattedData.findIndex(
+            (t) =>
+              (t.url != null && t.url === data.url) ||
+              (t.file != null && t.file === data.file),
+          ),
+      );
 
-      return {
-        name: generateDownloadName(image.name, image.uuid, queryData.mimeType),
-        url: queryData.url,
+      const worker = new ZipWorker();
+      worker.postMessage({ type: "zip", data: { imageData } });
+
+      worker.onmessage = (e) => {
+        console.log("e", e);
+        const { type, data } = e.data as {
+          type: string;
+          data: { blob: Blob };
+        };
+
+        if (type === "zip") {
+          toaster.remove(toastId);
+          worker.terminate();
+          setIsDownloading(false);
+          const { blob } = data;
+          console.log("blob", blob);
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `proxyprint_download_${Date.now()}.zip`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
       };
-    });
 
-    // remove duplicate data based on url -- optional?
-    const imageData = formattedData.filter(
-      (data, index, self) =>
-        index === self.findIndex((t) => t.url === data.url),
-    );
-
-    const worker = new ZipWorker();
-    worker.postMessage({ type: "zip", data: { imageData } });
-
-    worker.onmessage = (e) => {
-      console.log("e", e);
-      const { type, data } = e.data as {
-        type: string;
-        data: { blob: Blob };
-      };
-
-      if (type === "zip") {
+      worker.onerror = (e) => {
+        console.error("Worker error:", e.error);
+        setIsDownloading(false);
         toaster.remove(toastId);
         worker.terminate();
-        setIsDownloading(false);
-        const { blob } = data;
-        console.log("blob", blob);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `proxyprint_download_${Date.now()}.zip`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    };
-
-    worker.onerror = (e) => {
-      console.error("Worker error:", e.error);
-      setIsDownloading(false);
-      toaster.remove(toastId);
-      worker.terminate();
-    };
-  }, [images, queryClient]);
+      };
+    },
+    [images, queryClient],
+  );
 
   return {
     isDownloading,
     downloadImages,
   };
+};
+
+const NoSelectionActions = ({
+  isReferenceCardLoaded,
+  contentRef,
+}: {
+  isReferenceCardLoaded: boolean;
+  contentRef: React.RefObject<HTMLDivElement>;
+}) => {
+  const { onClear, isRendering, setIsRendering } = useContext(ImagesContext);
+
+  const isLoadingImages = useImageLoadingProgress();
+
+  const generatePdf = useGeneratePdf(contentRef);
+
+  const handleSave = () => {
+    setIsRendering(true);
+    console.time("save");
+    progressEvents.emit("progress", {
+      progress: 0,
+      phase: "Initializing",
+    });
+    generatePdf();
+  };
+
+  const { isDownloading, downloadImages } = useDownloadImages();
+  return (
+    <div className={hstack({ gap: "2" })}>
+      <Tooltip.Root
+        disabled={!isRendering && !isLoadingImages && isReferenceCardLoaded}
+        positioning={{
+          placement: "top",
+        }}
+      >
+        <Tooltip.Trigger asChild>
+          <Button
+            disabled={isRendering || isLoadingImages || !isReferenceCardLoaded}
+            onClick={() => handleSave()}
+          >
+            Save
+          </Button>
+        </Tooltip.Trigger>
+        <Tooltip.Positioner>
+          <Tooltip.Arrow>
+            <Tooltip.ArrowTip />
+          </Tooltip.Arrow>
+          <Tooltip.Content>
+            {isRendering
+              ? "Generating PDF..."
+              : isLoadingImages
+                ? "Downloading images..."
+                : !isReferenceCardLoaded
+                  ? "Loading images..."
+                  : ""}
+          </Tooltip.Content>
+        </Tooltip.Positioner>
+      </Tooltip.Root>
+      <Menu.Root>
+        <Menu.Trigger asChild>
+          <IconButton
+            variant="outline"
+            colorPalette="gray"
+            aria-label="Actions"
+            type="button"
+          >
+            <FontAwesomeIcon icon={faEllipsisV} size="lg" />
+          </IconButton>
+        </Menu.Trigger>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.ItemGroup>
+                <Menu.Item
+                  value="clear"
+                  onSelect={() => onClear()}
+                  disabled={isRendering}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Remove all cards</Menu.ItemText>
+                </Menu.Item>
+                <Menu.Item
+                  value="downloadZip"
+                  onSelect={() => downloadImages()}
+                  disabled={isLoadingImages || isDownloading}
+                >
+                  <Menu.ItemIndicator>
+                    {isDownloading ? (
+                      <Spinner size="sm" mr="1px" />
+                    ) : (
+                      <FontAwesomeIcon icon={faDownload} />
+                    )}
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Download images (ZIP)</Menu.ItemText>
+                </Menu.Item>
+              </Menu.ItemGroup>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
+      </Menu.Root>
+    </div>
+  );
+};
+
+const SelectionActions = () => {
+  const { onClear, isRendering } = useContext(ImagesContext);
+
+  const isLoadingImages = useImageLoadingProgress();
+  const { onSelectAllImages, selectedImageUuids } = useContext(
+    ImageSelectionContext,
+  );
+  const { isDownloading, downloadImages } = useDownloadImages();
+  const selectedImageCount = selectedImageUuids.length;
+
+  return (
+    <div className={hstack({ gap: "2", paddingLeft: "2" })}>
+      <Menu.Root onSelect={() => onSelectAllImages(false)}>
+        <Menu.Trigger asChild>
+          <Button colorPalette="gray" type="button">
+            Actions
+          </Button>
+        </Menu.Trigger>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.ItemGroup>
+                <Menu.Item
+                  value="clear"
+                  onSelect={() => onClear(selectedImageUuids)}
+                  disabled={isRendering}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Remove selected cards</Menu.ItemText>
+                </Menu.Item>
+                <Menu.Item
+                  value="downloadZip"
+                  onSelect={() => downloadImages(selectedImageUuids)}
+                  disabled={isLoadingImages || isDownloading}
+                >
+                  <Menu.ItemIndicator>
+                    {isDownloading ? (
+                      <Spinner size="sm" mr="1px" />
+                    ) : (
+                      <FontAwesomeIcon icon={faDownload} />
+                    )}
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Download images (ZIP)</Menu.ItemText>
+                </Menu.Item>
+              </Menu.ItemGroup>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
+      </Menu.Root>
+      <span>
+        {selectedImageCount} image{selectedImageCount === 1 ? "" : "s"} selected
+      </span>
+      <Link onClick={() => onSelectAllImages(false)}>Deselect all</Link>
+    </div>
+  );
 };
 
 export type ActionsProps = {
@@ -143,32 +323,10 @@ export const Actions = ({
   changePage,
   contentRef,
 }: ActionsProps) => {
-  const {
-    images,
-    onClear,
-    isRendering,
-    setIsRendering,
-    onClearErrors,
-    imagesWithError,
-  } = useContext(ImagesContext);
-
-  const isLoadingImages = useImageLoadingProgress();
+  const { images, onClearErrors, imagesWithError } = useContext(ImagesContext);
+  const { selectedImageUuids } = useContext(ImageSelectionContext);
 
   const { imageMatrix, cardsPerPage } = usePreviewData();
-
-  const generatePdf = useGeneratePdf(contentRef);
-
-  const handleSave = () => {
-    setIsRendering(true);
-    console.time("save");
-    progressEvents.emit("progress", {
-      progress: 0,
-      phase: "Initializing",
-    });
-    generatePdf();
-  };
-
-  const { isDownloading, downloadImages } = useDownloadImages();
 
   return (
     <div
@@ -187,85 +345,19 @@ export const Actions = ({
           gap: "2",
           justifyContent: "space-between",
           alignItems: "flex-end",
+          paddingBottom: "3",
+          borderTopRadius: "md",
+          backgroundColor: selectedImageUuids.length > 0 ? "bg.info" : "unset",
         })}
       >
-        <div className={hstack({ gap: "2" })}>
-          <Tooltip.Root
-            disabled={!isRendering && !isLoadingImages && isReferenceCardLoaded}
-            positioning={{
-              placement: "top",
-            }}
-          >
-            <Tooltip.Trigger asChild>
-              <Button
-                disabled={
-                  isRendering || isLoadingImages || !isReferenceCardLoaded
-                }
-                onClick={() => handleSave()}
-              >
-                Save
-              </Button>
-            </Tooltip.Trigger>
-            <Tooltip.Positioner>
-              <Tooltip.Arrow>
-                <Tooltip.ArrowTip />
-              </Tooltip.Arrow>
-              <Tooltip.Content>
-                {isRendering
-                  ? "Generating PDF..."
-                  : isLoadingImages
-                    ? "Downloading images..."
-                    : !isReferenceCardLoaded
-                      ? "Loading images..."
-                      : ""}
-              </Tooltip.Content>
-            </Tooltip.Positioner>
-          </Tooltip.Root>
-          <Menu.Root>
-            <Menu.Trigger asChild>
-              <IconButton
-                variant="outline"
-                colorPalette="gray"
-                aria-label="Actions"
-                type="button"
-              >
-                <FontAwesomeIcon icon={faEllipsisV} size="lg" />
-              </IconButton>
-            </Menu.Trigger>
-            <Portal>
-              <Menu.Positioner>
-                <Menu.Content>
-                  <Menu.ItemGroup>
-                    <Menu.Item
-                      value="clear"
-                      onSelect={() => onClear()}
-                      disabled={isRendering}
-                    >
-                      <Menu.ItemIndicator>
-                        <FontAwesomeIcon icon={faTrash} />
-                      </Menu.ItemIndicator>
-                      <Menu.ItemText>Remove all cards</Menu.ItemText>
-                    </Menu.Item>
-                    <Menu.Item
-                      value="downloadZip"
-                      onSelect={() => downloadImages()}
-                      disabled={isLoadingImages || isDownloading}
-                    >
-                      <Menu.ItemIndicator>
-                        {isDownloading ? (
-                          <Spinner size="sm" mr="1px" />
-                        ) : (
-                          <FontAwesomeIcon icon={faDownload} />
-                        )}
-                      </Menu.ItemIndicator>
-                      <Menu.ItemText>Download images (ZIP)</Menu.ItemText>
-                    </Menu.Item>
-                  </Menu.ItemGroup>
-                </Menu.Content>
-              </Menu.Positioner>
-            </Portal>
-          </Menu.Root>
-        </div>
+        {selectedImageUuids.length === 0 ? (
+          <NoSelectionActions
+            isReferenceCardLoaded={isReferenceCardLoaded}
+            contentRef={contentRef}
+          />
+        ) : (
+          <SelectionActions />
+        )}
         <div
           className={vstack({
             alignItems: "center",
@@ -283,10 +375,10 @@ export const Actions = ({
             of {Math.min(imageMatrix.length * cardsPerPage, images.length)}
           </span>
           <Pagination
+            siblingCount={0}
             count={imageMatrix.length * cardsPerPage}
             page={currentPage}
             pageSize={cardsPerPage}
-            siblingCount={1}
             onPageChange={({ page }) => changePage(page)}
           />
         </div>

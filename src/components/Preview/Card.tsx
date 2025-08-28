@@ -1,14 +1,14 @@
 import { MenuSelectionDetails, Portal } from "@ark-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { nanoid } from "nanoid";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { css, cx, RecipeVariantProps, Styles, sva } from "styled-system/css";
-import { center } from "styled-system/patterns";
+import { center, visuallyHidden } from "styled-system/patterns";
 
+import { ImageSelectionContext } from "../../context/ImageSelectionContext";
 import {
   getIsLocalImage,
-  ScryfallImageData,
-  GoogleImageData,
   ImagesContext,
   getIsDownloadableImage,
   PossiblyEmptyImage,
@@ -18,6 +18,7 @@ import { useCardPositionMeta } from "../../hooks/useCardClassNames";
 import { usePreviewData } from "../../hooks/usePreviewData";
 import { useSortableCard } from "../../hooks/useSortableCard";
 import { getQueryDataForImage, ImageQueryData } from "../../queries/images";
+import { Checkbox } from "../ui/checkbox";
 import { Kbd } from "../ui/kbd";
 import { Menu } from "../ui/menu";
 import { Spinner } from "../ui/spinner";
@@ -47,6 +48,7 @@ const useCardClassName = (props: {
 
   const classes: string[] = [
     "card",
+    "group",
     css({
       position: "relative",
       transition: "outline-color 0.1s ease-in-out",
@@ -195,6 +197,13 @@ export type CardProps = {
 export const Card = ({ image, index, onImageLoad }: CardProps) => {
   const { images, onAdd, onRemove, isRendering, onReorder } =
     useContext(ImagesContext);
+  const { onSelectImageUuid, getIsSelected } = useContext(
+    ImageSelectionContext,
+  );
+
+  const isSelected = useMemo(() => {
+    return getIsSelected(image.uuid);
+  }, [getIsSelected, image.uuid]);
 
   const absoluteIndex = useMemo(() => {
     return images.findIndex((img) => img.uuid === image.uuid);
@@ -272,11 +281,10 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
       }
 
       const index = images.indexOf(image);
+      const imageData = getIsLocalImage(image) ? image.file : image;
 
       onAdd(
-        new Array<File | GoogleImageData | ScryfallImageData>(count).fill(
-          getIsLocalImage(image) ? image.file : image,
-        ),
+        Array.from({ length: count }, () => imageData),
         index + 1,
       );
     },
@@ -308,6 +316,13 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     },
     [isEmpty, isPending, isRendering, onRemove, image.uuid, add],
   );
+
+  const name = useMemo(() => {
+    if (getIsLocalImage(image)) {
+      return image.file?.name;
+    }
+    return image.name;
+  }, [image]);
 
   useEffect(() => {
     let url: string | undefined;
@@ -380,7 +395,7 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
               <Menu.ContextTrigger cursor="grab" tabIndex={-1}>
                 <img
                   src={imageSrc}
-                  alt={getIsLocalImage(image) ? image.file?.name : image.name}
+                  alt={name}
                   className={css({
                     width:
                       "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
@@ -501,6 +516,28 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
           )}
         </>
       </div>
+      {!isEmpty && !isPending ? (
+        <Checkbox
+          className={css({
+            visibility: isSelected ? "visible" : "hidden",
+            position: "absolute",
+            top: 2,
+            left: 2,
+            backgroundColor: "bg.emphasized",
+            gap: 0,
+            _groupHover: {
+              visibility: "visible",
+            },
+          })}
+          checked={isSelected}
+          onCheckedChange={(details) =>
+            onSelectImageUuid(image.uuid, details.checked === true)
+          }
+          size="md"
+        >
+          <span className={visuallyHidden()}>Select {name}</span>
+        </Checkbox>
+      ) : null}
       <Guides />
     </div>
   );

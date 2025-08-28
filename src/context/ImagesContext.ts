@@ -70,7 +70,7 @@ export type ImagesContextValue = {
   ) => void;
   onError: (image: DownloadableImage) => void;
   onRemove: (uuid: string) => void;
-  onClear: () => void;
+  onClear: (uuids?: string[]) => void;
   onClearErrors: () => void;
 };
 

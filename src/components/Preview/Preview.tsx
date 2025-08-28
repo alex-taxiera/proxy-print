@@ -381,7 +381,7 @@ export const Preview = () => {
           <div
             className={vstack({
               alignItems: "center",
-              gap: "3",
+              gap: "0",
             })}
           >
             <Actions
