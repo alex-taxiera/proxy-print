@@ -63,7 +63,7 @@ const useDownloadImages = () => {
       title: "Downloading images",
     });
 
-    const imageData = images.map((image) => {
+    const formattedData = images.map((image) => {
       if (getIsLocalImage(image)) {
         return {
           name: generateDownloadName(
@@ -84,6 +84,12 @@ const useDownloadImages = () => {
         url: queryData.url,
       };
     });
+
+    // remove duplicate data based on url -- optional?
+    const imageData = formattedData.filter(
+      (data, index, self) =>
+        index === self.findIndex((t) => t.url === data.url),
+    );
 
     const worker = new ZipWorker();
     worker.postMessage({ type: "zip", data: { imageData } });
