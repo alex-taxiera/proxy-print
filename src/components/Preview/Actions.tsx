@@ -249,11 +249,11 @@ export const Actions = ({
                     <Menu.Item
                       value="downloadZip"
                       onSelect={() => downloadImages()}
-                      disabled={isDownloading}
+                      disabled={isLoadingImages || isDownloading}
                     >
                       <Menu.ItemIndicator>
                         {isDownloading ? (
-                          <Spinner />
+                          <Spinner size="sm" mr="1px" />
                         ) : (
                           <FontAwesomeIcon icon={faDownload} />
                         )}
