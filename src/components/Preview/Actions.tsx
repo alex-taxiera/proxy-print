@@ -153,13 +153,13 @@ const useDownloadImages = () => {
 const NoSelectionActions = ({
   isReferenceCardLoaded,
   contentRef,
+  isLoadingImages,
 }: {
   isReferenceCardLoaded: boolean;
   contentRef: React.RefObject<HTMLDivElement>;
+  isLoadingImages: boolean;
 }) => {
   const { onClear, isRendering, setIsRendering } = useContext(ImagesContext);
-
-  const isLoadingImages = useImageLoadingProgress();
 
   const generatePdf = useGeneratePdf(contentRef);
 
@@ -253,10 +253,15 @@ const NoSelectionActions = ({
   );
 };
 
-const SelectionActions = ({ currentPage }: { currentPage: number }) => {
+const SelectionActions = ({
+  currentPage,
+  isLoadingImages,
+}: {
+  currentPage: number;
+  isLoadingImages: boolean;
+}) => {
   const { images, onClear, isRendering, onReorder } = useContext(ImagesContext);
   const { cardsPerPage, imageMatrix } = usePreviewData();
-  const isLoadingImages = useImageLoadingProgress();
   const { onSelectAllImages, selectedImageUuids } = useContext(
     ImageSelectionContext,
   );
@@ -413,6 +418,8 @@ export const Actions = ({
   const { images, onClearErrors, imagesWithError } = useContext(ImagesContext);
   const { selectedImageUuids } = useContext(ImageSelectionContext);
 
+  const isLoadingImages = useImageLoadingProgress();
+
   const { imageMatrix, cardsPerPage } = usePreviewData();
 
   return (
@@ -442,9 +449,13 @@ export const Actions = ({
           <NoSelectionActions
             isReferenceCardLoaded={isReferenceCardLoaded}
             contentRef={contentRef}
+            isLoadingImages={isLoadingImages}
           />
         ) : (
-          <SelectionActions currentPage={currentPage} />
+          <SelectionActions
+            currentPage={currentPage}
+            isLoadingImages={isLoadingImages}
+          />
         )}
         <div
           className={vstack({
