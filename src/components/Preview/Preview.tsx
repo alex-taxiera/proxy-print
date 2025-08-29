@@ -473,6 +473,7 @@ export const Preview = () => {
                         key={image.uuid || `empty-${index}`}
                         image={image}
                         index={index}
+                        currentPage={currentPage}
                         onImageLoad={index === 0 ? onImageLoad : undefined}
                       />
                     ))}

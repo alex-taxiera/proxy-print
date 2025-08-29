@@ -1,8 +1,7 @@
-import { MenuSelectionDetails, Portal } from "@ark-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { css, cx, RecipeVariantProps, Styles, sva } from "styled-system/css";
+import { css, cx, Styles } from "styled-system/css";
 import { center, visuallyHidden } from "styled-system/patterns";
 
 import { ImageSelectionContext } from "../../context/ImageSelectionContext";
@@ -14,15 +13,13 @@ import {
   getIsEmptyImage,
 } from "../../context/ImagesContext";
 import { useCardPositionMeta } from "../../hooks/useCardClassNames";
-import { usePreviewData } from "../../hooks/usePreviewData";
 import { useSortableCard } from "../../hooks/useSortableCard";
 import { getQueryDataForImage, ImageQueryData } from "../../queries/images";
 import { ctrlOrMeta } from "../../utils/ctrl-or-meta";
-import { getKeybindLabels } from "../../utils/keybind-labels";
 import { Checkbox } from "../ui/checkbox";
-import { Kbd } from "../ui/kbd";
-import { Menu } from "../ui/menu";
 import { Spinner } from "../ui/spinner";
+import { CardContextMenu } from "./CardContextMenu";
+import { Guides } from "./Guides";
 
 const useCardClassName = (props: {
   isEmpty: boolean;
@@ -192,17 +189,15 @@ const useDownloadedSrc = (image: PossiblyEmptyImage) => {
 export type CardProps = {
   image: PossiblyEmptyImage;
   index: number;
+  currentPage: number;
   onImageLoad?: () => void;
 };
 
-export const Card = ({ image, index, onImageLoad }: CardProps) => {
-  const { images, onAdd, onRemove, isRendering, onReorder } =
-    useContext(ImagesContext);
+export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
+  const { images, onAdd, onRemove, isRendering } = useContext(ImagesContext);
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
-
-  const keybindLabels = getKeybindLabels();
 
   const isSelected = useMemo(() => {
     return getIsSelected(image.uuid);
@@ -211,52 +206,6 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   const absoluteIndex = useMemo(() => {
     return images.findIndex((img) => img.uuid === image.uuid);
   }, [images, image.uuid]);
-
-  const { cardsPerPage, imageMatrix } = usePreviewData();
-
-  const currentPage = Math.floor(absoluteIndex / cardsPerPage) + 1;
-
-  const isOnLastPage = useMemo(() => {
-    return currentPage === imageMatrix.length;
-  }, [currentPage, imageMatrix.length]);
-
-  const isOnFirstPage = useMemo(() => {
-    return currentPage === 1;
-  }, [currentPage]);
-
-  const onMoveToNextPage = useCallback(() => {
-    if (getIsEmptyImage(image)) {
-      return;
-    }
-
-    const newIndex = absoluteIndex + cardsPerPage - index;
-    onReorder([image], newIndex);
-  }, [image, absoluteIndex, index, cardsPerPage, onReorder]);
-
-  const onMoveToPreviousPage = useCallback(() => {
-    if (getIsEmptyImage(image)) {
-      return;
-    }
-
-    const newIndex = absoluteIndex - index - 1;
-    onReorder([image], newIndex);
-  }, [image, absoluteIndex, index, onReorder]);
-
-  const onMoveToPage = useCallback(
-    (details: MenuSelectionDetails) => {
-      if (getIsEmptyImage(image)) {
-        return;
-      }
-
-      const page = parseInt(details.value);
-      const newIndex =
-        page > currentPage
-          ? (page - 1) * cardsPerPage
-          : page * cardsPerPage - 1;
-      onReorder([image], newIndex);
-    },
-    [image, currentPage, cardsPerPage, onReorder],
-  );
 
   const [src, setSrc] = useState<string>("");
   const downloadedSrc = useDownloadedSrc(image);
@@ -304,17 +253,6 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     },
     [image, images, onAdd, isEmpty],
   );
-
-  const buildOnAddClick = useCallback(
-    (count: number) => () => {
-      add(count);
-    },
-    [add],
-  );
-
-  const onRemoveClick = useCallback(() => {
-    onRemove(image.uuid);
-  }, [image, onRemove]);
 
   const handleClick = useCallback(
     (event: React.MouseEvent) => {
@@ -416,118 +354,30 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
               })}
             />
           ) : imageSrc ? (
-            <Menu.Root>
-              <Menu.ContextTrigger cursor="grab" tabIndex={-1}>
-                <img
-                  src={imageSrc}
-                  alt={name}
-                  className={css({
-                    width:
-                      "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
-                    maxWidth: "unset",
-                    objectFit: "cover",
-                    position: "relative",
-                  })}
-                  onClick={handleClick}
-                  onLoad={() => {
-                    setIsLoading(false);
-                    onImageLoad?.();
-                  }}
-                />
-              </Menu.ContextTrigger>
-              <Portal>
-                <Menu.Positioner>
-                  <Menu.Content
-                    onDragStart={(e) => e.preventDefault()}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Menu.ItemGroup>
-                      <Menu.Item
-                        value="select"
-                        justifyContent="space-between"
-                        onSelect={() =>
-                          onSelectImageUuid(image.uuid, !isSelected)
-                        }
-                      >
-                        <Menu.ItemText>
-                          {isSelected ? "Deselect" : "Select"}
-                        </Menu.ItemText>
-                        <Kbd size="sm">{keybindLabels.ctrl} + Click</Kbd>
-                      </Menu.Item>
-                      <Menu.Item
-                        value="edit"
-                        color="fg.error"
-                        justifyContent="space-between"
-                        onSelect={onRemoveClick}
-                      >
-                        <Menu.ItemText>Remove</Menu.ItemText>
-                        <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
-                      </Menu.Item>
-                    </Menu.ItemGroup>
-                    <Menu.ItemGroup>
-                      <Menu.Item
-                        onSelect={buildOnAddClick(1)}
-                        value="add-1"
-                        justifyContent="space-between"
-                      >
-                        <Menu.ItemText>Add 1</Menu.ItemText>
-                        <Kbd size="sm">Click</Kbd>
-                      </Menu.Item>
-                      <Menu.Item
-                        onSelect={buildOnAddClick(5)}
-                        value="add-5"
-                        justifyContent="space-between"
-                      >
-                        <Menu.ItemText>Add 5</Menu.ItemText>
-                      </Menu.Item>
-                    </Menu.ItemGroup>
-                    <Menu.ItemGroup>
-                      {!isOnLastPage ? (
-                        <Menu.Item
-                          onSelect={onMoveToNextPage}
-                          value="move-to-next-page"
-                          justifyContent="space-between"
-                        >
-                          <Menu.ItemText>Move to next page</Menu.ItemText>
-                        </Menu.Item>
-                      ) : null}
-                      {!isOnFirstPage ? (
-                        <Menu.Item
-                          onSelect={onMoveToPreviousPage}
-                          value="move-to-previous-page"
-                          justifyContent="space-between"
-                        >
-                          <Menu.ItemText>Move to previous page</Menu.ItemText>
-                        </Menu.Item>
-                      ) : null}
-                      {imageMatrix.length > 1 ? (
-                        <Menu.Root
-                          onSelect={onMoveToPage}
-                          positioning={{ gutter: 10, placement: "right-start" }}
-                        >
-                          <Menu.TriggerItem>Move to ...</Menu.TriggerItem>
-                          <Portal>
-                            <Menu.Positioner>
-                              <Menu.Content>
-                                {imageMatrix.map((_, index) => (
-                                  <Menu.Item
-                                    key={index}
-                                    disabled={index + 1 === currentPage}
-                                    value={(index + 1).toString()}
-                                  >
-                                    Page {index + 1}
-                                  </Menu.Item>
-                                ))}
-                              </Menu.Content>
-                            </Menu.Positioner>
-                          </Portal>
-                        </Menu.Root>
-                      ) : null}
-                    </Menu.ItemGroup>
-                  </Menu.Content>
-                </Menu.Positioner>
-              </Portal>
-            </Menu.Root>
+            <CardContextMenu
+              image={image}
+              add={add}
+              onSelectImageUuid={onSelectImageUuid}
+              currentPage={currentPage}
+              index={index}
+            >
+              <img
+                src={imageSrc}
+                alt={name}
+                className={css({
+                  width:
+                    "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
+                  maxWidth: "unset",
+                  objectFit: "cover",
+                  position: "relative",
+                })}
+                onClick={handleClick}
+                onLoad={() => {
+                  setIsLoading(false);
+                  onImageLoad?.();
+                }}
+              />
+            </CardContextMenu>
           ) : (
             <span
               className={css({
@@ -583,123 +433,5 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
       ) : null}
       <Guides />
     </div>
-  );
-};
-
-const guide = sva({
-  slots: ["root", "horizontal", "vertical"],
-  base: {
-    root: {
-      position: "absolute",
-      display: "var(--guide-display)",
-      zIndex: "1",
-    },
-    horizontal: {
-      position: "absolute",
-      height: "var(--guide-border-width)",
-      backgroundColor: "var(--guide-border-color)",
-      backgroundImage:
-        "repeating-linear-gradient(to right, var(--guide-border-color-inverted) 0, var(--guide-border-color-inverted) 2px, transparent 2px, transparent 4px)",
-    },
-    vertical: {
-      position: "absolute",
-      width: "var(--guide-border-width)",
-      backgroundColor: "var(--guide-border-color)",
-      backgroundImage:
-        "repeating-linear-gradient(to bottom, var(--guide-border-color-inverted) 0, var(--guide-border-color-inverted) 2px, transparent 2px, transparent 4px)",
-    },
-  },
-  variants: {
-    position: {
-      topLeft: {
-        root: {
-          top: "var(--guide-corner-offset)",
-          left: "var(--guide-corner-offset)",
-        },
-        horizontal: {
-          top: "0",
-          left: "calc(-1 * var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
-        },
-        vertical: {
-          top: "calc(-1 * var(--bleed-edge-width))",
-          left: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
-        },
-      },
-      topRight: {
-        root: {
-          top: "var(--guide-corner-offset)",
-          right: "var(--guide-corner-offset)",
-        },
-        horizontal: {
-          top: "0",
-          right: "calc(-1 * var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
-        },
-        vertical: {
-          top: "calc(-1 * var(--bleed-edge-width))",
-          right: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
-        },
-      },
-      bottomLeft: {
-        root: {
-          bottom: "var(--guide-corner-offset)",
-          left: "var(--guide-corner-offset)",
-        },
-        horizontal: {
-          bottom: "0",
-          left: "calc(-1 *var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
-        },
-        vertical: {
-          bottom: "calc(-1 * var(--bleed-edge-width))",
-          left: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
-        },
-      },
-      bottomRight: {
-        root: {
-          bottom: "var(--guide-corner-offset)",
-          right: "var(--guide-corner-offset)",
-        },
-        horizontal: {
-          bottom: "0",
-          right: "calc(-1 * var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
-        },
-        vertical: {
-          bottom: "calc(-1 * var(--bleed-edge-width))",
-          right: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
-        },
-      },
-    },
-  },
-});
-
-export type GuideVariants = RecipeVariantProps<typeof guide>;
-
-type GuideProps = NonNullable<GuideVariants>;
-
-const Guide = ({ position = "topLeft" }: GuideProps) => {
-  const styles = guide({ position });
-  return (
-    <div className={styles.root}>
-      <div className={styles.horizontal} />
-      <div className={styles.vertical} />
-    </div>
-  );
-};
-
-const Guides = () => {
-  return (
-    <>
-      <Guide position="topLeft" />
-      <Guide position="topRight" />
-      <Guide position="bottomLeft" />
-      <Guide position="bottomRight" />
-    </>
   );
 };
