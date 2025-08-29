@@ -21,6 +21,7 @@ import {
 import { css, cx } from "styled-system/css";
 import { center, grid, hstack, vstack } from "styled-system/patterns";
 
+import { ImageSelectionContext } from "../../context/ImageSelectionContext";
 import { ImagesContext } from "../../context/ImagesContext";
 import { SettingsContext } from "../../context/SettingsContext";
 import { usePreviewData } from "../../hooks/usePreviewData";
@@ -204,6 +205,10 @@ export const Preview = () => {
   const { images, isRendering, imagesWithError, onReorder } =
     useContext(ImagesContext);
 
+  const { onSelectAllImages, getIsSelected } = useContext(
+    ImageSelectionContext,
+  );
+
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { imageMatrix, cardsPerPage, rowsPerPage, columnsPerPage } =
@@ -261,36 +266,46 @@ export const Preview = () => {
       if (isSortable(source) && getIsSortableCardData(source.data)) {
         if (getIsSortableCardData(target.data)) {
           // normal reorder
-          const imageUuid = source.id as string;
-          const newIndex = target.data.absoluteIndex;
+          const imagesToMove = source.data.images;
+          const dragTargetId = target.id as string;
+          const newIndex = images.findIndex(
+            (image) => image.uuid === dragTargetId,
+          );
 
-          if (imageUuid && newIndex !== undefined) {
-            onReorder(imageUuid, newIndex);
+          if (imagesToMove.length > 0 && newIndex !== undefined) {
+            onReorder(imagesToMove, newIndex);
           }
         } else if (target.type === "page") {
           // move to page
           switch (target.id) {
             case "prev-page":
               onReorder(
-                source.id as string,
-                source.data.absoluteIndex - source.sortable.initialIndex - 1,
+                source.data.images,
+                (currentPage - 1) * cardsPerPage - 1,
               );
               changePage(currentPage - 1);
               break;
             case "next-page":
-              onReorder(
-                source.id as string,
-                source.data.absoluteIndex +
-                  cardsPerPage -
-                  source.sortable.initialIndex,
-              );
+              onReorder(source.data.images, currentPage * cardsPerPage);
               changePage(currentPage + 1);
               break;
           }
         }
+
+        if (getIsSelected(source.id as string)) {
+          onSelectAllImages(false);
+        }
       }
     },
-    [onReorder, cardsPerPage, changePage, currentPage],
+    [
+      onReorder,
+      cardsPerPage,
+      changePage,
+      currentPage,
+      images,
+      onSelectAllImages,
+      getIsSelected,
+    ],
   );
 
   if (images.length === 0 && imagesWithError.length === 0) {
@@ -531,9 +546,11 @@ export const Preview = () => {
                     })}
                   >
                     {getIsSortableCardData(source.data)
-                      ? "name" in source.data.image
-                        ? source.data.image.name
-                        : source.data.image.file.name
+                      ? source.data.images.length === 1
+                        ? "name" in source.data.images[0]
+                          ? source.data.images[0].name
+                          : source.data.images[0].file.name
+                        : `${source.data.images.length} cards`
                       : "unknown"}
                   </div>
                 </div>

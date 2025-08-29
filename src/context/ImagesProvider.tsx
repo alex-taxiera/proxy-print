@@ -110,15 +110,34 @@ export const ImagesProvider = (
     [downloadImage],
   );
 
-  const onReorder = useCallback((imageUuid: string, newIndex: number) => {
+  const onReorder = useCallback((imagesToMove: Image[], newIndex: number) => {
     setImages((old) => {
-      const currentIndex = old.findIndex((image) => image.uuid === imageUuid);
-      if (currentIndex === -1 || newIndex < 0 || newIndex >= old.length) {
+      // Find the indices of all images to move
+      const indicesToMove = imagesToMove
+        .map((img) => old.findIndex((image) => image.uuid === img.uuid))
+        .filter((index) => index !== -1)
+        .sort((a, b) => a - b);
+
+      if (
+        indicesToMove.length === 0 ||
+        newIndex < 0 ||
+        newIndex >= old.length
+      ) {
         return old;
       }
+
       const updated = [...old];
-      const [moved] = updated.splice(currentIndex, 1);
-      updated.splice(newIndex, 0, moved);
+
+      // Remove all images to move (in reverse order to maintain indices)
+      const movedImages: Image[] = [];
+      for (let i = indicesToMove.length - 1; i >= 0; i--) {
+        const [removed] = updated.splice(indicesToMove[i], 1);
+        movedImages.unshift(removed);
+      }
+
+      // Insert all moved images at the new position
+      updated.splice(newIndex, 0, ...movedImages);
+
       return updated;
     });
   }, []);

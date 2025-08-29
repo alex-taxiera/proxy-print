@@ -17,6 +17,8 @@ import { useCardPositionMeta } from "../../hooks/useCardClassNames";
 import { usePreviewData } from "../../hooks/usePreviewData";
 import { useSortableCard } from "../../hooks/useSortableCard";
 import { getQueryDataForImage, ImageQueryData } from "../../queries/images";
+import { ctrlOrMeta } from "../../utils/ctrl-or-meta";
+import { getKeybindLabels } from "../../utils/keybind-labels";
 import { Checkbox } from "../ui/checkbox";
 import { Kbd } from "../ui/kbd";
 import { Menu } from "../ui/menu";
@@ -200,6 +202,8 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
     ImageSelectionContext,
   );
 
+  const keybindLabels = getKeybindLabels();
+
   const isSelected = useMemo(() => {
     return getIsSelected(image.uuid);
   }, [getIsSelected, image.uuid]);
@@ -221,25 +225,37 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   }, [currentPage]);
 
   const onMoveToNextPage = useCallback(() => {
+    if (getIsEmptyImage(image)) {
+      return;
+    }
+
     const newIndex = absoluteIndex + cardsPerPage - index;
-    onReorder(image.uuid, newIndex);
-  }, [image.uuid, absoluteIndex, index, cardsPerPage, onReorder]);
+    onReorder([image], newIndex);
+  }, [image, absoluteIndex, index, cardsPerPage, onReorder]);
 
   const onMoveToPreviousPage = useCallback(() => {
+    if (getIsEmptyImage(image)) {
+      return;
+    }
+
     const newIndex = absoluteIndex - index - 1;
-    onReorder(image.uuid, newIndex);
-  }, [image.uuid, absoluteIndex, index, onReorder]);
+    onReorder([image], newIndex);
+  }, [image, absoluteIndex, index, onReorder]);
 
   const onMoveToPage = useCallback(
     (details: MenuSelectionDetails) => {
+      if (getIsEmptyImage(image)) {
+        return;
+      }
+
       const page = parseInt(details.value);
       const newIndex =
         page > currentPage
           ? (page - 1) * cardsPerPage
           : page * cardsPerPage - 1;
-      onReorder(image.uuid, newIndex);
+      onReorder([image], newIndex);
     },
-    [image.uuid, currentPage, cardsPerPage, onReorder],
+    [image, currentPage, cardsPerPage, onReorder],
   );
 
   const [src, setSrc] = useState<string>("");
@@ -260,7 +276,6 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
   const sortable = useSortableCard({
     image,
     index,
-    isEmpty,
     isPending,
     imageSrc,
     absoluteIndex,
@@ -309,11 +324,22 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
 
       if (event.altKey) {
         onRemove(image.uuid);
+      } else if (ctrlOrMeta(event)) {
+        onSelectImageUuid(image.uuid, !isSelected);
       } else {
         add(1);
       }
     },
-    [isEmpty, isPending, isRendering, onRemove, image.uuid, add],
+    [
+      isEmpty,
+      isPending,
+      isRendering,
+      onRemove,
+      image.uuid,
+      onSelectImageUuid,
+      isSelected,
+      add,
+    ],
   );
 
   const name = useMemo(() => {
@@ -415,71 +441,89 @@ export const Card = ({ image, index, onImageLoad }: CardProps) => {
                     onDragStart={(e) => e.preventDefault()}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Menu.Item
-                      value="edit"
-                      color="fg.error"
-                      justifyContent="space-between"
-                      onSelect={onRemoveClick}
-                    >
-                      <Menu.ItemText>Remove</Menu.ItemText>
-                      <Kbd size="sm">Alt + Click</Kbd>
-                    </Menu.Item>
-                    <Menu.Item
-                      onSelect={buildOnAddClick(1)}
-                      value="add-1"
-                      justifyContent="space-between"
-                    >
-                      <Menu.ItemText>Add 1</Menu.ItemText>
-                      <Kbd size="sm">Click</Kbd>
-                    </Menu.Item>
-                    <Menu.Item
-                      onSelect={buildOnAddClick(5)}
-                      value="add-5"
-                      justifyContent="space-between"
-                    >
-                      <Menu.ItemText>Add 5</Menu.ItemText>
-                    </Menu.Item>
-                    {!isOnLastPage ? (
+                    <Menu.ItemGroup>
                       <Menu.Item
-                        onSelect={onMoveToNextPage}
-                        value="move-to-next-page"
+                        value="select"
+                        justifyContent="space-between"
+                        onSelect={() =>
+                          onSelectImageUuid(image.uuid, !isSelected)
+                        }
+                      >
+                        <Menu.ItemText>
+                          {isSelected ? "Deselect" : "Select"}
+                        </Menu.ItemText>
+                        <Kbd size="sm">{keybindLabels.ctrl} + Click</Kbd>
+                      </Menu.Item>
+                      <Menu.Item
+                        value="edit"
+                        color="fg.error"
+                        justifyContent="space-between"
+                        onSelect={onRemoveClick}
+                      >
+                        <Menu.ItemText>Remove</Menu.ItemText>
+                        <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
+                      </Menu.Item>
+                    </Menu.ItemGroup>
+                    <Menu.ItemGroup>
+                      <Menu.Item
+                        onSelect={buildOnAddClick(1)}
+                        value="add-1"
                         justifyContent="space-between"
                       >
-                        <Menu.ItemText>Move to next page</Menu.ItemText>
+                        <Menu.ItemText>Add 1</Menu.ItemText>
+                        <Kbd size="sm">Click</Kbd>
                       </Menu.Item>
-                    ) : null}
-                    {!isOnFirstPage ? (
                       <Menu.Item
-                        onSelect={onMoveToPreviousPage}
-                        value="move-to-previous-page"
+                        onSelect={buildOnAddClick(5)}
+                        value="add-5"
                         justifyContent="space-between"
                       >
-                        <Menu.ItemText>Move to previous page</Menu.ItemText>
+                        <Menu.ItemText>Add 5</Menu.ItemText>
                       </Menu.Item>
-                    ) : null}
-                    {imageMatrix.length > 1 ? (
-                      <Menu.Root
-                        onSelect={onMoveToPage}
-                        positioning={{ gutter: 10, placement: "right-start" }}
-                      >
-                        <Menu.TriggerItem>Move to ...</Menu.TriggerItem>
-                        <Portal>
-                          <Menu.Positioner>
-                            <Menu.Content>
-                              {imageMatrix.map((_, index) => (
-                                <Menu.Item
-                                  key={index}
-                                  disabled={index + 1 === currentPage}
-                                  value={(index + 1).toString()}
-                                >
-                                  Page {index + 1}
-                                </Menu.Item>
-                              ))}
-                            </Menu.Content>
-                          </Menu.Positioner>
-                        </Portal>
-                      </Menu.Root>
-                    ) : null}
+                    </Menu.ItemGroup>
+                    <Menu.ItemGroup>
+                      {!isOnLastPage ? (
+                        <Menu.Item
+                          onSelect={onMoveToNextPage}
+                          value="move-to-next-page"
+                          justifyContent="space-between"
+                        >
+                          <Menu.ItemText>Move to next page</Menu.ItemText>
+                        </Menu.Item>
+                      ) : null}
+                      {!isOnFirstPage ? (
+                        <Menu.Item
+                          onSelect={onMoveToPreviousPage}
+                          value="move-to-previous-page"
+                          justifyContent="space-between"
+                        >
+                          <Menu.ItemText>Move to previous page</Menu.ItemText>
+                        </Menu.Item>
+                      ) : null}
+                      {imageMatrix.length > 1 ? (
+                        <Menu.Root
+                          onSelect={onMoveToPage}
+                          positioning={{ gutter: 10, placement: "right-start" }}
+                        >
+                          <Menu.TriggerItem>Move to ...</Menu.TriggerItem>
+                          <Portal>
+                            <Menu.Positioner>
+                              <Menu.Content>
+                                {imageMatrix.map((_, index) => (
+                                  <Menu.Item
+                                    key={index}
+                                    disabled={index + 1 === currentPage}
+                                    value={(index + 1).toString()}
+                                  >
+                                    Page {index + 1}
+                                  </Menu.Item>
+                                ))}
+                              </Menu.Content>
+                            </Menu.Positioner>
+                          </Portal>
+                        </Menu.Root>
+                      ) : null}
+                    </Menu.ItemGroup>
                   </Menu.Content>
                 </Menu.Positioner>
               </Portal>

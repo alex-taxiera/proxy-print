@@ -1,12 +1,14 @@
-import { Portal } from "@ark-ui/react";
+import { MenuSelectionDetails, Portal } from "@ark-ui/react";
 import {
+  faArrowLeft,
+  faArrowRight,
   faDownload,
   faEllipsisV,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 
 import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
@@ -251,15 +253,50 @@ const NoSelectionActions = ({
   );
 };
 
-const SelectionActions = () => {
-  const { onClear, isRendering } = useContext(ImagesContext);
-
+const SelectionActions = ({ currentPage }: { currentPage: number }) => {
+  const { images, onClear, isRendering, onReorder } = useContext(ImagesContext);
+  const { cardsPerPage, imageMatrix } = usePreviewData();
   const isLoadingImages = useImageLoadingProgress();
   const { onSelectAllImages, selectedImageUuids } = useContext(
     ImageSelectionContext,
   );
   const { isDownloading, downloadImages } = useDownloadImages();
   const selectedImageCount = selectedImageUuids.length;
+  const selectedImages = useMemo(
+    () => images.filter((image) => selectedImageUuids.includes(image.uuid)),
+    [images, selectedImageUuids],
+  );
+
+  const isOnLastPage = useMemo(() => {
+    return currentPage === imageMatrix.length;
+  }, [currentPage, imageMatrix.length]);
+
+  const isOnFirstPage = useMemo(() => {
+    return currentPage === 1;
+  }, [currentPage]);
+
+  const onMoveToNextPage = useCallback(() => {
+    const newIndex = currentPage * cardsPerPage;
+    onReorder(selectedImages, newIndex);
+  }, [selectedImages, currentPage, cardsPerPage, onReorder]);
+
+  const onMoveToPreviousPage = useCallback(() => {
+    const newIndex = (currentPage - 1) * cardsPerPage - 1;
+    onReorder(selectedImages, newIndex);
+  }, [selectedImages, currentPage, cardsPerPage, onReorder]);
+
+  const onMoveToPage = useCallback(
+    (details: MenuSelectionDetails) => {
+      const page = parseInt(details.value);
+      const newIndex =
+        page > currentPage
+          ? (page - 1) * cardsPerPage
+          : page * cardsPerPage - 1;
+      onReorder(selectedImages, newIndex);
+      onSelectAllImages(false);
+    },
+    [selectedImages, currentPage, cardsPerPage, onReorder, onSelectAllImages],
+  );
 
   return (
     <div className={hstack({ gap: "2" })}>
@@ -297,6 +334,56 @@ const SelectionActions = () => {
                   </Menu.ItemIndicator>
                   <Menu.ItemText>Download images (ZIP)</Menu.ItemText>
                 </Menu.Item>
+              </Menu.ItemGroup>
+              <Menu.ItemGroup>
+                {!isOnLastPage ? (
+                  <Menu.Item
+                    onSelect={onMoveToNextPage}
+                    value="move-to-next-page"
+                  >
+                    <Menu.ItemIndicator>
+                      <FontAwesomeIcon icon={faArrowRight} />
+                    </Menu.ItemIndicator>
+                    <Menu.ItemText>Move to next page</Menu.ItemText>
+                  </Menu.Item>
+                ) : null}
+                {!isOnFirstPage ? (
+                  <Menu.Item
+                    onSelect={onMoveToPreviousPage}
+                    value="move-to-previous-page"
+                  >
+                    <Menu.ItemIndicator>
+                      <FontAwesomeIcon icon={faArrowLeft} />
+                    </Menu.ItemIndicator>
+                    <Menu.ItemText>Move to previous page</Menu.ItemText>
+                  </Menu.Item>
+                ) : null}
+                {imageMatrix.length > 1 ? (
+                  <Menu.Root
+                    onSelect={onMoveToPage}
+                    positioning={{ gutter: 10, placement: "right-start" }}
+                  >
+                    <Menu.TriggerItem>
+                      <FontAwesomeIcon icon={faEllipsisV} />
+                      Move to ...
+                    </Menu.TriggerItem>
+                    <Portal>
+                      <Menu.Positioner>
+                        <Menu.Content>
+                          {imageMatrix.map((_, index) => (
+                            <Menu.Item
+                              key={index}
+                              disabled={index + 1 === currentPage}
+                              value={(index + 1).toString()}
+                            >
+                              Page {index + 1}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Content>
+                      </Menu.Positioner>
+                    </Portal>
+                  </Menu.Root>
+                ) : null}
               </Menu.ItemGroup>
             </Menu.Content>
           </Menu.Positioner>
@@ -357,7 +444,7 @@ export const Actions = ({
             contentRef={contentRef}
           />
         ) : (
-          <SelectionActions />
+          <SelectionActions currentPage={currentPage} />
         )}
         <div
           className={vstack({
