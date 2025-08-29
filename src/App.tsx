@@ -7,6 +7,7 @@ import { Preview } from "./components/Preview";
 import { Sidebar } from "./components/Sidebar";
 import { Toaster } from "./components/ui/styled/toast";
 import { AlertToast } from "./components/ui/toast";
+import { ImageLoadingProvider } from "./context/ImageLoadingContext";
 import { ImageSelectionProvider } from "./context/ImageSelectionProvider";
 import { ImagesProvider } from "./context/ImagesProvider";
 import { SettingsProvider } from "./context/SettingsProvider";
@@ -20,24 +21,26 @@ function App() {
       <Toaster toaster={toaster}>
         {(toast) => <AlertToast toast={toast} />}
       </Toaster>
-      <SettingsProvider>
-        <ImagesProvider>
-          <ImageSelectionProvider>
-            <Header />
-            <main
-              className={hstack({
-                alignItems: "stretch",
-                flex: 1,
-                gap: "0",
-                overflow: "hidden",
-              })}
-            >
-              <Preview />
-              <Sidebar />
-            </main>
-          </ImageSelectionProvider>
-        </ImagesProvider>
-      </SettingsProvider>
+      <ImageLoadingProvider>
+        <SettingsProvider>
+          <ImagesProvider>
+            <ImageSelectionProvider>
+              <Header />
+              <main
+                className={hstack({
+                  alignItems: "stretch",
+                  flex: 1,
+                  gap: "0",
+                  overflow: "hidden",
+                })}
+              >
+                <Preview />
+                <Sidebar />
+              </main>
+            </ImageSelectionProvider>
+          </ImagesProvider>
+        </SettingsProvider>
+      </ImageLoadingProvider>
     </QueryClientProvider>
   );
 }

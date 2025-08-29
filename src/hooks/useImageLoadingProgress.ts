@@ -138,11 +138,6 @@ export function useImageLoadingProgress() {
         unsubscribeRef.current();
         unsubscribeRef.current = null;
       }
-
-      if (toastIdRef.current) {
-        toaster.remove(toastIdRef.current);
-        toastIdRef.current = null;
-      }
     };
   }, [queryClient, getCurrentProgress, updateProgressToast]);
 
