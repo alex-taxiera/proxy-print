@@ -1,4 +1,13 @@
 import { MenuSelectionDetails, Portal } from "@ark-ui/react";
+import {
+  faArrowLeft,
+  faArrowRight,
+  faCheck,
+  faEllipsisV,
+  faPlus,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useContext, useMemo } from "react";
 
 import { ImageSelectionContext } from "../../context/ImageSelectionContext";
@@ -90,38 +99,36 @@ export const CardContextMenu = ({
             <Menu.ItemGroup>
               <Menu.Item
                 value="select"
-                justifyContent="space-between"
                 onSelect={() => onSelectImageUuid(image.uuid, !isSelected)}
               >
+                <Menu.ItemIndicator>
+                  <FontAwesomeIcon icon={faCheck} />
+                </Menu.ItemIndicator>
                 <Menu.ItemText>
                   {isSelected ? "Deselect" : "Select"}
                 </Menu.ItemText>
-                <Kbd size="sm">{keybindLabels.ctrl} + Click</Kbd>
+                <Kbd size="sm">Click</Kbd>
               </Menu.Item>
-              <Menu.Item
-                value="edit"
-                color="fg.error"
-                justifyContent="space-between"
-                onSelect={onRemoveClick}
-              >
+              <Menu.Item value="edit" color="fg.error" onSelect={onRemoveClick}>
+                <Menu.ItemIndicator color="fg.error">
+                  <FontAwesomeIcon icon={faTrash} />
+                </Menu.ItemIndicator>
                 <Menu.ItemText>Remove</Menu.ItemText>
                 <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
               </Menu.Item>
             </Menu.ItemGroup>
             <Menu.ItemGroup>
-              <Menu.Item
-                onSelect={buildOnAddClick(1)}
-                value="add-1"
-                justifyContent="space-between"
-              >
+              <Menu.Item onSelect={buildOnAddClick(1)} value="add-1">
+                <Menu.ItemIndicator>
+                  <FontAwesomeIcon icon={faPlus} />
+                </Menu.ItemIndicator>
                 <Menu.ItemText>Add 1</Menu.ItemText>
-                <Kbd size="sm">Click</Kbd>
+                <Kbd size="sm">{keybindLabels.ctrl} + Click</Kbd>
               </Menu.Item>
-              <Menu.Item
-                onSelect={buildOnAddClick(5)}
-                value="add-5"
-                justifyContent="space-between"
-              >
+              <Menu.Item onSelect={buildOnAddClick(5)} value="add-5">
+                <Menu.ItemIndicator>
+                  <FontAwesomeIcon icon={faPlus} />
+                </Menu.ItemIndicator>
                 <Menu.ItemText>Add 5</Menu.ItemText>
               </Menu.Item>
             </Menu.ItemGroup>
@@ -130,8 +137,10 @@ export const CardContextMenu = ({
                 <Menu.Item
                   onSelect={onMoveToNextPage}
                   value="move-to-next-page"
-                  justifyContent="space-between"
                 >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faArrowRight} />
+                  </Menu.ItemIndicator>
                   <Menu.ItemText>Move to next page</Menu.ItemText>
                 </Menu.Item>
               ) : null}
@@ -139,8 +148,10 @@ export const CardContextMenu = ({
                 <Menu.Item
                   onSelect={onMoveToPreviousPage}
                   value="move-to-previous-page"
-                  justifyContent="space-between"
                 >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faArrowLeft} />
+                  </Menu.ItemIndicator>
                   <Menu.ItemText>Move to previous page</Menu.ItemText>
                 </Menu.Item>
               ) : null}
@@ -149,7 +160,10 @@ export const CardContextMenu = ({
                   onSelect={onMoveToPage}
                   positioning={{ gutter: 10, placement: "right-start" }}
                 >
-                  <Menu.TriggerItem>Move to ...</Menu.TriggerItem>
+                  <Menu.TriggerItem>
+                    <FontAwesomeIcon icon={faEllipsisV} />
+                    Move to ...
+                  </Menu.TriggerItem>
                   <Portal>
                     <Menu.Positioner>
                       <Menu.Content>

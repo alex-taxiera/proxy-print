@@ -263,9 +263,9 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
       if (event.altKey) {
         onRemove(image.uuid);
       } else if (ctrlOrMeta(event)) {
-        onSelectImageUuid(image.uuid, !isSelected);
-      } else {
         add(1);
+      } else {
+        onSelectImageUuid(image.uuid, !isSelected);
       }
     },
     [
