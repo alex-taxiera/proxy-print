@@ -1,11 +1,4 @@
-import { pointerIntersection } from "@dnd-kit/collision";
-import {
-  DragDropProvider,
-  DragDropEventHandlers,
-  useDroppable,
-  useDragDropMonitor,
-  DragOverlay,
-} from "@dnd-kit/react";
+import { DragDropProvider, DragDropEventHandlers } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -30,6 +23,8 @@ import { ProgressOverlay } from "../ProgressOverlay";
 import { Link } from "../ui/link";
 import { Actions } from "./Actions";
 import { Card } from "./Card";
+import { CardDragOverlay } from "./CardDragOverlay";
+import { PageDrop } from "./PageDrop";
 
 const containerStyles = css.raw({
   flex: 1,
@@ -85,118 +80,6 @@ const usePagination = () => {
     previousPage,
     onImageLoad,
   };
-};
-
-const PageDrop = ({
-  id,
-  disabled,
-  children,
-  onHoverTimeout,
-  hoverTimeoutMs = 200,
-}: React.PropsWithChildren<{
-  id: string;
-  disabled?: boolean;
-  onHoverTimeout?: () => void;
-  hoverTimeoutMs?: number;
-}>) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useDragDropMonitor({
-    onDragStart: () => setIsDragging(true),
-    onDragEnd: () => {
-      setIsDragging(false);
-      setIsHovering(false);
-      if (hoverTimerRef.current) {
-        clearTimeout(hoverTimerRef.current);
-        hoverTimerRef.current = null;
-      }
-    },
-  });
-
-  const { isDropTarget, ref } = useDroppable({
-    id,
-    type: "page",
-    accept: "card",
-    disabled,
-    collisionDetector: pointerIntersection,
-  });
-
-  const setHoverTimeout = useCallback(
-    (timeout?: number) => {
-      hoverTimerRef.current = setTimeout(() => {
-        onHoverTimeout?.();
-        setHoverTimeout(hoverTimeoutMs * 4);
-      }, timeout ?? hoverTimeoutMs);
-    },
-    [onHoverTimeout, hoverTimeoutMs],
-  );
-
-  // Handle hover timeout logic
-  const handleHoverStart = useCallback(() => {
-    if (disabled || !onHoverTimeout) return;
-
-    setIsHovering(true);
-
-    // Clear any existing timer
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-    }
-
-    // Set new timer
-    setHoverTimeout();
-  }, [disabled, onHoverTimeout, setHoverTimeout]);
-
-  const handleHoverEnd = useCallback(() => {
-    setIsHovering(false);
-
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  }, []);
-
-  // Monitor when we become a drop target (hovering over)
-  useEffect(() => {
-    if (isDropTarget && !isHovering) {
-      handleHoverStart();
-    } else if (!isDropTarget && isHovering) {
-      handleHoverEnd();
-    }
-  }, [isDropTarget, isHovering, handleHoverStart, handleHoverEnd]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimerRef.current) {
-        clearTimeout(hoverTimerRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={css({
-        visibility: !disabled && isDragging ? "visible" : "hidden",
-        bg: isDropTarget
-          ? "accent.5"
-          : isDragging
-            ? "bg.default"
-            : "transparent",
-        borderColor: "border.default",
-        borderStyle: "solid",
-        borderWidth: "1px",
-        borderRadius: "l2",
-        width: "24",
-        height: "var(--page-height, 11 var(--page-unit, in))",
-        paddingY: "4",
-      })}
-    >
-      {children}
-    </div>
-  );
 };
 
 export const Preview = () => {
@@ -429,7 +312,6 @@ export const Preview = () => {
                   "calc(calc(-0.5 * var(--guide-border-width)) + calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1)))",
               })}
             >
-              {}
               <div
                 className={css(
                   {
@@ -515,49 +397,7 @@ export const Preview = () => {
               </div>
             </div>
           </PageDrop>
-          <DragOverlay>
-            {(source) => {
-              return (
-                <div
-                  className={css({
-                    height: "full",
-                    position: "relative",
-                    width: "100%",
-                    overflow: "visible",
-                  })}
-                >
-                  <div
-                    style={{
-                      left: `${dragOverlayOffset?.x}px`,
-                      top: `${dragOverlayOffset?.y}px`,
-                    }}
-                    className={css({
-                      background: "accent.default",
-                      borderRadius: "l2",
-                      color: "accent.fg",
-                      padding: "2",
-                      fontSize: "sm",
-                      textAlign: "center",
-                      width: "max",
-                      maxWidth: "var(--card-width)",
-                      wordBreak: "break-all",
-                      position: "absolute",
-                      zIndex: "1",
-                      pointerEvents: "none",
-                    })}
-                  >
-                    {getIsSortableCardData(source.data)
-                      ? source.data.images.length === 1
-                        ? "name" in source.data.images[0]
-                          ? source.data.images[0].name
-                          : source.data.images[0].file.name
-                        : `${source.data.images.length} cards`
-                      : "unknown"}
-                  </div>
-                </div>
-              );
-            }}
-          </DragOverlay>
+          <CardDragOverlay dragOverlayOffset={dragOverlayOffset} />
         </DragDropProvider>
       </div>
     </div>
