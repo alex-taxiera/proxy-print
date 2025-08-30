@@ -2,7 +2,7 @@ import { DragOverlay } from "@dnd-kit/react";
 
 import { css } from "styled-system/css";
 
-import { getIsSortableCardData } from "../../hooks/useSortableCard";
+import { getIsSortableCardData } from "~/hooks/useSortableCard";
 
 export type CardDragOverlayProps = {
   dragOverlayOffset: {

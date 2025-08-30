@@ -2,16 +2,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { hstack } from "styled-system/patterns";
 
-import { Header } from "./components/Header";
-import { Preview } from "./components/Preview";
-import { Sidebar } from "./components/Sidebar";
-import { Toaster } from "./components/ui/styled/toast";
-import { AlertToast } from "./components/ui/toast";
-import { ImageLoadingProvider } from "./context/ImageLoadingContext";
-import { ImageSelectionProvider } from "./context/ImageSelectionProvider";
-import { ImagesProvider } from "./context/ImagesProvider";
-import { SettingsProvider } from "./context/SettingsProvider";
-import { toaster } from "./utils/toaster";
+import { Toaster } from "~/components/ui/styled/toast";
+import { AlertToast } from "~/components/ui/toast";
+
+import { Header } from "~/components/Header";
+import { Preview } from "~/components/Preview";
+import { Sidebar } from "~/components/Sidebar";
+
+import { ImageLoadingProvider } from "~/context/ImageLoadingContext";
+import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";
+import { ImagesProvider } from "~/context/ImagesProvider";
+import { SettingsProvider } from "~/context/SettingsProvider";
+import { toaster } from "~/utils/toaster";
 
 const queryClient = new QueryClient();
 

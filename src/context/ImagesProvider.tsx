@@ -1,7 +1,8 @@
 import { nanoid } from "nanoid";
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 
-import { getQueryDataForImage } from "../queries/images";
+import { getQueryDataForImage } from "~/queries/images";
+
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import {
   DownloadableImage,

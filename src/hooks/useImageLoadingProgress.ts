@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ImageQueryData, imagesQueryKey } from "../queries/images";
-import { toaster } from "../utils/toaster";
+import { ImageQueryData, imagesQueryKey } from "~/queries/images";
+import { toaster } from "~/utils/toaster";
 
 interface ImageLoadingProgress {
   /**

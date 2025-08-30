@@ -1,7 +1,7 @@
 import { FetchQueryOptions, QueryFunction } from "@tanstack/react-query";
 
-import { DownloadableImage, getIsGoogleImage } from "../context/ImagesContext";
-import { addBleedEdge } from "../utils/add-bleed";
+import { DownloadableImage, getIsGoogleImage } from "~/context/ImagesContext";
+import { addBleedEdge } from "~/utils/add-bleed";
 
 const getMpcImageUri = (id: string) => {
   return `https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec?id=${id}`;

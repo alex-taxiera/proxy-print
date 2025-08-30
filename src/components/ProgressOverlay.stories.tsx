@@ -3,9 +3,11 @@ import { useState } from "react";
 
 import { css } from "styled-system/css";
 
-import { progressEvents } from "../utils/progress-events";
+import { Button } from "~/components/ui/button";
+
+import { progressEvents } from "~/utils/progress-events";
+
 import { ProgressOverlay } from "./ProgressOverlay";
-import { Button } from "./ui/button";
 
 const meta: Meta<typeof ProgressOverlay> = {
   title: "Components/ProgressOverlay",

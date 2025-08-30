@@ -24,6 +24,9 @@
     ],
     "importOrder": [
       "^styled-system/(.*)$",
+      "^~/components/ui/(.*)$",
+      "^~/components/(.*)$",
+      "^~/(.*)$",
       "^[./]"
     ],
     "importOrderSeparation": true

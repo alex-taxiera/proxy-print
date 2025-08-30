@@ -11,6 +11,16 @@ import { useCallback, useContext, useMemo, useState } from "react";
 
 import { hstack, vstack } from "styled-system/patterns";
 
+import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Collapsible } from "~/components/ui/collapsible";
+import { ColorPicker } from "~/components/ui/color-picker";
+import { Field } from "~/components/ui/field";
+import { IconButton } from "~/components/ui/icon-button";
+import { NumberInput } from "~/components/ui/number-input";
+import { Select, createListCollection } from "~/components/ui/select";
+import { Tooltip } from "~/components/ui/tooltip";
+
 import {
   CARD_DIMENSIONS,
   cardSizeToNameMap,
@@ -21,16 +31,7 @@ import {
   SettingsContext,
   SettingsSchema,
   Unit,
-} from "../../context/SettingsContext";
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
-import { Collapsible } from "../ui/collapsible";
-import { ColorPicker } from "../ui/color-picker";
-import { Field } from "../ui/field";
-import { IconButton } from "../ui/icon-button";
-import { NumberInput } from "../ui/number-input";
-import { Select, createListCollection } from "../ui/select";
-import { Tooltip } from "../ui/tooltip";
+} from "~/context/SettingsContext";
 
 const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
   const convertedValue =

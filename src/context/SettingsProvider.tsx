@@ -1,6 +1,7 @@
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 
-import { invertHexColor } from "../utils/invert-hex-color";
+import { invertHexColor } from "~/utils/invert-hex-color";
+
 import {
   DEFAULT_SETTINGS,
   Settings,

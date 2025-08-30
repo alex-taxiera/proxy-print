@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { hstack } from "styled-system/patterns";
 
-import { Link } from "../ui/link";
+import { Link } from "~/components/ui/link";
 
 export const SocialLinks = () => {
   return (

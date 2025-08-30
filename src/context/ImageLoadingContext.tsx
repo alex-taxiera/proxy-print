@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import { useImageLoadingProgress } from "../hooks/useImageLoadingProgress";
+import { useImageLoadingProgress } from "~/hooks/useImageLoadingProgress";
 
 export const ImageLoadingContext = createContext({
   isLoadingImages: false,

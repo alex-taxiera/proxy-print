@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 
 import { center, visuallyHidden } from "styled-system/patterns";
 
-import { ProgressData, progressEvents } from "../utils/progress-events";
-import { Dialog } from "./ui/dialog";
-import { Progress } from "./ui/progress";
+import { Dialog } from "~/components/ui/dialog";
+import { Progress } from "~/components/ui/progress";
+
+import { ProgressData, progressEvents } from "~/utils/progress-events";
 
 export const ProgressOverlay = () => {
   const [isVisible, setIsVisible] = useState(false);

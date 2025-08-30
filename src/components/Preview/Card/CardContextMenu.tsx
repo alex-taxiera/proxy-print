@@ -10,12 +10,13 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useContext, useMemo } from "react";
 
-import { ImageSelectionContext } from "../../../context/ImageSelectionContext";
-import { Image, ImagesContext } from "../../../context/ImagesContext";
-import { usePreviewData } from "../../../hooks/usePreviewData";
-import { getKeybindLabels } from "../../../utils/keybind-labels";
-import { Kbd } from "../../ui/kbd";
-import { Menu } from "../../ui/menu";
+import { Kbd } from "~/components/ui/kbd";
+import { Menu } from "~/components/ui/menu";
+
+import { ImageSelectionContext } from "~/context/ImageSelectionContext";
+import { Image, ImagesContext } from "~/context/ImagesContext";
+import { usePreviewData } from "~/hooks/usePreviewData";
+import { getKeybindLabels } from "~/utils/keybind-labels";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
   image: Image;

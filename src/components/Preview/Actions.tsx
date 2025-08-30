@@ -13,23 +13,25 @@ import { useCallback, useContext, useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
 
-import { ImageLoadingContext } from "../../context/ImageLoadingContext";
-import { ImageSelectionContext } from "../../context/ImageSelectionContext";
-import { getIsLocalImage, ImagesContext } from "../../context/ImagesContext";
-import { useGeneratePdf } from "../../hooks/useGeneratePdf";
-import { usePreviewData } from "../../hooks/usePreviewData";
-import { getQueryDataForImage, ImageQueryData } from "../../queries/images";
-import { progressEvents } from "../../utils/progress-events";
-import { toaster } from "../../utils/toaster";
-import ZipWorker from "../../workers/zip-worker?worker";
-import { ImageErrors } from "../ImageErrors";
-import { Button } from "../ui/button";
-import { IconButton } from "../ui/icon-button";
-import { Link } from "../ui/link";
-import { Menu } from "../ui/menu";
-import { Pagination } from "../ui/pagination";
-import { Spinner } from "../ui/spinner";
-import { Tooltip } from "../ui/tooltip";
+import { Button } from "~/components/ui/button";
+import { IconButton } from "~/components/ui/icon-button";
+import { Link } from "~/components/ui/link";
+import { Menu } from "~/components/ui/menu";
+import { Pagination } from "~/components/ui/pagination";
+import { Spinner } from "~/components/ui/spinner";
+import { Tooltip } from "~/components/ui/tooltip";
+
+import { ImageErrors } from "~/components/ImageErrors";
+
+import { ImageLoadingContext } from "~/context/ImageLoadingContext";
+import { ImageSelectionContext } from "~/context/ImageSelectionContext";
+import { getIsLocalImage, ImagesContext } from "~/context/ImagesContext";
+import { useGeneratePdf } from "~/hooks/useGeneratePdf";
+import { usePreviewData } from "~/hooks/usePreviewData";
+import { getQueryDataForImage, ImageQueryData } from "~/queries/images";
+import { progressEvents } from "~/utils/progress-events";
+import { toaster } from "~/utils/toaster";
+import ZipWorker from "~/workers/zip-worker?worker";
 
 const getExtensionFromMimeType = (mimeType: string) => {
   const extension = mimeType.split("/").pop();

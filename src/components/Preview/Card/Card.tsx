@@ -4,19 +4,21 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { css, cx } from "styled-system/css";
 import { center, visuallyHidden } from "styled-system/patterns";
 
-import { ImageSelectionContext } from "../../../context/ImageSelectionContext";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Spinner } from "~/components/ui/spinner";
+
+import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import {
   getIsLocalImage,
   ImagesContext,
   getIsDownloadableImage,
   PossiblyEmptyImage,
   getIsEmptyImage,
-} from "../../../context/ImagesContext";
-import { useSortableCard } from "../../../hooks/useSortableCard";
-import { getQueryDataForImage, ImageQueryData } from "../../../queries/images";
-import { ctrlOrMeta } from "../../../utils/ctrl-or-meta";
-import { Checkbox } from "../../ui/checkbox";
-import { Spinner } from "../../ui/spinner";
+} from "~/context/ImagesContext";
+import { useSortableCard } from "~/hooks/useSortableCard";
+import { getQueryDataForImage, ImageQueryData } from "~/queries/images";
+import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
+
 import { CardContextMenu } from "./CardContextMenu";
 import { Guides } from "./Guides";
 import { useCardClassName } from "./useCardClassName";
