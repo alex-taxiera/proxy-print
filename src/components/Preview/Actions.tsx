@@ -82,7 +82,7 @@ const useDownloadImages = () => {
               image.uuid,
               image.file.type,
             ),
-            file: image.file,
+            image: image.file,
           };
         }
 
@@ -96,19 +96,14 @@ const useDownloadImages = () => {
             image.uuid,
             queryData.mimeType,
           ),
-          url: queryData.url,
+          image: queryData.data,
         };
       });
 
       // remove duplicate data based on url -- optional?
       const imageData = formattedData.filter(
         (data, index) =>
-          index ===
-          formattedData.findIndex(
-            (t) =>
-              (t.url != null && t.url === data.url) ||
-              (t.file != null && t.file === data.file),
-          ),
+          index === formattedData.findIndex((t) => t.image === data.image),
       );
 
       const worker = new ZipWorker();

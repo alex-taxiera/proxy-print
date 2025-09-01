@@ -2,7 +2,7 @@ import JSZip from "jszip";
 
 type MessageEventData =
   | {
-      imageData: Array<{ name: string } & ({ file: File } | { url: string })>;
+      imageData: Array<{ name: string; image: File | Blob }>;
     }
   | undefined;
 
@@ -23,24 +23,10 @@ self.onmessage = async function (
 
   const zip = new JSZip();
 
-  // Helper to fetch blob from url
-  async function fetchBlob(url: string) {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to fetch ${url}`);
-    return await response.blob();
-  }
-
   // Add each image to the zip
-  for (const data of imageData) {
-    console.log("data", data);
-    if ("file" in data) {
-      zip.file(data.name, data.file);
-    } else {
-      zip.file(data.name, fetchBlob(data.url));
-    }
+  for (const card of imageData) {
+    zip.file(card.name, card.image);
   }
-
-  console.log("zip", zip);
 
   // Generate the zip as a Blob
   const zipBlob = await zip.generateAsync({ type: "blob" });
