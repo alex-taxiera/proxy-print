@@ -148,18 +148,12 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           const isLocalImage = getIsLocalImage(image);
           try {
             // Get the image source URL (could be blob URL or data URL)
-            const imageSrc = isLocalImage
-              ? URL.createObjectURL(image.file)
-              : downloadableImageData!.url;
+            const imageSrc = URL.createObjectURL(
+              isLocalImage ? image.file : downloadableImageData!.data,
+            );
 
             // Create a new image element to get natural dimensions
             const tempImg = new Image();
-            if (
-              !isLocalImage &&
-              downloadableImageData!.url.startsWith("http")
-            ) {
-              tempImg.crossOrigin = "anonymous";
-            }
 
             // Wait for the image to load
             await new Promise((resolve, reject) => {
@@ -219,9 +213,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               cropCanvas.width = 0;
               cropCanvas.height = 0;
               cropCtx.clearRect(0, 0, 0, 0);
-              if (isLocalImage) {
-                URL.revokeObjectURL(imageSrc);
-              }
+              URL.revokeObjectURL(imageSrc);
             }
 
             // Clear tempImg reference to help GC

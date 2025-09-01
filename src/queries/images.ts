@@ -47,7 +47,6 @@ export const getScryfallImageQueryKey = (uri: string) =>
 export type ImageQueryData = {
   data: Blob;
   mimeType: string;
-  url: string;
 };
 
 const buildGoogleImageQueryFn =
@@ -68,9 +67,7 @@ const buildGoogleImageQueryFn =
     }
     const data = base64ToBlob(text, mimeType);
 
-    const url = URL.createObjectURL(data);
-
-    return { data, mimeType, url };
+    return { data, mimeType };
   };
 
 const buildScryfallImageQueryFn =
@@ -104,7 +101,7 @@ export const getQueryDataForImage = (
   return {
     queryKey,
     queryFn,
-    staleTime: Infinity,
+    staleTime: "static",
     gcTime: Infinity,
     retry: 3,
   };

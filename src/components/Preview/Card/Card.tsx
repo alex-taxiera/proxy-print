@@ -32,9 +32,9 @@ const useDownloadedSrc = (image: PossiblyEmptyImage) => {
   );
 
   // Manually subscribe to cache updates without triggering fetches
-  const [downloadedSrc, setDownloadedSrc] = useState<string | undefined>(() => {
+  const [downloadedSrc, setDownloadedSrc] = useState<Blob | undefined>(() => {
     if (!queryData) return undefined;
-    return queryClient.getQueryData<ImageQueryData>(queryData.queryKey)?.url;
+    return queryClient.getQueryData<ImageQueryData>(queryData.queryKey)?.data;
   });
 
   useEffect(() => {
@@ -52,10 +52,10 @@ const useDownloadedSrc = (image: PossiblyEmptyImage) => {
           JSON.stringify(queryData.queryKey);
 
       if ((event.type === "updated" || event.type === "added") && isOurQuery) {
-        const data = queryClient.getQueryData<ImageQueryData>(
+        const { data } = queryClient.getQueryData<ImageQueryData>(
           queryData.queryKey,
-        );
-        setDownloadedSrc(data?.url);
+        )!;
+        setDownloadedSrc(data);
       }
     });
 
@@ -99,7 +99,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const isPending = isLoading || isFetching;
 
-  const imageSrc = downloadedSrc ?? src;
+  const imageSrc = src;
 
   const sortable = useSortableCard({
     image,
@@ -169,9 +169,11 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   useEffect(() => {
     let url: string | undefined;
 
-    // TODO: build local url into image data
     if (getIsLocalImage(image)) {
       url = URL.createObjectURL(image.file);
+      setSrc(url);
+    } else if (downloadedSrc) {
+      url = URL.createObjectURL(downloadedSrc);
       setSrc(url);
     }
 
@@ -181,7 +183,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [image]);
+  }, [downloadedSrc, image]);
 
   return (
     <div
