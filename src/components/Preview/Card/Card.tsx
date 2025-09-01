@@ -16,7 +16,7 @@ import {
   getIsEmptyImage,
 } from "~/context/ImagesContext";
 import { useSortableCard } from "~/hooks/useSortableCard";
-import { getQueryDataForImage, ImageQueryData } from "~/queries/images";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
 
 import { CardContextMenu } from "./CardContextMenu";
@@ -26,19 +26,19 @@ import { useCardClassName } from "./useCardClassName";
 const useDownloadedSrc = (image: PossiblyEmptyImage) => {
   const queryClient = useQueryClient();
 
-  const queryData = useMemo(
-    () => (getIsDownloadableImage(image) ? getQueryDataForImage(image) : null),
+  const queryKey = useMemo(
+    () => (!getIsEmptyImage(image) ? getQueryKeyForImage(image) : null),
     [image],
   );
 
   // Manually subscribe to cache updates without triggering fetches
   const [downloadedSrc, setDownloadedSrc] = useState<Blob | undefined>(() => {
-    if (!queryData) return undefined;
-    return queryClient.getQueryData<ImageQueryData>(queryData.queryKey)?.data;
+    if (!queryKey) return undefined;
+    return queryClient.getQueryData<ImageQueryData>(queryKey)?.data;
   });
 
   useEffect(() => {
-    if (!queryData) return;
+    if (!queryKey) return;
 
     // Subscribe to cache updates for this specific query
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
@@ -48,19 +48,16 @@ const useDownloadedSrc = (image: PossiblyEmptyImage) => {
         Array.isArray(event.query.queryKey) &&
         event.query.queryKey.length > 0 &&
         // Compare the actual query key arrays, not hash vs string
-        JSON.stringify(event.query.queryKey) ===
-          JSON.stringify(queryData.queryKey);
+        JSON.stringify(event.query.queryKey) === JSON.stringify(queryKey);
 
       if ((event.type === "updated" || event.type === "added") && isOurQuery) {
-        const { data } = queryClient.getQueryData<ImageQueryData>(
-          queryData.queryKey,
-        )!;
+        const { data } = queryClient.getQueryData<ImageQueryData>(queryKey)!;
         setDownloadedSrc(data);
       }
     });
 
     return unsubscribe;
-  }, [queryClient, queryData]);
+  }, [queryClient, queryKey]);
 
   return downloadedSrc;
 };
@@ -122,12 +119,9 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
         return;
       }
 
-      const index = images.indexOf(image);
-      const imageData = getIsLocalImage(image) ? image.file : image;
-
       onAdd(
-        Array.from({ length: count }, () => imageData),
-        index + 1,
+        Array.from({ length: count }, () => image),
+        images.indexOf(image) + 1,
       );
     },
     [image, images, onAdd, isEmpty],
@@ -169,10 +163,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   useEffect(() => {
     let url: string | undefined;
 
-    if (getIsLocalImage(image)) {
-      url = URL.createObjectURL(image.file);
-      setSrc(url);
-    } else if (downloadedSrc) {
+    if (downloadedSrc) {
       url = URL.createObjectURL(downloadedSrc);
       setSrc(url);
     }

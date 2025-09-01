@@ -1,7 +1,13 @@
 import { FetchQueryOptions, QueryFunction } from "@tanstack/react-query";
 
-import { DownloadableImage, getIsGoogleImage } from "~/context/ImagesContext";
-import { addBleedEdge } from "~/utils/add-bleed";
+import {
+  getIsGoogleImage,
+  getIsLocalImage,
+  getIsScryfallImage,
+  Image,
+} from "~/context/ImagesContext";
+import { Settings } from "~/context/SettingsContext";
+import { addBleedEdge, needsBleedFromFile } from "~/utils/add-bleed";
 
 const getMpcImageUri = (id: string) => {
   return `https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec?id=${id}`;
@@ -38,19 +44,44 @@ export const googleImagesQueryKey = () =>
 export const scryfallImagesQueryKey = () =>
   [...imagesQueryKey(), "scryfall"] as const;
 
+export type ScryfallImageQueryKey = ReturnType<typeof scryfallImagesQueryKey>;
+
+export const localImagesQueryKey = () =>
+  [...imagesQueryKey(), "local"] as const;
+
+export type LocalImageQueryKey = ReturnType<typeof localImagesQueryKey>;
+
 export const getGoogleImageQueryKey = (uri: string) =>
   [...googleImagesQueryKey(), uri] as const;
 
 export const getScryfallImageQueryKey = (uri: string) =>
   [...scryfallImagesQueryKey(), uri] as const;
 
-export type ImageQueryData = {
+export const getLocalImageQueryKey = (hash: string) =>
+  [...localImagesQueryKey(), hash] as const;
+
+type BaseImageQueryData = {
   data: Blob;
   mimeType: string;
 };
 
+export type GoogleImageQueryData = BaseImageQueryData;
+
+export type ScryfallImageQueryData = BaseImageQueryData & {
+  original: Blob;
+};
+
+export type LocalImageQueryData = BaseImageQueryData & {
+  original: File;
+};
+
+export type ImageQueryData =
+  | GoogleImageQueryData
+  | ScryfallImageQueryData
+  | LocalImageQueryData;
+
 const buildGoogleImageQueryFn =
-  (uri: string): QueryFunction<ImageQueryData> =>
+  (uri: string): QueryFunction<GoogleImageQueryData> =>
   async ({ signal }) => {
     const response = await fetch(uri, { signal });
     const text = await response.text();
@@ -71,38 +102,86 @@ const buildGoogleImageQueryFn =
   };
 
 const buildScryfallImageQueryFn =
-  (uri: string): QueryFunction<ImageQueryData> =>
+  (uri: string, settings: Settings): QueryFunction<ScryfallImageQueryData> =>
   async ({ signal }) => {
     const response = await fetch(uri, { signal });
 
     const blob = await response.blob();
     const mimeType = response.headers.get("content-type") || "image/png";
 
-    const data = await addBleedEdge(blob, mimeType);
+    const data = await addBleedEdge(
+      blob,
+      mimeType,
+      Number(settings.cardWidth),
+      Number(settings.cardHeight),
+    );
 
-    const url = URL.createObjectURL(data);
-
-    return { data, mimeType, url };
+    return { original: blob, data, mimeType };
   };
+
+const buildLocalImageQueryFn =
+  (file: File, settings: Settings): QueryFunction<LocalImageQueryData> =>
+  async () => {
+    const needsBleedEdge = await needsBleedFromFile(
+      file,
+      Number(settings.cardWidth),
+      Number(settings.cardHeight),
+    );
+    const data = needsBleedEdge
+      ? await addBleedEdge(
+          file,
+          file.type,
+          Number(settings.cardWidth),
+          Number(settings.cardHeight),
+        )
+      : file;
+    return { original: file, data, mimeType: file.type };
+  };
+
+export const getQueryKeyForImage = (image: Image) => {
+  if (getIsLocalImage(image)) {
+    return getLocalImageQueryKey(image.hash);
+  }
+  if (getIsGoogleImage(image)) {
+    return getGoogleImageQueryKey(image.id);
+  }
+  if (getIsScryfallImage(image)) {
+    return getScryfallImageQueryKey(image.uri);
+  }
+  throw new Error("Invalid image type");
+};
 
 export const getQueryDataForImage = (
-  image: DownloadableImage,
+  image: Image,
+  settings: Settings,
 ): FetchQueryOptions<ImageQueryData> => {
-  const isGoogleImage = getIsGoogleImage(image);
-  const uri = isGoogleImage ? getMpcImageUri(image.id) : image.uri;
+  if (getIsLocalImage(image)) {
+    return {
+      queryKey: getLocalImageQueryKey(image.hash),
+      queryFn: buildLocalImageQueryFn(image.file, settings),
+    };
+  }
 
-  const queryKey = isGoogleImage
-    ? getGoogleImageQueryKey(uri)
-    : getScryfallImageQueryKey(uri);
-  const queryFn = isGoogleImage
-    ? buildGoogleImageQueryFn(uri)
-    : buildScryfallImageQueryFn(uri);
+  if (getIsGoogleImage(image)) {
+    const url = getMpcImageUri(image.id);
+    return {
+      queryKey: getGoogleImageQueryKey(url),
+      queryFn: buildGoogleImageQueryFn(url),
+      staleTime: "static",
+      gcTime: Infinity,
+      retry: 3,
+    };
+  }
 
-  return {
-    queryKey,
-    queryFn,
-    staleTime: "static",
-    gcTime: Infinity,
-    retry: 3,
-  };
+  if (getIsScryfallImage(image)) {
+    return {
+      queryKey: getScryfallImageQueryKey(image.uri),
+      queryFn: buildScryfallImageQueryFn(image.uri, settings),
+      staleTime: "static",
+      gcTime: Infinity,
+      retry: 3,
+    };
+  }
+
+  throw new Error("Invalid image type");
 };

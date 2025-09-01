@@ -10,7 +10,7 @@ import {
   ImagesContext,
 } from "~/context/ImagesContext";
 import { SettingsContext } from "~/context/SettingsContext";
-import { getQueryDataForImage, ImageQueryData } from "~/queries/images";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { invertHexColor } from "~/utils/invert-hex-color";
 import { progressEvents } from "~/utils/progress-events";
 import PdfWorker from "~/workers/pdf-worker?worker";
@@ -140,7 +140,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const downloadableImageData =
           image && getIsDownloadableImage(image)
             ? queryClient.getQueryData<ImageQueryData>(
-                getQueryDataForImage(image).queryKey,
+                getQueryKeyForImage(image),
               )
             : undefined;
 

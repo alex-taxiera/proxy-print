@@ -1,13 +1,11 @@
 import JSZip from "jszip";
 
-type MessageEventData =
-  | {
-      imageData: Array<{ name: string; image: File | Blob }>;
-    }
-  | undefined;
+type MessageEventData = {
+  imageData: Array<{ name: string; image: File | Blob }>;
+};
 
 self.onmessage = async function (
-  e: MessageEvent<{ type: string; data: MessageEventData }>,
+  e: MessageEvent<{ type: string; data?: MessageEventData }>,
 ) {
   const { type, data } = e.data;
   if (type !== "zip") {

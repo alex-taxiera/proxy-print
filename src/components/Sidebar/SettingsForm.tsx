@@ -7,6 +7,7 @@ import {
 } from "@ark-ui/react";
 import { faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext, useMemo, useState } from "react";
 
 import { hstack, vstack } from "styled-system/patterns";
@@ -32,6 +33,101 @@ import {
   SettingsSchema,
   Unit,
 } from "~/context/SettingsContext";
+import {
+  ScryfallImageQueryData,
+  LocalImageQueryData,
+  localImagesQueryKey,
+  scryfallImagesQueryKey,
+  ScryfallImageQueryKey,
+  LocalImageQueryKey,
+} from "~/queries/images";
+import { addBleedEdge, needsBleedFromFile } from "~/utils/add-bleed";
+
+const useHandleBleedEdgeForCardSizeChange = () => {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    async (settings: Settings) => {
+      // reprocess all image data in scryfall or local queries
+      const scryfallQueries =
+        queryClient.getQueriesData<ScryfallImageQueryData>({
+          queryKey: scryfallImagesQueryKey(),
+        });
+
+      const cardWidth = Number(settings.cardWidth);
+      const cardHeight = Number(settings.cardHeight);
+
+      const nextScryfallData = await Promise.all(
+        scryfallQueries.map(async ([key, old]) => {
+          const data = await addBleedEdge(
+            old!.original,
+            old!.mimeType,
+            cardWidth,
+            cardHeight,
+          );
+          return [key, data] as [ScryfallImageQueryKey, Blob];
+        }),
+      );
+
+      for (const [key, next] of nextScryfallData) {
+        queryClient.setQueryData<ScryfallImageQueryData, ScryfallImageQueryKey>(
+          key,
+          (old) => {
+            if (!old) {
+              return undefined;
+            }
+
+            return {
+              ...old,
+              data: next,
+            };
+          },
+        );
+      }
+
+      const localQueries = queryClient.getQueriesData<LocalImageQueryData>({
+        queryKey: localImagesQueryKey(),
+      });
+
+      const nextLocalData = await Promise.all(
+        localQueries.map(async ([key, old]) => {
+          const needsBleedEdge = await needsBleedFromFile(
+            old!.original,
+            cardWidth,
+            cardHeight,
+          );
+          console.log("needsBleedEdge", needsBleedEdge);
+          console.log("old!.original.name", old!.original.name);
+          if (needsBleedEdge) {
+            const data = await addBleedEdge(
+              old!.original,
+              old!.mimeType,
+              cardWidth,
+              cardHeight,
+            );
+            return [key, data] as [LocalImageQueryKey, Blob];
+          } else {
+            return [key, old!.original] as [LocalImageQueryKey, File];
+          }
+        }),
+      );
+
+      for (const [key, next] of nextLocalData) {
+        queryClient.setQueryData<LocalImageQueryData>(key, (old) => {
+          if (!old) {
+            return undefined;
+          }
+
+          return {
+            ...old,
+            data: next,
+          };
+        });
+      }
+    },
+    [queryClient],
+  );
+};
 
 const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
   const convertedValue =
@@ -53,6 +149,9 @@ export const SettingsForm = () => {
   const { settings, setSettings } = useContext(SettingsContext);
   const [formState, setFormState] = useState(settings);
 
+  const handleBleedEdgeForCardSizeChange =
+    useHandleBleedEdgeForCardSizeChange();
+
   const formErrors = useMemo(() => {
     const { error } = SettingsSchema.safeParse(formState);
     const keys = Object.keys(settings) as Array<keyof Settings>;
@@ -67,7 +166,7 @@ export const SettingsForm = () => {
   }, [formState, settings]);
 
   const handle = useCallback(
-    (updates: Partial<Settings>) => {
+    async (updates: Partial<Settings>) => {
       const nextState = {
         ...formState,
         ...Object.fromEntries(
@@ -78,7 +177,14 @@ export const SettingsForm = () => {
         ),
       };
 
-      const updatedKeys = Object.keys(updates);
+      const updatedKeys = Object.keys(updates) as Array<keyof Settings>;
+
+      if (
+        updatedKeys.includes("cardHeight") ||
+        updatedKeys.includes("cardWidth")
+      ) {
+        await handleBleedEdgeForCardSizeChange(nextState);
+      }
 
       if (
         nextState.unit !== formState.unit &&
@@ -125,33 +231,33 @@ export const SettingsForm = () => {
         }
       });
     },
-    [formState, setSettings],
+    [formState, handleBleedEdgeForCardSizeChange, setSettings],
   );
 
   const buildTextInputChangeHandler = useCallback(
     (key: keyof Settings) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      handle({ [key]: event.target.value });
+      void handle({ [key]: event.target.value });
     },
     [handle],
   );
 
   const buildNumberInputChangeHandler = useCallback(
     (key: keyof Settings) => (details: NumberInputValueChangeDetails) => {
-      handle({ [key]: details.value });
+      void handle({ [key]: details.value });
     },
     [handle],
   );
 
   const buildCheckboxChangeHandler = useCallback(
     (key: keyof Settings) => (details: CheckboxCheckedChangeDetails) => {
-      handle({ [key]: details.checked });
+      void handle({ [key]: details.checked });
     },
     [handle],
   );
 
   const buildSelectChangeHandler = useCallback(
     (key: keyof Settings) => (details: SelectValueChangeDetails) => {
-      handle({ [key]: details.value[0] });
+      void handle({ [key]: details.value[0] });
     },
     [handle],
   );
@@ -161,7 +267,7 @@ export const SettingsForm = () => {
       const value = details.value[0] as `${number}-${number}`;
       const cardSize = cardSizeToNameMap[value];
 
-      handle({
+      void handle({
         cardHeight: CARD_DIMENSIONS[cardSize].height.toString(),
         cardWidth: CARD_DIMENSIONS[cardSize].width.toString(),
       });
@@ -180,7 +286,7 @@ export const SettingsForm = () => {
       const pageWidth = PAGE_DIMENSIONS[pageSize].width;
       const pageHeight = PAGE_DIMENSIONS[pageSize].height;
 
-      handle({
+      void handle({
         pageWidth: isLandscape ? pageHeight.toString() : pageWidth.toString(),
         pageHeight: isLandscape ? pageWidth.toString() : pageHeight.toString(),
         unit: PAGE_DIMENSIONS[pageSize].unit,
@@ -191,7 +297,7 @@ export const SettingsForm = () => {
 
   const buildColorPickerChangeHandler = useCallback(
     (key: keyof Settings) => (details: ColorPickerValueChangeDetails) => {
-      handle({ [key]: details.value.toString("hex") });
+      void handle({ [key]: details.value.toString("hex") });
     },
     [handle],
   );
@@ -234,7 +340,7 @@ export const SettingsForm = () => {
   });
 
   const rotatePage = useCallback(() => {
-    handle({
+    void handle({
       pageWidth: formState.pageHeight,
       pageHeight: formState.pageWidth,
     });
@@ -547,39 +653,6 @@ export const SettingsForm = () => {
           </Field.Root>
         </Collapsible.Content>
       </Collapsible.Root>
-      <Field.Root invalid={formErrors.rowGap.length > 0}>
-        <Field.Label>Row Gap (mm)</Field.Label>
-        <NumberInput
-          min={0}
-          value={formState.rowGap}
-          onValueChange={buildNumberInputChangeHandler("rowGap")}
-        ></NumberInput>
-        {formErrors.rowGap.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
-      <Field.Root invalid={formErrors.columnGap.length > 0}>
-        <Field.Label>Column Gap (mm)</Field.Label>
-        <NumberInput
-          min={0}
-          value={formState.columnGap}
-          onValueChange={buildNumberInputChangeHandler("columnGap")}
-        ></NumberInput>
-        {formErrors.columnGap.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
-      <Field.Root invalid={formErrors.enableBleedEdge.length > 0}>
-        <Field.Label>Enable Bleed Edge</Field.Label>
-        <Checkbox
-          size="lg"
-          checked={formState.enableBleedEdge}
-          onCheckedChange={buildCheckboxChangeHandler("enableBleedEdge")}
-        />
-        {formErrors.enableBleedEdge.map((issue, i) => (
-          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-        ))}
-      </Field.Root>
       <Field.Root
         disabled={!formState.enableBleedEdge}
         invalid={formErrors.bleedEdge.length > 0}
@@ -609,6 +682,39 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
+      <Field.Root invalid={formErrors.rowGap.length > 0}>
+        <Field.Label>Row Gap (mm)</Field.Label>
+        <NumberInput
+          min={0}
+          value={formState.rowGap}
+          onValueChange={buildNumberInputChangeHandler("rowGap")}
+        ></NumberInput>
+        {formErrors.rowGap.map((issue, i) => (
+          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+        ))}
+      </Field.Root>
+      <Field.Root invalid={formErrors.columnGap.length > 0}>
+        <Field.Label>Column Gap (mm)</Field.Label>
+        <NumberInput
+          min={0}
+          value={formState.columnGap}
+          onValueChange={buildNumberInputChangeHandler("columnGap")}
+        ></NumberInput>
+        {formErrors.columnGap.map((issue, i) => (
+          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+        ))}
+      </Field.Root>
+      {/* <Field.Root invalid={formErrors.enableBleedEdge.length > 0}>
+        <Field.Label>Enable Bleed Edge</Field.Label>
+        <Checkbox
+          size="lg"
+          checked={formState.enableBleedEdge}
+          onCheckedChange={buildCheckboxChangeHandler("enableBleedEdge")}
+        />
+        {formErrors.enableBleedEdge.map((issue, i) => (
+          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+        ))}
+      </Field.Root> */}
       <Field.Root invalid={formErrors.guidesAtBleedEdge.length > 0}>
         <Field.Label>Guides at Bleed Edge</Field.Label>
         <Checkbox

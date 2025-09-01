@@ -28,7 +28,7 @@ import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { getIsLocalImage, ImagesContext } from "~/context/ImagesContext";
 import { useGeneratePdf } from "~/hooks/useGeneratePdf";
 import { usePreviewData } from "~/hooks/usePreviewData";
-import { getQueryDataForImage, ImageQueryData } from "~/queries/images";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { progressEvents } from "~/utils/progress-events";
 import { toaster } from "~/utils/toaster";
 import ZipWorker from "~/workers/zip-worker?worker";
@@ -87,7 +87,7 @@ const useDownloadImages = () => {
         }
 
         const queryData = queryClient.getQueryData<ImageQueryData>(
-          getQueryDataForImage(image).queryKey,
+          getQueryKeyForImage(image),
         )!;
 
         return {

@@ -13,7 +13,12 @@ import { FileUpload } from "~/components/ui/file-upload";
 
 import { DecklistDialog } from "~/components/DecklistDialog";
 
-import { GoogleImageData, ImagesContext } from "~/context/ImagesContext";
+import {
+  GoogleImageData,
+  ImagesContext,
+  LocalImageData,
+} from "~/context/ImagesContext";
+import { createFileHash } from "~/utils/create-file-hash";
 
 const parseXML = (file: File): Promise<GoogleImageData[]> => {
   return new Promise((resolve, reject) => {
@@ -55,12 +60,18 @@ const parseXML = (file: File): Promise<GoogleImageData[]> => {
   });
 };
 
+const parseNonXmlFile = async (file: File): Promise<LocalImageData> => {
+  const hash = await createFileHash(file);
+  return { file, hash };
+};
+
 const processFiles = async (files: File[]) => {
   const xmlFiles = files.filter((file) => file.type === "text/xml");
   const nonXmlFiles = files.filter((file) => file.type !== "text/xml");
   const xmlFilesParsed = (await Promise.all(xmlFiles.map(parseXML))).flat();
+  const nonXmlFilesHashed = await Promise.all(nonXmlFiles.map(parseNonXmlFile));
 
-  return [...nonXmlFiles, ...xmlFilesParsed];
+  return [...nonXmlFilesHashed, ...xmlFilesParsed];
 };
 
 export function ImageUploader() {
