@@ -101,5 +101,11 @@ export const getQueryDataForImage = (
     ? buildGoogleImageQueryFn(uri)
     : buildScryfallImageQueryFn(uri);
 
-  return { queryKey, queryFn, staleTime: Infinity, retry: 3 };
+  return {
+    queryKey,
+    queryFn,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: 3,
+  };
 };
