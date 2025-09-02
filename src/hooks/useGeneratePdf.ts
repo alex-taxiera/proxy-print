@@ -137,20 +137,15 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const pdfY = cardY * scaleY;
 
         let imageDataUrl = null;
-        const downloadableImageData =
-          image && getIsDownloadableImage(image)
-            ? queryClient.getQueryData<ImageQueryData>(
-                getQueryKeyForImage(image),
-              )
-            : undefined;
+        const downloadableImageData = image
+          ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image))
+          : undefined;
 
         if (image) {
           const isLocalImage = getIsLocalImage(image);
           try {
             // Get the image source URL (could be blob URL or data URL)
-            const imageSrc = URL.createObjectURL(
-              isLocalImage ? image.file : downloadableImageData!.data,
-            );
+            const imageSrc = URL.createObjectURL(downloadableImageData!.data);
 
             // Create a new image element to get natural dimensions
             const tempImg = new Image();

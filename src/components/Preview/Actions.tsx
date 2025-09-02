@@ -75,6 +75,10 @@ const useDownloadImages = () => {
         : images;
 
       const formattedData = imagesToDownload.map((image) => {
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+        )!;
+
         if (getIsLocalImage(image)) {
           return {
             name: generateDownloadName(
@@ -82,13 +86,9 @@ const useDownloadImages = () => {
               image.uuid,
               image.file.type,
             ),
-            image: image.file,
+            image: queryData.data,
           };
         }
-
-        const queryData = queryClient.getQueryData<ImageQueryData>(
-          getQueryKeyForImage(image),
-        )!;
 
         return {
           name: generateDownloadName(
