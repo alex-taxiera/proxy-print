@@ -163,10 +163,9 @@ export const getQueryDataForImage = (
   }
 
   if (getIsGoogleImage(image)) {
-    const url = getMpcImageUri(image.id);
     return {
-      queryKey: getGoogleImageQueryKey(url),
-      queryFn: buildGoogleImageQueryFn(url),
+      queryKey: getGoogleImageQueryKey(image.id),
+      queryFn: buildGoogleImageQueryFn(getMpcImageUri(image.id)),
       staleTime: "static",
       gcTime: Infinity,
       retry: 3,
