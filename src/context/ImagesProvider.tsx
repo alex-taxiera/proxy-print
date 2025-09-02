@@ -121,14 +121,15 @@ export const ImagesProvider = (
       setImages((old) => {
         const images = data.map((item) => {
           const uuid = nanoid();
-          if ("file" in item) {
-            void loadLocalImage({ uuid, ...item });
-            return { uuid, ...item };
+          const newItem = { ...item, uuid };
+          if ("file" in newItem) {
+            void loadLocalImage(newItem);
+            return newItem;
           }
 
-          void downloadImage({ uuid, ...item });
+          void downloadImage(newItem);
 
-          return { uuid, ...item };
+          return newItem;
         });
         if (index === undefined) {
           return old.concat(images);
