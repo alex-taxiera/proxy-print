@@ -26,16 +26,25 @@ export const Header = () => {
           paddingX: "4",
         })}
       >
-        <span className={css({ fontSize: "2xl", fontWeight: "bold" })}>
+        <span
+          className={hstack({
+            gap: "2",
+            fontSize: "2xl",
+            fontWeight: "bold",
+            alignItems: "flex-end",
+            display: "inline-flex",
+          })}
+        >
           Proxy Print Setup
           <span
-            className={css({
+            className={hstack({
+              gap: "0",
               display: "none",
-              sm: { display: "inline" },
+              sm: { display: "inline-flex" },
               fontSize: "xs",
+              lineHeight: "1.75rem",
               fontWeight: "normal",
               color: "fg.muted",
-              marginLeft: "2",
             })}
           >
             by&nbsp;
