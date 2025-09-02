@@ -13,7 +13,9 @@ export const globalCss = defineGlobalStyles({
     },
   },
   "#root": {
-    height: "100%",
+    height: "100svh",
+    position: "fixed",
+    inset: "0",
     display: "flex",
     flexDirection: "column",
   },
