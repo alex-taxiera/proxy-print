@@ -289,10 +289,12 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
             position: "absolute",
             top: 2,
             left: 2,
-            backgroundColor: "bg.emphasized",
             gap: 0,
             _groupHover: {
               visibility: "visible",
+            },
+            "& [data-part='control'][data-state='unchecked']": {
+              backgroundColor: "bg.emphasized",
             },
           })}
           checked={isSelected}
