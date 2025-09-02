@@ -15,6 +15,7 @@ import {
   PossiblyEmptyImage,
   getIsEmptyImage,
 } from "~/context/ImagesContext";
+import { SettingsContext } from "~/context/SettingsContext";
 import { useSortableCard } from "~/hooks/useSortableCard";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
@@ -74,6 +75,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
+  const { settings } = useContext(SettingsContext);
 
   const isSelected = useMemo(() => {
     return getIsSelected(image.uuid);
@@ -306,7 +308,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
           <span className={visuallyHidden()}>Select {name}</span>
         </Checkbox>
       ) : null}
-      <Guides />
+      {!settings.extendedGuidesOnly && <Guides />}
     </div>
   );
 };

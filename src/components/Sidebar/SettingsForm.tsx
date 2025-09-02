@@ -715,6 +715,17 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root> */}
+      <Field.Root invalid={formErrors.extendedGuidesOnly.length > 0}>
+        <Field.Label>Extended Guides Only</Field.Label>
+        <Checkbox
+          size="lg"
+          checked={formState.extendedGuidesOnly}
+          onCheckedChange={buildCheckboxChangeHandler("extendedGuidesOnly")}
+        />
+        {formErrors.extendedGuidesOnly.map((issue, i) => (
+          <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+        ))}
+      </Field.Root>
       <Field.Root invalid={formErrors.guidesAtBleedEdge.length > 0}>
         <Field.Label>Guides at Bleed Edge</Field.Label>
         <Checkbox

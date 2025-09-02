@@ -124,6 +124,7 @@ export const SettingsSchema = zod
       .max(3)
       .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater"),
     guidesAtBleedEdge: zod.boolean(),
+    extendedGuidesOnly: zod.boolean(),
     pageHeight: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
@@ -199,6 +200,7 @@ export const DEFAULT_SETTINGS = {
   guidesColor: "#adff2f",
   guidesThickness: "1",
   guidesAtBleedEdge: false,
+  extendedGuidesOnly: false,
   rowGap: "0",
   columnGap: "0",
 } as const satisfies Settings;

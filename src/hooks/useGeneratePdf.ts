@@ -96,6 +96,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const guidesThickness = 0.2645833333 * guideBorderWidth;
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
       const pdfName = `${settings.filename}.pdf`;
+      const extendedGuidesOnly = settings.extendedGuidesOnly;
 
       let progress = 0;
       const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
@@ -256,6 +257,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                 unit,
                 guidesThickness,
                 guidesAtBleedEdge,
+                extendedGuidesOnly,
               }
             : null,
         };
