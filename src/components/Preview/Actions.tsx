@@ -5,6 +5,7 @@ import {
   faDownload,
   faEllipsisV,
   faTrash,
+  faUndo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
@@ -261,6 +262,43 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
     () => images.filter((image) => selectedImageUuids.includes(image.uuid)),
     [images, selectedImageUuids],
   );
+  const queryClient = useQueryClient();
+
+  const canRevertToOriginal = useMemo(() => {
+    const allQueryData = selectedImages.map((image) => {
+      return queryClient.getQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+      );
+    });
+
+    return allQueryData.some((queryData) => {
+      if (!queryData) return false;
+      if ("original" in queryData) {
+        return queryData.original.size !== queryData.data.size;
+      }
+      return false;
+    });
+  }, [queryClient, selectedImages]);
+
+  const onRevertToOriginalClick = useCallback(() => {
+    if (canRevertToOriginal) {
+      selectedImages.forEach((image) => {
+        queryClient.setQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+          (old) => {
+            if (!old || !("original" in old)) {
+              return undefined;
+            }
+
+            return {
+              ...old,
+              data: old.original,
+            };
+          },
+        );
+      });
+    }
+  }, [canRevertToOriginal, selectedImages, queryClient]);
 
   const isOnLastPage = useMemo(() => {
     return currentPage === imageMatrix.length;
@@ -329,6 +367,17 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
                   </Menu.ItemIndicator>
                   <Menu.ItemText>Download images (ZIP)</Menu.ItemText>
                 </Menu.Item>
+                {canRevertToOriginal ? (
+                  <Menu.Item
+                    value="revert-to-original"
+                    onSelect={onRevertToOriginalClick}
+                  >
+                    <Menu.ItemIndicator>
+                      <FontAwesomeIcon icon={faUndo} />
+                    </Menu.ItemIndicator>
+                    <Menu.ItemText>Revert to original</Menu.ItemText>
+                  </Menu.Item>
+                ) : null}
               </Menu.ItemGroup>
               <Menu.ItemGroup>
                 {!isOnLastPage ? (

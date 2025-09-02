@@ -24,7 +24,7 @@ import { CardContextMenu } from "./CardContextMenu";
 import { Guides } from "./Guides";
 import { useCardClassName } from "./useCardClassName";
 
-const useDownloadedSrc = (image: PossiblyEmptyImage) => {
+const useQueryData = (image: PossiblyEmptyImage) => {
   const queryClient = useQueryClient();
 
   const queryKey = useMemo(
@@ -33,9 +33,9 @@ const useDownloadedSrc = (image: PossiblyEmptyImage) => {
   );
 
   // Manually subscribe to cache updates without triggering fetches
-  const [downloadedSrc, setDownloadedSrc] = useState<Blob | undefined>(() => {
+  const [queryData, setQueryData] = useState(() => {
     if (!queryKey) return undefined;
-    return queryClient.getQueryData<ImageQueryData>(queryKey)?.data;
+    return queryClient.getQueryData<ImageQueryData>(queryKey);
   });
 
   useEffect(() => {
@@ -52,15 +52,15 @@ const useDownloadedSrc = (image: PossiblyEmptyImage) => {
         JSON.stringify(event.query.queryKey) === JSON.stringify(queryKey);
 
       if ((event.type === "updated" || event.type === "added") && isOurQuery) {
-        const { data } = queryClient.getQueryData<ImageQueryData>(queryKey)!;
-        setDownloadedSrc(data);
+        const queryData = queryClient.getQueryData<ImageQueryData>(queryKey)!;
+        setQueryData(queryData);
       }
     });
 
     return unsubscribe;
   }, [queryClient, queryKey]);
 
-  return downloadedSrc;
+  return queryData;
 };
 
 export type CardProps = {
@@ -86,11 +86,11 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   }, [images, image.uuid]);
 
   const [src, setSrc] = useState<string>("");
-  const downloadedSrc = useDownloadedSrc(image);
+  const queryData = useQueryData(image);
 
   const isFetching = useMemo(
-    () => getIsDownloadableImage(image) && !downloadedSrc,
-    [image, downloadedSrc],
+    () => getIsDownloadableImage(image) && !queryData,
+    [image, queryData],
   );
 
   const isEmpty = getIsEmptyImage(image);
@@ -165,8 +165,8 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   useEffect(() => {
     let url: string | undefined;
 
-    if (downloadedSrc) {
-      url = URL.createObjectURL(downloadedSrc);
+    if (queryData) {
+      url = URL.createObjectURL(queryData.data);
       setSrc(url);
     }
 
@@ -176,7 +176,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [downloadedSrc, image]);
+  }, [queryData, image]);
 
   return (
     <div
@@ -235,6 +235,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
               onSelectImageUuid={onSelectImageUuid}
               currentPage={currentPage}
               index={index}
+              queryData={queryData}
             >
               <img
                 src={imageSrc}

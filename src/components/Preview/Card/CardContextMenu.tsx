@@ -6,8 +6,10 @@ import {
   faEllipsisV,
   faPlus,
   faTrash,
+  faUndo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext, useMemo } from "react";
 
 import { Kbd } from "~/components/ui/kbd";
@@ -16,6 +18,7 @@ import { Menu } from "~/components/ui/menu";
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { Image, ImagesContext } from "~/context/ImagesContext";
 import { usePreviewData } from "~/hooks/usePreviewData";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { getKeybindLabels } from "~/utils/keybind-labels";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
@@ -23,6 +26,7 @@ export type CardContextMenuProps = React.PropsWithChildren<{
   add: (count: number) => void;
   currentPage: number;
   index: number;
+  queryData?: ImageQueryData;
   onSelectImageUuid: (uuid: string, selected: boolean) => void;
 }>;
 
@@ -32,7 +36,9 @@ export const CardContextMenu = ({
   currentPage,
   children,
   index,
+  queryData,
 }: CardContextMenuProps) => {
+  const queryClient = useQueryClient();
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
@@ -55,6 +61,34 @@ export const CardContextMenu = ({
   const onRemoveClick = useCallback(() => {
     onRemove(image.uuid);
   }, [image, onRemove]);
+
+  const canRevertToOriginal = useMemo(() => {
+    if (!queryData) return false;
+
+    if ("original" in queryData) {
+      return queryData.original.size !== queryData.data.size;
+    }
+
+    return false;
+  }, [queryData]);
+
+  const onRevertToOriginalClick = useCallback(() => {
+    if (canRevertToOriginal) {
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        (old) => {
+          if (!old || !("original" in old)) {
+            return undefined;
+          }
+
+          return {
+            ...old,
+            data: old.original,
+          };
+        },
+      );
+    }
+  }, [image, canRevertToOriginal, queryClient]);
 
   const isOnLastPage = useMemo(() => {
     return currentPage === imageMatrix.length;
@@ -117,6 +151,17 @@ export const CardContextMenu = ({
                 <Menu.ItemText>Remove</Menu.ItemText>
                 <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
               </Menu.Item>
+              {canRevertToOriginal ? (
+                <Menu.Item
+                  value="revert-to-original"
+                  onSelect={onRevertToOriginalClick}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faUndo} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Revert to original</Menu.ItemText>
+                </Menu.Item>
+              ) : null}
             </Menu.ItemGroup>
             <Menu.ItemGroup>
               <Menu.Item onSelect={buildOnAddClick(1)} value="add-1">
