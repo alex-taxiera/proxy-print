@@ -4,7 +4,6 @@ import { PDFDocument } from "pdf-lib";
 import { useCallback, useContext } from "react";
 
 import {
-  getIsDownloadableImage,
   getIsLocalImage,
   Image as ImageType,
   ImagesContext,
