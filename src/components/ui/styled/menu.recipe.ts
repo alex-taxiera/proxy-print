@@ -14,9 +14,6 @@ const itemStyle = {
   transitionTimingFunction: "default",
   _hover: {
     background: "bg.muted",
-    "& :where(svg)": {
-      color: "fg.default",
-    },
   },
   _highlighted: {
     background: "bg.muted",
