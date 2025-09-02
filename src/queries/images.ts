@@ -138,6 +138,15 @@ const buildLocalImageQueryFn =
     return { original: file, data, mimeType: file.type };
   };
 
+const baseQueryOptions: Pick<
+  FetchQueryOptions<ImageQueryData>,
+  "staleTime" | "gcTime" | "retry"
+> = {
+  staleTime: "static",
+  gcTime: Infinity,
+  retry: 3,
+};
+
 export const getQueryKeyForImage = (image: Image) => {
   if (getIsLocalImage(image)) {
     return getLocalImageQueryKey(image.hash);
@@ -159,6 +168,7 @@ export const getQueryDataForImage = (
     return {
       queryKey: getLocalImageQueryKey(image.hash),
       queryFn: buildLocalImageQueryFn(image.file, settings),
+      ...baseQueryOptions,
     };
   }
 
@@ -166,9 +176,7 @@ export const getQueryDataForImage = (
     return {
       queryKey: getGoogleImageQueryKey(image.id),
       queryFn: buildGoogleImageQueryFn(getMpcImageUri(image.id)),
-      staleTime: "static",
-      gcTime: Infinity,
-      retry: 3,
+      ...baseQueryOptions,
     };
   }
 
@@ -176,9 +184,7 @@ export const getQueryDataForImage = (
     return {
       queryKey: getScryfallImageQueryKey(image.uri),
       queryFn: buildScryfallImageQueryFn(image.uri, settings),
-      staleTime: "static",
-      gcTime: Infinity,
-      retry: 3,
+      ...baseQueryOptions,
     };
   }
 
