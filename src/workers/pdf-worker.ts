@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 
-import { Settings } from "../context/SettingsContext";
+import type { Settings } from "~/context/SettingsContext";
 
 type InitData = {
   pageHeight: number;

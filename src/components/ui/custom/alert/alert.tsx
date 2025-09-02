@@ -7,7 +7,7 @@ import { OverrideProperties } from "type-fest";
 
 import type { HTMLStyledProps } from "styled-system/types";
 
-import { IconButton, IconButtonProps } from "../../icon-button";
+import { IconButton, IconButtonProps } from "~/components/ui/icon-button";
 
 export type RootProps = Assign<HTMLStyledProps<"div">, PolymorphicProps>;
 export const Root = ark.div;

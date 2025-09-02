@@ -1,7 +1,7 @@
 import { FetchQueryOptions, QueryFunction } from "@tanstack/react-query";
 
-import { DownloadableImage, getIsGoogleImage } from "../context/ImagesContext";
-import { addBleedEdge } from "../utils/add-bleed";
+import { DownloadableImage, getIsGoogleImage } from "~/context/ImagesContext";
+import { addBleedEdge } from "~/utils/add-bleed";
 
 const getMpcImageUri = (id: string) => {
   return `https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec?id=${id}`;
@@ -47,7 +47,6 @@ export const getScryfallImageQueryKey = (uri: string) =>
 export type ImageQueryData = {
   data: Blob;
   mimeType: string;
-  url: string;
 };
 
 const buildGoogleImageQueryFn =
@@ -68,9 +67,7 @@ const buildGoogleImageQueryFn =
     }
     const data = base64ToBlob(text, mimeType);
 
-    const url = URL.createObjectURL(data);
-
-    return { data, mimeType, url };
+    return { data, mimeType };
   };
 
 const buildScryfallImageQueryFn =
@@ -101,5 +98,11 @@ export const getQueryDataForImage = (
     ? buildGoogleImageQueryFn(uri)
     : buildScryfallImageQueryFn(uri);
 
-  return { queryKey, queryFn, staleTime: 1 * 60 * 1000, retry: 3 };
+  return {
+    queryKey,
+    queryFn,
+    staleTime: "static",
+    gcTime: Infinity,
+    retry: 3,
+  };
 };

@@ -63,14 +63,14 @@ export type ImagesContextValue = {
   imagesWithError: DownloadableImage[];
   isRendering: boolean;
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
-  onReorder: (imageUuid: string, newIndex: number) => void;
+  onReorder: (images: Image[], newIndex: number) => void;
   onAdd: (
     files: (File | GoogleImageData | ScryfallImageData)[],
     index?: number,
   ) => void;
   onError: (image: DownloadableImage) => void;
   onRemove: (uuid: string) => void;
-  onClear: () => void;
+  onClear: (uuids?: string[]) => void;
   onClearErrors: () => void;
 };
 

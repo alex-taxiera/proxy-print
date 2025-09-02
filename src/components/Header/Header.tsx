@@ -1,7 +1,8 @@
 import { css } from "styled-system/css";
 import { center, hstack } from "styled-system/patterns";
 
-import { Link } from "../ui/link";
+import { Link } from "~/components/ui/link";
+
 import { CommunityBanner } from "./CommunityBanner";
 import { SocialLinks } from "./SocialLinks";
 

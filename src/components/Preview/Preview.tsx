@@ -1,11 +1,4 @@
-import { pointerIntersection } from "@dnd-kit/collision";
-import {
-  DragDropProvider,
-  DragDropEventHandlers,
-  useDroppable,
-  useDragDropMonitor,
-  DragOverlay,
-} from "@dnd-kit/react";
+import { DragDropProvider, DragDropEventHandlers } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -21,20 +14,20 @@ import {
 import { css, cx } from "styled-system/css";
 import { center, grid, hstack, vstack } from "styled-system/patterns";
 
+import { Link } from "~/components/ui/link";
+
+import { ProgressOverlay } from "~/components/ProgressOverlay";
+
+import { ImageSelectionContext } from "~/context/ImageSelectionContext";
+import { ImagesContext } from "~/context/ImagesContext";
+import { SettingsContext } from "~/context/SettingsContext";
+import { usePreviewData } from "~/hooks/usePreviewData";
+import { getIsSortableCardData } from "~/hooks/useSortableCard";
+
+import { Actions } from "./Actions";
 import { Card } from "./Card";
-import { ImageErrors } from "./components/ImageErrors";
-import { ProgressOverlay } from "./components/ProgressOverlay";
-import { Button } from "./components/ui/button";
-import { Link } from "./components/ui/link";
-import { Pagination } from "./components/ui/pagination";
-import { Tooltip } from "./components/ui/tooltip";
-import { ImagesContext } from "./context/ImagesContext";
-import { SettingsContext } from "./context/SettingsContext";
-import { useGeneratePdf } from "./hooks/useGeneratePdf";
-import { useImageLoadingProgress } from "./hooks/useImageLoadingProgress";
-import { usePreviewData } from "./hooks/usePreviewData";
-import { getIsSortableCardData } from "./hooks/useSortableCard";
-import { progressEvents } from "./utils/progress-events";
+import { CardDragOverlay } from "./CardDragOverlay";
+import { PageDrop } from "./PageDrop";
 
 const containerStyles = css.raw({
   flex: 1,
@@ -92,132 +85,15 @@ const usePagination = () => {
   };
 };
 
-const PageDrop = ({
-  id,
-  disabled,
-  children,
-  onHoverTimeout,
-  hoverTimeoutMs = 200,
-}: React.PropsWithChildren<{
-  id: string;
-  disabled?: boolean;
-  onHoverTimeout?: () => void;
-  hoverTimeoutMs?: number;
-}>) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useDragDropMonitor({
-    onDragStart: () => setIsDragging(true),
-    onDragEnd: () => {
-      setIsDragging(false);
-      setIsHovering(false);
-      if (hoverTimerRef.current) {
-        clearTimeout(hoverTimerRef.current);
-        hoverTimerRef.current = null;
-      }
-    },
-  });
-
-  const { isDropTarget, ref } = useDroppable({
-    id,
-    type: "page",
-    accept: "card",
-    disabled,
-    collisionDetector: pointerIntersection,
-  });
-
-  const setHoverTimeout = useCallback(
-    (timeout?: number) => {
-      hoverTimerRef.current = setTimeout(() => {
-        onHoverTimeout?.();
-        setHoverTimeout(hoverTimeoutMs * 4);
-      }, timeout ?? hoverTimeoutMs);
-    },
-    [onHoverTimeout, hoverTimeoutMs],
-  );
-
-  // Handle hover timeout logic
-  const handleHoverStart = useCallback(() => {
-    if (disabled || !onHoverTimeout) return;
-
-    setIsHovering(true);
-
-    // Clear any existing timer
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-    }
-
-    // Set new timer
-    setHoverTimeout();
-  }, [disabled, onHoverTimeout, setHoverTimeout]);
-
-  const handleHoverEnd = useCallback(() => {
-    setIsHovering(false);
-
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  }, []);
-
-  // Monitor when we become a drop target (hovering over)
-  useEffect(() => {
-    if (isDropTarget && !isHovering) {
-      handleHoverStart();
-    } else if (!isDropTarget && isHovering) {
-      handleHoverEnd();
-    }
-  }, [isDropTarget, isHovering, handleHoverStart, handleHoverEnd]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimerRef.current) {
-        clearTimeout(hoverTimerRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={css({
-        visibility: !disabled && isDragging ? "visible" : "hidden",
-        bg: isDropTarget
-          ? "accent.5"
-          : isDragging
-            ? "bg.default"
-            : "transparent",
-        borderColor: "border.default",
-        borderStyle: "solid",
-        borderWidth: "1px",
-        borderRadius: "l2",
-        width: "24",
-        height: "var(--page-height, 11 var(--page-unit, in))",
-        paddingY: "4",
-      })}
-    >
-      {children}
-    </div>
-  );
-};
-
-export const PrintableImages = () => {
+export const Preview = () => {
   const { cssVars } = useContext(SettingsContext);
 
-  const {
-    images,
-    onClear,
-    isRendering,
-    setIsRendering,
-    onClearErrors,
-    imagesWithError,
-    onReorder,
-  } = useContext(ImagesContext);
+  const { images, isRendering, imagesWithError, onReorder } =
+    useContext(ImagesContext);
 
-  const isLoadingImages = useImageLoadingProgress();
+  const { onSelectAllImages, getIsSelected } = useContext(
+    ImageSelectionContext,
+  );
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -239,18 +115,6 @@ export const PrintableImages = () => {
     () => currentPage === imageMatrix.length,
     [currentPage, imageMatrix.length],
   );
-
-  const generatePdf = useGeneratePdf(contentRef);
-
-  const handleSave = () => {
-    setIsRendering(true);
-    console.time("save");
-    progressEvents.emit("progress", {
-      progress: 0,
-      phase: "Initializing",
-    });
-    generatePdf();
-  };
 
   const [dragOverlayOffset, setDragOverlayOffset] = useState<{
     x: number;
@@ -288,36 +152,46 @@ export const PrintableImages = () => {
       if (isSortable(source) && getIsSortableCardData(source.data)) {
         if (getIsSortableCardData(target.data)) {
           // normal reorder
-          const imageUuid = source.id as string;
-          const newIndex = target.data.absoluteIndex;
+          const imagesToMove = source.data.images;
+          const dragTargetId = target.id as string;
+          const newIndex = images.findIndex(
+            (image) => image.uuid === dragTargetId,
+          );
 
-          if (imageUuid && newIndex !== undefined) {
-            onReorder(imageUuid, newIndex);
+          if (imagesToMove.length > 0 && newIndex !== undefined) {
+            onReorder(imagesToMove, newIndex);
           }
         } else if (target.type === "page") {
           // move to page
           switch (target.id) {
             case "prev-page":
               onReorder(
-                source.id as string,
-                source.data.absoluteIndex - source.sortable.initialIndex - 1,
+                source.data.images,
+                (currentPage - 1) * cardsPerPage - 1,
               );
               changePage(currentPage - 1);
               break;
             case "next-page":
-              onReorder(
-                source.id as string,
-                source.data.absoluteIndex +
-                  cardsPerPage -
-                  source.sortable.initialIndex,
-              );
+              onReorder(source.data.images, currentPage * cardsPerPage);
               changePage(currentPage + 1);
               break;
           }
         }
+
+        if (getIsSelected(source.id as string)) {
+          onSelectAllImages(false);
+        }
       }
     },
-    [onReorder, cardsPerPage, changePage, currentPage],
+    [
+      onReorder,
+      cardsPerPage,
+      changePage,
+      currentPage,
+      images,
+      onSelectAllImages,
+      getIsSelected,
+    ],
   );
 
   if (images.length === 0 && imagesWithError.length === 0) {
@@ -408,102 +282,15 @@ export const PrintableImages = () => {
           <div
             className={vstack({
               alignItems: "center",
-              gap: "3",
+              gap: "0",
             })}
           >
-            <div
-              className={vstack({
-                gap: "2",
-                width: "max(var(--page-width), 8.5in)",
-                minWidth: "max",
-                maxWidth: "full",
-                alignItems: "stretch",
-                position: "sticky",
-                left: "0",
-              })}
-            >
-              <div
-                className={hstack({
-                  gap: "2",
-                  justifyContent: "space-between",
-                  alignItems: "flex-end",
-                })}
-              >
-                <div className={hstack({ gap: "2" })}>
-                  <Button
-                    colorPalette="gray"
-                    disabled={isRendering}
-                    onClick={() => onClear()}
-                  >
-                    Remove all cards
-                  </Button>
-                  <Tooltip.Root
-                    disabled={
-                      !isRendering && !isLoadingImages && isReferenceCardLoaded
-                    }
-                    positioning={{
-                      placement: "top",
-                    }}
-                  >
-                    <Tooltip.Trigger asChild>
-                      <Button
-                        disabled={
-                          isRendering ||
-                          isLoadingImages ||
-                          !isReferenceCardLoaded
-                        }
-                        onClick={() => handleSave()}
-                      >
-                        Save
-                      </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Positioner>
-                      <Tooltip.Arrow>
-                        <Tooltip.ArrowTip />
-                      </Tooltip.Arrow>
-                      <Tooltip.Content>
-                        {isRendering
-                          ? "Generating PDF..."
-                          : isLoadingImages
-                            ? "Downloading images..."
-                            : !isReferenceCardLoaded
-                              ? "Loading images..."
-                              : ""}
-                      </Tooltip.Content>
-                    </Tooltip.Positioner>
-                  </Tooltip.Root>
-                </div>
-                <div
-                  className={vstack({
-                    alignItems: "center",
-                    gap: "2",
-                    visibility: imageMatrix.length > 1 ? "visible" : "hidden",
-                  })}
-                >
-                  <span className={css({ fontSize: "xs", color: "fg.muted" })}>
-                    Showing {currentPage * cardsPerPage - cardsPerPage + 1} -{" "}
-                    {Math.min(
-                      currentPage * cardsPerPage,
-                      imageMatrix.length * cardsPerPage,
-                      images.length,
-                    )}{" "}
-                    of{" "}
-                    {Math.min(imageMatrix.length * cardsPerPage, images.length)}
-                  </span>
-                  <Pagination
-                    count={imageMatrix.length * cardsPerPage}
-                    page={currentPage}
-                    pageSize={cardsPerPage}
-                    siblingCount={1}
-                    onPageChange={({ page }) => changePage(page)}
-                  />
-                </div>
-              </div>
-              <ImageErrors
-                onDismiss={onClearErrors}
-                imagesWithError={imagesWithError}
-              />
-            </div>
+            <Actions
+              contentRef={contentRef}
+              isReferenceCardLoaded={isReferenceCardLoaded}
+              currentPage={currentPage}
+              changePage={changePage}
+            />
             <div
               ref={contentRef}
               style={
@@ -528,7 +315,6 @@ export const PrintableImages = () => {
                   "calc(calc(-0.5 * var(--guide-border-width)) + calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1)))",
               })}
             >
-              {}
               <div
                 className={css(
                   {
@@ -572,6 +358,7 @@ export const PrintableImages = () => {
                         key={image.uuid || `empty-${index}`}
                         image={image}
                         index={index}
+                        currentPage={currentPage}
                         onImageLoad={index === 0 ? onImageLoad : undefined}
                       />
                     ))}
@@ -613,47 +400,7 @@ export const PrintableImages = () => {
               </div>
             </div>
           </PageDrop>
-          <DragOverlay>
-            {(source) => {
-              return (
-                <div
-                  className={css({
-                    height: "full",
-                    position: "relative",
-                    width: "100%",
-                    overflow: "visible",
-                  })}
-                >
-                  <div
-                    style={{
-                      left: `${dragOverlayOffset?.x}px`,
-                      top: `${dragOverlayOffset?.y}px`,
-                    }}
-                    className={css({
-                      background: "accent.default",
-                      borderRadius: "l2",
-                      color: "accent.fg",
-                      padding: "2",
-                      fontSize: "sm",
-                      textAlign: "center",
-                      width: "max",
-                      maxWidth: "var(--card-width)",
-                      wordBreak: "break-all",
-                      position: "absolute",
-                      zIndex: "1",
-                      pointerEvents: "none",
-                    })}
-                  >
-                    {getIsSortableCardData(source.data)
-                      ? "name" in source.data.image
-                        ? source.data.image.name
-                        : source.data.image.file.name
-                      : "unknown"}
-                  </div>
-                </div>
-              );
-            }}
-          </DragOverlay>
+          <CardDragOverlay dragOverlayOffset={dragOverlayOffset} />
         </DragDropProvider>
       </div>
     </div>

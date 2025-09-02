@@ -1,7 +1,7 @@
 import { FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
 
-import { ImageQueryData } from "../queries/images";
+import { ImageQueryData } from "~/queries/images";
 
 type Item = {
   uuid: string;

@@ -4,12 +4,13 @@ import { useCallback, useContext } from "react";
 
 import { hstack, vstack, visuallyHidden } from "styled-system/patterns";
 
-import { ImagesContext } from "../../context/ImagesContext";
-import { useGetCardsForDecklist } from "../../hooks/useGetCardsForDecklist";
-import { getScryfallCardsCollectionQueryKey } from "../../queries/useScryfallCardsCollection";
-import { Button } from "../ui/button";
-import { Dialog } from "../ui/dialog";
-import { Field } from "../ui/field";
+import { Button } from "~/components/ui/button";
+import { Dialog } from "~/components/ui/dialog";
+import { Field } from "~/components/ui/field";
+
+import { ImagesContext } from "~/context/ImagesContext";
+import { useGetCardsForDecklist } from "~/hooks/useGetCardsForDecklist";
+import { getScryfallCardsCollectionQueryKey } from "~/queries/useScryfallCardsCollection";
 
 export const DecklistForm = () => {
   const { onAdd, onError } = useContext(ImagesContext);

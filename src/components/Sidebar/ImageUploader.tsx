@@ -8,10 +8,12 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { css } from "styled-system/css";
 import { center, vstack } from "styled-system/patterns";
 
-import { GoogleImageData, ImagesContext } from "../../context/ImagesContext";
-import { DecklistDialog } from "../DecklistDialog";
-import { Button } from "../ui/button";
-import { FileUpload } from "../ui/file-upload";
+import { Button } from "~/components/ui/button";
+import { FileUpload } from "~/components/ui/file-upload";
+
+import { DecklistDialog } from "~/components/DecklistDialog";
+
+import { GoogleImageData, ImagesContext } from "~/context/ImagesContext";
 
 const parseXML = (file: File): Promise<GoogleImageData[]> => {
   return new Promise((resolve, reject) => {

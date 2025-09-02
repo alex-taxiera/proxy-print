@@ -6,6 +6,7 @@ const itemStyle = {
   borderRadius: "l1",
   cursor: "pointer",
   display: "flex",
+  gap: "2",
   fontWeight: "medium",
   textStyle: "sm",
   transitionDuration: "fast",
@@ -19,9 +20,6 @@ const itemStyle = {
   },
   _highlighted: {
     background: "bg.muted",
-  },
-  "& :where(svg)": {
-    color: "fg.muted",
   },
   _disabled: {
     color: "fg.disabled",
@@ -68,6 +66,12 @@ export const menu = defineSlotRecipe({
     },
     item: itemStyle,
     triggerItem: itemStyle,
+    itemText: {
+      flex: 1,
+    },
+    itemIndicator: {
+      color: "fg.muted",
+    },
   },
   defaultVariants: {
     size: "md",
