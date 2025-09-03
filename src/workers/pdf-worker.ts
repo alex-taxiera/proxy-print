@@ -54,6 +54,21 @@ let pdfOptions:
 
 function initPdf(data: InitData) {
   const { pageHeight, pageWidth, unit } = data;
+
+  // Validate page dimensions
+  if (
+    !isFinite(pageWidth) ||
+    !isFinite(pageHeight) ||
+    pageWidth <= 0 ||
+    pageHeight <= 0 ||
+    pageWidth > 10000 ||
+    pageHeight > 10000
+  ) {
+    throw new Error(
+      `Invalid page dimensions: width=${pageWidth}, height=${pageHeight}`,
+    );
+  }
+
   pdfOptions = {
     orientation: pageWidth > pageHeight ? "l" : "p",
     unit: unit,
@@ -81,6 +96,29 @@ function addImage(cardData: CardData) {
     guides,
   } = cardData;
 
+  // Validate input data
+  if (
+    !isFinite(containerWidth) ||
+    !isFinite(containerHeight) ||
+    containerWidth <= 0 ||
+    containerHeight <= 0
+  ) {
+    throw new Error(
+      `Invalid container dimensions: width=${containerWidth}, height=${containerHeight}`,
+    );
+  }
+
+  if (
+    !isFinite(scaleX) ||
+    !isFinite(scaleY) ||
+    scaleX <= 0 ||
+    scaleY <= 0 ||
+    scaleX > 100 ||
+    scaleY > 100
+  ) {
+    throw new Error(`Invalid scale values: scaleX=${scaleX}, scaleY=${scaleY}`);
+  }
+
   const adjustedContainerWidth = containerWidth * scaleX;
   const adjustedContainerHeight = containerHeight * scaleY;
 
@@ -103,6 +141,29 @@ function addImage(cardData: CardData) {
           detectedPdfFormat = "PNG";
       }
     }
+
+    // Validate dimensions before adding image
+    if (
+      !isFinite(adjustedContainerWidth) ||
+      !isFinite(adjustedContainerHeight) ||
+      adjustedContainerWidth <= 0 ||
+      adjustedContainerHeight <= 0 ||
+      adjustedContainerWidth > 10000 ||
+      adjustedContainerHeight > 10000
+    ) {
+      throw new Error(
+        `Invalid image dimensions: width=${adjustedContainerWidth}, height=${adjustedContainerHeight}`,
+      );
+    }
+
+    if (!isFinite(pdfX) || !isFinite(pdfY) || pdfX < 0 || pdfY < 0) {
+      throw new Error(`Invalid image position: x=${pdfX}, y=${pdfY}`);
+    }
+
+    // Log dimensions for debugging
+    console.debug(
+      `Adding image: format=${detectedPdfFormat}, pos=(${pdfX}, ${pdfY}), size=${adjustedContainerWidth}x${adjustedContainerHeight}`,
+    );
 
     pdf.addImage(
       imageDataUrl,
