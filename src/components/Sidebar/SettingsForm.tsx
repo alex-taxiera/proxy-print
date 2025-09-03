@@ -721,17 +721,19 @@ export const SettingsForm = () => {
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
       </Field.Root>
-      {/* <Field.Root invalid={formErrors.enableBleedEdge.length > 0}>
-        <Field.Label>Enable Bleed Edge</Field.Label>
-        <Checkbox
-          size="lg"
-          checked={formState.enableBleedEdge}
-          onCheckedChange={buildCheckboxChangeHandler("enableBleedEdge")}
-        />
-        {formErrors.enableBleedEdge.map((issue, i) => (
+      <Field.Root invalid={formErrors.maxDpi.length > 0}>
+        <NumberInput
+          min={300}
+          max={1200}
+          value={formState.maxDpi}
+          onValueChange={buildNumberInputChangeHandler("maxDpi")}
+        >
+          Max DPI
+        </NumberInput>
+        {formErrors.maxDpi.map((issue, i) => (
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
         ))}
-      </Field.Root> */}
+      </Field.Root>
       <Field.Root invalid={formErrors.extendedGuidesOnly.length > 0}>
         <Field.Label>Extended Guides Only</Field.Label>
         <Checkbox

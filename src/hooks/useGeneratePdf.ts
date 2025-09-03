@@ -97,6 +97,14 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
       const pdfName = `${settings.filename}.pdf`;
       const extendedGuidesOnly = settings.extendedGuidesOnly;
+      const cardHeight = Number(settings.cardHeight);
+      const cardWidth = Number(settings.cardWidth);
+      const maxDpi = Number(settings.maxDpi);
+
+      const physicalCardHeight =
+        (cardHeight + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
+      const physicalCardWidth =
+        (cardWidth + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
 
       let progress = 0;
       const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
@@ -174,9 +182,31 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
             const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
 
-            // Use full resolution - no max width/height constraints
-            const targetWidth = Math.round(sourceWidth);
-            const targetHeight = Math.round(sourceHeight);
+            // Calculate DPI based on the physical dimensions of the card and the pixel dimensions of the cropped image
+            const cardDpi = Math.round(
+              Math.sqrt(
+                sourceWidth * sourceWidth + sourceHeight * sourceHeight,
+              ) /
+                Math.sqrt(
+                  physicalCardWidth * physicalCardWidth +
+                    physicalCardHeight * physicalCardHeight,
+                ),
+            );
+
+            console.debug("cardDpi", cardDpi);
+            // Calculate scale factor based on DPI limit
+            const dpiScale = cardDpi > maxDpi ? maxDpi / cardDpi : 1;
+
+            // Apply scaling to target dimensions
+            const targetWidth = Math.round(sourceWidth * dpiScale);
+            const targetHeight = Math.round(sourceHeight * dpiScale);
+
+            // Log when DPI limiting is applied
+            if (dpiScale < 1) {
+              console.debug(
+                `DPI limiting applied: ${cardDpi} DPI → ${Math.round(cardDpi * dpiScale)} DPI (scale: ${dpiScale.toFixed(3)})`,
+              );
+            }
 
             const cropCanvas = document.createElement("canvas");
             const cropCtx = cropCanvas.getContext("2d");

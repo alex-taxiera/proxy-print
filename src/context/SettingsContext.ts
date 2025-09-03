@@ -136,40 +136,41 @@ export const SettingsSchema = zod
     pageHeight: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(1)
       .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
     pageWidth: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(1)
       .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
     numberOfColumns: zod
       .string()
       .regex(/^\d+$/, "Must be a whole number")
-      .min(1)
       .refine((val) => parseInt(val) >= 1, "Must be 1 or greater"),
     unit: zod.enum(["in", "mm"]),
-    // cardSize: zod.enum(["standard", "japanese", "tarot"]),
     cardWidth: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(1)
-      .max(250),
+      .refine((val) => parseInt(val) >= 1, "Must be 1 or greater")
+      .refine((val) => parseInt(val) <= 250, "Must be 250 or less"),
     cardHeight: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(1)
-      .max(250),
+      .refine((val) => parseInt(val) >= 1, "Must be 1 or greater")
+      .refine((val) => parseInt(val) <= 250, "Must be 250 or less"),
     rowGap: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(0)
-      .max(10),
+      .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
+      .refine((val) => parseInt(val) <= 10, "Must be 10 or less"),
     columnGap: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(0)
-      .max(10),
+      .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
+      .refine((val) => parseInt(val) <= 10, "Must be 10 or less"),
+    maxDpi: zod
+      .string()
+      .regex(/^\d+$/, "Must be a whole number")
+      .refine((val) => parseInt(val) >= 300, "Must be 300 or greater")
+      .refine((val) => parseInt(val) <= 1200, "Must be 1200 or less"),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
@@ -226,6 +227,7 @@ export const DEFAULT_SETTINGS = {
   extendedGuidesOnly: false,
   rowGap: "0",
   columnGap: "0",
+  maxDpi: "1200",
 } as const satisfies Settings;
 
 export type SettingsContextValue = {
