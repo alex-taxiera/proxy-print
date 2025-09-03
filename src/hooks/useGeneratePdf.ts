@@ -93,7 +93,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const guideColor = settings.guidesColor;
       const invertedGuideColor = invertHexColor(settings.guidesColor);
       const unit = settings.unit;
-      const guidesThickness = 0.2645833333 * guideBorderWidth;
+      const guidesThickness = guideBorderWidth;
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
       const pdfName = `${settings.filename}.pdf`;
       const extendedGuidesOnly = settings.extendedGuidesOnly;

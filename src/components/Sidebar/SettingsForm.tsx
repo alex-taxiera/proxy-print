@@ -26,6 +26,8 @@ import {
   CARD_DIMENSIONS,
   cardSizeToNameMap,
   DEFAULT_SETTINGS,
+  MAX_BLEED,
+  MAX_GUIDES_THICKNESS,
   PAGE_DIMENSIONS,
   pageSizeToNameMap,
   Settings,
@@ -346,6 +348,19 @@ export const SettingsForm = () => {
     });
   }, [formState.pageHeight, formState.pageWidth, handle]);
 
+  const maxGuidesThickness = useMemo(
+    () =>
+      Math.min(
+        MAX_GUIDES_THICKNESS,
+        Math.round((MAX_BLEED - Number(formState.bleedEdge)) * 10000) / 10000,
+      ),
+    [formState.bleedEdge],
+  );
+  const maxBleedEdge = useMemo(
+    () => MAX_BLEED - Number(formState.guidesThickness),
+    [formState.guidesThickness],
+  );
+
   return (
     <form
       className={vstack({
@@ -659,7 +674,8 @@ export const SettingsForm = () => {
       >
         <NumberInput
           min={0}
-          max={3}
+          max={maxBleedEdge}
+          step={0.5}
           value={formState.bleedEdge}
           onValueChange={buildNumberInputChangeHandler("bleedEdge")}
         >
@@ -672,11 +688,12 @@ export const SettingsForm = () => {
       <Field.Root invalid={formErrors.guidesThickness.length > 0}>
         <NumberInput
           min={0}
-          max={3}
+          max={maxGuidesThickness}
+          step={0.01}
           value={formState.guidesThickness}
           onValueChange={buildNumberInputChangeHandler("guidesThickness")}
         >
-          Guides Width (px)
+          Guides Width (mm)
         </NumberInput>
         {formErrors.guidesThickness.map((issue, i) => (
           <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>

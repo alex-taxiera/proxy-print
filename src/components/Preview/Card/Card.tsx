@@ -285,6 +285,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
           )}
         </>
       </div>
+      {!settings.extendedGuidesOnly && <Guides />}
       {!isEmpty && !isPending ? (
         <Checkbox
           className={css({
@@ -292,6 +293,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
             position: "absolute",
             top: 2,
             left: 2,
+            zIndex: 1,
             gap: 0,
             _groupHover: {
               visibility: "visible",
@@ -309,7 +311,6 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
           <span className={visuallyHidden()}>Select {name}</span>
         </Checkbox>
       ) : null}
-      {!settings.extendedGuidesOnly && <Guides />}
     </div>
   );
 };

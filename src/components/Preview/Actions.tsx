@@ -463,7 +463,7 @@ export const Actions = ({
     <div
       className={vstack({
         gap: "2",
-        width: "max(var(--page-width), 8.5in)",
+        width: "var(--page-width)",
         minWidth: "max",
         maxWidth: "full",
         alignItems: "stretch",

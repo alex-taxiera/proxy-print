@@ -18,6 +18,10 @@ export const CARD_DIMENSIONS = {
 
 export type CardSize = keyof typeof CARD_DIMENSIONS;
 
+export const MAX_BLEED = 3;
+
+export const MAX_GUIDES_THICKNESS = 1;
+
 export const cardSizeToNameMap = Object.fromEntries(
   Object.entries(CARD_DIMENSIONS).map(([key, dimensions]) => [
     `${dimensions.width}-${dimensions.height}`,
@@ -78,7 +82,7 @@ export const getMinSize = (
 ) => {
   const cardSize = settings[key === "pageWidth" ? "cardWidth" : "cardHeight"]; // mm
   const bleedEdge = settings.enableBleedEdge ? Number(settings.bleedEdge) : 0; // mm
-  const guidesThickness = Number(settings.guidesThickness) * 0.264583;
+  const guidesThickness = Number(settings.guidesThickness);
   const minSize = Number(cardSize) + 2 * bleedEdge + guidesThickness;
 
   if (settings.unit === "in") {
@@ -113,16 +117,20 @@ export const SettingsSchema = zod
     bleedEdge: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(0)
-      .max(3)
-      .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater"),
+      .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater")
+      .refine(
+        (val) => parseFloat(val) <= MAX_BLEED,
+        `Must be ${MAX_BLEED} or less`,
+      ),
     guidesColor: zod.string().min(1),
     guidesThickness: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
-      .min(0)
-      .max(3)
-      .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater"),
+      .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater")
+      .refine(
+        (val) => parseFloat(val) <= MAX_GUIDES_THICKNESS,
+        `Must be ${MAX_GUIDES_THICKNESS} or less`,
+      ),
     guidesAtBleedEdge: zod.boolean(),
     extendedGuidesOnly: zod.boolean(),
     pageHeight: zod
@@ -164,9 +172,24 @@ export const SettingsSchema = zod
       .max(10),
   })
   .superRefine((data, ctx) => {
-    const { pageWidth, pageHeight } = data;
+    const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
     const minPageWidth = getMinSize(data, "pageWidth");
     const minPageHeight = getMinSize(data, "pageHeight");
+
+    if (Number(guidesThickness) + Number(bleedEdge) > 3) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Bleed edge and guides thickness must be less than or equal to 3",
+        path: ["guidesThickness"],
+      });
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Bleed edge and guides thickness must be less than or equal to 3",
+        path: ["bleedEdge"],
+      });
+    }
 
     if (Number(pageWidth) < Number(minPageWidth)) {
       ctx.addIssue({
@@ -198,7 +221,7 @@ export const DEFAULT_SETTINGS = {
   enableBleedEdge: true,
   bleedEdge: "0",
   guidesColor: "#adff2f",
-  guidesThickness: "1",
+  guidesThickness: "0.265",
   guidesAtBleedEdge: false,
   extendedGuidesOnly: false,
   rowGap: "0",
