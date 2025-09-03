@@ -4,6 +4,7 @@ import {
   faArrowRight,
   faDownload,
   faEllipsisV,
+  faExpand,
   faTrash,
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
@@ -27,9 +28,11 @@ import { ImageErrors } from "~/components/ImageErrors";
 import { ImageLoadingContext } from "~/context/ImageLoadingContext";
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { getIsLocalImage, ImagesContext } from "~/context/ImagesContext";
+import { SettingsContext } from "~/context/SettingsContext";
 import { useGeneratePdf } from "~/hooks/useGeneratePdf";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { addBleedEdge } from "~/utils/add-bleed";
 import { progressEvents } from "~/utils/progress-events";
 import { toaster } from "~/utils/toaster";
 import ZipWorker from "~/workers/zip-worker?worker";
@@ -255,6 +258,7 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
   const { onSelectAllImages, selectedImageUuids } = useContext(
     ImageSelectionContext,
   );
+  const { settings } = useContext(SettingsContext);
   const { isLoadingImages } = useContext(ImageLoadingContext);
   const { isDownloading, downloadImages } = useDownloadImages();
   const selectedImageCount = selectedImageUuids.length;
@@ -263,6 +267,45 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
     [images, selectedImageUuids],
   );
   const queryClient = useQueryClient();
+
+  // FIXME: updates to the query data does not trigger these to update
+  const canAddBleed = useMemo(() => {
+    const allQueryData = selectedImages.map((image) => {
+      return queryClient.getQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+      );
+    });
+
+    return allQueryData.some((queryData) => {
+      if (!queryData) return false;
+      if ("original" in queryData) {
+        return queryData.data.size === queryData.original.size;
+      }
+      return false;
+    });
+  }, [queryClient, selectedImages]);
+
+  const onAddBleedClick = useCallback(() => {
+    void Promise.all(
+      selectedImages.map(async (image) => {
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+        );
+        if (queryData && "original" in queryData) {
+          const data = await addBleedEdge(
+            queryData.original,
+            queryData.mimeType,
+            Number(settings.cardWidth),
+            Number(settings.cardHeight),
+          );
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, data }),
+          );
+        }
+      }),
+    );
+  }, [queryClient, selectedImages, settings.cardWidth, settings.cardHeight]);
 
   const canRevertToOriginal = useMemo(() => {
     const allQueryData = selectedImages.map((image) => {
@@ -367,6 +410,17 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
                   </Menu.ItemIndicator>
                   <Menu.ItemText>Download images (ZIP)</Menu.ItemText>
                 </Menu.Item>
+                {canAddBleed ? (
+                  <Menu.Item
+                    value="add-bleed"
+                    onSelect={() => void onAddBleedClick()}
+                  >
+                    <Menu.ItemIndicator>
+                      <FontAwesomeIcon icon={faExpand} />
+                    </Menu.ItemIndicator>
+                    <Menu.ItemText>Add bleed</Menu.ItemText>
+                  </Menu.Item>
+                ) : null}
                 {canRevertToOriginal ? (
                   <Menu.Item
                     value="revert-to-original"

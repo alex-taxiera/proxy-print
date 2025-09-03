@@ -4,6 +4,7 @@ import {
   faArrowRight,
   faCheck,
   faEllipsisV,
+  faExpand,
   faPlus,
   faTrash,
   faUndo,
@@ -17,8 +18,10 @@ import { Menu } from "~/components/ui/menu";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { Image, ImagesContext } from "~/context/ImagesContext";
+import { SettingsContext } from "~/context/SettingsContext";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { addBleedEdge } from "~/utils/add-bleed";
 import { getKeybindLabels } from "~/utils/keybind-labels";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
@@ -46,6 +49,7 @@ export const CardContextMenu = ({
   const { images, onRemove, onReorder } = useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
   const { imageMatrix, cardsPerPage } = usePreviewData();
+  const { settings } = useContext(SettingsContext);
 
   const absoluteIndex = useMemo(() => {
     return images.findIndex((img) => img.uuid === image.uuid);
@@ -61,6 +65,33 @@ export const CardContextMenu = ({
   const onRemoveClick = useCallback(() => {
     onRemove(image.uuid);
   }, [image, onRemove]);
+
+  const canAddBleed = useMemo(() => {
+    if (!queryData) return false;
+    if ("original" in queryData) {
+      return queryData.data.size === queryData.original.size;
+    }
+    return false;
+  }, [queryData]);
+
+  const onAddBleedClick = useCallback(async () => {
+    if (queryData && "original" in queryData) {
+      const data = await addBleedEdge(
+        queryData.original,
+        queryData.mimeType,
+        Number(settings.cardWidth),
+        Number(settings.cardHeight),
+      );
+
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        () => ({
+          ...queryData,
+          data,
+        }),
+      );
+    }
+  }, [queryData, settings.cardWidth, settings.cardHeight, queryClient, image]);
 
   const canRevertToOriginal = useMemo(() => {
     if (!queryData) return false;
@@ -151,6 +182,17 @@ export const CardContextMenu = ({
                 <Menu.ItemText>Remove</Menu.ItemText>
                 <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
               </Menu.Item>
+              {canAddBleed ? (
+                <Menu.Item
+                  value="add-bleed"
+                  onSelect={() => void onAddBleedClick()}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faExpand} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Add bleed</Menu.ItemText>
+                </Menu.Item>
+              ) : null}
               {canRevertToOriginal ? (
                 <Menu.Item
                   value="revert-to-original"
