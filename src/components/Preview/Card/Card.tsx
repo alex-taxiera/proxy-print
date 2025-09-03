@@ -41,6 +41,11 @@ const useQueryData = (image: PossiblyEmptyImage) => {
   useEffect(() => {
     if (!queryKey) return;
 
+    const currentQueryData = queryClient.getQueryData<ImageQueryData>(queryKey);
+    if (currentQueryData && !queryData) {
+      setTimeout(() => setQueryData(currentQueryData));
+    }
+
     // Subscribe to cache updates for this specific query
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       // Check if this event is related to our specific image query
@@ -58,7 +63,7 @@ const useQueryData = (image: PossiblyEmptyImage) => {
     });
 
     return unsubscribe;
-  }, [queryClient, queryKey]);
+  }, [queryClient, queryData, queryKey]);
 
   return queryData;
 };

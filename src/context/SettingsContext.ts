@@ -20,7 +20,7 @@ export type CardSize = keyof typeof CARD_DIMENSIONS;
 
 export const MAX_BLEED = 3;
 
-export const MAX_GUIDES_THICKNESS = 1;
+export const MAX_GUIDES_THICKNESS = 0.9;
 
 export const cardSizeToNameMap = Object.fromEntries(
   Object.entries(CARD_DIMENSIONS).map(([key, dimensions]) => [
