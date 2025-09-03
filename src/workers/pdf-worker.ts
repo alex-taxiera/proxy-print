@@ -387,6 +387,7 @@ self.onmessage = function (
           type: "error",
           event: "addImage",
           error: error instanceof Error ? error.message : "Unknown Error",
+          errorStack: error instanceof Error ? error.stack : undefined,
         });
       }
       break;
@@ -414,6 +415,7 @@ self.onmessage = function (
           type: "error",
           event: "save",
           error: error instanceof Error ? error.message : "Unknown Error",
+          errorStack: error instanceof Error ? error.stack : undefined,
         });
       }
       break;

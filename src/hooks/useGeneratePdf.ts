@@ -395,7 +395,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             type: string;
             success: boolean;
             error?: string;
+            errorStack?: string;
             blob?: Blob;
+            event?: string;
           }>,
         ) => {
           switch (e.data.type) {
@@ -455,8 +457,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               break;
             }
             case "error":
-              reject(new Error(e.data.error));
-              console.error("PDF error:", e.data.error);
+              reject(
+                new Error(`PDF error during ${e.data.event}: ${e.data.error}`, {
+                  cause: e.data.errorStack,
+                }),
+              );
               console.timeEnd("save");
               setIsRendering(false);
               progressEvents.emit("complete");
