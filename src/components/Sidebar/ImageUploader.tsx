@@ -93,7 +93,7 @@ export function ImageUploader() {
     maxFiles: Infinity,
     disabled: isProcessing,
     onFileAccept,
-    accept: [".jpg", ".jpeg", ".png", ".bmp", ".xml"],
+    accept: [".jpg", ".jpeg", ".png", ".bmp", ".webp", ".xml"],
   });
 
   // hack to clear files after they are accepted
