@@ -1,3 +1,28 @@
+/**
+ * Calculates DPI from image dimensions and target physical size
+ * @param imageWidth - Width of the image in pixels
+ * @param imageHeight - Height of the image in pixels
+ * @param targetWidthMm - Target width in mm
+ * @param targetHeightMm - Target height in mm
+ * @returns DPI value
+ */
+function calculateDpi(
+  imageWidth: number,
+  imageHeight: number,
+  targetWidthMm: number,
+  targetHeightMm: number,
+): number {
+  // Convert mm to inches (1 inch = 25.4mm)
+  const targetWidthInches = targetWidthMm / 25.4;
+  const targetHeightInches = targetHeightMm / 25.4;
+
+  // Calculate DPI for both dimensions and use the average
+  const dpiWidth = imageWidth / targetWidthInches;
+  const dpiHeight = imageHeight / targetHeightInches;
+
+  return Math.round((dpiWidth + dpiHeight) / 2);
+}
+
 function blackenAllNearBlackPixels(
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -56,8 +81,14 @@ export function needsBleed(
   targetWidthMm: number,
   targetHeightMm: number,
 ): boolean {
-  // Convert mm to pixels at 300 DPI
-  const mmToPixels = 300 / 25.4;
+  // Calculate DPI from image dimensions and target size
+  const dpi = calculateDpi(
+    imageWidth,
+    imageHeight,
+    targetWidthMm,
+    targetHeightMm,
+  );
+  const mmToPixels = dpi / 25.4;
   const targetWidthPx = targetWidthMm * mmToPixels;
   const targetHeightPx = targetHeightMm * mmToPixels;
 
@@ -127,27 +158,33 @@ export function addBleedEdge(
 ): Promise<Blob> {
   const url = URL.createObjectURL(src);
   return new Promise((resolve) => {
-    // Convert mm to pixels at 300 DPI (1 inch = 25.4mm, 300 pixels per inch)
-    const mmToPixels = 300 / 25.4;
-    const targetCardWidth = Math.round(targetWidthMm * mmToPixels);
-    const targetCardHeight = Math.round(targetHeightMm * mmToPixels);
-    const bleedMm = 3; // 3mm bleed on all edges
-    const bleed = Math.round(bleedMm * mmToPixels);
-    const finalWidth = targetCardWidth + bleed * 2;
-    const finalHeight = targetCardHeight + bleed * 2;
-    const blackThreshold = 30; // max RGB value to still consider "black"
-    const blackToleranceRatio = 0.7; // how much of the edge must be black to switch modes
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
-    canvas.width = finalWidth;
-    canvas.height = finalHeight;
-
     const img = new Image();
     img.crossOrigin = "anonymous";
 
     img.onload = () => {
       const aspectRatio = img.width / img.height;
+      // Calculate DPI from image dimensions and target size
+      const dpi = calculateDpi(
+        img.width,
+        img.height,
+        targetWidthMm,
+        targetHeightMm,
+      );
+      const mmToPixels = dpi / 25.4;
+      const targetCardWidth = Math.round(targetWidthMm * mmToPixels);
+      const targetCardHeight = Math.round(targetHeightMm * mmToPixels);
+      const bleedMm = 3; // 3mm bleed on all edges
+      const bleed = Math.round(bleedMm * mmToPixels);
+      const finalWidth = targetCardWidth + bleed * 2;
+      const finalHeight = targetCardHeight + bleed * 2;
+      const blackThreshold = 30; // max RGB value to still consider "black"
+      const blackToleranceRatio = 0.7; // how much of the edge must be black to switch modes
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
+
       const targetAspect = targetCardWidth / targetCardHeight;
 
       let drawWidth = targetCardWidth;
@@ -171,8 +208,11 @@ export function addBleedEdge(
       const tempCtx = temp.getContext("2d", { willReadFrequently: true })!;
       tempCtx.drawImage(img, -offsetX, -offsetY, drawWidth, drawHeight);
 
-      const cornerSize = 30;
-      const sampleInset = 10;
+      // Scale corner size and sample inset based on DPI (base size at 300 DPI)
+      const baseDpi = 300;
+      const dpiScale = dpi / baseDpi;
+      const cornerSize = Math.round(30 * dpiScale);
+      const sampleInset = Math.round(10 * dpiScale);
 
       const averageColor = (
         x: number,
