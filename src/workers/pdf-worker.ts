@@ -194,8 +194,9 @@ function addImage(cardData: CardData) {
         ? guides.bleedEdgeWidth / 25.4
         : guides.bleedEdgeWidth;
 
-    const crosshairSize =
-      bleedEdgeWidthPdf || (guides.unit === "in" ? 1 / 25.4 : 1);
+    const crosshairSize = guides.extendedGuidesOnly
+      ? 0
+      : bleedEdgeWidthPdf || (guides.unit === "in" ? 1 / 25.4 : 1);
 
     // Calculate crosshair positions (at the edges of the card area - 63mm x 88mm)
     const topLeft = {
@@ -215,8 +216,8 @@ function addImage(cardData: CardData) {
       y: pdfY + pdfContainerHeight - bleedEdgeWidthPdf,
     };
 
-    // Parse inverted guide color
     if (!guides.extendedGuidesOnly) {
+      // Parse inverted guide color
       const invertedColorMatch = guides.invertedGuideColor.match(
         /#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i,
       );
