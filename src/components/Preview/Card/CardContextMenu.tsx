@@ -17,12 +17,14 @@ import { Kbd } from "~/components/ui/kbd";
 import { Menu } from "~/components/ui/menu";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { Image, ImagesContext } from "~/context/ImagesContext";
+import { getIsLocalImage, Image, ImagesContext } from "~/context/ImagesContext";
 import { SettingsContext } from "~/context/SettingsContext";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { addBleedEdge } from "~/utils/add-bleed";
 import { getKeybindLabels } from "~/utils/keybind-labels";
+
+import { SelectionMenuContent } from "../Actions";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
   image: Image;
@@ -42,7 +44,7 @@ export const CardContextMenu = ({
   queryData,
 }: CardContextMenuProps) => {
   const queryClient = useQueryClient();
-  const { onSelectImageUuid, getIsSelected } = useContext(
+  const { onSelectImageUuid, getIsSelected, selectedImageUuids } = useContext(
     ImageSelectionContext,
   );
   const isSelected = getIsSelected(image.uuid);
@@ -54,6 +56,13 @@ export const CardContextMenu = ({
   const absoluteIndex = useMemo(() => {
     return images.findIndex((img) => img.uuid === image.uuid);
   }, [images, image.uuid]);
+
+  const name = useMemo(() => {
+    if (getIsLocalImage(image)) {
+      return image.file?.name;
+    }
+    return image.name;
+  }, [image]);
 
   const buildOnAddClick = useCallback(
     (count: number) => () => {
@@ -162,7 +171,13 @@ export const CardContextMenu = ({
             onDragStart={(e) => e.preventDefault()}
             onClick={(e) => e.stopPropagation()}
           >
+            {isSelected && selectedImageUuids.length > 1 ? (
+              <SelectionMenuContent currentPage={currentPage} />
+            ) : null}
             <Menu.ItemGroup>
+              <Menu.ItemGroupLabel>
+                {name && name.length > 40 ? name.slice(0, 40) + "…" : name}
+              </Menu.ItemGroupLabel>
               <Menu.Item
                 value="select"
                 onSelect={() => onSelectImageUuid(image.uuid, !isSelected)}
@@ -175,7 +190,11 @@ export const CardContextMenu = ({
                 </Menu.ItemText>
                 <Kbd size="sm">Click</Kbd>
               </Menu.Item>
-              <Menu.Item value="edit" color="fg.error" onSelect={onRemoveClick}>
+              <Menu.Item
+                value="remove"
+                color="fg.error"
+                onSelect={onRemoveClick}
+              >
                 <Menu.ItemIndicator color="fg.error">
                   <FontAwesomeIcon icon={faTrash} />
                 </Menu.ItemIndicator>
@@ -250,7 +269,7 @@ export const CardContextMenu = ({
                 >
                   <Menu.TriggerItem>
                     <FontAwesomeIcon icon={faEllipsisV} />
-                    Move to ...
+                    Move to Page …
                   </Menu.TriggerItem>
                   <Portal>
                     <Menu.Positioner>

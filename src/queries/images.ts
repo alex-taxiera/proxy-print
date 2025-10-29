@@ -1,4 +1,8 @@
-import { FetchQueryOptions, QueryFunction } from "@tanstack/react-query";
+import {
+  FetchQueryOptions,
+  QueryCacheNotifyEvent,
+  QueryFunction,
+} from "@tanstack/react-query";
 
 import {
   getIsGoogleImage,
@@ -189,4 +193,32 @@ export const getQueryDataForImage = (
   }
 
   throw new Error("Invalid image type");
+};
+
+export const getIsDownloadableImageCacheEvent = (
+  event: QueryCacheNotifyEvent,
+) => {
+  const isImageQuery =
+    event.query &&
+    // Check if the query key starts with the imagesQueryKey
+    Array.isArray(event.query.queryKey) &&
+    event.query.queryKey.length > 0 &&
+    event.query.queryKey.join(",").startsWith(`${imagesQueryKey().join(",")},`);
+
+  // Exclude local image queries from progress tracking
+  const isLocalImageQuery =
+    event.query &&
+    Array.isArray(event.query.queryKey) &&
+    event.query.queryKey.length > 0 &&
+    event.query.queryKey
+      .join(",")
+      .startsWith(`${localImagesQueryKey().join(",")},`);
+
+  return (
+    isImageQuery &&
+    !isLocalImageQuery &&
+    (event.type === "updated" ||
+      event.type === "added" ||
+      event.type === "removed")
+  );
 };

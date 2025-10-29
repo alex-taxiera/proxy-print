@@ -2,9 +2,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  getIsDownloadableImageCacheEvent,
   ImageQueryData,
   imagesQueryKey,
-  localImagesQueryKey,
 } from "~/queries/images";
 import { toaster } from "~/utils/toaster";
 
@@ -111,31 +111,10 @@ export function useImageLoadingProgress() {
     // Subscribe to cache events, but only care about image-related queries
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       // Check if this event is related to image queries, but exclude local images
-      const isImageQuery =
-        event.query &&
-        // Check if the query key starts with the imagesQueryKey
-        Array.isArray(event.query.queryKey) &&
-        event.query.queryKey.length > 0 &&
-        event.query.queryKey
-          .join(",")
-          .startsWith(`${imagesQueryKey().join(",")},`);
+      const isDownloadableImageCacheEvent =
+        getIsDownloadableImageCacheEvent(event);
 
-      // Exclude local image queries from progress tracking
-      const isLocalImageQuery =
-        event.query &&
-        Array.isArray(event.query.queryKey) &&
-        event.query.queryKey.length > 0 &&
-        event.query.queryKey
-          .join(",")
-          .startsWith(`${localImagesQueryKey().join(",")},`);
-
-      if (
-        isImageQuery &&
-        !isLocalImageQuery &&
-        (event.type === "updated" ||
-          event.type === "added" ||
-          event.type === "removed")
-      ) {
+      if (isDownloadableImageCacheEvent) {
         const currentProgress = getCurrentProgress();
         updateProgressToast(currentProgress);
       }

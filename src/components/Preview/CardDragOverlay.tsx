@@ -3,6 +3,7 @@ import { DragOverlay } from "@dnd-kit/react";
 import { css } from "styled-system/css";
 
 import { getIsSortableCardData } from "~/hooks/useSortableCard";
+import { formatCount } from "~/utils/pluralize";
 
 export type CardDragOverlayProps = {
   dragOverlayOffset: {
@@ -51,7 +52,7 @@ export const CardDragOverlay = ({
                   ? "name" in source.data.images[0]
                     ? source.data.images[0].name
                     : source.data.images[0].file.name
-                  : `${source.data.images.length} cards`
+                  : formatCount(source.data.images.length, "card")
                 : "unknown"}
             </div>
           </div>
