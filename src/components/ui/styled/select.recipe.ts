@@ -90,7 +90,7 @@ export const select = defineSlotRecipe({
         },
       },
       "& :where(svg)": {
-        color: "fg.subtle",
+        color: "fg.muted",
       },
     },
     trigger: {

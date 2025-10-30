@@ -100,6 +100,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const cardHeight = Number(settings.cardHeight);
       const cardWidth = Number(settings.cardWidth);
       const maxDpi = Number(settings.maxDpi);
+      const convertToJpg = settings.convertToJpg;
+      const jpgQuality = Number(settings.jpgQuality);
 
       const physicalCardHeight =
         (cardHeight + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
@@ -149,8 +151,15 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image))
           : undefined;
 
+        const mimeType = convertToJpg
+          ? "image/jpeg"
+          : image && getIsLocalImage(image)
+            ? image.file.type
+            : (downloadableImageData?.mimeType ?? "image/png");
+
+        const imgQuality = convertToJpg ? jpgQuality : 1;
+
         if (image) {
-          const isLocalImage = getIsLocalImage(image);
           try {
             // Get the image source URL (could be blob URL or data URL)
             const imageSrc = URL.createObjectURL(downloadableImageData!.data);
@@ -227,12 +236,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                 targetHeight,
               );
 
-              imageDataUrl = cropCanvas.toDataURL(
-                isLocalImage
-                  ? image.file.type
-                  : (downloadableImageData?.mimeType ?? "image/png"),
-                1,
-              );
+              imageDataUrl = cropCanvas.toDataURL(mimeType, imgQuality);
 
               // Clear canvas immediately to free memory
               cropCanvas.width = 0;
@@ -261,10 +265,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
         return {
           imageDataUrl,
-          mimeType:
-            image && getIsLocalImage(image)
-              ? image.file.type
-              : (downloadableImageData?.mimeType ?? "image/png"),
+          mimeType,
           pdfX,
           pdfY,
           containerWidth,

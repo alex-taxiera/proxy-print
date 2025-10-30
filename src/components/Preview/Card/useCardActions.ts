@@ -116,18 +116,6 @@ const useDownloadImages = (images: Image[]) => {
   };
 };
 
-const useAddCards = (images: Image[]) => {
-  const { onAdd } = useContext(ImagesContext);
-
-  return useCallback(
-    (count: number) => {
-      const data = Array.from({ length: count }, () => images).flat();
-      onAdd(data);
-    },
-    [onAdd, images],
-  );
-};
-
 const useGetCanAddBleed = (images: Image[]) => {
   const queryClient = useQueryClient();
 

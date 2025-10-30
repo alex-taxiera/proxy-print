@@ -171,6 +171,14 @@ export const SettingsSchema = zod
       .regex(/^\d+$/, "Must be a whole number")
       .refine((val) => parseInt(val) >= 300, "Must be 300 or greater")
       .refine((val) => parseInt(val) <= 1200, "Must be 1200 or less"),
+    convertToJpg: zod.boolean(),
+    jpgQuality: zod
+      .string()
+      .regex(/^\d*\.?\d+$/, "Must be a valid number")
+      .refine((val) => {
+        const num = parseFloat(val);
+        return num >= 0.1 && num <= 1;
+      }, "Must be between 0.1 and 1"),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
@@ -228,6 +236,8 @@ export const DEFAULT_SETTINGS = {
   rowGap: "0",
   columnGap: "0",
   maxDpi: "1200",
+  convertToJpg: false,
+  jpgQuality: "0.95",
 } as const satisfies Settings;
 
 export type SettingsContextValue = {
