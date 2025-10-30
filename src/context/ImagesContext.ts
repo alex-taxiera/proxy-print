@@ -7,6 +7,7 @@ export type GoogleImageData = {
 
 export type LocalImageData = {
   file: File;
+  hash: string;
 };
 
 export type ScryfallImageData = {
@@ -27,6 +28,8 @@ export type BaseImage = {
 export type Image = BaseImage & ImageData;
 
 export type PossiblyEmptyImage = BaseImage & (ImageData | EmptyImageData);
+
+export type LocalImage = BaseImage & LocalImageData;
 
 export type DownloadableImage = {
   uuid: string;
@@ -65,7 +68,7 @@ export type ImagesContextValue = {
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
   onReorder: (images: Image[], newIndex: number) => void;
   onAdd: (
-    files: (File | GoogleImageData | ScryfallImageData)[],
+    files: (LocalImageData | GoogleImageData | ScryfallImageData)[],
     index?: number,
   ) => void;
   onError: (image: DownloadableImage) => void;

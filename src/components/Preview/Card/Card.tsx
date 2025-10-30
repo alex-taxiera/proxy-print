@@ -15,30 +15,36 @@ import {
   PossiblyEmptyImage,
   getIsEmptyImage,
 } from "~/context/ImagesContext";
+import { SettingsContext } from "~/context/SettingsContext";
 import { useSortableCard } from "~/hooks/useSortableCard";
-import { getQueryDataForImage, ImageQueryData } from "~/queries/images";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
 
 import { CardContextMenu } from "./CardContextMenu";
 import { Guides } from "./Guides";
 import { useCardClassName } from "./useCardClassName";
 
-const useDownloadedSrc = (image: PossiblyEmptyImage) => {
+const useQueryData = (image: PossiblyEmptyImage) => {
   const queryClient = useQueryClient();
 
-  const queryData = useMemo(
-    () => (getIsDownloadableImage(image) ? getQueryDataForImage(image) : null),
+  const queryKey = useMemo(
+    () => (!getIsEmptyImage(image) ? getQueryKeyForImage(image) : null),
     [image],
   );
 
   // Manually subscribe to cache updates without triggering fetches
-  const [downloadedSrc, setDownloadedSrc] = useState<Blob | undefined>(() => {
-    if (!queryData) return undefined;
-    return queryClient.getQueryData<ImageQueryData>(queryData.queryKey)?.data;
+  const [queryData, setQueryData] = useState(() => {
+    if (!queryKey) return undefined;
+    return queryClient.getQueryData<ImageQueryData>(queryKey);
   });
 
   useEffect(() => {
-    if (!queryData) return;
+    if (!queryKey) return;
+
+    const currentQueryData = queryClient.getQueryData<ImageQueryData>(queryKey);
+    if (currentQueryData && !queryData) {
+      setTimeout(() => setQueryData(currentQueryData));
+    }
 
     // Subscribe to cache updates for this specific query
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
@@ -48,21 +54,18 @@ const useDownloadedSrc = (image: PossiblyEmptyImage) => {
         Array.isArray(event.query.queryKey) &&
         event.query.queryKey.length > 0 &&
         // Compare the actual query key arrays, not hash vs string
-        JSON.stringify(event.query.queryKey) ===
-          JSON.stringify(queryData.queryKey);
+        JSON.stringify(event.query.queryKey) === JSON.stringify(queryKey);
 
       if ((event.type === "updated" || event.type === "added") && isOurQuery) {
-        const { data } = queryClient.getQueryData<ImageQueryData>(
-          queryData.queryKey,
-        )!;
-        setDownloadedSrc(data);
+        const queryData = queryClient.getQueryData<ImageQueryData>(queryKey)!;
+        setQueryData(queryData);
       }
     });
 
     return unsubscribe;
-  }, [queryClient, queryData]);
+  }, [queryClient, queryData, queryKey]);
 
-  return downloadedSrc;
+  return queryData;
 };
 
 export type CardProps = {
@@ -77,6 +80,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
+  const { settings } = useContext(SettingsContext);
 
   const isSelected = useMemo(() => {
     return getIsSelected(image.uuid);
@@ -87,11 +91,11 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   }, [images, image.uuid]);
 
   const [src, setSrc] = useState<string>("");
-  const downloadedSrc = useDownloadedSrc(image);
+  const queryData = useQueryData(image);
 
   const isFetching = useMemo(
-    () => getIsDownloadableImage(image) && !downloadedSrc,
-    [image, downloadedSrc],
+    () => getIsDownloadableImage(image) && !queryData,
+    [image, queryData],
   );
 
   const isEmpty = getIsEmptyImage(image);
@@ -122,12 +126,9 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
         return;
       }
 
-      const index = images.indexOf(image);
-      const imageData = getIsLocalImage(image) ? image.file : image;
-
       onAdd(
-        Array.from({ length: count }, () => imageData),
-        index + 1,
+        Array.from({ length: count }, () => image),
+        images.indexOf(image) + 1,
       );
     },
     [image, images, onAdd, isEmpty],
@@ -169,11 +170,8 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   useEffect(() => {
     let url: string | undefined;
 
-    if (getIsLocalImage(image)) {
-      url = URL.createObjectURL(image.file);
-      setSrc(url);
-    } else if (downloadedSrc) {
-      url = URL.createObjectURL(downloadedSrc);
+    if (queryData) {
+      url = URL.createObjectURL(queryData.data);
       setSrc(url);
     }
 
@@ -183,7 +181,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
         URL.revokeObjectURL(url);
       }
     };
-  }, [downloadedSrc, image]);
+  }, [queryData, image]);
 
   return (
     <div
@@ -242,6 +240,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
               onSelectImageUuid={onSelectImageUuid}
               currentPage={currentPage}
               index={index}
+              queryData={queryData}
             >
               <img
                 src={imageSrc}
@@ -291,6 +290,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
           )}
         </>
       </div>
+      {!settings.extendedGuidesOnly && <Guides />}
       {!isEmpty && !isPending ? (
         <Checkbox
           className={css({
@@ -298,10 +298,13 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
             position: "absolute",
             top: 2,
             left: 2,
-            backgroundColor: "bg.emphasized",
+            zIndex: 1,
             gap: 0,
             _groupHover: {
               visibility: "visible",
+            },
+            "& [data-part='control'][data-state='unchecked']": {
+              backgroundColor: "bg.emphasized",
             },
           })}
           checked={isSelected}
@@ -313,7 +316,6 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
           <span className={visuallyHidden()}>Select {name}</span>
         </Checkbox>
       ) : null}
-      <Guides />
     </div>
   );
 };

@@ -227,24 +227,24 @@ export const Preview = () => {
   return (
     <div className={css(containerStyles)} style={cssVars}>
       <ProgressOverlay />
-      <div
-        className={hstack({
-          minWidth: "max",
-          width: "full",
-          alignItems: "flex-end",
-          justifyContent: "center",
-          gap: "6",
-          paddingY: "6",
-          paddingX: "2",
-        })}
+      {/* TODO: use grid so that actions and pagination don't need to be inside dragdrop provider */}
+      <DragDropProvider
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragOver={(event) => {
+          event.preventDefault();
+        }}
       >
-        {/* TODO: use grid so that actions and pagination don't need to be inside dragdrop provider */}
-        <DragDropProvider
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onDragOver={(event) => {
-            event.preventDefault();
-          }}
+        <div
+          className={hstack({
+            minWidth: "max",
+            width: "full",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            gap: "6",
+            paddingY: "6",
+            paddingX: "2",
+          })}
         >
           <PageDrop
             id="prev-page"
@@ -400,9 +400,9 @@ export const Preview = () => {
               </div>
             </div>
           </PageDrop>
-          <CardDragOverlay dragOverlayOffset={dragOverlayOffset} />
-        </DragDropProvider>
-      </div>
+        </div>
+        <CardDragOverlay dragOverlayOffset={dragOverlayOffset} />
+      </DragDropProvider>
     </div>
   );
 };

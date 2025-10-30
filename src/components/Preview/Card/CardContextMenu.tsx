@@ -4,25 +4,34 @@ import {
   faArrowRight,
   faCheck,
   faEllipsisV,
+  faExpand,
   faPlus,
   faTrash,
+  faUndo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext, useMemo } from "react";
 
 import { Kbd } from "~/components/ui/kbd";
 import { Menu } from "~/components/ui/menu";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { Image, ImagesContext } from "~/context/ImagesContext";
+import { getIsLocalImage, Image, ImagesContext } from "~/context/ImagesContext";
+import { SettingsContext } from "~/context/SettingsContext";
 import { usePreviewData } from "~/hooks/usePreviewData";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { addBleedEdge } from "~/utils/add-bleed";
 import { getKeybindLabels } from "~/utils/keybind-labels";
+
+import { SelectionMenuContent } from "../Actions";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
   image: Image;
   add: (count: number) => void;
   currentPage: number;
   index: number;
+  queryData?: ImageQueryData;
   onSelectImageUuid: (uuid: string, selected: boolean) => void;
 }>;
 
@@ -32,18 +41,28 @@ export const CardContextMenu = ({
   currentPage,
   children,
   index,
+  queryData,
 }: CardContextMenuProps) => {
-  const { onSelectImageUuid, getIsSelected } = useContext(
+  const queryClient = useQueryClient();
+  const { onSelectImageUuid, getIsSelected, selectedImageUuids } = useContext(
     ImageSelectionContext,
   );
   const isSelected = getIsSelected(image.uuid);
   const { images, onRemove, onReorder } = useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
   const { imageMatrix, cardsPerPage } = usePreviewData();
+  const { settings } = useContext(SettingsContext);
 
   const absoluteIndex = useMemo(() => {
     return images.findIndex((img) => img.uuid === image.uuid);
   }, [images, image.uuid]);
+
+  const name = useMemo(() => {
+    if (getIsLocalImage(image)) {
+      return image.file?.name;
+    }
+    return image.name;
+  }, [image]);
 
   const buildOnAddClick = useCallback(
     (count: number) => () => {
@@ -55,6 +74,61 @@ export const CardContextMenu = ({
   const onRemoveClick = useCallback(() => {
     onRemove(image.uuid);
   }, [image, onRemove]);
+
+  const canAddBleed = useMemo(() => {
+    if (!queryData) return false;
+    if ("original" in queryData) {
+      return queryData.data.size === queryData.original.size;
+    }
+    return false;
+  }, [queryData]);
+
+  const onAddBleedClick = useCallback(async () => {
+    if (queryData && "original" in queryData) {
+      const data = await addBleedEdge(
+        queryData.original,
+        queryData.mimeType,
+        Number(settings.cardWidth),
+        Number(settings.cardHeight),
+      );
+
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        () => ({
+          ...queryData,
+          data,
+        }),
+      );
+    }
+  }, [queryData, settings.cardWidth, settings.cardHeight, queryClient, image]);
+
+  const canRevertToOriginal = useMemo(() => {
+    if (!queryData) return false;
+
+    if ("original" in queryData) {
+      return queryData.original.size !== queryData.data.size;
+    }
+
+    return false;
+  }, [queryData]);
+
+  const onRevertToOriginalClick = useCallback(() => {
+    if (canRevertToOriginal) {
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        (old) => {
+          if (!old || !("original" in old)) {
+            return undefined;
+          }
+
+          return {
+            ...old,
+            data: old.original,
+          };
+        },
+      );
+    }
+  }, [image, canRevertToOriginal, queryClient]);
 
   const isOnLastPage = useMemo(() => {
     return currentPage === imageMatrix.length;
@@ -97,7 +171,13 @@ export const CardContextMenu = ({
             onDragStart={(e) => e.preventDefault()}
             onClick={(e) => e.stopPropagation()}
           >
+            {isSelected && selectedImageUuids.length > 1 ? (
+              <SelectionMenuContent currentPage={currentPage} />
+            ) : null}
             <Menu.ItemGroup>
+              <Menu.ItemGroupLabel>
+                {name && name.length > 40 ? name.slice(0, 40) + "…" : name}
+              </Menu.ItemGroupLabel>
               <Menu.Item
                 value="select"
                 onSelect={() => onSelectImageUuid(image.uuid, !isSelected)}
@@ -110,13 +190,39 @@ export const CardContextMenu = ({
                 </Menu.ItemText>
                 <Kbd size="sm">Click</Kbd>
               </Menu.Item>
-              <Menu.Item value="edit" color="fg.error" onSelect={onRemoveClick}>
+              <Menu.Item
+                value="remove"
+                color="fg.error"
+                onSelect={onRemoveClick}
+              >
                 <Menu.ItemIndicator color="fg.error">
                   <FontAwesomeIcon icon={faTrash} />
                 </Menu.ItemIndicator>
                 <Menu.ItemText>Remove</Menu.ItemText>
                 <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
               </Menu.Item>
+              {canAddBleed ? (
+                <Menu.Item
+                  value="add-bleed"
+                  onSelect={() => void onAddBleedClick()}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faExpand} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Add bleed</Menu.ItemText>
+                </Menu.Item>
+              ) : null}
+              {canRevertToOriginal ? (
+                <Menu.Item
+                  value="revert-to-original"
+                  onSelect={onRevertToOriginalClick}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faUndo} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Revert to original</Menu.ItemText>
+                </Menu.Item>
+              ) : null}
             </Menu.ItemGroup>
             <Menu.ItemGroup>
               <Menu.Item onSelect={buildOnAddClick(1)} value="add-1">
@@ -163,7 +269,7 @@ export const CardContextMenu = ({
                 >
                   <Menu.TriggerItem>
                     <FontAwesomeIcon icon={faEllipsisV} />
-                    Move to ...
+                    Move to Page …
                   </Menu.TriggerItem>
                   <Portal>
                     <Menu.Positioner>

@@ -1,5 +1,11 @@
 import { nanoid } from "nanoid";
-import { ComponentProps, useCallback, useMemo, useState } from "react";
+import {
+  ComponentProps,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 import { getQueryDataForImage } from "~/queries/images";
 
@@ -10,8 +16,11 @@ import {
   GoogleImageData,
   Image,
   ImagesContext,
+  LocalImage,
+  LocalImageData,
   ScryfallImageData,
 } from "./ImagesContext";
+import { SettingsContext } from "./SettingsContext";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,
@@ -20,6 +29,11 @@ export const ImagesProvider = (
   const scryfallDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,
   });
+  const localDownloadManager = useImageDownloadManager({
+    maxInflight: Infinity,
+  });
+
+  const { settings } = useContext(SettingsContext);
 
   const [images, setImages] = useState<Image[]>([]);
   const [imagesWithError, setImagesWithError] = useState<DownloadableImage[]>(
@@ -74,7 +88,7 @@ export const ImagesProvider = (
   const downloadImage = useCallback(
     async (image: DownloadableImage) => {
       const isGoogleImage = getIsGoogleImage(image);
-      const queryData = getQueryDataForImage(image);
+      const queryData = getQueryDataForImage(image, settings);
       try {
         if (isGoogleImage) {
           await googleDownloadManager.add({ uuid: image.uuid, queryData });
@@ -85,21 +99,37 @@ export const ImagesProvider = (
         onError(image);
       }
     },
-    [googleDownloadManager, scryfallDownloadManager, onError],
+    [googleDownloadManager, scryfallDownloadManager, onError, settings],
+  );
+
+  const loadLocalImage = useCallback(
+    async (image: LocalImage) => {
+      const queryData = getQueryDataForImage(image, settings);
+      await localDownloadManager.add({
+        uuid: image.uuid,
+        queryData,
+      });
+    },
+    [localDownloadManager, settings],
   );
 
   const onAdd = useCallback(
-    (data: (File | GoogleImageData | ScryfallImageData)[], index?: number) => {
+    (
+      data: (LocalImageData | GoogleImageData | ScryfallImageData)[],
+      index?: number,
+    ) => {
       setImages((old) => {
         const images = data.map((item) => {
           const uuid = nanoid();
-          if (item instanceof File) {
-            return { uuid, file: item };
+          const newItem = { ...item, uuid };
+          if ("file" in newItem) {
+            void loadLocalImage(newItem);
+            return newItem;
           }
 
-          void downloadImage({ uuid, ...item });
+          void downloadImage(newItem);
 
-          return { uuid, ...item };
+          return newItem;
         });
         if (index === undefined) {
           return old.concat(images);
@@ -108,7 +138,7 @@ export const ImagesProvider = (
         return old.toSpliced(index, 0, ...images);
       });
     },
-    [downloadImage],
+    [loadLocalImage, downloadImage],
   );
 
   const onReorder = useCallback((imagesToMove: Image[], newIndex: number) => {

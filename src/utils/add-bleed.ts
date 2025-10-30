@@ -1,3 +1,28 @@
+/**
+ * Calculates DPI from image dimensions and target physical size
+ * @param imageWidth - Width of the image in pixels
+ * @param imageHeight - Height of the image in pixels
+ * @param targetWidthMm - Target width in mm
+ * @param targetHeightMm - Target height in mm
+ * @returns DPI value
+ */
+function calculateDpi(
+  imageWidth: number,
+  imageHeight: number,
+  targetWidthMm: number,
+  targetHeightMm: number,
+): number {
+  // Convert mm to inches (1 inch = 25.4mm)
+  const targetWidthInches = targetWidthMm / 25.4;
+  const targetHeightInches = targetHeightMm / 25.4;
+
+  // Calculate DPI for both dimensions and use the average
+  const dpiWidth = imageWidth / targetWidthInches;
+  const dpiHeight = imageHeight / targetHeightInches;
+
+  return Math.round((dpiWidth + dpiHeight) / 2);
+}
+
 function blackenAllNearBlackPixels(
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -39,30 +64,127 @@ function blackenAllNearBlackPixels(
   ctx.putImageData(imageData, 0, 0);
 }
 
-// TODO: connect this to the card size settings
-// TODO: determine how to dynamically detect image dimensions
-export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
+/**
+ * Detects if an image needs bleed to be added based on aspect ratio comparison.
+ * Compares the image's aspect ratio to both the non-bleed and bleed aspect ratios
+ * to determine which one the image is closer to.
+ *
+ * @param imageWidth - Width of the image in pixels
+ * @param imageHeight - Height of the image in pixels
+ * @param targetWidthMm - Target width without bleed in mm
+ * @param targetHeightMm - Target height without bleed in mm
+ * @returns true if the image aspect ratio is closer to the non-bleed aspect ratio, false otherwise
+ */
+export function needsBleed(
+  imageWidth: number,
+  imageHeight: number,
+  targetWidthMm: number,
+  targetHeightMm: number,
+): boolean {
+  // Calculate DPI from image dimensions and target size
+  const dpi = calculateDpi(
+    imageWidth,
+    imageHeight,
+    targetWidthMm,
+    targetHeightMm,
+  );
+  const mmToPixels = dpi / 25.4;
+  const targetWidthPx = targetWidthMm * mmToPixels;
+  const targetHeightPx = targetHeightMm * mmToPixels;
+
+  // Calculate bleed dimensions (3mm on all edges)
+  const bleedMm = 3;
+  const bleedPx = bleedMm * mmToPixels;
+  const bleedWidthPx = targetWidthPx + bleedPx * 2;
+  const bleedHeightPx = targetHeightPx + bleedPx * 2;
+
+  // Calculate aspect ratios
+  const imageAspectRatio = imageWidth / imageHeight;
+  const nonBleedAspectRatio = targetWidthPx / targetHeightPx;
+  const bleedAspectRatio = bleedWidthPx / bleedHeightPx;
+
+  // Calculate the difference between image aspect ratio and each target aspect ratio
+  const diffToNonBleed = Math.abs(imageAspectRatio - nonBleedAspectRatio);
+  const diffToBleed = Math.abs(imageAspectRatio - bleedAspectRatio);
+
+  // Return true if the image aspect ratio is closer to the non-bleed aspect ratio
+  // This means the image needs bleed to reach the bleed dimensions
+  return diffToNonBleed < diffToBleed;
+}
+
+/**
+ * Wrapper function that takes a File and extracts the image dimensions to determine bleed needs.
+ * This is the main entry point for checking if an uploaded image needs bleed.
+ *
+ * @param imageFile - The image as a File
+ * @param targetWidthMm - Target width without bleed in mm
+ * @param targetHeightMm - Target height without bleed in mm
+ * @returns Promise<boolean> - true if the image needs bleed for proper formatting
+ */
+export function needsBleedFromFile(
+  imageFile: File,
+  targetWidthMm: number,
+  targetHeightMm: number,
+): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(imageFile);
+    const img = new Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const result = needsBleed(
+        img.width,
+        img.height,
+        targetWidthMm,
+        targetHeightMm,
+      );
+      resolve(result);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image from file"));
+    };
+
+    img.src = url;
+  });
+}
+
+export function addBleedEdge(
+  src: Blob,
+  mimeType: string,
+  targetWidthMm: number,
+  targetHeightMm: number,
+): Promise<Blob> {
   const url = URL.createObjectURL(src);
   return new Promise((resolve) => {
-    // width and height are hardcoded based on scryfall image size
-    const targetCardWidth = 745;
-    const targetCardHeight = 1040;
-    const bleed = Math.round((3 * targetCardHeight) / 88);
-    const finalWidth = targetCardWidth + bleed * 2;
-    const finalHeight = targetCardHeight + bleed * 2;
-    const blackThreshold = 30; // max RGB value to still consider "black"
-    const blackToleranceRatio = 0.7; // how much of the edge must be black to switch modes
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
-    canvas.width = finalWidth;
-    canvas.height = finalHeight;
-
     const img = new Image();
     img.crossOrigin = "anonymous";
 
     img.onload = () => {
       const aspectRatio = img.width / img.height;
+      // Calculate DPI from image dimensions and target size
+      const dpi = calculateDpi(
+        img.width,
+        img.height,
+        targetWidthMm,
+        targetHeightMm,
+      );
+      const mmToPixels = dpi / 25.4;
+      const targetCardWidth = Math.round(targetWidthMm * mmToPixels);
+      const targetCardHeight = Math.round(targetHeightMm * mmToPixels);
+      const bleedMm = 3; // 3mm bleed on all edges
+      const bleed = Math.round(bleedMm * mmToPixels);
+      const finalWidth = targetCardWidth + bleed * 2;
+      const finalHeight = targetCardHeight + bleed * 2;
+      const blackThreshold = 30; // max RGB value to still consider "black"
+      const blackToleranceRatio = 0.7; // how much of the edge must be black to switch modes
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
+
       const targetAspect = targetCardWidth / targetCardHeight;
 
       let drawWidth = targetCardWidth;
@@ -86,8 +208,11 @@ export function addBleedEdge(src: Blob, mimeType: string): Promise<Blob> {
       const tempCtx = temp.getContext("2d", { willReadFrequently: true })!;
       tempCtx.drawImage(img, -offsetX, -offsetY, drawWidth, drawHeight);
 
-      const cornerSize = 30;
-      const sampleInset = 10;
+      // Scale corner size and sample inset based on DPI (base size at 300 DPI)
+      const baseDpi = 300;
+      const dpiScale = dpi / baseDpi;
+      const cornerSize = Math.round(30 * dpiScale);
+      const sampleInset = Math.round(10 * dpiScale);
 
       const averageColor = (
         x: number,

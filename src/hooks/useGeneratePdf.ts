@@ -4,13 +4,12 @@ import { PDFDocument } from "pdf-lib";
 import { useCallback, useContext } from "react";
 
 import {
-  getIsDownloadableImage,
   getIsLocalImage,
   Image as ImageType,
   ImagesContext,
 } from "~/context/ImagesContext";
 import { SettingsContext } from "~/context/SettingsContext";
-import { getQueryDataForImage, ImageQueryData } from "~/queries/images";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { invertHexColor } from "~/utils/invert-hex-color";
 import { progressEvents } from "~/utils/progress-events";
 import PdfWorker from "~/workers/pdf-worker?worker";
@@ -94,9 +93,20 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const guideColor = settings.guidesColor;
       const invertedGuideColor = invertHexColor(settings.guidesColor);
       const unit = settings.unit;
-      const guidesThickness = 0.2645833333 * guideBorderWidth;
+      const guidesThickness = guideBorderWidth;
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
       const pdfName = `${settings.filename}.pdf`;
+      const extendedGuidesOnly = settings.extendedGuidesOnly;
+      const cardHeight = Number(settings.cardHeight);
+      const cardWidth = Number(settings.cardWidth);
+      const maxDpi = Number(settings.maxDpi);
+      const convertToJpg = settings.convertToJpg;
+      const jpgQuality = Number(settings.jpgQuality);
+
+      const physicalCardHeight =
+        (cardHeight + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
+      const physicalCardWidth =
+        (cardWidth + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
 
       let progress = 0;
       const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
@@ -137,20 +147,22 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const pdfY = cardY * scaleY;
 
         let imageDataUrl = null;
-        const downloadableImageData =
-          image && getIsDownloadableImage(image)
-            ? queryClient.getQueryData<ImageQueryData>(
-                getQueryDataForImage(image).queryKey,
-              )
-            : undefined;
+        const downloadableImageData = image
+          ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image))
+          : undefined;
+
+        const mimeType = convertToJpg
+          ? "image/jpeg"
+          : image && getIsLocalImage(image)
+            ? image.file.type
+            : (downloadableImageData?.mimeType ?? "image/png");
+
+        const imgQuality = convertToJpg ? jpgQuality : 1;
 
         if (image) {
-          const isLocalImage = getIsLocalImage(image);
           try {
             // Get the image source URL (could be blob URL or data URL)
-            const imageSrc = URL.createObjectURL(
-              isLocalImage ? image.file : downloadableImageData!.data,
-            );
+            const imageSrc = URL.createObjectURL(downloadableImageData!.data);
 
             // Create a new image element to get natural dimensions
             const tempImg = new Image();
@@ -179,9 +191,31 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
             const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
 
-            // Use full resolution - no max width/height constraints
-            const targetWidth = Math.round(sourceWidth);
-            const targetHeight = Math.round(sourceHeight);
+            // Calculate DPI based on the physical dimensions of the card and the pixel dimensions of the cropped image
+            const cardDpi = Math.round(
+              Math.sqrt(
+                sourceWidth * sourceWidth + sourceHeight * sourceHeight,
+              ) /
+                Math.sqrt(
+                  physicalCardWidth * physicalCardWidth +
+                    physicalCardHeight * physicalCardHeight,
+                ),
+            );
+
+            console.debug("cardDpi", cardDpi);
+            // Calculate scale factor based on DPI limit
+            const dpiScale = cardDpi > maxDpi ? maxDpi / cardDpi : 1;
+
+            // Apply scaling to target dimensions
+            const targetWidth = Math.round(sourceWidth * dpiScale);
+            const targetHeight = Math.round(sourceHeight * dpiScale);
+
+            // Log when DPI limiting is applied
+            if (dpiScale < 1) {
+              console.debug(
+                `DPI limiting applied: ${cardDpi} DPI → ${Math.round(cardDpi * dpiScale)} DPI (scale: ${dpiScale.toFixed(3)})`,
+              );
+            }
 
             const cropCanvas = document.createElement("canvas");
             const cropCtx = cropCanvas.getContext("2d");
@@ -202,12 +236,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                 targetHeight,
               );
 
-              imageDataUrl = cropCanvas.toDataURL(
-                isLocalImage
-                  ? image.file.type
-                  : (downloadableImageData?.mimeType ?? "image/png"),
-                1,
-              );
+              imageDataUrl = cropCanvas.toDataURL(mimeType, imgQuality);
 
               // Clear canvas immediately to free memory
               cropCanvas.width = 0;
@@ -236,10 +265,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
         return {
           imageDataUrl,
-          mimeType:
-            image && getIsLocalImage(image)
-              ? image.file.type
-              : (downloadableImageData?.mimeType ?? "image/png"),
+          mimeType,
           pdfX,
           pdfY,
           containerWidth,
@@ -262,6 +288,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                 unit,
                 guidesThickness,
                 guidesAtBleedEdge,
+                extendedGuidesOnly,
               }
             : null,
         };
@@ -369,7 +396,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             type: string;
             success: boolean;
             error?: string;
+            errorStack?: string;
             blob?: Blob;
+            event?: string;
           }>,
         ) => {
           switch (e.data.type) {
@@ -429,8 +458,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               break;
             }
             case "error":
-              reject(new Error(e.data.error));
-              console.error("PDF error:", e.data.error);
+              reject(
+                new Error(`PDF error during ${e.data.event}: ${e.data.error}`, {
+                  cause: e.data.errorStack,
+                }),
+              );
               console.timeEnd("save");
               setIsRendering(false);
               progressEvents.emit("complete");

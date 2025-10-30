@@ -13,6 +13,7 @@ import { pagination } from "./pagination.recipe";
 import { progress } from "./progress.recipe";
 import { select } from "./select.recipe";
 import { spinner } from "./spinner.recipe";
+import { tabs } from "./tabs.recipe";
 import { toast } from "./toast.recipe";
 import { tooltip } from "./tooltip.recipe";
 
@@ -37,6 +38,7 @@ export const slotRecipes = {
   pagination,
   progress,
   select,
+  tabs,
   toast,
   tooltip,
 };

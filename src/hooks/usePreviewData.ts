@@ -7,7 +7,7 @@ import { SettingsContext } from "~/context/SettingsContext";
 export const usePageLimits = () => {
   const { settings } = useContext(SettingsContext);
 
-  const guidesThickness = parseFloat(settings.guidesThickness) * 0.265; // convert px to mm
+  const guidesThickness = parseFloat(settings.guidesThickness); // mm
   const bleedEdge = settings.enableBleedEdge ? Number(settings.bleedEdge) : 0; // mm
 
   // Adjust card height based on card size

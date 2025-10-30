@@ -14,9 +14,6 @@ const itemStyle = {
   transitionTimingFunction: "default",
   _hover: {
     background: "bg.muted",
-    "& :where(svg)": {
-      color: "fg.default",
-    },
   },
   _highlighted: {
     background: "bg.muted",
@@ -38,6 +35,7 @@ export const menu = defineSlotRecipe({
     itemGroupLabel: {
       fontWeight: "semibold",
       textStyle: "sm",
+      color: "fg.muted",
     },
     content: {
       background: "bg.default",
@@ -65,7 +63,12 @@ export const menu = defineSlotRecipe({
       flexDirection: "column",
     },
     item: itemStyle,
-    triggerItem: itemStyle,
+    triggerItem: {
+      ...itemStyle,
+      "& :where(svg)": {
+        color: "fg.muted",
+      },
+    },
     itemText: {
       flex: 1,
     },
