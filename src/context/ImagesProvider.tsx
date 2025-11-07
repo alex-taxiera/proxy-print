@@ -28,6 +28,7 @@ export const ImagesProvider = (
   const googleDownloadManager = useImageDownloadManager();
   const scryfallDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,
+    upscale: true,
   });
   const localDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,

@@ -2,6 +2,8 @@ import { jsPDF } from "jspdf";
 
 import type { Settings } from "~/context/SettingsContext";
 
+declare const self: DedicatedWorkerGlobalScope;
+
 type InitData = {
   pageHeight: number;
   pageWidth: number;

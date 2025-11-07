@@ -1,6 +1,7 @@
 import { FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
 
+import { useUpscaleImage } from "~/hooks/useUpscaleImage";
 import { ImageQueryData } from "~/queries/images";
 
 type Item = {
@@ -12,12 +13,15 @@ type Item = {
 
 export function useImageDownloadManager({
   maxInflight = 20,
+  upscale,
 }: {
   maxInflight?: number;
+  upscale?: boolean;
 } = {}) {
   const queryClient = useQueryClient();
   const queueRef = useRef<Item[]>([]);
   const inflightRef = useRef<Item[]>([]);
+  const { upscaleImage } = useUpscaleImage();
 
   const processQueue = useCallback(() => {
     while (
@@ -27,8 +31,33 @@ export function useImageDownloadManager({
       const item = queueRef.current.shift()!;
       inflightRef.current.push(item);
 
+      const queryData = upscale
+        ? {
+            ...item.queryData,
+            queryFn: async (...args: unknown[]) => {
+              if (typeof item.queryData.queryFn === "function") {
+                const data = await item.queryData.queryFn(
+                  ...(args as Parameters<typeof item.queryData.queryFn>),
+                );
+                console.log("data :>> ", data);
+                if ("original" in data && data.original instanceof Blob) {
+                  const upscaled = await upscaleImage(data.original);
+                  return {
+                    ...data,
+                    data: upscaled,
+                  };
+                } else {
+                  return data;
+                }
+              }
+
+              throw new Error("Query function is not a function");
+            },
+          }
+        : item.queryData;
+
       queryClient
-        .fetchQuery(item.queryData)
+        .fetchQuery(queryData)
         .then(item.resolve)
         .catch(item.reject)
         .finally(() => {
@@ -41,7 +70,7 @@ export function useImageDownloadManager({
           }
         });
     }
-  }, [maxInflight, queryClient]);
+  }, [maxInflight, queryClient, upscale, upscaleImage]);
 
   const add = useCallback(
     ({ uuid, queryData }: Pick<Item, "uuid" | "queryData">): Promise<void> => {
