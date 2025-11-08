@@ -8,6 +8,8 @@ import {
 } from "@ark-ui/react";
 import {
   faArrowsRotate,
+  faExclamationTriangle,
+  faFlask,
   faUser,
   faUserGraduate,
 } from "@fortawesome/free-solid-svg-icons";
@@ -409,6 +411,27 @@ export const SettingsForm = () => {
                     <Tooltip.ArrowTip />
                   </Tooltip.Arrow>
                   <Tooltip.Content>Advanced Settings</Tooltip.Content>
+                </Tooltip.Positioner>
+              </Portal>
+            </Tooltip.Root>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="experimental" aria-label="Experimental Settings">
+            <Tooltip.Root
+              openDelay={100}
+              closeDelay={200}
+              positioning={{
+                placement: "top",
+              }}
+            >
+              <Tooltip.Trigger asChild>
+                <FontAwesomeIcon icon={faFlask} size="lg" />
+              </Tooltip.Trigger>
+              <Portal>
+                <Tooltip.Positioner>
+                  <Tooltip.Arrow>
+                    <Tooltip.ArrowTip />
+                  </Tooltip.Arrow>
+                  <Tooltip.Content>Experimental Settings</Tooltip.Content>
                 </Tooltip.Positioner>
               </Portal>
             </Tooltip.Root>
@@ -841,6 +864,45 @@ export const SettingsForm = () => {
               onCheckedChange={buildCheckboxChangeHandler("guidesAtBleedEdge")}
             />
             {formErrors.guidesAtBleedEdge.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+        </Tabs.Content>
+        <Tabs.Content
+          value="experimental"
+          className={vstack({
+            width: "full",
+            alignItems: "stretch",
+            gap: "2",
+            alignSelf: "stretch",
+            justifyContent: "center",
+          })}
+        >
+          <Field.Root invalid={formErrors.upscaleScryfallImages.length > 0}>
+            <Field.Label>
+              Upscale Scryfall Images{" "}
+              <Tooltip.Root openDelay={100} closeDelay={200}>
+                <Tooltip.Trigger asChild>
+                  <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Arrow>
+                    <Tooltip.ArrowTip />
+                  </Tooltip.Arrow>
+                  <Tooltip.Content>
+                    This can add a lot of time to the download process.
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
+            </Field.Label>
+            <Checkbox
+              size="lg"
+              checked={formState.upscaleScryfallImages}
+              onCheckedChange={buildCheckboxChangeHandler(
+                "upscaleScryfallImages",
+              )}
+            />
+            {formErrors.upscaleScryfallImages.map((issue, i) => (
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>

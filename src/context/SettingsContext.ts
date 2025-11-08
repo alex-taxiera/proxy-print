@@ -179,6 +179,7 @@ export const SettingsSchema = zod
         const num = parseFloat(val);
         return num >= 0.1 && num <= 1;
       }, "Must be between 0.1 and 1"),
+    upscaleScryfallImages: zod.boolean(),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
@@ -238,6 +239,7 @@ export const DEFAULT_SETTINGS = {
   maxDpi: "1200",
   convertToJpg: false,
   jpgQuality: "0.95",
+  upscaleScryfallImages: false,
 } as const satisfies Settings;
 
 export type SettingsContextValue = {

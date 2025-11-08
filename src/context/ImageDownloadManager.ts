@@ -39,16 +39,11 @@ export function useImageDownloadManager({
                 const data = await item.queryData.queryFn(
                   ...(args as Parameters<typeof item.queryData.queryFn>),
                 );
-                console.log("data :>> ", data);
-                if ("original" in data && data.original instanceof Blob) {
-                  const upscaled = await upscaleImage(data.original);
-                  return {
-                    ...data,
-                    data: upscaled,
-                  };
-                } else {
-                  return data;
-                }
+                const upscaled = await upscaleImage(data.data);
+                return {
+                  ...data,
+                  data: upscaled,
+                };
               }
 
               throw new Error("Query function is not a function");

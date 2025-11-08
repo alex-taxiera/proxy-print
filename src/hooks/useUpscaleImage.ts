@@ -1,15 +1,39 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 import Module from "~/asm/imghelper.js";
+import { useUpscaleQueueManager } from "~/context/UpscaleQueueManager";
 import { CustomImage } from "~/image";
 import UpscaleWorker from "~/workers/upscale-worker?worker";
 
 const wasmModule = Module();
 
+/**
+ * Detects the best available TensorFlow.js backend
+ * Prefers WebGPU for better performance, falls back to WebGL
+ */
+async function detectBestBackend(): Promise<"webgl" | "webgpu"> {
+  // Check if WebGPU is available
+  if (typeof navigator !== "undefined" && "gpu" in navigator) {
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      if (adapter) {
+        return "webgpu";
+      }
+    } catch (error) {
+      console.warn("WebGPU not available, falling back to WebGL:", error);
+    }
+  }
+
+  // Default to WebGL as it's more widely supported
+  return "webgl";
+}
+
 export function useUpscaleImage() {
   const factor = 4;
+  const queueManager = useUpscaleQueueManager();
 
-  const upscaleImage = useCallback(
+  // Core upscale function that does the actual processing
+  const processUpscaleImage = useCallback(
     async (src: Blob): Promise<Blob> => {
       const start = Date.now();
 
@@ -51,6 +75,9 @@ export function useUpscaleImage() {
         // Fallback: assume no alpha
         hasAlpha = false;
       }
+
+      // Detect the best available backend (webgpu preferred, fallback to webgl)
+      const backend = await detectBestBackend();
 
       // Process image with worker
       return new Promise<Blob>((resolve, reject) => {
@@ -164,6 +191,7 @@ export function useUpscaleImage() {
             width: input.width,
             height: input.height,
             hasAlpha: false, // Always process RGB first
+            backend,
           },
           [input.data.buffer],
         );
@@ -172,7 +200,27 @@ export function useUpscaleImage() {
     [factor],
   );
 
+  // Set up the queue manager with our processing function
+  useEffect(() => {
+    queueManager.setUpscaleWorker(processUpscaleImage);
+  }, [queueManager, processUpscaleImage]);
+
+  // Public upscale function that uses the queue
+  const upscaleImage = useCallback(
+    async (src: Blob, id?: string): Promise<Blob> => {
+      const itemId =
+        id ||
+        `upscale-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      return queueManager.addToQueue(itemId, src);
+    },
+    [queueManager],
+  );
+
   return {
     upscaleImage,
+    queueStatus: queueManager.status,
+    removeFromQueue: queueManager.removeFromQueue,
+    clearQueue: queueManager.clearQueue,
+    getQueuePosition: queueManager.getQueuePosition,
   };
 }
