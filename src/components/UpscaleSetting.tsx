@@ -15,7 +15,7 @@ export const UpscaleSetting = ({
   return (
     <Field.Root className={className}>
       <Field.Label display="inline-flex" alignItems="center" gap="1">
-        {children ?? "Upscale Scryfall Images"}
+        {children ?? "Upscale Decklist Images"}
         <Tooltip.Root openDelay={100} closeDelay={200}>
           <Tooltip.Trigger asChild>
             <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
