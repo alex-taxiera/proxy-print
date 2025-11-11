@@ -160,12 +160,12 @@ export const SettingsSchema = zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
       .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
-      .refine((val) => parseInt(val) <= 10, "Must be 10 or less"),
+      .refine((val) => parseInt(val) <= 100, "Must be 100 or less"),
     columnGap: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
       .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
-      .refine((val) => parseInt(val) <= 10, "Must be 10 or less"),
+      .refine((val) => parseInt(val) <= 100, "Must be 100 or less"),
     maxDpi: zod
       .string()
       .regex(/^\d+$/, "Must be a whole number")
