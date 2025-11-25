@@ -251,17 +251,49 @@ export function addBleedEdge(
         a: number,
       ): boolean => a === 0 || (r > 200 && g > 200 && b > 200);
 
-      const cornerCoords = [
-        { x: 0, y: 0 },
-        { x: temp.width - cornerSize, y: 0 },
-        { x: 0, y: temp.height - cornerSize },
-        { x: temp.width - cornerSize, y: temp.height - cornerSize },
-      ];
+      const cornerRadiusMm = 2.5;
+      const cornerRadiusPx = Math.max(
+        1,
+        Math.round(cornerRadiusMm * mmToPixels),
+      );
+      const cornerOverlapMm = 0.4;
+      const cornerOverlapPx = Math.max(
+        1,
+        Math.round(cornerOverlapMm * mmToPixels),
+      );
 
-      cornerCoords.forEach(({ x, y }) => {
+      const cornerConfigs = [
+        {
+          rectX: 0,
+          rectY: 0,
+          isLeft: true,
+          isTop: true,
+        },
+        {
+          rectX: temp.width - cornerSize,
+          rectY: 0,
+          isLeft: false,
+          isTop: true,
+        },
+        {
+          rectX: 0,
+          rectY: temp.height - cornerSize,
+          isLeft: true,
+          isTop: false,
+        },
+        {
+          rectX: temp.width - cornerSize,
+          rectY: temp.height - cornerSize,
+          isLeft: false,
+          isTop: false,
+        },
+      ] as const;
+
+      cornerConfigs.forEach((config) => {
+        const { rectX, rectY, isLeft, isTop } = config;
         const imageData = tempCtx.getImageData(
-          x,
-          y,
+          rectX,
+          rectY,
           cornerSize,
           cornerSize,
         ).data;
@@ -279,15 +311,41 @@ export function addBleedEdge(
         }
 
         if (shouldFill) {
-          const avgColor = averageColor(
-            x < temp.width / 2 ? sampleInset : temp.width - sampleInset - 10,
-            y < temp.height / 2 ? sampleInset : temp.height - sampleInset - 10,
-            10,
-            10,
-          );
+          const sampleX = isLeft ? sampleInset : temp.width - sampleInset - 10;
+          const sampleY = isTop ? sampleInset : temp.height - sampleInset - 10;
+          const avgColor = averageColor(sampleX, sampleY, 10, 10);
+          const localCenterX = isLeft
+            ? cornerRadiusPx
+            : cornerSize - cornerRadiusPx;
+          const localCenterY = isTop
+            ? cornerRadiusPx
+            : cornerSize - cornerRadiusPx;
 
-          tempCtx.fillStyle = avgColor;
-          tempCtx.fillRect(x, y, cornerSize, cornerSize);
+          const cornerCanvas = document.createElement("canvas");
+          cornerCanvas.width = cornerSize;
+          cornerCanvas.height = cornerSize;
+          const cornerCtx = cornerCanvas.getContext("2d")!;
+
+          cornerCtx.fillStyle = avgColor;
+          cornerCtx.fillRect(0, 0, cornerSize, cornerSize);
+
+          // Remove the rounded corner portion from the fill without touching the source image
+          cornerCtx.save();
+          cornerCtx.globalCompositeOperation = "destination-out";
+          const cutRadiusPx = Math.max(1, cornerRadiusPx - cornerOverlapPx);
+          cornerCtx.beginPath();
+          cornerCtx.arc(
+            localCenterX,
+            localCenterY,
+            cutRadiusPx,
+            0,
+            Math.PI * 2,
+          );
+          cornerCtx.closePath();
+          cornerCtx.fill();
+          cornerCtx.restore();
+
+          tempCtx.drawImage(cornerCanvas, rectX, rectY);
         }
       });
 
