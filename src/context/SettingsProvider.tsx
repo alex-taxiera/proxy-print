@@ -79,9 +79,10 @@ export const SettingsProvider = (
     };
   }, [value]);
 
+  const [formState, setFormState] = useState(value);
   const contextValue = useMemo(
-    () => ({ settings: value, setSettings, cssVars }),
-    [value, setSettings, cssVars],
+    () => ({ settings: value, setSettings, cssVars, formState, setFormState }),
+    [value, setSettings, cssVars, formState],
   );
 
   return <SettingsContext.Provider {...props} value={contextValue} />;

@@ -246,9 +246,13 @@ export type SettingsContextValue = {
   settings: Settings;
   setSettings: (updater: (old: Settings) => Settings) => void;
   cssVars: Record<string, string>;
+  formState: Settings;
+  setFormState: React.Dispatch<React.SetStateAction<Settings>>;
 };
 export const SettingsContext = createContext<SettingsContextValue>({
   settings: DEFAULT_SETTINGS,
   setSettings: () => {},
   cssVars: {},
+  formState: DEFAULT_SETTINGS,
+  setFormState: () => {},
 });

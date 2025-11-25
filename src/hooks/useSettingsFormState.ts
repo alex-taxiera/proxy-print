@@ -5,7 +5,7 @@ import {
   ColorPickerValueChangeDetails,
 } from "@ark-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useState, useMemo } from "react";
+import { useCallback, useContext, useMemo } from "react";
 
 import {
   Settings,
@@ -122,8 +122,8 @@ const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
 };
 
 export const useSettingsFormState = () => {
-  const { settings, setSettings } = useContext(SettingsContext);
-  const [formState, setFormState] = useState(settings);
+  const { settings, setSettings, formState, setFormState } =
+    useContext(SettingsContext);
 
   const handleBleedEdgeForCardSizeChange =
     useHandleBleedEdgeForCardSizeChange();
@@ -207,7 +207,7 @@ export const useSettingsFormState = () => {
         }
       });
     },
-    [formState, handleBleedEdgeForCardSizeChange, setSettings],
+    [formState, handleBleedEdgeForCardSizeChange, setFormState, setSettings],
   );
 
   const buildTextInputChangeHandler = useCallback(
