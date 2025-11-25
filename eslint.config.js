@@ -20,6 +20,7 @@ export default tseslint.config(
     ignores: [
       "styled-system/**",
       "src/components/ui/styled/utils/create-style-context.tsx",
+      "src/asm/**",
     ],
     languageOptions: {
       ecmaVersion: 2023,

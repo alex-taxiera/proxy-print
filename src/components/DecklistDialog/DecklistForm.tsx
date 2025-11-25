@@ -2,6 +2,7 @@ import { UseDialogContext } from "@ark-ui/react";
 import { useIsMutating } from "@tanstack/react-query";
 import { useCallback, useContext } from "react";
 
+import { css } from "styled-system/css";
 import { hstack, vstack, visuallyHidden } from "styled-system/patterns";
 
 import { Button } from "~/components/ui/button";
@@ -11,6 +12,8 @@ import { Field } from "~/components/ui/field";
 import { ImagesContext } from "~/context/ImagesContext";
 import { useGetCardsForDecklist } from "~/hooks/useGetCardsForDecklist";
 import { getScryfallCardsCollectionQueryKey } from "~/queries/useScryfallCardsCollection";
+
+import { UpscaleSetting } from "../UpscaleSetting";
 
 export const DecklistForm = () => {
   const { onAdd, onError } = useContext(ImagesContext);
@@ -70,23 +73,31 @@ export const DecklistForm = () => {
           </Field.Root>
           <div
             className={hstack({
-              gap: "2",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               width: "full",
             })}
           >
-            <Dialog.CloseTrigger asChild>
-              <Button variant="outline" colorPalette="gray">
-                Cancel
-              </Button>
-            </Dialog.CloseTrigger>
-            <Button
-              type="submit"
-              loading={isSubmitting}
-              loadingText="Submitting..."
+            <UpscaleSetting className={css({ flexDirection: "row-reverse" })}>
+              Upscale Images
+            </UpscaleSetting>
+            <div
+              className={hstack({
+                gap: "2",
+              })}
             >
-              Submit
-            </Button>
+              <Dialog.CloseTrigger asChild>
+                <Button variant="outline" colorPalette="gray">
+                  Cancel
+                </Button>
+              </Dialog.CloseTrigger>
+              <Button
+                type="submit"
+                loading={isSubmitting}
+                loadingText="Submitting..."
+              >
+                Submit
+              </Button>
+            </div>
           </div>
         </form>
       )}

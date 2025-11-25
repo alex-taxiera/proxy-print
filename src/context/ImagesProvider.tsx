@@ -25,15 +25,16 @@ import { SettingsContext } from "./SettingsContext";
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,
 ) => {
+  const { settings } = useContext(SettingsContext);
+
   const googleDownloadManager = useImageDownloadManager();
   const scryfallDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,
+    upscale: settings.upscaleScryfallImages,
   });
   const localDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,
   });
-
-  const { settings } = useContext(SettingsContext);
 
   const [images, setImages] = useState<Image[]>([]);
   const [imagesWithError, setImagesWithError] = useState<DownloadableImage[]>(

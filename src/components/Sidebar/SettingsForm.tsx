@@ -1,19 +1,12 @@
-import {
-  CheckboxCheckedChangeDetails,
-  ColorPickerValueChangeDetails,
-  NumberInputValueChangeDetails,
-  parseColor,
-  Portal,
-  SelectValueChangeDetails,
-} from "@ark-ui/react";
+import { parseColor, Portal } from "@ark-ui/react";
 import {
   faArrowsRotate,
+  faFlask,
   faUser,
   faUserGraduate,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { hstack, vstack } from "styled-system/patterns";
 
@@ -30,119 +23,13 @@ import { Tooltip } from "~/components/ui/tooltip";
 
 import {
   CARD_DIMENSIONS,
-  cardSizeToNameMap,
-  DEFAULT_SETTINGS,
   MAX_BLEED,
   MAX_GUIDES_THICKNESS,
   PAGE_DIMENSIONS,
-  pageSizeToNameMap,
-  Settings,
-  SettingsContext,
-  SettingsSchema,
-  Unit,
 } from "~/context/SettingsContext";
-import {
-  ScryfallImageQueryData,
-  LocalImageQueryData,
-  localImagesQueryKey,
-  scryfallImagesQueryKey,
-  ScryfallImageQueryKey,
-  LocalImageQueryKey,
-} from "~/queries/images";
-import { addBleedEdge, needsBleedFromFile } from "~/utils/add-bleed";
+import { useSettingsFormState } from "~/hooks/useSettingsFormState";
 
-const useHandleBleedEdgeForCardSizeChange = () => {
-  const queryClient = useQueryClient();
-
-  return useCallback(
-    async (settings: Settings) => {
-      // reprocess all image data in scryfall or local queries
-      const scryfallQueries =
-        queryClient.getQueriesData<ScryfallImageQueryData>({
-          queryKey: scryfallImagesQueryKey(),
-        });
-
-      const cardWidth = Number(settings.cardWidth);
-      const cardHeight = Number(settings.cardHeight);
-
-      const nextScryfallData = await Promise.all(
-        scryfallQueries.map(async ([key, old]) => {
-          const data = await addBleedEdge(
-            old!.original,
-            old!.mimeType,
-            cardWidth,
-            cardHeight,
-          );
-          return [key, data] as [ScryfallImageQueryKey, Blob];
-        }),
-      );
-
-      for (const [key, next] of nextScryfallData) {
-        queryClient.setQueryData<ScryfallImageQueryData, ScryfallImageQueryKey>(
-          key,
-          (old) => {
-            if (!old) {
-              return undefined;
-            }
-
-            return {
-              ...old,
-              data: next,
-            };
-          },
-        );
-      }
-
-      const localQueries = queryClient.getQueriesData<LocalImageQueryData>({
-        queryKey: localImagesQueryKey(),
-      });
-
-      const nextLocalData = await Promise.all(
-        localQueries.map(async ([key, old]) => {
-          const needsBleedEdge = await needsBleedFromFile(
-            old!.original,
-            cardWidth,
-            cardHeight,
-          );
-          console.log("needsBleedEdge", needsBleedEdge);
-          console.log("old!.original.name", old!.original.name);
-          if (needsBleedEdge) {
-            const data = await addBleedEdge(
-              old!.original,
-              old!.mimeType,
-              cardWidth,
-              cardHeight,
-            );
-            return [key, data] as [LocalImageQueryKey, Blob];
-          } else {
-            return [key, old!.original] as [LocalImageQueryKey, File];
-          }
-        }),
-      );
-
-      for (const [key, next] of nextLocalData) {
-        queryClient.setQueryData<LocalImageQueryData>(key, (old) => {
-          if (!old) {
-            return undefined;
-          }
-
-          return {
-            ...old,
-            data: next,
-          };
-        });
-      }
-    },
-    [queryClient],
-  );
-};
-
-const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
-  const convertedValue =
-    unit === "in" ? Number(value) / 25.4 : Number(value) * 25.4;
-  const rounded = Math.round(convertedValue * 100) / 100;
-  return rounded.toString();
-};
+import { UpscaleSetting } from "../UpscaleSetting";
 
 const unitsCollection = createListCollection({
   items: Array.from(
@@ -154,163 +41,20 @@ const unitsCollection = createListCollection({
 });
 
 export const SettingsForm = () => {
-  const { settings, setSettings } = useContext(SettingsContext);
-  const [formState, setFormState] = useState(settings);
-
-  const handleBleedEdgeForCardSizeChange =
-    useHandleBleedEdgeForCardSizeChange();
-
-  const formErrors = useMemo(() => {
-    const { error } = SettingsSchema.safeParse(formState);
-    const keys = Object.keys(settings) as Array<keyof Settings>;
-
-    return keys.reduce(
-      (errorMap, key) => ({
-        ...errorMap,
-        [key]: error?.issues.filter((issue) => issue.path.includes(key)) ?? [],
-      }),
-      {} as Record<keyof Settings, NonNullable<typeof error>["issues"]>,
-    );
-  }, [formState, settings]);
-
-  const handle = useCallback(
-    async (updates: Partial<Settings>) => {
-      const nextState = {
-        ...formState,
-        ...Object.fromEntries(
-          Object.entries(updates).map(([key, value]) => [
-            key,
-            value ?? DEFAULT_SETTINGS[key as keyof Settings],
-          ]),
-        ),
-      };
-
-      const updatedKeys = Object.keys(updates) as Array<keyof Settings>;
-
-      if (
-        updatedKeys.includes("cardHeight") ||
-        updatedKeys.includes("cardWidth")
-      ) {
-        await handleBleedEdgeForCardSizeChange(nextState);
-      }
-
-      if (
-        nextState.unit !== formState.unit &&
-        !updatedKeys.includes("pageHeight") &&
-        !updatedKeys.includes("pageWidth")
-      ) {
-        nextState.pageHeight = calculatePageDimensions(
-          nextState.pageHeight,
-          nextState.unit,
-        );
-        nextState.pageWidth = calculatePageDimensions(
-          nextState.pageWidth,
-          nextState.unit,
-        );
-      }
-
-      setFormState(nextState);
-      setSettings((old) => {
-        const updatedSettings = {
-          ...old,
-          ...nextState,
-        };
-
-        const { data, success, error } =
-          SettingsSchema.safeParse(updatedSettings);
-        if (success) {
-          return data;
-        } else {
-          // Return an object with keys that don't have errors, mixed on top of formState
-          const validKeys = Object.keys(updatedSettings).filter(
-            (key) => !error.issues?.some((issue) => issue.path.includes(key)),
-          );
-
-          const validSettings = validKeys.reduce(
-            (acc, key) => {
-              acc[key as keyof Settings] =
-                updatedSettings[key as keyof Settings];
-              return acc;
-            },
-            {} as Record<string, string | boolean>,
-          );
-
-          return { ...old, ...validSettings };
-        }
-      });
-    },
-    [formState, handleBleedEdgeForCardSizeChange, setSettings],
-  );
-
-  const buildTextInputChangeHandler = useCallback(
-    (key: keyof Settings) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      void handle({ [key]: event.target.value });
-    },
-    [handle],
-  );
-
-  const buildNumberInputChangeHandler = useCallback(
-    (key: keyof Settings) => (details: NumberInputValueChangeDetails) => {
-      void handle({ [key]: details.value });
-    },
-    [handle],
-  );
-
-  const buildCheckboxChangeHandler = useCallback(
-    (key: keyof Settings) => (details: CheckboxCheckedChangeDetails) => {
-      void handle({ [key]: details.checked });
-    },
-    [handle],
-  );
-
-  const buildSelectChangeHandler = useCallback(
-    (key: keyof Settings) => (details: SelectValueChangeDetails) => {
-      void handle({ [key]: details.value[0] });
-    },
-    [handle],
-  );
-
-  const cardSizeChangeHandler = useCallback(
-    (details: SelectValueChangeDetails) => {
-      const value = details.value[0] as `${number}-${number}`;
-      const cardSize = cardSizeToNameMap[value];
-
-      void handle({
-        cardHeight: CARD_DIMENSIONS[cardSize].height.toString(),
-        cardWidth: CARD_DIMENSIONS[cardSize].width.toString(),
-      });
-    },
-    [handle],
-  );
-
-  const isLandscape =
-    Number(formState.pageWidth) > Number(formState.pageHeight);
-
-  const pageSizeChangeHandler = useCallback(
-    (details: SelectValueChangeDetails) => {
-      const value = details.value[0] as `${number}${Unit}-${number}${Unit}`;
-      const pageSize = pageSizeToNameMap[value];
-
-      const pageWidth = PAGE_DIMENSIONS[pageSize].width;
-      const pageHeight = PAGE_DIMENSIONS[pageSize].height;
-
-      void handle({
-        pageWidth: isLandscape ? pageHeight.toString() : pageWidth.toString(),
-        pageHeight: isLandscape ? pageWidth.toString() : pageHeight.toString(),
-        unit: PAGE_DIMENSIONS[pageSize].unit,
-      });
-    },
-    [handle, isLandscape],
-  );
-
-  const buildColorPickerChangeHandler = useCallback(
-    (key: keyof Settings) => (details: ColorPickerValueChangeDetails) => {
-      void handle({ [key]: details.value.toString("hex") });
-    },
-    [handle],
-  );
-
-  const cardSizeValue = `${formState.cardWidth}-${formState.cardHeight}`;
+  const {
+    formState,
+    formErrors,
+    handle,
+    buildTextInputChangeHandler,
+    buildNumberInputChangeHandler,
+    buildCheckboxChangeHandler,
+    buildSelectChangeHandler,
+    cardSizeChangeHandler,
+    pageSizeChangeHandler,
+    buildColorPickerChangeHandler,
+    cardSizeValue,
+    pageSizeValue,
+  } = useSettingsFormState();
 
   const cardSizeCollection = createListCollection({
     items: Object.entries(CARD_DIMENSIONS)
@@ -325,10 +69,6 @@ export const SettingsForm = () => {
         hidden: true,
       }),
   });
-
-  const pageSizeValue = isLandscape
-    ? `${formState.pageHeight}${formState.unit}-${formState.pageWidth}${formState.unit}`
-    : `${formState.pageWidth}${formState.unit}-${formState.pageHeight}${formState.unit}`;
 
   const pageSizeCollection = createListCollection({
     groupBy: (item) => item.unit,
@@ -409,6 +149,27 @@ export const SettingsForm = () => {
                     <Tooltip.ArrowTip />
                   </Tooltip.Arrow>
                   <Tooltip.Content>Advanced Settings</Tooltip.Content>
+                </Tooltip.Positioner>
+              </Portal>
+            </Tooltip.Root>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="experimental" aria-label="Experimental Settings">
+            <Tooltip.Root
+              openDelay={100}
+              closeDelay={200}
+              positioning={{
+                placement: "top",
+              }}
+            >
+              <Tooltip.Trigger asChild>
+                <FontAwesomeIcon icon={faFlask} size="lg" />
+              </Tooltip.Trigger>
+              <Portal>
+                <Tooltip.Positioner>
+                  <Tooltip.Arrow>
+                    <Tooltip.ArrowTip />
+                  </Tooltip.Arrow>
+                  <Tooltip.Content>Experimental Settings</Tooltip.Content>
                 </Tooltip.Positioner>
               </Portal>
             </Tooltip.Root>
@@ -742,7 +503,7 @@ export const SettingsForm = () => {
             <Field.Label>Row Gap (mm)</Field.Label>
             <NumberInput
               min={0}
-              max={10}
+              max={100}
               value={formState.rowGap}
               onValueChange={buildNumberInputChangeHandler("rowGap")}
             ></NumberInput>
@@ -754,7 +515,7 @@ export const SettingsForm = () => {
             <Field.Label>Column Gap (mm)</Field.Label>
             <NumberInput
               min={0}
-              max={10}
+              max={100}
               value={formState.columnGap}
               onValueChange={buildNumberInputChangeHandler("columnGap")}
             ></NumberInput>
@@ -773,20 +534,7 @@ export const SettingsForm = () => {
             justifyContent: "center",
           })}
         >
-          <Field.Root invalid={formErrors.maxDpi.length > 0}>
-            <NumberInput
-              min={300}
-              max={1200}
-              step={100}
-              value={formState.maxDpi}
-              onValueChange={buildNumberInputChangeHandler("maxDpi")}
-            >
-              Max DPI
-            </NumberInput>
-            {formErrors.maxDpi.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
+          <UpscaleSetting />
           <Field.Root invalid={formErrors.convertToJpg.length > 0}>
             <Field.Label>Convert images to JPG</Field.Label>
             <Checkbox
@@ -822,6 +570,20 @@ export const SettingsForm = () => {
               </Field.Root>
             </Collapsible.Content>
           </Collapsible.Root>
+          <Field.Root invalid={formErrors.maxDpi.length > 0}>
+            <NumberInput
+              min={300}
+              max={1200}
+              step={100}
+              value={formState.maxDpi}
+              onValueChange={buildNumberInputChangeHandler("maxDpi")}
+            >
+              Max DPI
+            </NumberInput>
+            {formErrors.maxDpi.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
           <Field.Root invalid={formErrors.extendedGuidesOnly.length > 0}>
             <Field.Label>Extended Guides Only</Field.Label>
             <Checkbox
@@ -845,6 +607,16 @@ export const SettingsForm = () => {
             ))}
           </Field.Root>
         </Tabs.Content>
+        <Tabs.Content
+          value="experimental"
+          className={vstack({
+            width: "full",
+            alignItems: "stretch",
+            gap: "2",
+            alignSelf: "stretch",
+            justifyContent: "center",
+          })}
+        ></Tabs.Content>
       </form>
     </Tabs.Root>
   );

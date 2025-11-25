@@ -160,12 +160,12 @@ export const SettingsSchema = zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
       .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
-      .refine((val) => parseInt(val) <= 10, "Must be 10 or less"),
+      .refine((val) => parseInt(val) <= 100, "Must be 100 or less"),
     columnGap: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
       .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
-      .refine((val) => parseInt(val) <= 10, "Must be 10 or less"),
+      .refine((val) => parseInt(val) <= 100, "Must be 100 or less"),
     maxDpi: zod
       .string()
       .regex(/^\d+$/, "Must be a whole number")
@@ -179,6 +179,7 @@ export const SettingsSchema = zod
         const num = parseFloat(val);
         return num >= 0.1 && num <= 1;
       }, "Must be between 0.1 and 1"),
+    upscaleScryfallImages: zod.boolean(),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
@@ -238,15 +239,20 @@ export const DEFAULT_SETTINGS = {
   maxDpi: "1200",
   convertToJpg: false,
   jpgQuality: "0.95",
+  upscaleScryfallImages: false,
 } as const satisfies Settings;
 
 export type SettingsContextValue = {
   settings: Settings;
   setSettings: (updater: (old: Settings) => Settings) => void;
   cssVars: Record<string, string>;
+  formState: Settings;
+  setFormState: React.Dispatch<React.SetStateAction<Settings>>;
 };
 export const SettingsContext = createContext<SettingsContextValue>({
   settings: DEFAULT_SETTINGS,
   setSettings: () => {},
   cssVars: {},
+  formState: DEFAULT_SETTINGS,
+  setFormState: () => {},
 });
