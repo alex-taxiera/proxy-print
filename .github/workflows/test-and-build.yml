@@ -1,0 +1,154 @@
+name: Test and Build
+
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - trunk
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Dependency Cache
+        id: deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: npm ci
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci --ignore-scripts
+
+  generate-css:
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Dependency Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: CSS Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/styled-system
+          key: ${{ hashFiles('**/src/**/*.tsx') }}
+
+      - name: Generate CSS
+        run: npm run prepare
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: [install, generate-css]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Dependency Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: CSS Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/styled-system
+          key: ${{ hashFiles('**/src/**/*.tsx') }}
+
+      - name: Lint project
+        run: npm run lint
+
+  format:
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Dependency Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: Format project
+        run: npm run format:ci
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [install, generate-css]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Dependency Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - name: CSS Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/styled-system
+          key: ${{ hashFiles('**/src/**/*.tsx') }}
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload Artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/

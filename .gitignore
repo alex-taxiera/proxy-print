@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+coverage
 
 # Editor directories and files
 .vscode/*
@@ -25,6 +26,15 @@ dist-ssr
 
 # Docker
 docker-compose.override.yml
+
+# Panda
+styled-system
+styled-system-studio
+*storybook.log
+storybook-static
+
+# copied part recipes
+src/components/ui/preset/theme/recipes/**
 
 # Sentry Config File
 .env.sentry-build-plugin

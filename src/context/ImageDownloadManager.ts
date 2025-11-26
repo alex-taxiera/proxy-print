@@ -1,57 +1,27 @@
-import { useCallback, useRef, useState } from "react";
+import { FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useRef } from "react";
+
+import { useUpscaleImage } from "~/hooks/useUpscaleImage";
+import { ImageQueryData } from "~/queries/images";
 
 type Item = {
-  id: string;
-  resolve: (value: { mimeType: string, url: string }) => void;
+  uuid: string;
+  queryData: FetchQueryOptions<ImageQueryData>;
+  resolve: () => void;
   reject: (reason?: unknown) => void;
 };
 
-/**
- * Converts a Base64 string to a Blob.
- * @param base64String - The Base64 string of the image.
- * @param contentType - The MIME type of the image (e.g., "image/jpeg", "image/png").
- * @returns The resulting Blob object.
- */
-function base64ToBlob(
-  base64String: string,
-  contentType: string
-): Blob {
-  // Decode the Base64 string
-  const byteCharacters = atob(base64String);
-
-  // Convert the decoded string into an array of bytes
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-
-  // Create a Uint8Array from the byte numbers
-  const byteArray = new Uint8Array(byteNumbers);
-
-  // Create and return the Blob
-  return new Blob([byteArray], { type: contentType });
-}
-
-async function fetchImage({ id }: Item, init?: RequestInit): Promise<string> {
-  const url =
-    "https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec";
-  const params = new URLSearchParams({ id });
-  // FIXME: this signal doesn't work because script.google.com redirects to script.googleusercontent.com
-  const response = await fetch(`${url}?${params}`, init);
-  return await response.text();
-}
-
 export function useImageDownloadManager({
   maxInflight = 20,
+  upscale,
 }: {
   maxInflight?: number;
+  upscale?: boolean;
 } = {}) {
+  const queryClient = useQueryClient();
   const queueRef = useRef<Item[]>([]);
   const inflightRef = useRef<Item[]>([]);
-  const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
-  const imageCacheRef = useRef<Map<string, { url: string; mimeType: string }>>(new Map());
-
-  const [isFetching, setIsFetching] = useState(false);
+  const { upscaleImage } = useUpscaleImage();
 
   const processQueue = useCallback(() => {
     while (
@@ -60,83 +30,53 @@ export function useImageDownloadManager({
     ) {
       const item = queueRef.current.shift()!;
       inflightRef.current.push(item);
-      setIsFetching((oldIsFetching) => oldIsFetching || true);
-      const abortController = abortControllersRef.current.get(item.id);
-      fetchImage(item, { signal: abortController?.signal })
-        .then((data) => {
-          let mimeType = 'image/png';
 
-          // Check for JPEG signature (base64 starts with /9j/ for JFIF)
-          if (data.startsWith('/9j/')) {
-            mimeType = 'image/jpeg';
+      const queryData = upscale
+        ? {
+            ...item.queryData,
+            queryFn: async (...args: unknown[]) => {
+              if (typeof item.queryData.queryFn === "function") {
+                const data = await item.queryData.queryFn(
+                  ...(args as Parameters<typeof item.queryData.queryFn>),
+                );
+                const upscaled = await upscaleImage(data.data);
+                return {
+                  ...data,
+                  data: upscaled,
+                };
+              }
+
+              throw new Error("Query function is not a function");
+            },
           }
-          // Check for WebP signature (UklGRiI)
-          else if (data.startsWith('UklGRiI')) {
-            mimeType = 'image/webp';
-          }
-          const blob = base64ToBlob(data, mimeType);
-          const url = URL.createObjectURL(blob);
-          imageCacheRef.current.set(item.id, { url, mimeType });
-          item.resolve({ mimeType, url });
-        })
-        .catch((error) => {
-          item.reject(error);
-        })
+        : item.queryData;
+
+      queryClient
+        .fetchQuery(queryData)
+        .then(item.resolve)
+        .catch(item.reject)
         .finally(() => {
-          abortControllersRef.current.delete(item.id);
           inflightRef.current = inflightRef.current.filter((i) => i !== item);
           if (
             inflightRef.current.length < maxInflight &&
             queueRef.current.length > 0
           ) {
             processQueue();
-          } else if (
-            inflightRef.current.length === 0 &&
-            queueRef.current.length === 0
-          ) {
-            setIsFetching(false);
           }
         });
     }
-  }, [maxInflight]);
+  }, [maxInflight, queryClient, upscale, upscaleImage]);
 
   const add = useCallback(
-    (id: string): Promise<{ mimeType: string, url: string }> => {
+    ({ uuid, queryData }: Pick<Item, "uuid" | "queryData">): Promise<void> => {
       return new Promise((resolve, reject) => {
-        if (imageCacheRef.current.has(id)) {
-          // resolve with cached image
-          resolve(imageCacheRef.current.get(id)!);
-          return;
-        }
-
-        // check if inflight or queue contains the id
-        // combine resolve and reject with the existing item
-        const existingItem =
-          inflightRef.current.find((i) => i.id === id) ||
-          queueRef.current.find((i) => i.id === id);
-        if (existingItem) {
-          const originalResolve = existingItem.resolve;
-          const originalReject = existingItem.reject;
-          existingItem.resolve = (value) => {
-            originalResolve(value);
-            resolve(value);
-          };
-          existingItem.reject = (reason) => {
-            originalReject(reason);
-            reject(reason as Error);
-          };
-          return;
-        }
-
-        const abortController = new AbortController();
-        abortControllersRef.current.set(id, abortController);
-        queueRef.current.push({ id, resolve, reject });
+        queueRef.current.push({ uuid, queryData, resolve, reject });
         if (inflightRef.current.length < maxInflight) {
           processQueue();
         }
       });
     },
-    [maxInflight, processQueue]
+    [maxInflight, processQueue],
   );
 
   /**
@@ -144,32 +84,24 @@ export function useImageDownloadManager({
    * @param id The id of the download to remove
    * @remarks If the download is inflight, it cannot be aborted, so it will continue to completion
    * @remarks If the download is in the queue, it will be removed
-   * @remarks If the download is cached, it will be remain
    */
-  const remove = useCallback((id: string) => {
-    const queueItem = queueRef.current.find((i) => i.id === id);
+  const remove = useCallback((uuid: string) => {
+    const queueItem = queueRef.current.find((i) => i.uuid === uuid);
     if (queueItem) {
-      queueRef.current = queueRef.current.filter((i) => i.id !== id);
+      queueRef.current = queueRef.current.filter((i) => i.uuid !== uuid);
     }
   }, []);
 
   /**
    * Remove all downloads from the queue
-   * @remarks Downloads that are inflight or cached will remain
+   * @remarks Downloads that are inflight will remain
    * @remarks Downloads that are in the queue will be removed
    */
   const removeAll = useCallback(() => {
     queueRef.current = [];
   }, []);
 
-  const getCachedImage = useCallback(
-    (id: string) => imageCacheRef.current.get(id)?.url,
-    []
-  );
-
   return {
-    isFetching,
-    getCachedImage,
     add,
     remove,
     removeAll,

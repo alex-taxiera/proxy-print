@@ -1,0 +1,2 @@
+src/asm/**
+src/types/wasm.d.ts

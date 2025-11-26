@@ -1,13 +1,21 @@
-import { useCallback, useContext } from "react";
-import { progressEvents } from "../utils/progress-events";
-import { SettingsContext } from "../context/SettingsContext";
-import { ImagesContext } from "../context/ImagesContext";
-import PdfWorker from "../workers/pdf-worker?worker";
-import { usePreviewData } from "./usePreviewData";
-import { useCardClassNames } from "./useCardClassNames";
-import { invertHexColor } from "../utils/invert-hex-color";
 import * as Sentry from "@sentry/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { PDFDocument } from "pdf-lib";
+import { useCallback, useContext } from "react";
+
+import {
+  getIsLocalImage,
+  Image as ImageType,
+  ImagesContext,
+} from "~/context/ImagesContext";
+import { SettingsContext } from "~/context/SettingsContext";
+import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { invertHexColor } from "~/utils/invert-hex-color";
+import { progressEvents } from "~/utils/progress-events";
+import PdfWorker from "~/workers/pdf-worker?worker";
+
+import { useCardPositionMeta } from "./useCardClassNames";
+import { usePreviewData } from "./usePreviewData";
 
 const doTimeout = (fn: () => void, timeout?: number) => {
   if (window.requestIdleCallback) {
@@ -28,7 +36,7 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
     if (pdfSize + blob.size > maxPdfSize) {
       console.debug("pdf is too large, saving the current pdf");
       const mergedBytes = await mergedPdf.save();
-      yield new Blob([mergedBytes], { type: "application/pdf" });
+      yield new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
       mergedPdf = await PDFDocument.create();
       pdfSize = 0;
     }
@@ -42,78 +50,91 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
 
   console.debug("saving the final pdf");
   const mergedBytes = await mergedPdf.save();
-  yield new Blob([mergedBytes], { type: "application/pdf" });
-}
-
-function splitIntoChunks<T>(
-  items: T[],
-  chunkCount: number,
-  chunkSize: number
-): T[][] {
-  const assignments: T[][] = [];
-
-  for (let i = 0; i < chunkCount; i++) {
-    const start = i * chunkSize;
-    const end = start + chunkSize;
-    assignments.push(items.slice(start, end));
-  }
-
-  return assignments;
+  yield new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
 }
 
 export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
+  const queryClient = useQueryClient();
   const { settings } = useContext(SettingsContext);
   const { images, setIsRendering } = useContext(ImagesContext);
   const { imageMatrix, cardsPerPage } = usePreviewData();
-  const cardClassNames = useCardClassNames();
+  const cardPositionMeta = useCardPositionMeta();
 
   const generatePdf = useCallback(() => {
     return new Promise((resolve, reject) => {
       const referencePage = contentRef.current?.querySelector<HTMLElement>(
-        ".page"
+        ".page",
       ) as HTMLElement;
       const referencePageRect = referencePage.getBoundingClientRect();
       const referenceCards = Array.from(
-        referencePage.querySelectorAll<HTMLElement>(".card")
+        referencePage.querySelectorAll<HTMLElement>(".card"),
       );
+      const referenceImageContainer = referenceCards[0].querySelector(
+        ".image-container",
+      ) as HTMLElement;
+      const imageContainerRect =
+        referenceImageContainer.getBoundingClientRect();
+      const containerWidth = imageContainerRect.width;
+      const containerHeight = imageContainerRect.height;
+      const referenceImg = referenceCards[0].querySelector<HTMLImageElement>(
+        "img",
+      ) as HTMLImageElement;
+      const imageRect = referenceImg.getBoundingClientRect();
+      const imageWidth = imageRect.width;
+      const imageHeight = imageRect.height;
 
       // read settings
       const pageHeight = Number(settings.pageHeight);
       const pageWidth = Number(settings.pageWidth);
       const guideBorderWidth = Number(settings.guidesThickness);
-      const bleedEdgeWidth = Number(
-        settings.enableBleedEdge ? settings.bleedEdge : 0
-      );
+      const bleedEdgeWidth = settings.enableBleedEdge
+        ? Number(settings.bleedEdge)
+        : 0;
       const guideColor = settings.guidesColor;
       const invertedGuideColor = invertHexColor(settings.guidesColor);
       const unit = settings.unit;
-      const guidesThickness = 0.2645833333 * guideBorderWidth;
+      const guidesThickness = guideBorderWidth;
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
+      const pdfName = `${settings.filename}.pdf`;
+      const extendedGuidesOnly = settings.extendedGuidesOnly;
+      const cardHeight = Number(settings.cardHeight);
+      const cardWidth = Number(settings.cardWidth);
+      const maxDpi = Number(settings.maxDpi);
+      const convertToJpg = settings.convertToJpg;
+      const jpgQuality = Number(settings.jpgQuality);
 
-      const cards = Array.from(
-        contentRef.current?.querySelectorAll<HTMLElement>(".card") || []
-      );
+      const physicalCardHeight =
+        (cardHeight + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
+      const physicalCardWidth =
+        (cardWidth + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
 
       let progress = 0;
-      const totalProgressAmount = cards.length * 2; // 1 for processing 1 for adding to pdf
+      const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
       const numberOfPages = imageMatrix.length;
       const maxWorkers = Math.min(Math.floor(numberOfPages / 2) || 1, 34);
       const cardsDone = new Map<number, number>();
       const pdfPages = new Map<number, Blob>();
 
       // sort cards into separate lists per worker
-      const assignments = splitIntoChunks(cards, numberOfPages, cardsPerPage);
+      const assignments = imageMatrix.map((page) =>
+        page.map((image) => image.uuid),
+      );
 
-      const processCard = async (cardElement: HTMLElement) => {
-        const index = cards.indexOf(cardElement);
-        const relativeIndex = index % cardsPerPage;
-        console.debug(`Card ${index + 1} of ${cards.length} processing`);
+      const processCard = async ({
+        imageUuid,
+        relativeIndex,
+      }: {
+        imageUuid?: string;
+        relativeIndex: number;
+      }) => {
+        const index = imageUuid
+          ? images.findIndex((image) => image.uuid === imageUuid)
+          : relativeIndex + (imageMatrix.length - 1) * cardsPerPage;
+        const image: ImageType | undefined = images[index];
+        console.debug(
+          `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processing`,
+        );
         const referenceCard = referenceCards[relativeIndex];
-        const referenceImgElement = referenceCard.querySelector(
-          "img"
-        ) as HTMLImageElement;
-        const imageUuid = cardElement?.id;
-        const image = images.find((image) => image.uuid === imageUuid);
         const cardRect = referenceCard.getBoundingClientRect();
 
         const scaleX = pageWidth / referencePageRect.width;
@@ -125,23 +146,26 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const pdfX = cardX * scaleX;
         const pdfY = cardY * scaleY;
 
-        const imageContainer = referenceCard.querySelector(
-          ".image-container"
-        ) as HTMLElement;
-        const imageContainerRect = imageContainer.getBoundingClientRect();
-        const containerWidth = imageContainerRect.width;
-        const containerHeight = imageContainerRect.height;
-
         let imageDataUrl = null;
+        const downloadableImageData = image
+          ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image))
+          : undefined;
+
+        const mimeType = convertToJpg
+          ? "image/jpeg"
+          : image && getIsLocalImage(image)
+            ? image.file.type
+            : (downloadableImageData?.mimeType ?? "image/png");
+
+        const imgQuality = convertToJpg ? jpgQuality : 1;
 
         if (image) {
           try {
             // Get the image source URL (could be blob URL or data URL)
-            const imageSrc = image.url ?? URL.createObjectURL(image.file!);
+            const imageSrc = URL.createObjectURL(downloadableImageData!.data);
 
             // Create a new image element to get natural dimensions
             const tempImg = new Image();
-            tempImg.crossOrigin = "anonymous";
 
             // Wait for the image to load
             await new Promise((resolve, reject) => {
@@ -149,8 +173,6 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               tempImg.onerror = (event, source, lineno, colno, error) => {
                 console.debug("Image load error:", {
                   imageSrc,
-                  fileType: image?.file?.type,
-                  fileSize: image?.file?.size,
                   event,
                   source,
                   lineno,
@@ -162,10 +184,6 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               tempImg.src = imageSrc;
             });
 
-            const imageRect = referenceImgElement.getBoundingClientRect();
-            const imageWidth = imageRect.width;
-            const imageHeight = imageRect.height;
-
             const sourceWidth =
               (containerWidth / imageWidth) * tempImg.naturalWidth;
             const sourceHeight =
@@ -173,9 +191,31 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
             const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
 
-            // Use full resolution - no max width/height constraints
-            const targetWidth = Math.round(sourceWidth);
-            const targetHeight = Math.round(sourceHeight);
+            // Calculate DPI based on the physical dimensions of the card and the pixel dimensions of the cropped image
+            const cardDpi = Math.round(
+              Math.sqrt(
+                sourceWidth * sourceWidth + sourceHeight * sourceHeight,
+              ) /
+                Math.sqrt(
+                  physicalCardWidth * physicalCardWidth +
+                    physicalCardHeight * physicalCardHeight,
+                ),
+            );
+
+            console.debug("cardDpi", cardDpi);
+            // Calculate scale factor based on DPI limit
+            const dpiScale = cardDpi > maxDpi ? maxDpi / cardDpi : 1;
+
+            // Apply scaling to target dimensions
+            const targetWidth = Math.round(sourceWidth * dpiScale);
+            const targetHeight = Math.round(sourceHeight * dpiScale);
+
+            // Log when DPI limiting is applied
+            if (dpiScale < 1) {
+              console.debug(
+                `DPI limiting applied: ${cardDpi} DPI → ${Math.round(cardDpi * dpiScale)} DPI (scale: ${dpiScale.toFixed(3)})`,
+              );
+            }
 
             const cropCanvas = document.createElement("canvas");
             const cropCtx = cropCanvas.getContext("2d");
@@ -193,21 +233,16 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                 0,
                 0,
                 targetWidth,
-                targetHeight
+                targetHeight,
               );
 
-              imageDataUrl = cropCanvas.toDataURL(
-                image.mimeType ?? image.file!.type,
-                1
-              );
+              imageDataUrl = cropCanvas.toDataURL(mimeType, imgQuality);
 
               // Clear canvas immediately to free memory
               cropCanvas.width = 0;
               cropCanvas.height = 0;
               cropCtx.clearRect(0, 0, 0, 0);
-              if (image.file) {
-                URL.revokeObjectURL(imageSrc);
-              }
+              URL.revokeObjectURL(imageSrc);
             }
 
             // Clear tempImg reference to help GC
@@ -221,18 +256,16 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         }
 
         progress++;
-        console.debug(`Card ${index + 1} of ${cards.length} processed`);
+        console.debug(
+          `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processed`,
+        );
 
-        // Get card classes to determine guide types
-        const cardClasses = cardClassNames[relativeIndex].split(" ");
-        const isFirstRow = cardClasses.includes("first-row");
-        const isLastRow = cardClasses.includes("last-row");
-        const isFirstColumn = cardClasses.includes("first-column");
-        const isLastColumn = cardClasses.includes("last-column");
+        const { isFirstRow, isLastRow, isFirstColumn, isLastColumn } =
+          cardPositionMeta[relativeIndex];
 
         return {
           imageDataUrl,
-          mimeType: image?.mimeType ?? image?.file!.type,
+          mimeType,
           pdfX,
           pdfY,
           containerWidth,
@@ -255,16 +288,18 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                 unit,
                 guidesThickness,
                 guidesAtBleedEdge,
+                extendedGuidesOnly,
               }
             : null,
         };
       };
 
       const requestNextCard = (
-        data: [HTMLElement, Worker],
-        cards: [HTMLElement, Worker][]
+        data: [string, Worker],
+        cards: [string, Worker][],
+        relativeIndex: number,
       ) => {
-        const [cardElement, worker] = data;
+        const [imageUuid, worker] = data;
 
         progressEvents.emit("progress", {
           progress: progress,
@@ -272,7 +307,10 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           phase: "Building PDF",
         });
 
-        processCard(cardElement)
+        processCard({
+          imageUuid,
+          relativeIndex,
+        })
           .then((card) => {
             progressEvents.emit("progress", {
               progress: progress,
@@ -292,7 +330,10 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             });
 
             if (cards.length > 0) {
-              doTimeout(() => requestNextCard(cards.shift()!, cards), 50);
+              doTimeout(
+                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1),
+                50,
+              );
             }
           })
           .catch((error) => {
@@ -303,9 +344,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
       const savePDF = async () => {
         progressEvents.emit("progress", {
-          progress: progress,
+          progress: null,
           totalProgressAmount,
-          isIndeterminate: true,
           phase: "Saving PDF",
         });
 
@@ -313,7 +353,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const pdfGenerator = mergePDFsBlobs(
           Array.from(pdfPages.entries())
             .sort((a, b) => a[0] - b[0])
-            .map(([, blob]) => blob)
+            .map(([, blob]) => blob),
         );
 
         try {
@@ -322,12 +362,16 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "cards.pdf";
+            a.download = pdfName;
             a.click();
             URL.revokeObjectURL(url);
           }
           console.debug("done!");
-          Sentry.captureMessage("PDF generation complete", "info");
+          Sentry.addBreadcrumb({
+            category: "pdf",
+            message: "PDF generation complete",
+            level: "info",
+          });
           console.timeEnd("save");
           setIsRendering(false);
           progressEvents.emit("complete");
@@ -352,8 +396,10 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             type: string;
             success: boolean;
             error?: string;
+            errorStack?: string;
             blob?: Blob;
-          }>
+            event?: string;
+          }>,
         ) => {
           switch (e.data.type) {
             case "cardProcessed": {
@@ -361,9 +407,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               cardsDone.set(workerIndex, (cardsDone.get(workerIndex) || 0) + 1);
 
               console.debug(
-                `PDF Worker ${workerIndex + 1}: card ${cardsDone.get(
-                  workerIndex
-                )} of ${cardsPerPage} processed`
+                `PDF Worker ${workerIndex}: card ${cardsDone.get(
+                  workerIndex,
+                )} of ${cardsPerPage} processed`,
               );
 
               progressEvents.emit("progress", {
@@ -382,9 +428,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             }
             case "save": {
               console.debug(
-                `PDF Worker ${workerIndex + 1}: saved pdf size ${
+                `PDF Worker ${workerIndex}: saved pdf size ${
                   e.data.blob?.size
-                }`
+                }`,
               );
               worker.terminate();
               if (assignments.length > 0) {
@@ -406,14 +452,17 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                   },
                   async () => {
                     await savePDF();
-                  }
+                  },
                 );
               }
               break;
             }
             case "error":
-              reject(new Error(e.data.error));
-              console.error("PDF error:", e.data.error);
+              reject(
+                new Error(`PDF error during ${e.data.event}: ${e.data.error}`, {
+                  cause: e.data.errorStack,
+                }),
+              );
               console.timeEnd("save");
               setIsRendering(false);
               progressEvents.emit("complete");
@@ -433,7 +482,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         doTimeout(() => {
           requestNextCard(
             [cards.shift()!, worker],
-            cards.map((card) => [card, worker])
+            cards.map((card) => [card, worker]),
+            0,
           );
         });
       };
@@ -452,10 +502,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   }, [
     contentRef,
     settings,
-    cardsPerPage,
-    imageMatrix.length,
     images,
-    cardClassNames,
+    imageMatrix,
+    cardsPerPage,
+    cardPositionMeta,
+    queryClient,
     setIsRendering,
   ]);
 
@@ -469,7 +520,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           cardsPerPage,
         },
       },
-      generatePdf
+      generatePdf,
     );
   }, [generatePdf, imageMatrix.length, cardsPerPage]);
 };
