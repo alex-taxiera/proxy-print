@@ -2,8 +2,8 @@ name: Build and Deploy Vite Project
 
 on:
   push:
-    branches:
-      - trunk
+    tags:
+      - 'v*'
 
 permissions:
   id-token: write
