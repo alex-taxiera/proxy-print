@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Automatic bleed generation for local files** - Images now automatically get bleed added when uploaded, with option to revert to original
 - **Zip download functionality** - Download all cards as a zip file with duplicate removal
-- **Scryfall decklist import** - Import card lists directly from Scryfall using decklist format
+- **Scryfall decklist import**:
+  - Import card lists directly from Scryfall using decklist format
+  - Images are upscaled and bleed is added
 - **Advanced image processing options**:
   - Max DPI setting (300-1000) for high-resolution images
   - JPG conversion with custom quality settings
