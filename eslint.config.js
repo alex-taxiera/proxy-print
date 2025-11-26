@@ -10,18 +10,21 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  {
+    ignores: [
+      "dist",
+      "styled-system/**",
+      "src/components/ui/styled/utils/create-style-context.tsx",
+      "src/asm/**",
+      "src/types/wasm.d.ts",
+    ],
+  },
   {
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommendedTypeChecked,
     ],
     files: ["**/*.{ts,tsx}"],
-    ignores: [
-      "styled-system/**",
-      "src/components/ui/styled/utils/create-style-context.tsx",
-      "src/asm/**",
-    ],
     languageOptions: {
       ecmaVersion: 2023,
       globals: globals.browser,

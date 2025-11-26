@@ -1541,12 +1541,7 @@
       {
         "name": "PartitionedCall/model_34/tf.math.add/Add",
         "op": "_FusedConv2D",
-        "input": [
-          "input",
-          "unknown",
-          "unknown_0",
-          "unknown_1"
-        ],
+        "input": ["input", "unknown", "unknown_0", "unknown_1"],
         "device": "/device:CPU:0",
         "attr": {
           "num_host_args": {
@@ -1598,12 +1593,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -1611,17 +1601,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -1644,12 +1629,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -1733,10 +1713,7 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "num_args": {
@@ -1744,19 +1721,12 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -1779,12 +1749,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -1849,10 +1814,7 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "num_args": {
@@ -1860,19 +1822,12 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -1895,12 +1850,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -1965,12 +1915,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -1978,17 +1923,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2011,12 +1951,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2081,12 +2016,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -2094,17 +2024,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2127,12 +2052,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2197,10 +2117,7 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "num_args": {
@@ -2208,19 +2125,12 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2243,12 +2153,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2313,10 +2218,7 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "num_args": {
@@ -2324,19 +2226,12 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2359,12 +2254,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2429,12 +2319,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -2442,17 +2327,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2475,12 +2355,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2545,12 +2420,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -2558,17 +2428,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2591,12 +2456,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2661,12 +2521,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -2674,17 +2529,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2707,12 +2557,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2777,10 +2622,7 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "num_args": {
@@ -2788,19 +2630,12 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2823,12 +2658,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -2893,10 +2723,7 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "num_args": {
@@ -2904,19 +2731,12 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -2939,12 +2759,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -3009,12 +2824,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -3022,17 +2832,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -3055,12 +2860,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -3125,12 +2925,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -3138,17 +2933,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -3171,12 +2961,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -3241,12 +3026,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -3254,17 +3034,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -3287,12 +3062,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -3357,12 +3127,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -3370,17 +3135,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -3403,12 +3163,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -3473,12 +3228,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -3486,17 +3236,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA==",
-                "UHJlbHU="
-              ]
+              "s": ["Qmlhc0FkZA==", "UHJlbHU="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -3519,12 +3264,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -3588,12 +3328,7 @@
           },
           "strides": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           },
           "num_args": {
@@ -3601,16 +3336,12 @@
           },
           "fused_ops": {
             "list": {
-              "s": [
-                "Qmlhc0FkZA=="
-              ]
+              "s": ["Qmlhc0FkZA=="]
             }
           },
           "TArgs": {
             "list": {
-              "type": [
-                "DT_FLOAT"
-              ]
+              "type": ["DT_FLOAT"]
             }
           },
           "padding": {
@@ -3633,12 +3364,7 @@
           },
           "dilations": {
             "list": {
-              "i": [
-                "1",
-                "1",
-                "1",
-                "1"
-              ]
+              "i": ["1", "1", "1", "1"]
             }
           }
         }
@@ -3742,9 +3468,7 @@
       {
         "name": "Identity",
         "op": "Identity",
-        "input": [
-          "PartitionedCall/model_34/output/Add"
-        ],
+        "input": ["PartitionedCall/model_34/output/Add"],
         "attr": {
           "T": {
             "type": "DT_FLOAT"
@@ -3759,17 +3483,11 @@
   },
   "weightsManifest": [
     {
-      "paths": [
-        "group1-shard1of1.bin"
-      ],
+      "paths": ["group1-shard1of1.bin"],
       "weights": [
         {
           "name": "unknown_49",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3778,11 +3496,7 @@
         },
         {
           "name": "unknown_46",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3791,11 +3505,7 @@
         },
         {
           "name": "unknown_43",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3804,11 +3514,7 @@
         },
         {
           "name": "unknown_40",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3817,11 +3523,7 @@
         },
         {
           "name": "unknown_37",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3830,11 +3532,7 @@
         },
         {
           "name": "unknown_34",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3843,11 +3541,7 @@
         },
         {
           "name": "unknown_31",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3856,11 +3550,7 @@
         },
         {
           "name": "unknown_28",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3869,11 +3559,7 @@
         },
         {
           "name": "unknown_25",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3882,11 +3568,7 @@
         },
         {
           "name": "unknown_22",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3895,11 +3577,7 @@
         },
         {
           "name": "unknown_19",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3908,11 +3586,7 @@
         },
         {
           "name": "unknown_16",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3921,11 +3595,7 @@
         },
         {
           "name": "unknown_13",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3934,11 +3604,7 @@
         },
         {
           "name": "unknown_10",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3947,11 +3613,7 @@
         },
         {
           "name": "unknown_7",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3960,11 +3622,7 @@
         },
         {
           "name": "unknown_4",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3973,11 +3631,7 @@
         },
         {
           "name": "unknown_1",
-          "shape": [
-            1,
-            1,
-            64
-          ],
+          "shape": [1, 1, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -3986,12 +3640,7 @@
         },
         {
           "name": "unknown",
-          "shape": [
-            3,
-            3,
-            3,
-            64
-          ],
+          "shape": [3, 3, 3, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4000,9 +3649,7 @@
         },
         {
           "name": "unknown_0",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4011,12 +3658,7 @@
         },
         {
           "name": "unknown_2",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4025,9 +3667,7 @@
         },
         {
           "name": "unknown_3",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4036,12 +3676,7 @@
         },
         {
           "name": "unknown_5",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4050,9 +3685,7 @@
         },
         {
           "name": "unknown_6",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4061,12 +3694,7 @@
         },
         {
           "name": "unknown_8",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4075,9 +3703,7 @@
         },
         {
           "name": "unknown_9",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4086,12 +3712,7 @@
         },
         {
           "name": "unknown_11",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4100,9 +3721,7 @@
         },
         {
           "name": "unknown_12",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4111,12 +3730,7 @@
         },
         {
           "name": "unknown_14",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4125,9 +3739,7 @@
         },
         {
           "name": "unknown_15",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4136,12 +3748,7 @@
         },
         {
           "name": "unknown_17",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4150,9 +3757,7 @@
         },
         {
           "name": "unknown_18",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4161,12 +3766,7 @@
         },
         {
           "name": "unknown_20",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4175,9 +3775,7 @@
         },
         {
           "name": "unknown_21",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4186,12 +3784,7 @@
         },
         {
           "name": "unknown_23",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4200,9 +3793,7 @@
         },
         {
           "name": "unknown_24",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4211,12 +3802,7 @@
         },
         {
           "name": "unknown_26",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4225,9 +3811,7 @@
         },
         {
           "name": "unknown_27",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4236,12 +3820,7 @@
         },
         {
           "name": "unknown_29",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4250,9 +3829,7 @@
         },
         {
           "name": "unknown_30",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4261,12 +3838,7 @@
         },
         {
           "name": "unknown_32",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4275,9 +3847,7 @@
         },
         {
           "name": "unknown_33",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4286,12 +3856,7 @@
         },
         {
           "name": "unknown_35",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4300,9 +3865,7 @@
         },
         {
           "name": "unknown_36",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4311,12 +3874,7 @@
         },
         {
           "name": "unknown_38",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4325,9 +3883,7 @@
         },
         {
           "name": "unknown_39",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4336,12 +3892,7 @@
         },
         {
           "name": "unknown_41",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4350,9 +3901,7 @@
         },
         {
           "name": "unknown_42",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4361,12 +3910,7 @@
         },
         {
           "name": "unknown_44",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4375,9 +3919,7 @@
         },
         {
           "name": "unknown_45",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4386,12 +3928,7 @@
         },
         {
           "name": "unknown_47",
-          "shape": [
-            3,
-            3,
-            64,
-            64
-          ],
+          "shape": [3, 3, 64, 64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4400,9 +3937,7 @@
         },
         {
           "name": "unknown_48",
-          "shape": [
-            64
-          ],
+          "shape": [64],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4411,12 +3946,7 @@
         },
         {
           "name": "unknown_50",
-          "shape": [
-            3,
-            3,
-            64,
-            48
-          ],
+          "shape": [3, 3, 64, 48],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4425,9 +3955,7 @@
         },
         {
           "name": "unknown_51",
-          "shape": [
-            48
-          ],
+          "shape": [48],
           "dtype": "float32",
           "quantization": {
             "dtype": "float16",
@@ -4436,30 +3964,22 @@
         },
         {
           "name": "PartitionedCall/model_34/tf.reshape/Reshape/shape",
-          "shape": [
-            6
-          ],
+          "shape": [6],
           "dtype": "int32"
         },
         {
           "name": "PartitionedCall/model_34/tf.compat.v1.transpose_17/transpose/perm",
-          "shape": [
-            6
-          ],
+          "shape": [6],
           "dtype": "int32"
         },
         {
           "name": "PartitionedCall/model_34/tf.reshape_1/Reshape/shape",
-          "shape": [
-            4
-          ],
+          "shape": [4],
           "dtype": "int32"
         },
         {
           "name": "PartitionedCall/model_34/tf.compat.v1.image.resize_nearest_neighbor/ResizeNearestNeighbor/size",
-          "shape": [
-            2
-          ],
+          "shape": [2],
           "dtype": "int32"
         }
       ]
