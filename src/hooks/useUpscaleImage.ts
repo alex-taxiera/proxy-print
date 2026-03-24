@@ -29,7 +29,6 @@ async function detectBestBackend(): Promise<"webgl" | "webgpu"> {
 }
 
 export function useUpscaleImage() {
-  const factor = 4;
   const queueManager = useUpscaleQueueManager();
 
   // Core upscale function that does the actual processing
@@ -84,12 +83,13 @@ export function useUpscaleImage() {
         const workerInstance = new UpscaleWorker({ name: "Upscale Worker" });
 
         workerInstance.addEventListener("message", (e: MessageEvent) => {
-          const { done, output, alertmsg } = e.data as {
+          const { done, output, alertmsg, factor } = e.data as {
             progress?: number;
             done?: boolean;
             output?: ArrayBuffer;
             alertmsg?: string;
             info?: string;
+            factor?: number;
           };
 
           if (alertmsg) {
@@ -101,9 +101,10 @@ export function useUpscaleImage() {
           if (done && output) {
             // Handle async processing in a separate function
             try {
+              const scale = factor ?? 4;
               const finalOutput = new CustomImage(
-                factor * input.width,
-                factor * input.height,
+                scale * input.width,
+                scale * input.height,
                 new Uint8Array(output),
               );
 
@@ -187,7 +188,6 @@ export function useUpscaleImage() {
         workerInstance.postMessage(
           {
             input: input.data.buffer,
-            factor,
             width: input.width,
             height: input.height,
             hasAlpha: false, // Always process RGB first
@@ -197,7 +197,7 @@ export function useUpscaleImage() {
         );
       });
     },
-    [factor],
+    [],
   );
 
   // Set up the queue manager with our processing function

@@ -20,6 +20,8 @@ export type WorkerCompleteMessage = {
   done: boolean;
   output: ArrayBuffer;
   info: string;
+  /** Spatial upscale ratio of the loaded model (must match tile compositor). */
+  factor: number;
 };
 
 async function upscale(
@@ -75,7 +77,6 @@ export type UpscaleData = {
   alpha: boolean;
   backend: "webgl" | "webgpu";
   tileSize?: number;
-  factor?: number;
   minLap?: number;
   hasAlpha: boolean;
   width: number;
@@ -84,8 +85,20 @@ export type UpscaleData = {
   output: Uint8Array;
 };
 
-const modelUrl: string = "/models/anime-fast/model.json";
-const modelName: string = "anime-fast";
+const esrganModels = {
+  "anime-fast": {
+    url: "/models/anime-fast/model.json",
+    name: "anime-fast",
+    scaleFactor: 4,
+  },
+  "4x-ultrasharp32": {
+    url: "/models/4x-ultrasharp32/model.json",
+    name: "4x-ultrasharp32",
+    scaleFactor: 4,
+  },
+} as const;
+
+const esrganModel = esrganModels["anime-fast"];
 
 self.addEventListener(
   "message",
@@ -94,7 +107,7 @@ self.addEventListener(
       return;
     }
 
-    const factor = data.factor || 4;
+    const factor = esrganModel.scaleFactor;
     const tileSize = data.tileSize || 64;
     const minLap = data.minLap || 12;
     const input = new CustomImage(
@@ -284,7 +297,7 @@ self.addEventListener(
       }
       let model: tf.GraphModel | undefined;
       try {
-        model = await tf.loadGraphModel(`indexeddb://${modelName}`);
+        model = await tf.loadGraphModel(`indexeddb://${esrganModel.name}`);
         console.log("Model loaded successfully");
         self.postMessage({
           progress: 0,
@@ -296,8 +309,8 @@ self.addEventListener(
           info: "Downloading model",
         });
         model = await (async () => {
-          const fetchedModel = await tf.loadGraphModel(modelUrl);
-          await fetchedModel.save(`indexeddb://${modelName}`);
+          const fetchedModel = await tf.loadGraphModel(esrganModel.url);
+          await fetchedModel.save(`indexeddb://${esrganModel.name}`);
           return fetchedModel;
         })();
       }
@@ -336,6 +349,7 @@ self.addEventListener(
           done: true,
           output: output.data.buffer,
           info: `Processing image...`,
+          factor,
         },
         [output.data.buffer],
       );
