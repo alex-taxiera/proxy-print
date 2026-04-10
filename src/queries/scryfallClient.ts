@@ -4,7 +4,7 @@
  */
 export class ScryfallClient {
   private lastCallTime = 0;
-  private readonly throttleDelay = 100; // 100ms delay between calls
+  private readonly throttleDelay = 500; // 500ms delay between calls
 
   /**
    * Performs a throttled fetch request to Scryfall API
