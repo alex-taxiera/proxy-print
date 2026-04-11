@@ -151,11 +151,16 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image))
           : undefined;
 
-        const mimeType = convertToJpg
+        const rawMimeType = convertToJpg
           ? "image/jpeg"
           : image && getIsLocalImage(image)
             ? image.file.type
             : (downloadableImageData?.mimeType ?? "image/png");
+        // pdf-lib does not support WEBP natively; convert to PNG at the canvas step.
+        const mimeType =
+          !convertToJpg && rawMimeType === "image/webp"
+            ? "image/png"
+            : rawMimeType;
 
         const imgQuality = convertToJpg ? jpgQuality : 1;
 
