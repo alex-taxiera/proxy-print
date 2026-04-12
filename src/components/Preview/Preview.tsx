@@ -20,9 +20,9 @@ import { ProgressOverlay } from "~/components/ProgressOverlay";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { ImagesContext } from "~/context/ImagesContext";
-import { useSettingsStore, computeCssVars } from "~/store/settingsStore";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getIsSortableCardData } from "~/hooks/useSortableCard";
+import { useSettingsStore, computeCssVars } from "~/store/settingsStore";
 
 import { Actions } from "./Actions";
 import { Card } from "./Card";
@@ -42,7 +42,12 @@ const usePagination = () => {
   const [isReferenceCardLoaded, setIsReferenceCardLoaded] = useState(false);
 
   const currentPageData = useMemo(
-    () => pages[currentPage - 1] ?? { items: [], pageType: "front" as const, gridColumns: 3 },
+    () =>
+      pages[currentPage - 1] ?? {
+        items: [],
+        pageType: "front" as const,
+        gridColumns: 3,
+      },
     [pages, currentPage],
   );
 
@@ -88,12 +93,42 @@ const usePagination = () => {
   };
 };
 
+const backSideLabelClass = css({
+  position: "absolute",
+  top: "-6",
+  left: "0",
+  right: "0",
+  textAlign: "center",
+  fontSize: "xs",
+  color: "fg.muted",
+  fontStyle: "italic",
+});
+
+const PageLabels = ({
+  pageType,
+}: {
+  pageType: "front" | "back" | "side-by-side";
+}) => {
+  if (pageType !== "back") return null;
+  return (
+    <div className={backSideLabelClass}>
+      Back side — mirrored for duplex printing
+    </div>
+  );
+};
+
 export const Preview = () => {
   const settings = useSettingsStore((s) => s.settings);
   const cssVars = useMemo(() => computeCssVars(settings), [settings]);
 
-  const { images, isRendering, imagesWithError, onReorder, onReorderSlots, sortedSlots } =
-    useContext(ImagesContext);
+  const {
+    images,
+    isRendering,
+    imagesWithError,
+    onReorder,
+    onReorderSlots,
+    sortedSlots,
+  } = useContext(ImagesContext);
 
   const { onSelectAllImages, getIsSelected } = useContext(
     ImageSelectionContext,
@@ -101,8 +136,7 @@ export const Preview = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { pages, cardsPerPage, rowsPerPage } =
-    usePreviewData();
+  const { pages, cardsPerPage, rowsPerPage } = usePreviewData();
 
   const {
     currentPage,
@@ -118,6 +152,20 @@ export const Preview = () => {
     () => currentPage === pages.length,
     [currentPage, pages.length],
   );
+
+  const pageTransformStyle = useMemo(() => {
+    if (isRendering) return undefined;
+    const isBack = currentPageData.pageType === "back";
+    const offsetX = Number(isBack ? settings.backOffsetX : settings.offsetX);
+    const offsetY = Number(isBack ? settings.backOffsetY : settings.offsetY);
+    const rotation = Number(
+      isBack ? settings.backPageRotation : settings.pageRotation,
+    );
+    if (offsetX === 0 && offsetY === 0 && rotation === 0) return undefined;
+    return {
+      transform: `rotate(${rotation}deg) translate(${offsetX}mm, ${offsetY}mm)`,
+    };
+  }, [isRendering, currentPageData.pageType, settings]);
 
   // In duplex mode pages alternate front/back, so drag-to-page navigation skips
   // 2 pages to keep the user on the same face type (front→front, back→back).
@@ -201,7 +249,13 @@ export const Preview = () => {
             case "prev-page": {
               const targetPage = Math.max(1, currentPage - dragPageStep);
               const targetBoundary = pages[targetPage - 1]?.insertBoundary;
-              onReorder(source.data.images, targetBoundary?.last ?? (Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) + 1) * cardsPerPage - 1);
+              onReorder(
+                source.data.images,
+                targetBoundary?.last ??
+                  (Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) + 1) *
+                    cardsPerPage -
+                    1,
+              );
               changePage(targetPage);
               break;
             }
@@ -211,7 +265,12 @@ export const Preview = () => {
                 currentPage + dragPageStep,
               );
               const targetBoundary = pages[targetPage - 1]?.insertBoundary;
-              onReorder(source.data.images, targetBoundary?.first ?? Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) * cardsPerPage);
+              onReorder(
+                source.data.images,
+                targetBoundary?.first ??
+                  Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) *
+                    cardsPerPage,
+              );
               changePage(targetPage);
               break;
             }
@@ -361,14 +420,20 @@ export const Preview = () => {
               })}
             >
               <div
-                className={css(
-                  {
-                    position: "relative",
-                    width: "100%",
-                  },
-                  isRendering ? { pointerEvents: "none" } : {},
+                className={cx(
+                  "page-container",
+                  css(
+                    {
+                      position: "relative",
+                      width: "100%",
+                      background: "white",
+                      boxShadow: "md",
+                    },
+                    isRendering ? { pointerEvents: "none" } : {},
+                  ),
                 )}
               >
+                <PageLabels pageType={currentPageData.pageType} />
                 <div
                   className={cx(
                     "page",
@@ -376,14 +441,15 @@ export const Preview = () => {
                       flexDirection: "column",
                       height: "var(--page-height, 11 var(--page-unit, in))",
                       width: "var(--page-width, 8.5 var(--page-unit, in))",
-                      background: "white",
-                      boxShadow: "md",
+                      // background: "white",
+                      // boxShadow: "md",
                       "--item-width":
                         "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
                       "--item-height":
                         "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
                     }),
                   )}
+                  style={pageTransformStyle}
                 >
                   <div
                     className={grid({

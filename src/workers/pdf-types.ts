@@ -15,6 +15,11 @@ export type InitData = {
   basePdfBytes?: Uint8Array;
   /** 0-based index of which page of the base PDF to use. Cycles if out of range. Defaults to 0. */
   basePdfPageIndex?: number;
+  /** Grid offset in mm, positive X = right, positive Y = down. Applied as a PDF CTM. */
+  offsetX?: number;
+  offsetY?: number;
+  /** Clockwise rotation in degrees. Applied as a PDF CTM around the page center. */
+  pageRotation?: number;
 };
 
 export type CardData = {

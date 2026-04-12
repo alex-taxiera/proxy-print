@@ -1,4 +1,4 @@
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument, rgb, pushGraphicsState, concatTransformationMatrix } from "pdf-lib";
 
 import { buildCardRenderOps } from "./pdf-spec";
 import type { CardData, InitData } from "./pdf-types";
@@ -75,8 +75,52 @@ async function initPdf(data: InitData): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Render a single card's operations onto the current page
+// Apply page-level transform (offset + rotation) as a PDF content CTM.
+// Called once per page, after initPdf() and before any renderCard() calls.
 // ---------------------------------------------------------------------------
+
+function applyPageTransform(data: InitData): void {
+  if (!pdfDoc) return;
+  const { offsetX = 0, offsetY = 0, pageRotation = 0 } = data;
+  if (offsetX === 0 && offsetY === 0 && pageRotation === 0) return;
+
+  const ptsPerUnit = data.unit === "mm" ? 72 / 25.4 : 72;
+  const pageWidthPts = data.pageWidth * ptsPerUnit;
+  const pageHeightPts = data.pageHeight * ptsPerUnit;
+
+  const page = pdfDoc.getPages()[pdfDoc.getPageCount() - 1];
+
+  // Convert clockwise-visual rotation to radians.
+  // In pdf-lib's y-up coordinate system, a clockwise visual rotation corresponds
+  // to a negative mathematical angle.
+  const theta = -(pageRotation * Math.PI) / 180;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+
+  // Page center (rotation pivot)
+  const cx = pageWidthPts / 2;
+  const cy = pageHeightPts / 2;
+
+  // Offset in PDF points. Positive offsetY is visually downward → negative y-up.
+  const tx = offsetX * (72 / 25.4);
+  const ty = -offsetY * (72 / 25.4);
+
+  // Combined CTM: rotate around page center, then translate.
+  // [ a  b  0 ]   [ cosT -sinT 0 ]   translation applied in e/f
+  // [ c  d  0 ] = [ sinT  cosT 0 ]
+  // [ e  f  1 ]   [ e     f    1 ]
+  const a = cosT;
+  const b = sinT;
+  const c = -sinT;
+  const d = cosT;
+  const e = cx * (1 - cosT) + cy * sinT + tx;
+  const f = cy * (1 - cosT) - cx * sinT + ty;
+
+  page.pushOperators(
+    pushGraphicsState(),
+    concatTransformationMatrix(a, b, c, d, e, f),
+  );
+}
 
 async function renderCard(cardData: CardData): Promise<void> {
   if (!pdfDoc || !currentInit) {
@@ -175,6 +219,7 @@ self.onmessage = function (
         try {
           if (init && !pdfDoc) {
             await initPdf(init);
+            applyPageTransform(init);
           }
 
           await renderCard(card);

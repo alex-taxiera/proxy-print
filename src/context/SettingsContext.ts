@@ -186,6 +186,12 @@ export const SettingsSchema = zod
       }, "Must be between 0.1 and 1"),
     upscaleScryfallImages: zod.boolean(),
     printMode: zod.enum(["duplex", "side-by-side", "inline-faces", "fronts-only", "backs-only"]),
+    offsetX: zod.string().refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    offsetY: zod.string().refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    pageRotation: zod.string().refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    backOffsetX: zod.string().refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    backOffsetY: zod.string().refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    backPageRotation: zod.string().refine((v) => isFinite(Number(v)), "Must be a valid number"),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
@@ -247,4 +253,10 @@ export const DEFAULT_SETTINGS = {
   jpgQuality: "0.95",
   upscaleScryfallImages: false,
   printMode: "duplex",
+  offsetX: "0",
+  offsetY: "0",
+  pageRotation: "0",
+  backOffsetX: "0",
+  backOffsetY: "0",
+  backPageRotation: "0",
 } as const satisfies Settings;

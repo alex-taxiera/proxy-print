@@ -70,6 +70,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const referencePage = contentRef.current?.querySelector<HTMLElement>(
         ".page",
       ) as HTMLElement;
+      // Temporarily clear any visual CSS transform so getBoundingClientRect()
+      // returns unmodified layout coordinates. The PDF worker applies the real
+      // offset/rotation via CTM. We restore after all measurements are taken.
+      const savedTransform = referencePage.style.transform;
+      referencePage.style.transform = "";
       const referencePageRect = referencePage.getBoundingClientRect();
       const referenceCards = Array.from(
         referencePage.querySelectorAll<HTMLElement>(".card"),
@@ -87,6 +92,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const imageRect = referenceImg.getBoundingClientRect();
       const imageWidth = imageRect.width;
       const imageHeight = imageRect.height;
+      // All getBoundingClientRect() calls are done — restore the visual transform.
+      referencePage.style.transform = savedTransform;
 
       // read settings
       const pageHeight = Number(settings.pageHeight);
@@ -308,6 +315,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         cards: [PossiblyEmptyImage, Worker][],
         relativeIndex: number,
         workerInitData?: { basePdfBytes: Uint8Array; basePdfPageIndex: number },
+        pageTransformData?: { offsetX: number; offsetY: number; pageRotation: number },
       ) => {
         const [image, worker] = data;
 
@@ -337,13 +345,14 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                   unit: settings.unit,
                   // Only sent with the first card message; worker ignores init once pdfDoc is set.
                   ...workerInitData,
+                  ...pageTransformData,
                 },
               },
             });
 
             if (cards.length > 0) {
               doTimeout(
-                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1),
+                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1, undefined, pageTransformData),
                 50,
               );
             }
@@ -495,6 +504,14 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           ? (workerIndex - 1) % basePdfPageCount
           : undefined;
 
+        const pageType = pages[workerIndex - 1]?.pageType;
+        const isBack = pageType === "back";
+        const pageTransformData = {
+          offsetX: Number(isBack ? settings.backOffsetX : settings.offsetX),
+          offsetY: Number(isBack ? settings.backOffsetY : settings.offsetY),
+          pageRotation: Number(isBack ? settings.backPageRotation : settings.pageRotation),
+        };
+
         doTimeout(() => {
           requestNextCard(
             [cards.shift()!, worker],
@@ -503,6 +520,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             basePdfBytes !== null && basePdfPageIndex !== undefined
               ? { basePdfBytes: basePdfBytes.slice(), basePdfPageIndex }
               : undefined,
+            pageTransformData,
           );
         });
       };

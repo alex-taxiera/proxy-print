@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PDFDocument } from "pdf-lib";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
 
 import { Button } from "~/components/ui/button";
@@ -754,6 +755,142 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
+          <Collapsible.Root
+            className={vstack({
+              width: "full",
+              alignItems: "stretch",
+              alignSelf: "stretch",
+            })}
+          >
+            <div
+              className={hstack({
+                width: "full",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+              })}
+            >
+              <span>Page Alignment</span>
+              <Collapsible.Trigger asChild>
+                <Button variant="link" size="xs" colorPalette="gray">
+                  Expand
+                </Button>
+              </Collapsible.Trigger>
+            </div>
+            <Collapsible.Content
+              className={vstack({
+                width: "full",
+                alignItems: "stretch",
+                gap: "2",
+                alignSelf: "stretch",
+                justifyContent: "center",
+                paddingLeft: "4",
+                paddingTop: "2",
+              })}
+            >
+              <span
+                className={css({ fontSize: "xs", color: "fg.muted", fontWeight: "semibold" })}
+              >
+                Front pages
+              </span>
+              <div className={hstack({ width: "full", gap: "2" })}>
+                <Field.Root
+                  invalid={formErrors.offsetX.length > 0}
+                  className={css({ flex: 1 })}
+                >
+                  <NumberInput
+                    step={0.1}
+                    value={formState.offsetX}
+                    onValueChange={buildNumberInputChangeHandler("offsetX")}
+                  >
+                    X Offset (mm)
+                  </NumberInput>
+                  {formErrors.offsetX.map((issue, i) => (
+                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                  ))}
+                </Field.Root>
+                <Field.Root
+                  invalid={formErrors.offsetY.length > 0}
+                  className={css({ flex: 1 })}
+                >
+                  <NumberInput
+                    step={0.1}
+                    value={formState.offsetY}
+                    onValueChange={buildNumberInputChangeHandler("offsetY")}
+                  >
+                    Y Offset (mm)
+                  </NumberInput>
+                  {formErrors.offsetY.map((issue, i) => (
+                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                  ))}
+                </Field.Root>
+              </div>
+              <Field.Root invalid={formErrors.pageRotation.length > 0}>
+                <NumberInput
+                  step={0.1}
+                  min={-180}
+                  max={180}
+                  value={formState.pageRotation}
+                  onValueChange={buildNumberInputChangeHandler("pageRotation")}
+                >
+                  Rotation (°)
+                </NumberInput>
+                {formErrors.pageRotation.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+              <span
+                className={css({ fontSize: "xs", color: "fg.muted", fontWeight: "semibold" })}
+              >
+                Back pages
+              </span>
+              <div className={hstack({ width: "full", gap: "2" })}>
+                <Field.Root
+                  invalid={formErrors.backOffsetX.length > 0}
+                  className={css({ flex: 1 })}
+                >
+                  <NumberInput
+                    step={0.1}
+                    value={formState.backOffsetX}
+                    onValueChange={buildNumberInputChangeHandler("backOffsetX")}
+                  >
+                    X Offset (mm)
+                  </NumberInput>
+                  {formErrors.backOffsetX.map((issue, i) => (
+                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                  ))}
+                </Field.Root>
+                <Field.Root
+                  invalid={formErrors.backOffsetY.length > 0}
+                  className={css({ flex: 1 })}
+                >
+                  <NumberInput
+                    step={0.1}
+                    value={formState.backOffsetY}
+                    onValueChange={buildNumberInputChangeHandler("backOffsetY")}
+                  >
+                    Y Offset (mm)
+                  </NumberInput>
+                  {formErrors.backOffsetY.map((issue, i) => (
+                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                  ))}
+                </Field.Root>
+              </div>
+              <Field.Root invalid={formErrors.backPageRotation.length > 0}>
+                <NumberInput
+                  step={0.1}
+                  min={-180}
+                  max={180}
+                  value={formState.backPageRotation}
+                  onValueChange={buildNumberInputChangeHandler("backPageRotation")}
+                >
+                  Rotation (°)
+                </NumberInput>
+                {formErrors.backPageRotation.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+            </Collapsible.Content>
+          </Collapsible.Root>
         </Tabs.Content>
         <Tabs.Content
           value="experimental"
