@@ -11,9 +11,9 @@ import { Sidebar } from "~/components/Sidebar";
 
 import { useSettingsStore } from "~/store/settingsStore";
 
-import { ImageLoadingProvider } from "~/context/ImageLoadingContext";
 import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";
 import { ImagesProvider } from "~/context/ImagesProvider";
+import { useImageLoadingProgress } from "~/hooks/useImageLoadingProgress";
 import { toaster } from "~/utils/toaster";
 
 const queryClient = new QueryClient();
@@ -29,10 +29,11 @@ declare global {
 window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 
 function AppContent() {
+  useImageLoadingProgress();
+
   return (
-    <ImageLoadingProvider>
-      <ImagesProvider>
-        <ImageSelectionProvider>
+    <ImagesProvider>
+      <ImageSelectionProvider>
           <Header />
           <main
             className={hstack({
@@ -47,7 +48,6 @@ function AppContent() {
           </main>
         </ImageSelectionProvider>
       </ImagesProvider>
-    </ImageLoadingProvider>
   );
 }
 

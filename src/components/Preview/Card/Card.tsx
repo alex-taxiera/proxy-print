@@ -73,9 +73,13 @@ export type CardProps = {
   index: number;
   currentPage: number;
   onImageLoad?: () => void;
+  /** Slot this card belongs to (null for filler/padding) */
+  slotId?: string | null;
+  /** Whether this card is displaying a front or back face */
+  face?: "front" | "back";
 };
 
-export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
+export const Card = ({ image, index, currentPage, onImageLoad, slotId = null, face = "front" }: CardProps) => {
   const { images, onAdd, onRemove, isRendering } = useContext(ImagesContext);
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
@@ -111,6 +115,8 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
     isPending,
     imageSrc,
     absoluteIndex,
+    slotId,
+    face,
   });
 
   const className = useCardClassName({
@@ -241,6 +247,8 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
               currentPage={currentPage}
               index={index}
               queryData={queryData}
+              slotId={slotId}
+              face={face}
             >
               <img
                 src={imageSrc}

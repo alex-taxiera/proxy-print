@@ -13,6 +13,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useContext, useMemo } from "react";
 
 import { css } from "styled-system/css";
+import { VisuallyHidden } from "styled-system/jsx";
 import { hstack, vstack } from "styled-system/patterns";
 
 import { Button } from "~/components/ui/button";
@@ -20,20 +21,88 @@ import { IconButton } from "~/components/ui/icon-button";
 import { Link } from "~/components/ui/link";
 import { Menu } from "~/components/ui/menu";
 import { Pagination } from "~/components/ui/pagination";
+import { createListCollection, Select } from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
 import { Tooltip } from "~/components/ui/tooltip";
 
 import { ImageErrors } from "~/components/ImageErrors";
 
-import { ImageLoadingContext } from "~/context/ImageLoadingContext";
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { ImagesContext } from "~/context/ImagesContext";
+import { PrintMode } from "~/context/SettingsContext";
+import { useDownloadProgressStore } from "~/store/downloadProgressStore";
 import { useGeneratePdf } from "~/hooks/useGeneratePdf";
 import { usePreviewData } from "~/hooks/usePreviewData";
+import { useSettingsStore } from "~/store/settingsStore";
 import { formatCount, formatSelectionCount } from "~/utils/pluralize";
 import { progressEvents } from "~/utils/progress-events";
 
 import { useCardActions } from "./Card/useCardActions";
+
+const PRINT_MODE_OPTIONS: { value: PrintMode; label: string }[] = [
+  { value: "duplex", label: "Duplex" },
+  { value: "side-by-side", label: "Side by side" },
+  { value: "inline-faces", label: "Inline faces" },
+  { value: "fronts-only", label: "Fronts only" },
+  { value: "backs-only", label: "Backs only" },
+];
+
+const printModeCollection = createListCollection({
+  items: PRINT_MODE_OPTIONS,
+  itemToValue: (item) => item.value,
+  itemToString: (item) => item.label,
+});
+
+const PrintModeToggle = () => {
+  const printMode = useSettingsStore((s) => s.settings.printMode);
+  const setSettings = useSettingsStore((s) => s.setSettings);
+
+  const handleChange = useCallback(
+    (details: { value: string[] }) => {
+      const mode = details.value[0] as PrintMode;
+      if (mode) setSettings((s) => ({ ...s, printMode: mode }));
+    },
+    [setSettings],
+  );
+
+  return (
+    <Select.Root
+      collection={printModeCollection}
+      value={[printMode]}
+      onValueChange={handleChange}
+      size="md"
+      width="44"
+    >
+      <Select.Label asChild>
+        <VisuallyHidden>Card Size</VisuallyHidden>
+      </Select.Label>
+      <Select.Control>
+        <Select.Trigger>
+          <Select.ValueText />
+          <Select.Indicator asChild>
+            <Select.IndicatorIcon />
+          </Select.Indicator>
+        </Select.Trigger>
+      </Select.Control>
+      <Portal>
+        <Select.Positioner>
+          <Select.Content>
+            <Select.List>
+              {printModeCollection.items.map((opt) => (
+                <Select.Item key={opt.value} item={opt}>
+                  <Select.ItemText>{opt.label}</Select.ItemText>
+                  <Select.ItemIndicator asChild>
+                    <Select.ItemIndicatorIcon />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.List>
+          </Select.Content>
+        </Select.Positioner>
+      </Portal>
+    </Select.Root>
+  );
+};
 
 const NoSelectionActions = ({
   isReferenceCardLoaded,
@@ -43,7 +112,7 @@ const NoSelectionActions = ({
   contentRef: React.RefObject<HTMLDivElement>;
 }) => {
   const { isRendering, setIsRendering, images } = useContext(ImagesContext);
-  const { isLoadingImages } = useContext(ImageLoadingContext);
+  const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
   const generatePdf = useGeneratePdf(contentRef);
   const { onSelectAllImages } = useContext(ImageSelectionContext);
 
@@ -63,7 +132,8 @@ const NoSelectionActions = ({
   });
 
   return (
-    <div className={hstack({ gap: "2" })}>
+    <div className={hstack({ gap: "2", flexWrap: "wrap" })}>
+      <PrintModeToggle />
       <Tooltip.Root
         disabled={!isRendering && !isLoadingImages && isReferenceCardLoaded}
         positioning={{
@@ -157,9 +227,9 @@ export const SelectionMenuContent = ({
   currentPage: number;
 }) => {
   const { images, isRendering } = useContext(ImagesContext);
-  const { imageMatrix } = usePreviewData();
+  const { pages } = usePreviewData();
   const { selectedImageUuids } = useContext(ImageSelectionContext);
-  const { isLoadingImages } = useContext(ImageLoadingContext);
+  const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
   const selectedImages = useMemo(
     () => images.filter((image) => selectedImageUuids.includes(image.uuid)),
     [images, selectedImageUuids],
@@ -256,7 +326,7 @@ export const SelectionMenuContent = ({
             <Menu.ItemText>Move all to previous page</Menu.ItemText>
           </Menu.Item>
         ) : null}
-        {imageMatrix.length > 1 ? (
+        {pages.length > 1 ? (
           <Menu.Root
             onSelect={onMoveToPage}
             positioning={{ gutter: 10, placement: "right-start" }}
@@ -268,7 +338,7 @@ export const SelectionMenuContent = ({
             <Portal>
               <Menu.Positioner>
                 <Menu.Content>
-                  {imageMatrix.map((_, index) => (
+                  {pages.map((_, index) => (
                     <Menu.Item
                       key={index}
                       disabled={index + 1 === currentPage}
@@ -328,10 +398,10 @@ export const Actions = ({
   changePage,
   contentRef,
 }: ActionsProps) => {
-  const { images, onClearErrors, imagesWithError } = useContext(ImagesContext);
+  const { onClearErrors, imagesWithError } = useContext(ImagesContext);
   const { selectedImageUuids } = useContext(ImageSelectionContext);
 
-  const { imageMatrix, cardsPerPage } = usePreviewData();
+  const { pages, cardsPerPage } = usePreviewData();
 
   return (
     <div
@@ -368,21 +438,15 @@ export const Actions = ({
           className={vstack({
             alignItems: "center",
             gap: "2",
-            visibility: imageMatrix.length > 1 ? "visible" : "hidden",
+            visibility: pages.length > 1 ? "visible" : "hidden",
           })}
         >
           <span className={css({ fontSize: "xs", color: "fg.muted" })}>
-            Showing {currentPage * cardsPerPage - cardsPerPage + 1} -{" "}
-            {Math.min(
-              currentPage * cardsPerPage,
-              imageMatrix.length * cardsPerPage,
-              images.length,
-            )}{" "}
-            of {Math.min(imageMatrix.length * cardsPerPage, images.length)}
+            Page {currentPage} of {pages.length}
           </span>
           <Pagination
             siblingCount={0}
-            count={imageMatrix.length * cardsPerPage}
+            count={pages.length * cardsPerPage}
             page={currentPage}
             pageSize={cardsPerPage}
             onPageChange={({ page }) => changePage(page)}

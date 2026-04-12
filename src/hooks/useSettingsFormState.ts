@@ -138,6 +138,12 @@ export const useSettingsFormState = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasHydrated]);
 
+  // Keep formState in sync for settings changed outside the form (e.g. printMode toggle).
+  useEffect(() => {
+    setFormState((prev) => ({ ...prev, printMode: settings.printMode }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.printMode]);
+
   const handleBleedEdgeForCardSizeChange =
     useHandleBleedEdgeForCardSizeChange();
 

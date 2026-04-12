@@ -36,28 +36,30 @@ const containerStyles = css.raw({
 });
 
 const usePagination = () => {
-  const { imageMatrix } = usePreviewData();
+  const { pages } = usePreviewData();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [isReferenceCardLoaded, setIsReferenceCardLoaded] = useState(false);
 
-  const currentCards = useMemo(
-    () => imageMatrix[currentPage - 1] ?? [],
-    [imageMatrix, currentPage],
+  const currentPageData = useMemo(
+    () => pages[currentPage - 1] ?? { items: [], pageType: "front" as const, gridColumns: 3 },
+    [pages, currentPage],
   );
+
+  const currentCards = useMemo(() => currentPageData.items, [currentPageData]);
 
   const changePage = useCallback(
     (page: number) => {
-      setCurrentPage(Math.max(1, Math.min(page, imageMatrix.length)));
+      setCurrentPage(Math.max(1, Math.min(page, pages.length)));
       setIsReferenceCardLoaded(false);
     },
-    [imageMatrix.length],
+    [pages.length],
   );
 
   const nextPage = useCallback(() => {
-    setCurrentPage((old) => Math.min(old + 1, imageMatrix.length));
+    setCurrentPage((old) => Math.min(old + 1, pages.length));
     setIsReferenceCardLoaded(false);
-  }, [imageMatrix.length]);
+  }, [pages.length]);
 
   const previousPage = useCallback(() => {
     setCurrentPage((old) => Math.max(old - 1, 1));
@@ -69,13 +71,14 @@ const usePagination = () => {
   }, []);
 
   useEffect(() => {
-    if (currentPage > imageMatrix.length) {
-      changePage(imageMatrix.length || 1);
+    if (currentPage > pages.length) {
+      changePage(pages.length || 1);
     }
-  }, [currentPage, imageMatrix.length, changePage]);
+  }, [currentPage, pages.length, changePage]);
 
   return {
     currentPage,
+    currentPageData,
     currentCards,
     isReferenceCardLoaded,
     changePage,
@@ -89,7 +92,7 @@ export const Preview = () => {
   const settings = useSettingsStore((s) => s.settings);
   const cssVars = useMemo(() => computeCssVars(settings), [settings]);
 
-  const { images, isRendering, imagesWithError, onReorder } =
+  const { images, isRendering, imagesWithError, onReorder, onReorderSlots, sortedSlots } =
     useContext(ImagesContext);
 
   const { onSelectAllImages, getIsSelected } = useContext(
@@ -98,24 +101,42 @@ export const Preview = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { imageMatrix, cardsPerPage, rowsPerPage, columnsPerPage } =
+  const { pages, cardsPerPage, rowsPerPage } =
     usePreviewData();
 
   const {
     currentPage,
+    currentPageData,
     currentCards,
     isReferenceCardLoaded,
     changePage,
-    nextPage,
-    previousPage,
     onImageLoad,
   } = usePagination();
 
   const isFirstPage = useMemo(() => currentPage === 1, [currentPage]);
   const isLastPage = useMemo(
-    () => currentPage === imageMatrix.length,
-    [currentPage, imageMatrix.length],
+    () => currentPage === pages.length,
+    [currentPage, pages.length],
   );
+
+  // In duplex mode pages alternate front/back, so drag-to-page navigation skips
+  // 2 pages to keep the user on the same face type (front→front, back→back).
+  const isDuplex = settings.printMode === "duplex";
+  const dragPageStep = isDuplex ? 2 : 1;
+
+  // Disable drop zones when there is no same-face page in that direction.
+  const isDragPrevDisabled = isDuplex ? currentPage <= 2 : isFirstPage;
+  const isDragNextDisabled = isDuplex
+    ? currentPage >= pages.length - 1
+    : isLastPage;
+
+  const dragPreviousPage = useCallback(() => {
+    changePage(Math.max(1, currentPage - dragPageStep));
+  }, [changePage, currentPage, dragPageStep]);
+
+  const dragNextPage = useCallback(() => {
+    changePage(Math.min(pages.length, currentPage + dragPageStep));
+  }, [changePage, pages.length, currentPage, dragPageStep]);
 
   const [dragOverlayOffset, setDragOverlayOffset] = useState<{
     x: number;
@@ -142,6 +163,9 @@ export const Preview = () => {
     [],
   );
 
+  // Strip `:back`, `:front-empty`, `:back-empty`, `:back-preview` suffixes to get the base slot ID.
+  const toSlotId = useCallback((uuid: string) => uuid.split(":")[0], []);
+
   const onDragEnd: DragDropEventHandlers["onDragEnd"] = useCallback(
     (event) => {
       const { source, target } = event.operation;
@@ -152,30 +176,45 @@ export const Preview = () => {
 
       if (isSortable(source) && getIsSortableCardData(source.data)) {
         if (getIsSortableCardData(target.data)) {
-          // normal reorder
           const imagesToMove = source.data.images;
           const dragTargetId = target.id as string;
-          const newIndex = images.findIndex(
-            (image) => image.uuid === dragTargetId,
-          );
 
-          if (imagesToMove.length > 0 && newIndex !== undefined) {
-            onReorder(imagesToMove, newIndex);
+          if (imagesToMove.length > 0) {
+            // Use slot IDs so back-face drags work correctly
+            const slotIdsToMove = [
+              ...new Set(imagesToMove.map((img) => toSlotId(img.uuid))),
+            ];
+            const targetSlotId = toSlotId(dragTargetId);
+            const newIndex = sortedSlots.findIndex(
+              (s) => s.id === targetSlotId,
+            );
+            if (newIndex >= 0) {
+              onReorderSlots(slotIdsToMove, newIndex);
+            }
           }
         } else if (target.type === "page") {
-          // move to page
+          // In duplex mode skip 2 pages so the card lands on the same face type.
+          // slotGroup maps a page number to its underlying slot-range index:
+          //   duplex: every 2 pages share one group → floor((page-1)/2)
+          //   others: each page is its own group  → page-1
           switch (target.id) {
-            case "prev-page":
-              onReorder(
-                source.data.images,
-                (currentPage - 1) * cardsPerPage - 1,
+            case "prev-page": {
+              const targetPage = Math.max(1, currentPage - dragPageStep);
+              const targetBoundary = pages[targetPage - 1]?.insertBoundary;
+              onReorder(source.data.images, targetBoundary?.last ?? (Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) + 1) * cardsPerPage - 1);
+              changePage(targetPage);
+              break;
+            }
+            case "next-page": {
+              const targetPage = Math.min(
+                pages.length,
+                currentPage + dragPageStep,
               );
-              changePage(currentPage - 1);
+              const targetBoundary = pages[targetPage - 1]?.insertBoundary;
+              onReorder(source.data.images, targetBoundary?.first ?? Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) * cardsPerPage);
+              changePage(targetPage);
               break;
-            case "next-page":
-              onReorder(source.data.images, currentPage * cardsPerPage);
-              changePage(currentPage + 1);
-              break;
+            }
           }
         }
 
@@ -186,10 +225,15 @@ export const Preview = () => {
     },
     [
       onReorder,
+      onReorderSlots,
+      sortedSlots,
+      toSlotId,
       cardsPerPage,
       changePage,
       currentPage,
-      images,
+      isDuplex,
+      dragPageStep,
+      pages,
       onSelectAllImages,
       getIsSelected,
     ],
@@ -249,8 +293,8 @@ export const Preview = () => {
         >
           <PageDrop
             id="prev-page"
-            disabled={isFirstPage}
-            onHoverTimeout={previousPage}
+            disabled={isDragPrevDisabled}
+            onHoverTimeout={dragPreviousPage}
           >
             <div
               className={vstack({
@@ -297,8 +341,8 @@ export const Preview = () => {
               style={
                 {
                   "--rows-per-page": rowsPerPage.toString(),
-                  "--columns-per-page": columnsPerPage.toString(),
-                  "--grid-columns": columnsPerPage.toString(),
+                  "--columns-per-page": currentPageData.gridColumns.toString(),
+                  "--grid-columns": currentPageData.gridColumns.toString(),
                 } as Record<string, string>
               }
               className={vstack({
@@ -354,13 +398,15 @@ export const Preview = () => {
                       columnGap: "var(--column-gap)",
                     })}
                   >
-                    {currentCards.map((image, index) => (
+                    {currentCards.map((item, index) => (
                       <Card
-                        key={image.uuid || `empty-${index}`}
-                        image={image}
+                        key={item.image.uuid || `empty-${index}`}
+                        image={item.image}
                         index={index}
                         currentPage={currentPage}
                         onImageLoad={index === 0 ? onImageLoad : undefined}
+                        slotId={item.slotId}
+                        face={item.face}
                       />
                     ))}
                   </div>
@@ -370,8 +416,8 @@ export const Preview = () => {
           </div>
           <PageDrop
             id="next-page"
-            disabled={isLastPage}
-            onHoverTimeout={nextPage}
+            disabled={isDragNextDisabled}
+            onHoverTimeout={dragNextPage}
           >
             <div
               className={vstack({

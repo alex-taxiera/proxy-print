@@ -29,6 +29,12 @@ export const cardSizeToNameMap = Object.fromEntries(
 ) as Record<`${number}-${number}`, CardSize>;
 
 export type Unit = "in" | "mm";
+export type PrintMode =
+  | "duplex"
+  | "side-by-side"
+  | "inline-faces"
+  | "fronts-only"
+  | "backs-only";
 
 export const PAGE_DIMENSIONS = {
   letter: {
@@ -179,6 +185,7 @@ export const SettingsSchema = zod
         return num >= 0.1 && num <= 1;
       }, "Must be between 0.1 and 1"),
     upscaleScryfallImages: zod.boolean(),
+    printMode: zod.enum(["duplex", "side-by-side", "inline-faces", "fronts-only", "backs-only"]),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
@@ -239,4 +246,5 @@ export const DEFAULT_SETTINGS = {
   convertToJpg: false,
   jpgQuality: "0.95",
   upscaleScryfallImages: false,
+  printMode: "duplex",
 } as const satisfies Settings;

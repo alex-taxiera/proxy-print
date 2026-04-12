@@ -24,28 +24,35 @@ export const useSortableCard = ({
   index,
   isPending,
   imageSrc,
+  slotId = null,
 }: {
   image: PossiblyEmptyImage;
   index: number;
   isPending: boolean;
   imageSrc: string;
   absoluteIndex: number;
+  slotId?: string | null;
+  face?: "front" | "back";
 }) => {
   const { images } = useContext(ImagesContext);
   const { getIsSelected } = useContext(ImageSelectionContext);
   const isSelected = getIsSelected(image.uuid);
   const selectedImages = images.filter((image) => getIsSelected(image.uuid));
   const isEmpty = getIsEmptyImage(image);
+  // Empty slots with a real slotId should remain as drop targets.
+  // Padding slots (slotId=null) and still-loading cards should be fully disabled.
+  const isRealEmptySlot = isEmpty && slotId != null;
 
   return useSortable({
     id: image.uuid,
-    disabled: isEmpty || isPending || !imageSrc,
+    disabled: isPending || (!imageSrc && !isRealEmptySlot),
     index,
     type: "card",
     accept: "card",
     collisionDetector: pointerIntersection,
     data: {
       images: isEmpty ? [] : isSelected ? selectedImages : [image],
+      slotId,
     },
   });
 };

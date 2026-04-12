@@ -3,6 +3,11 @@ import { create } from "zustand";
 import { persist, PersistStorage, StorageValue } from "zustand/middleware";
 
 import { invertHexColor } from "~/utils/invert-hex-color";
+import {
+  GoogleImageData,
+  LocalImageData,
+  ScryfallImageData,
+} from "~/context/ImagesContext";
 
 import { DEFAULT_SETTINGS, Settings, SettingsSchema } from "~/context/SettingsContext";
 
@@ -36,6 +41,7 @@ type PersistedSettings = {
   basePdfBytes: Uint8Array | null;
   basePdfName: string | null;
   basePdfPageCount: number | null;
+  defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -77,6 +83,7 @@ export interface SettingsStoreState {
   basePdfBytes: Uint8Array | null;
   basePdfName: string | null;
   basePdfPageCount: number | null;
+  defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
   _hasHydrated: boolean;
 }
 
@@ -84,6 +91,9 @@ export interface SettingsStoreActions {
   setSettings: (updater: (old: Settings) => Settings) => void;
   setBasePdf: (
     data: { bytes: Uint8Array; name: string; pageCount: number } | null,
+  ) => void;
+  setDefaultCardBack: (
+    data: GoogleImageData | LocalImageData | ScryfallImageData | null,
   ) => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -134,6 +144,7 @@ export const useSettingsStore = create<SettingsStore>()(
       basePdfBytes: null,
       basePdfName: null,
       basePdfPageCount: null,
+      defaultCardBack: null,
       _hasHydrated: false,
 
       setSettings: (updater) =>
@@ -151,17 +162,42 @@ export const useSettingsStore = create<SettingsStore>()(
         }
       },
 
+      setDefaultCardBack: (data) => {
+        set({ defaultCardBack: data });
+      },
+
       setHasHydrated: (value) => set({ _hasHydrated: value }),
     }),
     {
       name: "proxy-print-settings",
+      version: 2,
       storage: createIdbStorage<PersistedSettings>(),
+      migrate: (persistedState, version) => {
+        if (!persistedState) {
+          return persistedState as SettingsStore;
+        }
+
+        if (version < 2) {
+          const state = persistedState as Partial<SettingsStore>;
+          return {
+            ...state,
+            settings: {
+              ...DEFAULT_SETTINGS,
+              ...state.settings,
+            },
+            defaultCardBack: null,
+          } as SettingsStore;
+        }
+
+        return persistedState as SettingsStore;
+      },
       // Only persist settings + base PDF data. _hasHydrated is always runtime-only.
       partialize: (state) => ({
         settings: state.settings,
         basePdfBytes: state.basePdfBytes,
         basePdfName: state.basePdfName,
         basePdfPageCount: state.basePdfPageCount,
+        defaultCardBack: state.defaultCardBack,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

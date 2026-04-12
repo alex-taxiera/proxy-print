@@ -159,6 +159,52 @@ export const useGetCardsForDecklist = () => {
         }
       }
 
+      const slotItems = fullList
+        .map((card) => {
+          if ("image_uris" in card) {
+            return {
+              front: {
+                uri: card?.image_uris?.png,
+                name: card?.name,
+              },
+              back: null,
+            };
+          }
+
+          if ("card_faces" in card) {
+            const [frontFace, backFace] = card.card_faces;
+            const front =
+              frontFace && "image_uris" in frontFace
+                ? {
+                    uri: frontFace.image_uris?.png,
+                    name: frontFace.name,
+                  }
+                : null;
+            const back =
+              backFace && "image_uris" in backFace
+                ? {
+                    uri: backFace.image_uris?.png,
+                    name: backFace.name,
+                  }
+                : null;
+
+            return {
+              front,
+              back,
+            };
+          }
+
+          return null;
+        })
+        .filter(
+          (
+            slot,
+          ): slot is {
+            front: ScryfallImageData;
+            back: ScryfallImageData | null;
+          } => slot !== null && slot.front !== null,
+        );
+
       const items = fullList
         .flatMap((card) => {
           if ("image_uris" in card) {
@@ -179,7 +225,7 @@ export const useGetCardsForDecklist = () => {
         })
         .filter((c): c is ScryfallImageData => c !== undefined);
 
-      return { items, errors };
+      return { items, slotItems, errors };
     },
     [getCards],
   );

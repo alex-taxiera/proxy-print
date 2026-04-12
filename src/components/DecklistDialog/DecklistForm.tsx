@@ -16,7 +16,7 @@ import { getScryfallCardsCollectionQueryKey } from "~/queries/useScryfallCardsCo
 import { UpscaleSetting } from "../UpscaleSetting";
 
 export const DecklistForm = () => {
-  const { onAdd, onError } = useContext(ImagesContext);
+  const { onAdd, onAddSlots, onError } = useContext(ImagesContext);
   const isMutating = useIsMutating({
     mutationKey: getScryfallCardsCollectionQueryKey(),
   });
@@ -37,13 +37,17 @@ export const DecklistForm = () => {
       if (decklist) {
         const result = await getCardsForDecklist(decklist);
 
-        onAdd(result.items);
+        if (result.slotItems.length > 0) {
+          onAddSlots(result.slotItems);
+        } else {
+          onAdd(result.items);
+        }
         result.errors.forEach(onError);
         form.reset();
         dialog.setOpen(false);
       }
     },
-    [onAdd, onError, getCardsForDecklist],
+    [onAdd, onAddSlots, onError, getCardsForDecklist],
   );
 
   const isSubmitting = !!isMutating;

@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PDFDocument } from "pdf-lib";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { hstack, vstack } from "styled-system/patterns";
 
@@ -31,8 +31,86 @@ import {
 } from "~/context/SettingsContext";
 import { useSettingsFormState } from "~/hooks/useSettingsFormState";
 import { useSettingsStore } from "~/store/settingsStore";
+import { createFileHash } from "~/utils/create-file-hash";
 
 import { UpscaleSetting } from "../UpscaleSetting";
+
+const DefaultCardBackSection = () => {
+  const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
+  const setDefaultCardBack = useSettingsStore((s) => s.setDefaultCardBack);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [thumbSrc, setThumbSrc] = useState<string | null>(null);
+
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const hash = await createFileHash(file);
+      setDefaultCardBack({ file, hash });
+      const url = URL.createObjectURL(file);
+      setThumbSrc(url);
+      e.target.value = "";
+    },
+    [setDefaultCardBack],
+  );
+
+  const handleClear = useCallback(() => {
+    setDefaultCardBack(null);
+    setThumbSrc(null);
+  }, [setDefaultCardBack]);
+
+  const displayName = defaultCardBack
+    ? "file" in defaultCardBack
+      ? defaultCardBack.file.name
+      : defaultCardBack.name
+    : null;
+
+  return (
+    <Field.Root>
+      <Field.Label>Default Card Back</Field.Label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpg,.jpeg,.png,.bmp,.webp"
+        style={{ display: "none" }}
+        onChange={(e) => void handleFileChange(e)}
+      />
+      {defaultCardBack ? (
+        <div className={hstack({ gap: "2", alignItems: "center" })}>
+          {thumbSrc && (
+            <img
+              src={thumbSrc}
+              alt="Default card back thumbnail"
+              style={{ width: 32, height: 44, objectFit: "cover", borderRadius: 2 }}
+            />
+          )}
+          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.75rem" }}>
+            {displayName}
+          </span>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            colorPalette="gray"
+            aria-label="Remove default card back"
+            onClick={handleClear}
+          >
+            <FontAwesomeIcon icon={faXmark} />
+          </IconButton>
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          colorPalette="gray"
+          onClick={() => fileInputRef.current?.click()}
+          type="button"
+        >
+          Upload card back…
+        </Button>
+      )}
+    </Field.Root>
+  );
+};
 
 const unitsCollection = createListCollection({
   items: Array.from(
@@ -592,6 +670,7 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
+          <DefaultCardBackSection />
         </Tabs.Content>
         <Tabs.Content
           value="advanced"
