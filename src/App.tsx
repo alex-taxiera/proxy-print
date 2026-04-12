@@ -9,10 +9,11 @@ import { Header } from "~/components/Header";
 import { Preview } from "~/components/Preview";
 import { Sidebar } from "~/components/Sidebar";
 
+import { useSettingsStore } from "~/store/settingsStore";
+
 import { ImageLoadingProvider } from "~/context/ImageLoadingContext";
 import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";
 import { ImagesProvider } from "~/context/ImagesProvider";
-import { SettingsProvider } from "~/context/SettingsProvider";
 import { toaster } from "~/utils/toaster";
 
 const queryClient = new QueryClient();
@@ -27,32 +28,38 @@ declare global {
 // This code is for all users
 window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 
+function AppContent() {
+  return (
+    <ImageLoadingProvider>
+      <ImagesProvider>
+        <ImageSelectionProvider>
+          <Header />
+          <main
+            className={hstack({
+              alignItems: "stretch",
+              flex: 1,
+              gap: "0",
+              overflow: "hidden",
+            })}
+          >
+            <Preview />
+            <Sidebar />
+          </main>
+        </ImageSelectionProvider>
+      </ImagesProvider>
+    </ImageLoadingProvider>
+  );
+}
+
 function App() {
+  const hasHydrated = useSettingsStore((s) => s._hasHydrated);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster toaster={toaster}>
         {(toast) => <AlertToast toast={toast} />}
       </Toaster>
-      <ImageLoadingProvider>
-        <SettingsProvider>
-          <ImagesProvider>
-            <ImageSelectionProvider>
-              <Header />
-              <main
-                className={hstack({
-                  alignItems: "stretch",
-                  flex: 1,
-                  gap: "0",
-                  overflow: "hidden",
-                })}
-              >
-                <Preview />
-                <Sidebar />
-              </main>
-            </ImageSelectionProvider>
-          </ImagesProvider>
-        </SettingsProvider>
-      </ImageLoadingProvider>
+      {hasHydrated ? <AppContent /> : null}
     </QueryClientProvider>
   );
 }

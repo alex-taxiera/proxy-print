@@ -15,7 +15,7 @@ import {
   PossiblyEmptyImage,
   getIsEmptyImage,
 } from "~/context/ImagesContext";
-import { SettingsContext } from "~/context/SettingsContext";
+import { useSettingsStore } from "~/store/settingsStore";
 import { useSortableCard } from "~/hooks/useSortableCard";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
@@ -80,7 +80,7 @@ export const Card = ({ image, index, currentPage, onImageLoad }: CardProps) => {
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
-  const { settings } = useContext(SettingsContext);
+  const settings = useSettingsStore((s) => s.settings);
 
   const isSelected = useMemo(() => {
     return getIsSelected(image.uuid);

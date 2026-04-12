@@ -4,9 +4,11 @@ import {
   faFlask,
   faUser,
   faUserGraduate,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useCallback, useMemo } from "react";
+import { PDFDocument } from "pdf-lib";
+import { useCallback, useMemo, useRef } from "react";
 
 import { hstack, vstack } from "styled-system/patterns";
 
@@ -28,6 +30,7 @@ import {
   PAGE_DIMENSIONS,
 } from "~/context/SettingsContext";
 import { useSettingsFormState } from "~/hooks/useSettingsFormState";
+import { useSettingsStore } from "~/store/settingsStore";
 
 import { UpscaleSetting } from "../UpscaleSetting";
 
@@ -93,6 +96,37 @@ export const SettingsForm = () => {
       pageHeight: formState.pageWidth,
     });
   }, [formState.pageHeight, formState.pageWidth, handle]);
+
+  const basePdfName = useSettingsStore((s) => s.basePdfName);
+  const setBasePdf = useSettingsStore((s) => s.setBasePdf);
+  const basePdfInputRef = useRef<HTMLInputElement>(null);
+  const isPageSizeLocked = basePdfName !== null;
+
+  const handleBasePdfChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const bytes = await file.arrayBuffer();
+      const bytesArray = new Uint8Array(bytes);
+      const doc = await PDFDocument.load(bytesArray);
+      const page = doc.getPage(0);
+      const { width: widthPts, height: heightPts } = page.getSize();
+      const pageCount = doc.getPageCount();
+
+      // Convert pts to the current unit.
+      const ptsPerUnit = formState.unit === "mm" ? 72 / 25.4 : 72;
+      const pageWidth = (widthPts / ptsPerUnit).toFixed(3);
+      const pageHeight = (heightPts / ptsPerUnit).toFixed(3);
+
+      setBasePdf({ bytes: bytesArray, name: file.name, pageCount });
+      void handle({ pageWidth, pageHeight });
+
+      // Reset so the same file can be re-selected.
+      e.target.value = "";
+    },
+    [formState.unit, handle, setBasePdf],
+  );
 
   const maxGuidesThickness = useMemo(
     () =>
@@ -311,6 +345,7 @@ export const SettingsForm = () => {
                 collection={pageSizeCollection}
                 value={[pageSizeValue]}
                 onValueChange={pageSizeChangeHandler}
+                disabled={isPageSizeLocked}
               >
                 <div
                   className={hstack({
@@ -331,47 +366,69 @@ export const SettingsForm = () => {
                     </Button>
                   </Collapsible.Trigger>
                 </div>
-                <Select.Control position="relative">
-                  <Select.Trigger>
-                    <Select.ValueText textTransform="capitalize" />
-                  </Select.Trigger>
-                  <div
-                    className={hstack({
-                      position: "absolute",
-                      right: "3",
-                      top: "0",
-                      height: "full",
-                      pointerEvents: "none",
-                      gap: "1",
-                    })}
-                  >
-                    <Tooltip.Root openDelay={100} closeDelay={200}>
-                      <Tooltip.Trigger asChild>
-                        <IconButton
-                          type="button"
-                          pointerEvents="auto"
-                          size="xs"
-                          aria-label="Rotate Page"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            rotatePage();
-                          }}
-                        >
-                          <FontAwesomeIcon icon={faArrowsRotate} size="lg" />
-                        </IconButton>
-                      </Tooltip.Trigger>
-                      <Tooltip.Positioner>
-                        <Tooltip.Arrow>
-                          <Tooltip.ArrowTip />
-                        </Tooltip.Arrow>
-                        <Tooltip.Content>Rotate Page</Tooltip.Content>
-                      </Tooltip.Positioner>
-                    </Tooltip.Root>
-                    <Select.Indicator asChild>
-                      <Select.IndicatorIcon />
-                    </Select.Indicator>
-                  </div>
-                </Select.Control>
+                <Tooltip.Root
+                  disabled={!isPageSizeLocked}
+                  openDelay={100}
+                  closeDelay={200}
+                >
+                  <Tooltip.Trigger asChild>
+                    <Select.Control position="relative">
+                      <Select.Trigger>
+                        <Select.ValueText textTransform="capitalize" />
+                      </Select.Trigger>
+                      <div
+                        className={hstack({
+                          position: "absolute",
+                          right: "3",
+                          top: "0",
+                          height: "full",
+                          pointerEvents: "none",
+                          gap: "1",
+                        })}
+                      >
+                        <Tooltip.Root openDelay={100} closeDelay={200}>
+                          <Tooltip.Trigger asChild>
+                            <IconButton
+                              type="button"
+                              pointerEvents="auto"
+                              size="xs"
+                              aria-label="Rotate Page"
+                              disabled={isPageSizeLocked}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                rotatePage();
+                              }}
+                            >
+                              <FontAwesomeIcon
+                                icon={faArrowsRotate}
+                                size="lg"
+                              />
+                            </IconButton>
+                          </Tooltip.Trigger>
+                          <Tooltip.Positioner>
+                            <Tooltip.Arrow>
+                              <Tooltip.ArrowTip />
+                            </Tooltip.Arrow>
+                            <Tooltip.Content>Rotate Page</Tooltip.Content>
+                          </Tooltip.Positioner>
+                        </Tooltip.Root>
+                        <Select.Indicator asChild>
+                          <Select.IndicatorIcon />
+                        </Select.Indicator>
+                      </div>
+                    </Select.Control>
+                  </Tooltip.Trigger>
+                  <Portal>
+                    <Tooltip.Positioner>
+                      <Tooltip.Arrow>
+                        <Tooltip.ArrowTip />
+                      </Tooltip.Arrow>
+                      <Tooltip.Content>
+                        Locked to Base PDF dimensions{" "}
+                      </Tooltip.Content>
+                    </Tooltip.Positioner>
+                  </Portal>
+                </Tooltip.Root>
                 <Select.Positioner>
                   <Select.Content>
                     {pageSizeCollection.group().map(([type, group]) => (
@@ -407,12 +464,16 @@ export const SettingsForm = () => {
                 paddingLeft: "4",
               })}
             >
-              <Field.Root invalid={formErrors.unit.length > 0}>
+              <Field.Root
+                invalid={formErrors.unit.length > 0}
+                disabled={isPageSizeLocked}
+              >
                 {/* TODO: Make more simple Select */}
                 <Select.Root
                   collection={unitsCollection}
                   value={[formState.unit]}
                   onValueChange={buildSelectChangeHandler("unit")}
+                  disabled={isPageSizeLocked}
                 >
                   <Select.Label>Page Unit</Select.Label>
                   <Select.Control>
@@ -442,11 +503,15 @@ export const SettingsForm = () => {
                   <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
                 ))}
               </Field.Root>
-              <Field.Root invalid={formErrors.pageWidth.length > 0}>
+              <Field.Root
+                invalid={formErrors.pageWidth.length > 0}
+                disabled={isPageSizeLocked}
+              >
                 <NumberInput
                   min={1}
                   value={formState.pageWidth}
                   onValueChange={buildNumberInputChangeHandler("pageWidth")}
+                  disabled={isPageSizeLocked}
                 >
                   Page Width ({formState.unit})
                 </NumberInput>
@@ -454,11 +519,15 @@ export const SettingsForm = () => {
                   <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
                 ))}
               </Field.Root>
-              <Field.Root invalid={formErrors.pageHeight.length > 0}>
+              <Field.Root
+                invalid={formErrors.pageHeight.length > 0}
+                disabled={isPageSizeLocked}
+              >
                 <NumberInput
                   min={1}
                   value={formState.pageHeight}
                   onValueChange={buildNumberInputChangeHandler("pageHeight")}
+                  disabled={isPageSizeLocked}
                 >
                   Page Height ({formState.unit})
                 </NumberInput>
@@ -616,7 +685,63 @@ export const SettingsForm = () => {
             alignSelf: "stretch",
             justifyContent: "center",
           })}
-        ></Tabs.Content>
+        >
+          <Field.Root>
+            <Field.Label>Base PDF</Field.Label>
+            <Field.HelperText>
+              Cards will be printed on top of this PDF. Page size is locked to
+              the PDF&apos;s dimensions.
+            </Field.HelperText>
+            <input
+              ref={basePdfInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                void handleBasePdfChange(e);
+              }}
+            />
+            {basePdfName ? (
+              <div
+                className={hstack({
+                  width: "full",
+                  gap: "2",
+                  alignItems: "center",
+                })}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {basePdfName}
+                </span>
+                <IconButton
+                  type="button"
+                  size="xs"
+                  variant="ghost"
+                  aria-label="Remove base PDF"
+                  onClick={() => setBasePdf(null)}
+                >
+                  <FontAwesomeIcon icon={faXmark} />
+                </IconButton>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                alignSelf="flex-start"
+                onClick={() => basePdfInputRef.current?.click()}
+              >
+                Choose PDF…
+              </Button>
+            )}
+          </Field.Root>
+        </Tabs.Content>
       </form>
     </Tabs.Root>
   );

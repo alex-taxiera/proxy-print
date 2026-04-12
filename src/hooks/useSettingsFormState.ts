@@ -5,12 +5,11 @@ import {
   ColorPickerValueChangeDetails,
 } from "@ark-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Settings,
   PAGE_DIMENSIONS,
-  SettingsContext,
   SettingsSchema,
   DEFAULT_SETTINGS,
   cardSizeToNameMap,
@@ -18,6 +17,7 @@ import {
   pageSizeToNameMap,
   Unit,
 } from "~/context/SettingsContext";
+import { useSettingsStore } from "~/store/settingsStore";
 import {
   ScryfallImageQueryData,
   scryfallImagesQueryKey,
@@ -122,8 +122,21 @@ const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
 };
 
 export const useSettingsFormState = () => {
-  const { settings, setSettings, formState, setFormState } =
-    useContext(SettingsContext);
+  const settings = useSettingsStore((s) => s.settings);
+  const setSettings = useSettingsStore((s) => s.setSettings);
+  const hasHydrated = useSettingsStore((s) => s._hasHydrated);
+
+  const [formState, setFormState] = useState<Settings>(settings);
+
+  // When the store hydrates from IDB, sync formState to the persisted settings.
+  useEffect(() => {
+    if (hasHydrated) {
+      setFormState(settings);
+    }
+    // Only run when hydration completes; subsequent settings changes are
+    // driven through handle() which updates formState directly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasHydrated]);
 
   const handleBleedEdgeForCardSizeChange =
     useHandleBleedEdgeForCardSizeChange();

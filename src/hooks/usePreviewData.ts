@@ -2,10 +2,10 @@ import { nanoid } from "nanoid";
 import { useContext, useMemo } from "react";
 
 import { ImagesContext, PossiblyEmptyImage } from "~/context/ImagesContext";
-import { SettingsContext } from "~/context/SettingsContext";
+import { useSettingsStore } from "~/store/settingsStore";
 
 export const usePageLimits = () => {
-  const { settings } = useContext(SettingsContext);
+  const settings = useSettingsStore((s) => s.settings);
 
   const guidesThickness = parseFloat(settings.guidesThickness); // mm
   const bleedEdge = settings.enableBleedEdge ? Number(settings.bleedEdge) : 0; // mm

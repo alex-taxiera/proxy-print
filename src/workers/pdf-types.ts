@@ -11,6 +11,10 @@ export type InitData = {
   pageWidth: number;
   pageHeight: number;
   unit: "mm" | "in";
+  /** Raw bytes of the base PDF. When present, this page is used as the page background. */
+  basePdfBytes?: Uint8Array;
+  /** 0-based index of which page of the base PDF to use. Cycles if out of range. Defaults to 0. */
+  basePdfPageIndex?: number;
 };
 
 export type CardData = {

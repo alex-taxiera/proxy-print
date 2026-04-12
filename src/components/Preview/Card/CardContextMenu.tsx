@@ -18,7 +18,7 @@ import { Menu } from "~/components/ui/menu";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { getIsLocalImage, Image, ImagesContext } from "~/context/ImagesContext";
-import { SettingsContext } from "~/context/SettingsContext";
+import { useSettingsStore } from "~/store/settingsStore";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { addBleedEdge } from "~/utils/add-bleed";
@@ -51,7 +51,7 @@ export const CardContextMenu = ({
   const { images, onRemove, onReorder } = useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
   const { imageMatrix, cardsPerPage } = usePreviewData();
-  const { settings } = useContext(SettingsContext);
+  const settings = useSettingsStore((s) => s.settings);
 
   const absoluteIndex = useMemo(() => {
     return images.findIndex((img) => img.uuid === image.uuid);

@@ -39,7 +39,7 @@ function dataUrlToUint8Array(dataUrl: string): Uint8Array {
 // ---------------------------------------------------------------------------
 
 async function initPdf(data: InitData): Promise<void> {
-  const { pageWidth, pageHeight, unit } = data;
+  const { pageWidth, pageHeight, unit, basePdfBytes, basePdfPageIndex = 0 } = data;
 
   // Validation is also performed inside buildCardRenderOps; duplicate here so
   // the error surfaces at init time rather than on the first card.
@@ -61,7 +61,16 @@ async function initPdf(data: InitData): Promise<void> {
   const pageHeightPts = pageHeight * ptsPerUnit;
 
   pdfDoc = await PDFDocument.create();
-  pdfDoc.addPage([pageWidthPts, pageHeightPts]);
+
+  if (basePdfBytes) {
+    const basePdf = await PDFDocument.load(basePdfBytes);
+    const pageIndex = basePdfPageIndex % basePdf.getPageCount();
+    const [copiedPage] = await pdfDoc.copyPages(basePdf, [pageIndex]);
+    pdfDoc.addPage(copiedPage);
+  } else {
+    pdfDoc.addPage([pageWidthPts, pageHeightPts]);
+  }
+
   currentInit = data;
 }
 
@@ -198,7 +207,7 @@ self.onmessage = function (
       enqueue(async () => {
         try {
           const bytes = await docToSave.save();
-          const blob = new Blob([bytes], { type: "application/pdf" });
+          const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
 
           self.postMessage({
             type: "save",

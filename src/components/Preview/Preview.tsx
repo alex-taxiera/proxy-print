@@ -20,7 +20,7 @@ import { ProgressOverlay } from "~/components/ProgressOverlay";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { ImagesContext } from "~/context/ImagesContext";
-import { SettingsContext } from "~/context/SettingsContext";
+import { useSettingsStore, computeCssVars } from "~/store/settingsStore";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getIsSortableCardData } from "~/hooks/useSortableCard";
 
@@ -86,7 +86,8 @@ const usePagination = () => {
 };
 
 export const Preview = () => {
-  const { cssVars } = useContext(SettingsContext);
+  const settings = useSettingsStore((s) => s.settings);
+  const cssVars = useMemo(() => computeCssVars(settings), [settings]);
 
   const { images, isRendering, imagesWithError, onReorder } =
     useContext(ImagesContext);
