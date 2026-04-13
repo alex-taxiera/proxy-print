@@ -3,13 +3,13 @@ import { useContext, useMemo, useCallback, useState, useEffect } from "react";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { Image, ImagesContext, getIsLocalImage } from "~/context/ImagesContext";
-import { SettingsContext } from "~/context/SettingsContext";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import {
   getIsDownloadableImageCacheEvent,
   ImageQueryData,
   getQueryKeyForImage,
 } from "~/queries/images";
+import { useSettingsStore } from "~/store/settingsStore";
 import { addBleedEdge } from "~/utils/add-bleed";
 import { toaster } from "~/utils/toaster";
 import ZipWorker from "~/workers/zip-worker?worker";
@@ -164,7 +164,7 @@ export const useCardActions = ({
   const { onReorder, onClear } = useContext(ImagesContext);
   const { cardsPerPage, imageMatrix } = usePreviewData();
   const { onSelectAllImages } = useContext(ImageSelectionContext);
-  const { settings } = useContext(SettingsContext);
+  const settings = useSettingsStore((s) => s.settings);
   const queryClient = useQueryClient();
 
   const getCanAddBleed = useGetCanAddBleed(images);

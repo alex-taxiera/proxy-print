@@ -8,8 +8,8 @@ import {
   Image as ImageType,
   ImagesContext,
 } from "~/context/ImagesContext";
-import { SettingsContext } from "~/context/SettingsContext";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { useSettingsStore } from "~/store/settingsStore";
 import { invertHexColor } from "~/utils/invert-hex-color";
 import { progressEvents } from "~/utils/progress-events";
 import PdfWorker from "~/workers/pdf-worker?worker";
@@ -55,12 +55,14 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
 
 export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const queryClient = useQueryClient();
-  const { settings } = useContext(SettingsContext);
+  const settings = useSettingsStore((s) => s.settings);
+  const basePdfBytes = useSettingsStore((s) => s.basePdfBytes);
+  const basePdfPageCount = useSettingsStore((s) => s.basePdfPageCount) ?? 1;
   const { images, setIsRendering } = useContext(ImagesContext);
   const { imageMatrix, cardsPerPage } = usePreviewData();
   const cardPositionMeta = useCardPositionMeta();
 
-  const generatePdf = useCallback(() => {
+  const generatePdf = useCallback(async () => {
     return new Promise((resolve, reject) => {
       const referencePage = contentRef.current?.querySelector<HTMLElement>(
         ".page",
@@ -151,11 +153,16 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image))
           : undefined;
 
-        const mimeType = convertToJpg
+        const rawMimeType = convertToJpg
           ? "image/jpeg"
           : image && getIsLocalImage(image)
             ? image.file.type
             : (downloadableImageData?.mimeType ?? "image/png");
+        // pdf-lib does not support WEBP natively; convert to PNG at the canvas step.
+        const mimeType =
+          !convertToJpg && rawMimeType === "image/webp"
+            ? "image/png"
+            : rawMimeType;
 
         const imgQuality = convertToJpg ? jpgQuality : 1;
 
@@ -298,6 +305,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         data: [string, Worker],
         cards: [string, Worker][],
         relativeIndex: number,
+        workerInitData?: { basePdfBytes: Uint8Array; basePdfPageIndex: number },
       ) => {
         const [imageUuid, worker] = data;
 
@@ -325,6 +333,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                   pageHeight: Number(settings.pageHeight),
                   pageWidth: Number(settings.pageWidth),
                   unit: settings.unit,
+                  // Only sent with the first card message; worker ignores init once pdfDoc is set.
+                  ...workerInitData,
                 },
               },
             });
@@ -479,11 +489,18 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         };
 
         // start the worker
+        const basePdfPageIndex = basePdfBytes
+          ? (workerIndex - 1) % basePdfPageCount
+          : undefined;
+
         doTimeout(() => {
           requestNextCard(
             [cards.shift()!, worker],
             cards.map((card) => [card, worker]),
             0,
+            basePdfBytes !== null && basePdfPageIndex !== undefined
+              ? { basePdfBytes: basePdfBytes.slice(), basePdfPageIndex }
+              : undefined,
           );
         });
       };
@@ -508,6 +525,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     cardPositionMeta,
     queryClient,
     setIsRendering,
+    basePdfBytes,
+    basePdfPageCount,
   ]);
 
   return useCallback(() => {

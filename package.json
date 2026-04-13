@@ -47,12 +47,13 @@
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "@tensorflow/tfjs-core": "^4.22.0",
-    "jspdf": "github:laucheukhim/jsPDF",
+    "idb-keyval": "^6.2.2",
     "jszip": "^3.10.1",
     "nanoid": "^5.1.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zod": "^4.0.17"
+    "zod": "^4.0.17",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.0",

@@ -13,6 +13,9 @@ dist-ssr
 *.local
 coverage
 
+# Playwright MCP
+.playwright-mcp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,4 +1,3 @@
-import { createContext } from "react";
 import * as zod from "zod";
 
 export const CARD_DIMENSIONS = {
@@ -241,18 +240,3 @@ export const DEFAULT_SETTINGS = {
   jpgQuality: "0.95",
   upscaleScryfallImages: false,
 } as const satisfies Settings;
-
-export type SettingsContextValue = {
-  settings: Settings;
-  setSettings: (updater: (old: Settings) => Settings) => void;
-  cssVars: Record<string, string>;
-  formState: Settings;
-  setFormState: React.Dispatch<React.SetStateAction<Settings>>;
-};
-export const SettingsContext = createContext<SettingsContextValue>({
-  settings: DEFAULT_SETTINGS,
-  setSettings: () => {},
-  cssVars: {},
-  formState: DEFAULT_SETTINGS,
-  setFormState: () => {},
-});
