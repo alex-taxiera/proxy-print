@@ -9,11 +9,10 @@ import { Header } from "~/components/Header";
 import { Preview } from "~/components/Preview";
 import { Sidebar } from "~/components/Sidebar";
 
-import { useSettingsStore } from "~/store/settingsStore";
-
 import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";
 import { ImagesProvider } from "~/context/ImagesProvider";
 import { useImageLoadingProgress } from "~/hooks/useImageLoadingProgress";
+import { useSettingsStore } from "~/store/settingsStore";
 import { toaster } from "~/utils/toaster";
 
 const queryClient = new QueryClient();
@@ -34,20 +33,20 @@ function AppContent() {
   return (
     <ImagesProvider>
       <ImageSelectionProvider>
-          <Header />
-          <main
-            className={hstack({
-              alignItems: "stretch",
-              flex: 1,
-              gap: "0",
-              overflow: "hidden",
-            })}
-          >
-            <Preview />
-            <Sidebar />
-          </main>
-        </ImageSelectionProvider>
-      </ImagesProvider>
+        <Header />
+        <main
+          className={hstack({
+            alignItems: "stretch",
+            flex: 1,
+            gap: "0",
+            overflow: "hidden",
+          })}
+        >
+          <Preview />
+          <Sidebar />
+        </main>
+      </ImageSelectionProvider>
+    </ImagesProvider>
   );
 }
 

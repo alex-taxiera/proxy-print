@@ -11,9 +11,9 @@ import {
   getIsEmptyImage,
 } from "~/context/ImagesContext";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { useSettingsStore } from "~/store/settingsStore";
 import { invertHexColor } from "~/utils/invert-hex-color";
 import { progressEvents } from "~/utils/progress-events";
-import { useSettingsStore } from "~/store/settingsStore";
 import PdfWorker from "~/workers/pdf-worker?worker";
 
 import { useCardPositionMeta } from "./useCardClassNames";
@@ -65,7 +65,6 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const cardPositionMeta = useCardPositionMeta();
 
   const generatePdf = useCallback(async () => {
-
     return new Promise((resolve, reject) => {
       const referencePage = contentRef.current?.querySelector<HTMLElement>(
         ".page",

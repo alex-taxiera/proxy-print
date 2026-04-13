@@ -142,10 +142,7 @@ describe("mimeType normalisation", () => {
   });
 
   it('undefined mimeType defaults to "image/png"', () => {
-    const ops = buildCardRenderOps(
-      makeCard({ mimeType: undefined }),
-      A4_MM,
-    );
+    const ops = buildCardRenderOps(makeCard({ mimeType: undefined }), A4_MM);
     expect(imageOps(ops)[0].mimeType).toBe("image/png");
   });
 });
@@ -452,7 +449,11 @@ describe("guidesAtBleedEdge = true", () => {
 describe("validation", () => {
   it("throws on invalid page dimensions", () => {
     expect(() =>
-      buildCardRenderOps(makeCard(), { pageWidth: -1, pageHeight: 297, unit: "mm" }),
+      buildCardRenderOps(makeCard(), {
+        pageWidth: -1,
+        pageHeight: 297,
+        unit: "mm",
+      }),
     ).toThrow("Invalid page dimensions");
   });
 
@@ -463,15 +464,15 @@ describe("validation", () => {
   });
 
   it("throws on invalid scale values", () => {
-    expect(() =>
-      buildCardRenderOps(makeCard({ scaleX: 0 }), A4_MM),
-    ).toThrow("Invalid scale values");
+    expect(() => buildCardRenderOps(makeCard({ scaleX: 0 }), A4_MM)).toThrow(
+      "Invalid scale values",
+    );
   });
 
   it("throws on negative image position", () => {
-    expect(() =>
-      buildCardRenderOps(makeCard({ pdfX: -1 }), A4_MM),
-    ).toThrow("Invalid image position");
+    expect(() => buildCardRenderOps(makeCard({ pdfX: -1 }), A4_MM)).toThrow(
+      "Invalid image position",
+    );
   });
 });
 

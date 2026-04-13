@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { ComponentProps, useCallback, useMemo, useState } from "react";
 
 import { getQueryDataForImage } from "~/queries/images";
+import { useSettingsStore } from "~/store/settingsStore";
 
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import {
@@ -18,7 +19,6 @@ import {
   ScryfallImageData,
   SlotInputData,
 } from "./ImagesContext";
-import { useSettingsStore } from "~/store/settingsStore";
 import { getIsLocalImage } from "./ImagesContext";
 
 const normalizeSlots = (slots: CardSlot[]) => {
@@ -148,50 +148,58 @@ export const ImagesProvider = (
     [localDownloadManager, settings],
   );
 
-  const onAddSlots = useCallback((data: SlotInputData[], index?: number) => {
-    // Pre-generate all slot objects (pure, no side effects).
-    const newSlots: CardSlot[] = data.map((item) => {
-      const slotId = nanoid();
-      const front = item.front
-        ? ({ ...item.front, uuid: slotId } as Image)
-        : null;
-      const back = item.back
-        ? ({ ...item.back, uuid: `${slotId}:back` } as Image)
-        : null;
-      return { id: slotId, front, back, position: 0 } satisfies CardSlot;
-    });
+  const onAddSlots = useCallback(
+    (data: SlotInputData[], index?: number) => {
+      // Pre-generate all slot objects (pure, no side effects).
+      const newSlots: CardSlot[] = data.map((item) => {
+        const slotId = nanoid();
+        const front = item.front
+          ? ({ ...item.front, uuid: slotId } as Image)
+          : null;
+        const back = item.back
+          ? ({ ...item.back, uuid: `${slotId}:back` } as Image)
+          : null;
+        return { id: slotId, front, back, position: 0 } satisfies CardSlot;
+      });
 
-    // Trigger all downloads OUTSIDE the state updater. React may invoke state
-    // updater functions more than once (StrictMode / Concurrent features), so
-    // side effects must never live inside them.
-    const currentCardBack = useSettingsStore.getState().defaultCardBack;
-    if (currentCardBack && newSlots.length > 0) {
-      const cbImage = { ...currentCardBack, uuid: "default-card-back" } as Image;
-      if (getIsLocalImage(cbImage)) void loadLocalImage(cbImage as LocalImage);
-      else void downloadImage(cbImage as DownloadableImage);
-    }
-    for (const slot of newSlots) {
-      if (slot.front) {
-        if ("file" in slot.front) void loadLocalImage(slot.front as LocalImage);
-        else void downloadImage(slot.front as DownloadableImage);
+      // Trigger all downloads OUTSIDE the state updater. React may invoke state
+      // updater functions more than once (StrictMode / Concurrent features), so
+      // side effects must never live inside them.
+      const currentCardBack = useSettingsStore.getState().defaultCardBack;
+      if (currentCardBack && newSlots.length > 0) {
+        const cbImage = {
+          ...currentCardBack,
+          uuid: "default-card-back",
+        } as Image;
+        if (getIsLocalImage(cbImage))
+          void loadLocalImage(cbImage as LocalImage);
+        else void downloadImage(cbImage as DownloadableImage);
       }
-      if (slot.back) {
-        if ("file" in slot.back) void loadLocalImage(slot.back as LocalImage);
-        else void downloadImage(slot.back as DownloadableImage);
+      for (const slot of newSlots) {
+        if (slot.front) {
+          if ("file" in slot.front)
+            void loadLocalImage(slot.front as LocalImage);
+          else void downloadImage(slot.front as DownloadableImage);
+        }
+        if (slot.back) {
+          if ("file" in slot.back) void loadLocalImage(slot.back as LocalImage);
+          else void downloadImage(slot.back as DownloadableImage);
+        }
       }
-    }
 
-    // Pure state update — no side effects.
-    setSlots((old) => {
-      const oldSlots = getSortedSlots(old);
-      if (index === undefined) {
-        return toSlotMap(normalizeSlots(oldSlots.concat(newSlots)));
-      }
-      const insertAt = Math.max(0, Math.min(index, oldSlots.length));
-      const updated = oldSlots.toSpliced(insertAt, 0, ...newSlots);
-      return toSlotMap(normalizeSlots(updated));
-    });
-  }, [loadLocalImage, downloadImage]);
+      // Pure state update — no side effects.
+      setSlots((old) => {
+        const oldSlots = getSortedSlots(old);
+        if (index === undefined) {
+          return toSlotMap(normalizeSlots(oldSlots.concat(newSlots)));
+        }
+        const insertAt = Math.max(0, Math.min(index, oldSlots.length));
+        const updated = oldSlots.toSpliced(insertAt, 0, ...newSlots);
+        return toSlotMap(normalizeSlots(updated));
+      });
+    },
+    [loadLocalImage, downloadImage],
+  );
 
   const onAdd = useCallback(
     (
@@ -276,57 +284,70 @@ export const ImagesProvider = (
     });
   }, []);
 
-  const onReorderSlots = useCallback((slotIds: string[], newPosition: number) => {
-    setSlots((old) => {
-      const sorted = getSortedSlots(old);
-      const idsToMove = new Set(slotIds);
-      const moved = sorted.filter((slot) => idsToMove.has(slot.id));
+  const onReorderSlots = useCallback(
+    (slotIds: string[], newPosition: number) => {
+      setSlots((old) => {
+        const sorted = getSortedSlots(old);
+        const idsToMove = new Set(slotIds);
+        const moved = sorted.filter((slot) => idsToMove.has(slot.id));
 
-      if (moved.length === 0 || newPosition < 0 || newPosition >= sorted.length) {
-        return old;
-      }
+        if (
+          moved.length === 0 ||
+          newPosition < 0 ||
+          newPosition >= sorted.length
+        ) {
+          return old;
+        }
 
-      const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
-      const insertAt = Math.max(0, Math.min(newPosition, remaining.length));
-      const updated = remaining.toSpliced(insertAt, 0, ...moved);
-      return toSlotMap(normalizeSlots(updated));
-    });
-  }, []);
+        const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
+        const insertAt = Math.max(0, Math.min(newPosition, remaining.length));
+        const updated = remaining.toSpliced(insertAt, 0, ...moved);
+        return toSlotMap(normalizeSlots(updated));
+      });
+    },
+    [],
+  );
 
-  const onReorder = useCallback((imagesToMove: Image[], newIndex: number) => {
-    onReorderSlots(
-      imagesToMove.map((image) => image.uuid),
-      newIndex,
-    );
-  }, [onReorderSlots]);
+  const onReorder = useCallback(
+    (imagesToMove: Image[], newIndex: number) => {
+      onReorderSlots(
+        imagesToMove.map((image) => image.uuid),
+        newIndex,
+      );
+    },
+    [onReorderSlots],
+  );
 
-  const onMoveSlotToAbsoluteIndex = useCallback((slotIds: string[], targetAbsoluteIndex: number) => {
-    setSlots((old) => {
-      const sorted = getSortedSlots(old);
-      const idsToMove = new Set(slotIds);
-      const moved = sorted.filter((slot) => idsToMove.has(slot.id));
+  const onMoveSlotToAbsoluteIndex = useCallback(
+    (slotIds: string[], targetAbsoluteIndex: number) => {
+      setSlots((old) => {
+        const sorted = getSortedSlots(old);
+        const idsToMove = new Set(slotIds);
+        const moved = sorted.filter((slot) => idsToMove.has(slot.id));
 
-      if (moved.length === 0 || targetAbsoluteIndex < 0) return old;
+        if (moved.length === 0 || targetAbsoluteIndex < 0) return old;
 
-      const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
-      // How many empty filler slots we need to insert before the moved slots
-      const gapCount = Math.max(0, targetAbsoluteIndex - remaining.length);
-      const insertAt = targetAbsoluteIndex - gapCount;
-      const emptySlots: CardSlot[] = Array.from({ length: gapCount }, () => ({
-        id: nanoid(),
-        front: null,
-        back: null,
-        position: 0,
-      }));
-      const updated = [
-        ...remaining.slice(0, insertAt),
-        ...emptySlots,
-        ...moved,
-        ...remaining.slice(insertAt),
-      ];
-      return toSlotMap(normalizeSlots(updated));
-    });
-  }, []);
+        const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
+        // How many empty filler slots we need to insert before the moved slots
+        const gapCount = Math.max(0, targetAbsoluteIndex - remaining.length);
+        const insertAt = targetAbsoluteIndex - gapCount;
+        const emptySlots: CardSlot[] = Array.from({ length: gapCount }, () => ({
+          id: nanoid(),
+          front: null,
+          back: null,
+          position: 0,
+        }));
+        const updated = [
+          ...remaining.slice(0, insertAt),
+          ...emptySlots,
+          ...moved,
+          ...remaining.slice(insertAt),
+        ];
+        return toSlotMap(normalizeSlots(updated));
+      });
+    },
+    [],
+  );
 
   const contextValue = useMemo(
     () => ({

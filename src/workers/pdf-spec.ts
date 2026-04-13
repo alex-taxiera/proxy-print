@@ -4,13 +4,16 @@
 //
 // This module has zero side-effects and no library dependencies, making it straightforward
 // to unit-test and safe to snapshot for regression detection between renderers.
-
 import type { CardData, InitData, PdfLineOp, PdfRenderOp } from "./pdf-types";
 
 function parseHexColor(hex: string): [number, number, number] | null {
   const match = hex.match(/#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);
   if (!match) return null;
-  return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16)];
+  return [
+    parseInt(match[1], 16),
+    parseInt(match[2], 16),
+    parseInt(match[3], 16),
+  ];
 }
 
 /**
@@ -222,9 +225,13 @@ export function buildCardRenderOps(
       for (const corner of [tl, tr, bl, br]) {
         const { x, y } = corner;
         // horizontal
-        ops.push(solidLine(x - crosshairPts, y, x + crosshairPts, y, invertedColor));
+        ops.push(
+          solidLine(x - crosshairPts, y, x + crosshairPts, y, invertedColor),
+        );
         // vertical (y1 > y2 in pdf-lib is fine — direction does not affect rendering)
-        ops.push(solidLine(x, y + crosshairPts, x, y - crosshairPts, invertedColor));
+        ops.push(
+          solidLine(x, y + crosshairPts, x, y - crosshairPts, invertedColor),
+        );
         // dashed horizontal
         ops.push(dashedLine(x - crosshairPts, y, x + crosshairPts, y));
         // dashed vertical
