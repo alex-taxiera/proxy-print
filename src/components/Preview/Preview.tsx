@@ -36,7 +36,7 @@ const containerStyles = css.raw({
 });
 
 const usePagination = () => {
-  const { pages } = usePreviewData();
+  const { pages, cardsPerPage, rowsPerPage } = usePreviewData();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [isReferenceCardLoaded, setIsReferenceCardLoaded] = useState(false);
@@ -82,6 +82,9 @@ const usePagination = () => {
   }, [currentPage, pages.length, changePage]);
 
   return {
+    pages,
+    cardsPerPage,
+    rowsPerPage,
     currentPage,
     currentPageData,
     currentCards,
@@ -149,30 +152,6 @@ const PageGrid = ({ style, children }: PageGridProps) => (
   </div>
 );
 
-const backSideLabelClass = css({
-  position: "absolute",
-  top: "-6",
-  left: "0",
-  right: "0",
-  textAlign: "center",
-  fontSize: "xs",
-  color: "fg.muted",
-  fontStyle: "italic",
-});
-
-const PageLabels = ({
-  pageType,
-}: {
-  pageType: "front" | "back" | "side-by-side";
-}) => {
-  if (pageType !== "back") return null;
-  return (
-    <div className={backSideLabelClass}>
-      Back side — mirrored for duplex printing
-    </div>
-  );
-};
-
 export const Preview = () => {
   const settings = useSettingsStore((s) => s.settings);
   const cssVars = useMemo(() => computeCssVars(settings), [settings]);
@@ -183,6 +162,7 @@ export const Preview = () => {
     imagesWithError,
     onReorder,
     onReorderSlots,
+    onMoveSlotToAbsoluteIndex,
     sortedSlots,
   } = useContext(ImagesContext);
 
@@ -192,9 +172,10 @@ export const Preview = () => {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { pages, cardsPerPage, rowsPerPage } = usePreviewData();
-
   const {
+    pages,
+    cardsPerPage,
+    rowsPerPage,
     currentPage,
     currentPageData,
     currentCards,
@@ -294,6 +275,19 @@ export const Preview = () => {
             );
             if (newIndex >= 0) {
               onReorderSlots(slotIdsToMove, newIndex);
+            } else {
+              // Target is a padding slot (slotId=null). Place the card at the
+              // exact visual position, inserting empty gap-filler slots as needed.
+              const pageDat = pages[currentPage - 1];
+              const paddingIdx = pageDat?.items.findIndex(
+                (c) => c.image.uuid === dragTargetId,
+              ) ?? -1;
+              if (paddingIdx >= 0 && pageDat) {
+                onMoveSlotToAbsoluteIndex(
+                  slotIdsToMove,
+                  pageDat.insertBoundary.first + paddingIdx,
+                );
+              }
             }
           }
         } else if (target.type === "page") {
@@ -341,6 +335,7 @@ export const Preview = () => {
     [
       onReorder,
       onReorderSlots,
+      onMoveSlotToAbsoluteIndex,
       sortedSlots,
       toSlotId,
       cardsPerPage,
@@ -492,7 +487,6 @@ export const Preview = () => {
                   ),
                 )}
               >
-                <PageLabels pageType={currentPageData.pageType} />
                 <PageGrid style={pageTransformStyle}>
                   {currentCards.map((item, index) => (
                     <Card

@@ -300,6 +300,34 @@ export const ImagesProvider = (
     );
   }, [onReorderSlots]);
 
+  const onMoveSlotToAbsoluteIndex = useCallback((slotIds: string[], targetAbsoluteIndex: number) => {
+    setSlots((old) => {
+      const sorted = getSortedSlots(old);
+      const idsToMove = new Set(slotIds);
+      const moved = sorted.filter((slot) => idsToMove.has(slot.id));
+
+      if (moved.length === 0 || targetAbsoluteIndex < 0) return old;
+
+      const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
+      // How many empty filler slots we need to insert before the moved slots
+      const gapCount = Math.max(0, targetAbsoluteIndex - remaining.length);
+      const insertAt = targetAbsoluteIndex - gapCount;
+      const emptySlots: CardSlot[] = Array.from({ length: gapCount }, () => ({
+        id: nanoid(),
+        front: null,
+        back: null,
+        position: 0,
+      }));
+      const updated = [
+        ...remaining.slice(0, insertAt),
+        ...emptySlots,
+        ...moved,
+        ...remaining.slice(insertAt),
+      ];
+      return toSlotMap(normalizeSlots(updated));
+    });
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       slots,
@@ -319,6 +347,7 @@ export const ImagesProvider = (
       setIsRendering,
       onReorderSlots,
       onReorder,
+      onMoveSlotToAbsoluteIndex,
     }),
     [
       slots,
@@ -338,6 +367,7 @@ export const ImagesProvider = (
       setIsRendering,
       onReorderSlots,
       onReorder,
+      onMoveSlotToAbsoluteIndex,
     ],
   );
 

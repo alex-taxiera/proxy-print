@@ -95,7 +95,7 @@ function buildBackRow(
       if (slot.back) {
         return { image: slot.back, slotId: slot.id, face: "back" };
       }
-      if (defaultBack && slot.id) {
+      if (defaultBack && slot.id && slot.front) {
         return {
           image: { ...defaultBack, uuid: `${slot.id}:back-preview` },
           slotId: slot.id,

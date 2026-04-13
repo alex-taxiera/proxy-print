@@ -39,13 +39,13 @@ export const useSortableCard = ({
   const isSelected = getIsSelected(image.uuid);
   const selectedImages = images.filter((image) => getIsSelected(image.uuid));
   const isEmpty = getIsEmptyImage(image);
-  // Empty slots with a real slotId should remain as drop targets.
-  // Padding slots (slotId=null) and still-loading cards should be fully disabled.
-  const isRealEmptySlot = isEmpty && slotId != null;
+  // Empty slots (real or padding) are always valid drop targets — there is nothing
+  // to load, so isPending is permanently true for them, but they should never be disabled.
+  // Non-empty cards are disabled while still loading or when they have no image src.
 
   return useSortable({
     id: image.uuid,
-    disabled: isPending || (!imageSrc && !isRealEmptySlot),
+    disabled: !isEmpty && (isPending || !imageSrc),
     index,
     type: "card",
     accept: "card",

@@ -100,6 +100,9 @@ export type ImagesContextValue = {
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
   onReorderSlots: (slotIds: string[], newPosition: number) => void;
   onReorder: (images: Image[], newIndex: number) => void;
+  /** Move slots to an absolute index, inserting empty gap-filler slots if the
+   * target index is beyond the current end of the list. */
+  onMoveSlotToAbsoluteIndex: (slotIds: string[], targetAbsoluteIndex: number) => void;
   onAdd: (
     files: (LocalImageData | GoogleImageData | ScryfallImageData)[],
     index?: number,
@@ -131,6 +134,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onAddBack: () => {},
   onRemoveBack: () => {},
   onInsertEmptySlot: () => {},
+  onMoveSlotToAbsoluteIndex: () => {},
   onError: () => {},
   onRemove: () => {},
   onClear: () => {},
