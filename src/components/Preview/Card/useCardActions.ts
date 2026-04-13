@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useContext, useMemo, useCallback, useState, useEffect } from "react";
+import { useContext, useState, useEffect } from "react";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { Image, ImagesContext, getIsLocalImage } from "~/context/ImagesContext";
@@ -40,7 +40,7 @@ const useDownloadImages = (images: Image[]) => {
 
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const downloadImages = useCallback(() => {
+  const downloadImages = () => {
     setIsDownloading(true);
     const toastId = toaster.create({
       type: "info",
@@ -108,7 +108,7 @@ const useDownloadImages = (images: Image[]) => {
       toaster.remove(toastId);
       worker.terminate();
     };
-  }, [images, queryClient]);
+  };
 
   return {
     isDownloading,
@@ -119,7 +119,7 @@ const useDownloadImages = (images: Image[]) => {
 const useGetCanAddBleed = (images: Image[]) => {
   const queryClient = useQueryClient();
 
-  return useCallback(() => {
+  return () => {
     const data = images.map((image) =>
       queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image)),
     );
@@ -131,13 +131,13 @@ const useGetCanAddBleed = (images: Image[]) => {
       }
       return false;
     });
-  }, [images, queryClient]);
+  };
 };
 
 const useGetCanRevertToOriginal = (images: Image[]) => {
   const queryClient = useQueryClient();
 
-  return useCallback(() => {
+  return () => {
     const data = images.map((image) =>
       queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image)),
     );
@@ -149,7 +149,7 @@ const useGetCanRevertToOriginal = (images: Image[]) => {
       }
       return false;
     });
-  }, [images, queryClient]);
+  };
 };
 
 export type UseCardActionsProps = {
@@ -199,11 +199,11 @@ export const useCardActions = ({
 
   const { isDownloading, downloadImages } = useDownloadImages(images);
 
-  const remove = useCallback(() => {
+  const remove = () => {
     onClear(images.map((image) => image.uuid));
-  }, [onClear, images]);
+  };
 
-  const addBleed = useCallback(() => {
+  const addBleed = () => {
     if (getCanAddBleed()) {
       void Promise.all(
         images.map(async (image) => {
@@ -225,15 +225,9 @@ export const useCardActions = ({
         }),
       );
     }
-  }, [
-    queryClient,
-    settings.cardWidth,
-    settings.cardHeight,
-    getCanAddBleed,
-    images,
-  ]);
+  };
 
-  const revertToOriginal = useCallback(() => {
+  const revertToOriginal = () => {
     if (getCanRevertToOriginal()) {
       images.forEach((image) => {
         queryClient.setQueryData<ImageQueryData>(
@@ -251,37 +245,24 @@ export const useCardActions = ({
         );
       });
     }
-  }, [getCanRevertToOriginal, queryClient, images]);
+  };
 
-  const canMoveToNextPage = useMemo(() => {
-    return currentPage === imageMatrix.length;
-  }, [currentPage, imageMatrix.length]);
+  const canMoveToNextPage = currentPage === imageMatrix.length;
 
-  const canMoveToPreviousPage = useMemo(() => {
-    return currentPage === 1;
-  }, [currentPage]);
+  const canMoveToPreviousPage = currentPage === 1;
 
-  const moveToPage = useCallback(
-    (page: number) => {
-      const newIndex =
-        page > currentPage
-          ? (page - 1) * cardsPerPage
-          : page * cardsPerPage - 1 - Math.min(cardsPerPage, images.length - 1);
-      onReorder(images, Math.max(0, newIndex));
-      onSelectAllImages(false);
-    },
-    [currentPage, cardsPerPage, onReorder, onSelectAllImages, images],
-  );
+  const moveToPage = (page: number) => {
+    const newIndex =
+      page > currentPage
+        ? (page - 1) * cardsPerPage
+        : page * cardsPerPage - 1 - Math.min(cardsPerPage, images.length - 1);
+    onReorder(images, Math.max(0, newIndex));
+    onSelectAllImages(false);
+  };
 
-  const moveToNextPage = useCallback(
-    () => moveToPage(currentPage + 1),
-    [moveToPage, currentPage],
-  );
+  const moveToNextPage = () => moveToPage(currentPage + 1);
 
-  const moveToPreviousPage = useCallback(
-    () => moveToPage(currentPage - 1),
-    [moveToPage, currentPage],
-  );
+  const moveToPreviousPage = () => moveToPage(currentPage - 1);
 
   return {
     remove,

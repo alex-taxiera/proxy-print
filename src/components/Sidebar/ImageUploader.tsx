@@ -3,7 +3,7 @@ import {
   useFileUpload,
   type FileUploadFileAcceptDetails,
 } from "@ark-ui/react";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import { css } from "styled-system/css";
 import { center, vstack } from "styled-system/patterns";
@@ -22,10 +22,7 @@ import {
 import { useSettingsStore } from "~/store/settingsStore";
 import { createFileHash } from "~/utils/create-file-hash";
 
-import {
-  XmlImportDialog,
-  XmlImportPending,
-} from "./XmlImportDialog";
+import { XmlImportDialog, XmlImportPending } from "./XmlImportDialog";
 
 type ParsedXmlUpload = {
   slots: SlotInputData[];
@@ -47,8 +44,7 @@ const parseCardSection = (
   Array.from(cards).forEach((card) => {
     const id = card.querySelector("id")?.textContent?.trim();
     const name =
-      card.querySelector("name")?.textContent?.trim() ??
-      `${sectionName}-card`;
+      card.querySelector("name")?.textContent?.trim() ?? `${sectionName}-card`;
     const slots = card
       .querySelector("slots")
       ?.textContent?.split(",")
@@ -151,29 +147,26 @@ export function ImageUploader() {
   const [xmlPending, setXmlPending] = useState<XmlImportPending | null>(null);
   const [updateDefaultCardBack, setUpdateDefaultCardBack] = useState(false);
 
-  const onFileAccept = useCallback(
-    ({ files }: FileUploadFileAcceptDetails) => {
-      setIsProcessing(true);
-      processFiles(files)
-        .then(({ directAdds, xmlPending: pending }) => {
-          if (directAdds.length > 0) {
-            onAdd(directAdds);
-          }
-          if (pending) {
-            // Default the toggle: true when no existing card back, false otherwise
-            setUpdateDefaultCardBack(
-              pending.xmlDefaultCardBack !== null && existingCardBack === null,
-            );
-            setXmlPending(pending);
-          }
-        })
-        .catch(console.error)
-        .finally(() => setIsProcessing(false));
-    },
-    [onAdd, existingCardBack],
-  );
+  const onFileAccept = ({ files }: FileUploadFileAcceptDetails) => {
+    setIsProcessing(true);
+    processFiles(files)
+      .then(({ directAdds, xmlPending: pending }) => {
+        if (directAdds.length > 0) {
+          onAdd(directAdds);
+        }
+        if (pending) {
+          // Default the toggle: true when no existing card back, false otherwise
+          setUpdateDefaultCardBack(
+            pending.xmlDefaultCardBack !== null && existingCardBack === null,
+          );
+          setXmlPending(pending);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setIsProcessing(false));
+  };
 
-  const handleXmlConfirm = useCallback(() => {
+  const handleXmlConfirm = () => {
     if (!xmlPending) return;
     // Set the card back in Zustand FIRST (synchronous) so that when onAddSlots
     // reads useSettingsStore.getState().defaultCardBack it sees the new value
@@ -183,11 +176,11 @@ export function ImageUploader() {
     }
     onAddSlots(xmlPending.slotAdds);
     setXmlPending(null);
-  }, [xmlPending, updateDefaultCardBack, onAddSlots, setDefaultCardBack]);
+  };
 
-  const handleXmlCancel = useCallback(() => {
+  const handleXmlCancel = () => {
     setXmlPending(null);
-  }, []);
+  };
 
   const fileUpload = useFileUpload({
     maxFiles: Infinity,

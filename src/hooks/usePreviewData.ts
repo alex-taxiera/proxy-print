@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 
 import {
   CardSlot,
@@ -21,7 +21,7 @@ export const usePageLimits = () => {
   const cardWidth =
     Number(settings.cardWidth) + 2 * bleedEdge + guidesThickness;
 
-  const rowsPerPage = useMemo(() => {
+  const rowsPerPage = (() => {
     // convert in to mm when settings.unit is set to "in"
     const pageHeight =
       parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1);
@@ -32,9 +32,9 @@ export const usePageLimits = () => {
     const availableHeight = pageHeight - gapHeight;
     const rowsAfterGap = Math.floor(availableHeight / cardHeight);
     return rowsAfterGap;
-  }, [settings, cardHeight]);
+  })();
 
-  const columnsPerPage = useMemo(() => {
+  const columnsPerPage = (() => {
     const pageWidth =
       parseFloat(settings.pageWidth) * (settings.unit === "in" ? 25.4 : 1);
 
@@ -44,12 +44,9 @@ export const usePageLimits = () => {
     const availableWidth = pageWidth - gapWidth;
     const columnsAfterGap = Math.floor(availableWidth / cardWidth);
     return columnsAfterGap;
-  }, [settings, cardWidth]);
+  })();
 
-  const cardsPerPage = useMemo(
-    () => rowsPerPage * columnsPerPage,
-    [rowsPerPage, columnsPerPage],
-  );
+  const cardsPerPage = rowsPerPage * columnsPerPage;
 
   return {
     rowsPerPage,
@@ -118,7 +115,7 @@ export const usePreviewData = () => {
   const { cardsPerPage, rowsPerPage, columnsPerPage } = usePageLimits();
   const printMode = settings.printMode;
 
-  const pages = useMemo((): PreviewPage[] => {
+  const pages = ((): PreviewPage[] => {
     if (sortedSlots.length === 0) return [];
 
     if (printMode === "duplex") {
@@ -127,19 +124,31 @@ export const usePreviewData = () => {
       for (let i = 0; i < sortedSlots.length; i += cardsPerPage) {
         const chunk = sortedSlots.slice(i, i + cardsPerPage);
 
-      const chunkStart = i;
-      const chunkEnd = Math.min(i + cardsPerPage, sortedSlots.length) - 1;
+        const chunkStart = i;
+        const chunkEnd = Math.min(i + cardsPerPage, sortedSlots.length) - 1;
 
         // Front page
         const frontItems: PreviewPageItem[] = chunk.map((slot) => ({
-          image: slot.front ?? { uuid: `${slot.id}:front-empty`, name: "empty" },
+          image: slot.front ?? {
+            uuid: `${slot.id}:front-empty`,
+            name: "empty",
+          },
           slotId: slot.id,
           face: "front" as const,
         }));
         while (frontItems.length < cardsPerPage) {
-          frontItems.push({ image: { uuid: nanoid(), name: "empty" }, slotId: null, face: "front" });
+          frontItems.push({
+            image: { uuid: nanoid(), name: "empty" },
+            slotId: null,
+            face: "front",
+          });
         }
-        result.push({ items: frontItems, pageType: "front", gridColumns: columnsPerPage, insertBoundary: { first: chunkStart, last: chunkEnd } });
+        result.push({
+          items: frontItems,
+          pageType: "front",
+          gridColumns: columnsPerPage,
+          insertBoundary: { first: chunkStart, last: chunkEnd },
+        });
 
         // Back page — per-row column reversal for duplex alignment
         const backItems: PreviewPageItem[] = [];
@@ -150,7 +159,12 @@ export const usePreviewData = () => {
           );
           backItems.push(...buildBackRow(rowSlots, defaultCardBack));
         }
-        result.push({ items: backItems, pageType: "back", gridColumns: columnsPerPage, insertBoundary: { first: chunkStart, last: chunkEnd } });
+        result.push({
+          items: backItems,
+          pageType: "back",
+          gridColumns: columnsPerPage,
+          insertBoundary: { first: chunkStart, last: chunkEnd },
+        });
       }
 
       return result;
@@ -170,13 +184,18 @@ export const usePreviewData = () => {
 
         for (const slot of chunk) {
           items.push({
-            image: slot.front ?? { uuid: `${slot.id}:front-empty`, name: "empty" },
+            image: slot.front ?? {
+              uuid: `${slot.id}:front-empty`,
+              name: "empty",
+            },
             slotId: slot.id,
             face: "front",
           });
           const backImg =
             slot.back ??
-            (defaultCardBack ? { ...defaultCardBack, uuid: `${slot.id}:back-preview` } : null);
+            (defaultCardBack
+              ? { ...defaultCardBack, uuid: `${slot.id}:back-preview` }
+              : null);
           items.push({
             image: backImg ?? { uuid: `${slot.id}:back-empty`, name: "empty" },
             slotId: slot.id,
@@ -185,10 +204,22 @@ export const usePreviewData = () => {
         }
 
         while (items.length < slotsPerPage * 2) {
-          items.push({ image: { uuid: nanoid(), name: "empty" }, slotId: null, face: "front" });
+          items.push({
+            image: { uuid: nanoid(), name: "empty" },
+            slotId: null,
+            face: "front",
+          });
         }
 
-        result.push({ items, pageType: "side-by-side", gridColumns, insertBoundary: { first: i, last: Math.min(i + slotsPerPage, sortedSlots.length) - 1 } });
+        result.push({
+          items,
+          pageType: "side-by-side",
+          gridColumns,
+          insertBoundary: {
+            first: i,
+            last: Math.min(i + slotsPerPage, sortedSlots.length) - 1,
+          },
+        });
       }
 
       return result;
@@ -202,7 +233,10 @@ export const usePreviewData = () => {
       const allItems: PreviewPageItem[] = [];
       for (const slot of sortedSlots) {
         allItems.push({
-          image: slot.front ?? { uuid: `${slot.id}:front-empty`, name: "empty" },
+          image: slot.front ?? {
+            uuid: `${slot.id}:front-empty`,
+            name: "empty",
+          },
           slotId: slot.id,
           face: "front",
         });
@@ -220,13 +254,22 @@ export const usePreviewData = () => {
         const chunk = allItems.slice(i, i + cardsPerPage);
         const items = [...chunk];
         while (items.length < cardsPerPage) {
-          items.push({ image: { uuid: nanoid(), name: "empty" }, slotId: null, face: "front" });
+          items.push({
+            image: { uuid: nanoid(), name: "empty" },
+            slotId: null,
+            face: "front",
+          });
         }
         // insertBoundary: find the sortedSlots index range covered by this page
         const firstSlotId = chunk.find((it) => it.slotId)?.slotId ?? null;
-        const lastSlotId = [...chunk].reverse().find((it) => it.slotId)?.slotId ?? null;
-        const firstIdx = firstSlotId ? sortedSlots.findIndex((s) => s.id === firstSlotId) : 0;
-        const lastIdx = lastSlotId ? sortedSlots.findIndex((s) => s.id === lastSlotId) : sortedSlots.length - 1;
+        const lastSlotId =
+          [...chunk].reverse().find((it) => it.slotId)?.slotId ?? null;
+        const firstIdx = firstSlotId
+          ? sortedSlots.findIndex((s) => s.id === firstSlotId)
+          : 0;
+        const lastIdx = lastSlotId
+          ? sortedSlots.findIndex((s) => s.id === lastSlotId)
+          : sortedSlots.length - 1;
         result.push({
           items,
           pageType: "side-by-side",
@@ -243,14 +286,29 @@ export const usePreviewData = () => {
       for (let i = 0; i < sortedSlots.length; i += cardsPerPage) {
         const chunk = sortedSlots.slice(i, i + cardsPerPage);
         const items: PreviewPageItem[] = chunk.map((slot) => ({
-          image: slot.front ?? { uuid: `${slot.id}:front-empty`, name: "empty" },
+          image: slot.front ?? {
+            uuid: `${slot.id}:front-empty`,
+            name: "empty",
+          },
           slotId: slot.id,
           face: "front" as const,
         }));
         while (items.length < cardsPerPage) {
-          items.push({ image: { uuid: nanoid(), name: "empty" }, slotId: null, face: "front" });
+          items.push({
+            image: { uuid: nanoid(), name: "empty" },
+            slotId: null,
+            face: "front",
+          });
         }
-        result.push({ items, pageType: "front", gridColumns: columnsPerPage, insertBoundary: { first: i, last: Math.min(i + cardsPerPage, sortedSlots.length) - 1 } });
+        result.push({
+          items,
+          pageType: "front",
+          gridColumns: columnsPerPage,
+          insertBoundary: {
+            first: i,
+            last: Math.min(i + cardsPerPage, sortedSlots.length) - 1,
+          },
+        });
       }
       return result;
     }
@@ -267,34 +325,32 @@ export const usePreviewData = () => {
           );
           backItems.push(...buildBackRow(rowSlots, defaultCardBack));
         }
-        result.push({ items: backItems, pageType: "back", gridColumns: columnsPerPage, insertBoundary: { first: i, last: Math.min(i + cardsPerPage, sortedSlots.length) - 1 } });
+        result.push({
+          items: backItems,
+          pageType: "back",
+          gridColumns: columnsPerPage,
+          insertBoundary: {
+            first: i,
+            last: Math.min(i + cardsPerPage, sortedSlots.length) - 1,
+          },
+        });
       }
       return result;
     }
 
     return [];
-  }, [
-    sortedSlots,
-    printMode,
-    cardsPerPage,
-    columnsPerPage,
-    rowsPerPage,
-    defaultCardBack,
-  ]);
+  })();
 
   // Backward-compatible imageMatrix (flat images per page)
-  const imageMatrix = useMemo(
-    () => pages.map((p) => p.items.map((item) => item.image)),
-    [pages],
-  );
+  const imageMatrix = pages.map((p) => p.items.map((item) => item.image));
 
   // The grid columns to use for CSS/position calculations
-  const currentGridColumns = useMemo(() => {
+  const currentGridColumns = (() => {
     if (printMode === "side-by-side") {
       return Math.max(1, Math.floor(columnsPerPage / 2)) * 2;
     }
     return columnsPerPage;
-  }, [printMode, columnsPerPage]);
+  })();
 
   return {
     rowsPerPage,

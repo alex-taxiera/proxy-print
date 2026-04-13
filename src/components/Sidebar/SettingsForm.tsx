@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PDFDocument } from "pdf-lib";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
@@ -42,23 +42,20 @@ const DefaultCardBackSection = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [thumbSrc, setThumbSrc] = useState<string | null>(null);
 
-  const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const hash = await createFileHash(file);
-      setDefaultCardBack({ file, hash });
-      const url = URL.createObjectURL(file);
-      setThumbSrc(url);
-      e.target.value = "";
-    },
-    [setDefaultCardBack],
-  );
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const hash = await createFileHash(file);
+    setDefaultCardBack({ file, hash });
+    const url = URL.createObjectURL(file);
+    setThumbSrc(url);
+    e.target.value = "";
+  };
 
-  const handleClear = useCallback(() => {
+  const handleClear = () => {
     setDefaultCardBack(null);
     setThumbSrc(null);
-  }, [setDefaultCardBack]);
+  };
 
   const displayName = defaultCardBack
     ? "file" in defaultCardBack
@@ -182,56 +179,48 @@ export const SettingsForm = () => {
       }),
   });
 
-  const rotatePage = useCallback(() => {
+  const rotatePage = () => {
     void handle({
       pageWidth: formState.pageHeight,
       pageHeight: formState.pageWidth,
     });
-  }, [formState.pageHeight, formState.pageWidth, handle]);
+  };
 
   const basePdfName = useSettingsStore((s) => s.basePdfName);
   const setBasePdf = useSettingsStore((s) => s.setBasePdf);
   const basePdfInputRef = useRef<HTMLInputElement>(null);
   const isPageSizeLocked = basePdfName !== null;
 
-  const handleBasePdfChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const handleBasePdfChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      const bytes = await file.arrayBuffer();
-      const bytesArray = new Uint8Array(bytes);
-      const doc = await PDFDocument.load(bytesArray);
-      const page = doc.getPage(0);
-      const { width: widthPts, height: heightPts } = page.getSize();
-      const pageCount = doc.getPageCount();
+    const bytes = await file.arrayBuffer();
+    const bytesArray = new Uint8Array(bytes);
+    const doc = await PDFDocument.load(bytesArray);
+    const page = doc.getPage(0);
+    const { width: widthPts, height: heightPts } = page.getSize();
+    const pageCount = doc.getPageCount();
 
-      // Convert pts to the current unit.
-      const ptsPerUnit = formState.unit === "mm" ? 72 / 25.4 : 72;
-      const pageWidth = (widthPts / ptsPerUnit).toFixed(3);
-      const pageHeight = (heightPts / ptsPerUnit).toFixed(3);
+    // Convert pts to the current unit.
+    const ptsPerUnit = formState.unit === "mm" ? 72 / 25.4 : 72;
+    const pageWidth = (widthPts / ptsPerUnit).toFixed(3);
+    const pageHeight = (heightPts / ptsPerUnit).toFixed(3);
 
-      setBasePdf({ bytes: bytesArray, name: file.name, pageCount });
-      void handle({ pageWidth, pageHeight });
+    setBasePdf({ bytes: bytesArray, name: file.name, pageCount });
+    void handle({ pageWidth, pageHeight });
 
-      // Reset so the same file can be re-selected.
-      e.target.value = "";
-    },
-    [formState.unit, handle, setBasePdf],
+    // Reset so the same file can be re-selected.
+    e.target.value = "";
+  };
+
+  const maxGuidesThickness = Math.min(
+    MAX_GUIDES_THICKNESS,
+    Math.round((MAX_BLEED - Number(formState.bleedEdge)) * 10000) / 10000,
   );
-
-  const maxGuidesThickness = useMemo(
-    () =>
-      Math.min(
-        MAX_GUIDES_THICKNESS,
-        Math.round((MAX_BLEED - Number(formState.bleedEdge)) * 10000) / 10000,
-      ),
-    [formState.bleedEdge],
-  );
-  const maxBleedEdge = useMemo(
-    () => MAX_BLEED - Number(formState.guidesThickness),
-    [formState.guidesThickness],
-  );
+  const maxBleedEdge = MAX_BLEED - Number(formState.guidesThickness);
 
   return (
     <Tabs.Root asChild defaultValue="basic">

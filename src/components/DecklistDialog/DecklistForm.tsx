@@ -1,6 +1,6 @@
 import { UseDialogContext } from "@ark-ui/react";
 import { useIsMutating } from "@tanstack/react-query";
-import { useCallback, useContext } from "react";
+import { useContext } from "react";
 
 import { css } from "styled-system/css";
 import { hstack, vstack, visuallyHidden } from "styled-system/patterns";
@@ -23,32 +23,29 @@ export const DecklistForm = () => {
 
   const getCardsForDecklist = useGetCardsForDecklist();
 
-  const handleSubmit = useCallback(
-    async (
-      event: React.FormEvent<HTMLFormElement>,
-      dialog: UseDialogContext,
-    ) => {
-      event.preventDefault();
-      const formData = new FormData(event.target as HTMLFormElement);
-      const decklist = formData.get("decklist") as string;
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+    dialog: UseDialogContext,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.target as HTMLFormElement);
+    const decklist = formData.get("decklist") as string;
 
-      const form = event.target as HTMLFormElement;
+    const form = event.target as HTMLFormElement;
 
-      if (decklist) {
-        const result = await getCardsForDecklist(decklist);
+    if (decklist) {
+      const result = await getCardsForDecklist(decklist);
 
-        if (result.slotItems.length > 0) {
-          onAddSlots(result.slotItems);
-        } else {
-          onAdd(result.items);
-        }
-        result.errors.forEach(onError);
-        form.reset();
-        dialog.setOpen(false);
+      if (result.slotItems.length > 0) {
+        onAddSlots(result.slotItems);
+      } else {
+        onAdd(result.items);
       }
-    },
-    [onAdd, onAddSlots, onError, getCardsForDecklist],
-  );
+      result.errors.forEach(onError);
+      form.reset();
+      dialog.setOpen(false);
+    }
+  };
 
   const isSubmitting = !!isMutating;
 

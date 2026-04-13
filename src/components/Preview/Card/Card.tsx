@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import { css, cx } from "styled-system/css";
 import { center, visuallyHidden } from "styled-system/patterns";
@@ -27,10 +27,7 @@ import { useCardClassName } from "./useCardClassName";
 const useQueryData = (image: PossiblyEmptyImage) => {
   const queryClient = useQueryClient();
 
-  const queryKey = useMemo(
-    () => (!getIsEmptyImage(image) ? getQueryKeyForImage(image) : null),
-    [image],
-  );
+  const queryKey = !getIsEmptyImage(image) ? getQueryKeyForImage(image) : null;
 
   // Manually subscribe to cache updates without triggering fetches
   const [queryData, setQueryData] = useState(() => {
@@ -79,28 +76,28 @@ export type CardProps = {
   face?: "front" | "back";
 };
 
-export const Card = ({ image, index, currentPage, onImageLoad, slotId = null, face = "front" }: CardProps) => {
+export const Card = ({
+  image,
+  index,
+  currentPage,
+  onImageLoad,
+  slotId = null,
+  face = "front",
+}: CardProps) => {
   const { images, onAdd, onRemove, isRendering } = useContext(ImagesContext);
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
   const settings = useSettingsStore((s) => s.settings);
 
-  const isSelected = useMemo(() => {
-    return getIsSelected(image.uuid);
-  }, [getIsSelected, image.uuid]);
+  const isSelected = getIsSelected(image.uuid);
 
-  const absoluteIndex = useMemo(() => {
-    return images.findIndex((img) => img.uuid === image.uuid);
-  }, [images, image.uuid]);
+  const absoluteIndex = images.findIndex((img) => img.uuid === image.uuid);
 
   const [src, setSrc] = useState<string>("");
   const queryData = useQueryData(image);
 
-  const isFetching = useMemo(
-    () => getIsDownloadableImage(image) && !queryData,
-    [image, queryData],
-  );
+  const isFetching = getIsDownloadableImage(image) && !queryData;
 
   const isEmpty = getIsEmptyImage(image);
 
@@ -126,52 +123,32 @@ export const Card = ({ image, index, currentPage, onImageLoad, slotId = null, fa
     isDragging: sortable.isDragging,
   });
 
-  const add = useCallback(
-    (count: number) => {
-      if (isEmpty) {
-        return;
-      }
-
-      onAdd(
-        Array.from({ length: count }, () => image),
-        images.indexOf(image) + 1,
-      );
-    },
-    [image, images, onAdd, isEmpty],
-  );
-
-  const handleClick = useCallback(
-    (event: React.MouseEvent) => {
-      if (isEmpty || isPending || isRendering) {
-        return;
-      }
-
-      if (event.altKey) {
-        onRemove(image.uuid);
-      } else if (ctrlOrMeta(event)) {
-        add(1);
-      } else {
-        onSelectImageUuid(image.uuid, !isSelected);
-      }
-    },
-    [
-      isEmpty,
-      isPending,
-      isRendering,
-      onRemove,
-      image.uuid,
-      onSelectImageUuid,
-      isSelected,
-      add,
-    ],
-  );
-
-  const name = useMemo(() => {
-    if (getIsLocalImage(image)) {
-      return image.file?.name;
+  const add = (count: number) => {
+    if (isEmpty) {
+      return;
     }
-    return image.name;
-  }, [image]);
+
+    onAdd(
+      Array.from({ length: count }, () => image),
+      images.indexOf(image) + 1,
+    );
+  };
+
+  const handleClick = (event: React.MouseEvent) => {
+    if (isEmpty || isPending || isRendering) {
+      return;
+    }
+
+    if (event.altKey) {
+      onRemove(image.uuid);
+    } else if (ctrlOrMeta(event)) {
+      add(1);
+    } else {
+      onSelectImageUuid(image.uuid, !isSelected);
+    }
+  };
+
+  const name = getIsLocalImage(image) ? image.file?.name : image.name;
 
   useEffect(() => {
     let url: string | undefined;

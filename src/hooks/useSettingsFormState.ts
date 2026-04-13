@@ -5,7 +5,7 @@ import {
   ColorPickerValueChangeDetails,
 } from "@ark-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Settings,
@@ -31,74 +31,31 @@ import { addBleedEdge, needsBleedFromFile } from "~/utils/add-bleed";
 const useHandleBleedEdgeForCardSizeChange = () => {
   const queryClient = useQueryClient();
 
-  return useCallback(
-    async (settings: Settings) => {
-      // reprocess all image data in scryfall or local queries
-      const scryfallQueries =
-        queryClient.getQueriesData<ScryfallImageQueryData>({
-          queryKey: scryfallImagesQueryKey(),
-        });
+  return async (settings: Settings) => {
+    // reprocess all image data in scryfall or local queries
+    const scryfallQueries = queryClient.getQueriesData<ScryfallImageQueryData>({
+      queryKey: scryfallImagesQueryKey(),
+    });
 
-      const cardWidth = Number(settings.cardWidth);
-      const cardHeight = Number(settings.cardHeight);
+    const cardWidth = Number(settings.cardWidth);
+    const cardHeight = Number(settings.cardHeight);
 
-      const nextScryfallData = await Promise.all(
-        scryfallQueries.map(async ([key, old]) => {
-          const data = await addBleedEdge(
-            old!.original,
-            old!.mimeType,
-            cardWidth,
-            cardHeight,
-          );
-          return [key, data] as [ScryfallImageQueryKey, Blob];
-        }),
-      );
-
-      for (const [key, next] of nextScryfallData) {
-        queryClient.setQueryData<ScryfallImageQueryData, ScryfallImageQueryKey>(
-          key,
-          (old) => {
-            if (!old) {
-              return undefined;
-            }
-
-            return {
-              ...old,
-              data: next,
-            };
-          },
+    const nextScryfallData = await Promise.all(
+      scryfallQueries.map(async ([key, old]) => {
+        const data = await addBleedEdge(
+          old!.original,
+          old!.mimeType,
+          cardWidth,
+          cardHeight,
         );
-      }
+        return [key, data] as [ScryfallImageQueryKey, Blob];
+      }),
+    );
 
-      const localQueries = queryClient.getQueriesData<LocalImageQueryData>({
-        queryKey: localImagesQueryKey(),
-      });
-
-      const nextLocalData = await Promise.all(
-        localQueries.map(async ([key, old]) => {
-          const needsBleedEdge = await needsBleedFromFile(
-            old!.original,
-            cardWidth,
-            cardHeight,
-          );
-          console.log("needsBleedEdge", needsBleedEdge);
-          console.log("old!.original.name", old!.original.name);
-          if (needsBleedEdge) {
-            const data = await addBleedEdge(
-              old!.original,
-              old!.mimeType,
-              cardWidth,
-              cardHeight,
-            );
-            return [key, data] as [LocalImageQueryKey, Blob];
-          } else {
-            return [key, old!.original] as [LocalImageQueryKey, File];
-          }
-        }),
-      );
-
-      for (const [key, next] of nextLocalData) {
-        queryClient.setQueryData<LocalImageQueryData>(key, (old) => {
+    for (const [key, next] of nextScryfallData) {
+      queryClient.setQueryData<ScryfallImageQueryData, ScryfallImageQueryKey>(
+        key,
+        (old) => {
           if (!old) {
             return undefined;
           }
@@ -107,11 +64,50 @@ const useHandleBleedEdgeForCardSizeChange = () => {
             ...old,
             data: next,
           };
-        });
-      }
-    },
-    [queryClient],
-  );
+        },
+      );
+    }
+
+    const localQueries = queryClient.getQueriesData<LocalImageQueryData>({
+      queryKey: localImagesQueryKey(),
+    });
+
+    const nextLocalData = await Promise.all(
+      localQueries.map(async ([key, old]) => {
+        const needsBleedEdge = await needsBleedFromFile(
+          old!.original,
+          cardWidth,
+          cardHeight,
+        );
+        console.log("needsBleedEdge", needsBleedEdge);
+        console.log("old!.original.name", old!.original.name);
+        if (needsBleedEdge) {
+          const data = await addBleedEdge(
+            old!.original,
+            old!.mimeType,
+            cardWidth,
+            cardHeight,
+          );
+          return [key, data] as [LocalImageQueryKey, Blob];
+        } else {
+          return [key, old!.original] as [LocalImageQueryKey, File];
+        }
+      }),
+    );
+
+    for (const [key, next] of nextLocalData) {
+      queryClient.setQueryData<LocalImageQueryData>(key, (old) => {
+        if (!old) {
+          return undefined;
+        }
+
+        return {
+          ...old,
+          data: next,
+        };
+      });
+    }
+  };
 };
 
 const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
@@ -146,7 +142,7 @@ export const useSettingsFormState = () => {
   const handleBleedEdgeForCardSizeChange =
     useHandleBleedEdgeForCardSizeChange();
 
-  const formErrors = useMemo(() => {
+  const formErrors = (() => {
     const { error } = SettingsSchema.safeParse(formState);
     const keys = Object.keys(settings) as Array<keyof Settings>;
 
@@ -157,144 +153,124 @@ export const useSettingsFormState = () => {
       }),
       {} as Record<keyof Settings, NonNullable<typeof error>["issues"]>,
     );
-  }, [formState, settings]);
+  })();
 
-  const handle = useCallback(
-    async (updates: Partial<Settings>) => {
-      const nextState = {
-        ...formState,
-        ...Object.fromEntries(
-          Object.entries(updates).map(([key, value]) => [
-            key,
-            value ?? DEFAULT_SETTINGS[key as keyof Settings],
-          ]),
-        ),
+  const handle = async (updates: Partial<Settings>) => {
+    const nextState = {
+      ...formState,
+      ...Object.fromEntries(
+        Object.entries(updates).map(([key, value]) => [
+          key,
+          value ?? DEFAULT_SETTINGS[key as keyof Settings],
+        ]),
+      ),
+    };
+
+    const updatedKeys = Object.keys(updates) as Array<keyof Settings>;
+
+    if (
+      updatedKeys.includes("cardHeight") ||
+      updatedKeys.includes("cardWidth")
+    ) {
+      await handleBleedEdgeForCardSizeChange(nextState);
+    }
+
+    if (
+      nextState.unit !== formState.unit &&
+      !updatedKeys.includes("pageHeight") &&
+      !updatedKeys.includes("pageWidth")
+    ) {
+      nextState.pageHeight = calculatePageDimensions(
+        nextState.pageHeight,
+        nextState.unit,
+      );
+      nextState.pageWidth = calculatePageDimensions(
+        nextState.pageWidth,
+        nextState.unit,
+      );
+    }
+
+    setFormState(nextState);
+    setSettings((old) => {
+      const updatedSettings = {
+        ...old,
+        ...nextState,
       };
 
-      const updatedKeys = Object.keys(updates) as Array<keyof Settings>;
-
-      if (
-        updatedKeys.includes("cardHeight") ||
-        updatedKeys.includes("cardWidth")
-      ) {
-        await handleBleedEdgeForCardSizeChange(nextState);
-      }
-
-      if (
-        nextState.unit !== formState.unit &&
-        !updatedKeys.includes("pageHeight") &&
-        !updatedKeys.includes("pageWidth")
-      ) {
-        nextState.pageHeight = calculatePageDimensions(
-          nextState.pageHeight,
-          nextState.unit,
+      const { data, success, error } =
+        SettingsSchema.safeParse(updatedSettings);
+      if (success) {
+        return data;
+      } else {
+        // Return an object with keys that don't have errors, mixed on top of formState
+        const validKeys = Object.keys(updatedSettings).filter(
+          (key) => !error.issues?.some((issue) => issue.path.includes(key)),
         );
-        nextState.pageWidth = calculatePageDimensions(
-          nextState.pageWidth,
-          nextState.unit,
+
+        const validSettings = validKeys.reduce(
+          (acc, key) => {
+            acc[key as keyof Settings] = updatedSettings[key as keyof Settings];
+            return acc;
+          },
+          {} as Record<string, string | boolean>,
         );
+
+        return { ...old, ...validSettings };
       }
+    });
+  };
 
-      setFormState(nextState);
-      setSettings((old) => {
-        const updatedSettings = {
-          ...old,
-          ...nextState,
-        };
-
-        const { data, success, error } =
-          SettingsSchema.safeParse(updatedSettings);
-        if (success) {
-          return data;
-        } else {
-          // Return an object with keys that don't have errors, mixed on top of formState
-          const validKeys = Object.keys(updatedSettings).filter(
-            (key) => !error.issues?.some((issue) => issue.path.includes(key)),
-          );
-
-          const validSettings = validKeys.reduce(
-            (acc, key) => {
-              acc[key as keyof Settings] =
-                updatedSettings[key as keyof Settings];
-              return acc;
-            },
-            {} as Record<string, string | boolean>,
-          );
-
-          return { ...old, ...validSettings };
-        }
-      });
-    },
-    [formState, handleBleedEdgeForCardSizeChange, setFormState, setSettings],
-  );
-
-  const buildTextInputChangeHandler = useCallback(
+  const buildTextInputChangeHandler =
     (key: keyof Settings) => (event: React.ChangeEvent<HTMLInputElement>) => {
       void handle({ [key]: event.target.value });
-    },
-    [handle],
-  );
+    };
 
-  const buildNumberInputChangeHandler = useCallback(
+  const buildNumberInputChangeHandler =
     (key: keyof Settings) => (details: NumberInputValueChangeDetails) => {
       void handle({ [key]: details.value });
-    },
-    [handle],
-  );
+    };
 
-  const buildCheckboxChangeHandler = useCallback(
+  const buildCheckboxChangeHandler =
     (key: keyof Settings) => (details: CheckboxCheckedChangeDetails) => {
       void handle({ [key]: details.checked });
-    },
-    [handle],
-  );
+    };
 
-  const buildSelectChangeHandler = useCallback(
+  const buildSelectChangeHandler =
     (key: keyof Settings) => (details: SelectValueChangeDetails) => {
       void handle({ [key]: details.value[0] });
-    },
-    [handle],
-  );
+    };
 
-  const cardSizeChangeHandler = useCallback(
-    (details: SelectValueChangeDetails) => {
-      const value = details.value[0] as `${number}-${number}`;
-      const cardSize = cardSizeToNameMap[value];
+  const cardSizeChangeHandler = (details: SelectValueChangeDetails) => {
+    const value = details.value[0] as `${number}-${number}`;
+    const cardSize = cardSizeToNameMap[value];
 
-      void handle({
-        cardHeight: CARD_DIMENSIONS[cardSize].height.toString(),
-        cardWidth: CARD_DIMENSIONS[cardSize].width.toString(),
-      });
-    },
-    [handle],
-  );
+    void handle({
+      cardHeight: CARD_DIMENSIONS[cardSize].height.toString(),
+      cardWidth: CARD_DIMENSIONS[cardSize].width.toString(),
+    });
+  };
 
   const isLandscape =
     Number(formState.pageWidth) > Number(formState.pageHeight);
 
-  const pageSizeChangeHandler = useCallback(
-    (details: SelectValueChangeDetails) => {
-      const value = details.value[0] as `${number}${Unit}-${number}${Unit}`;
-      const pageSize = pageSizeToNameMap[value];
+  const pageSizeChangeHandler = (details: SelectValueChangeDetails) => {
+    const value = details.value[0] as `${number}${Unit}-${number}${Unit}`;
+    const pageSize = pageSizeToNameMap[value];
 
-      const pageWidth = PAGE_DIMENSIONS[pageSize].width;
-      const pageHeight = PAGE_DIMENSIONS[pageSize].height;
+    const pageWidth = PAGE_DIMENSIONS[pageSize].width;
+    const pageHeight = PAGE_DIMENSIONS[pageSize].height;
 
-      void handle({
-        pageWidth: isLandscape ? pageHeight.toString() : pageWidth.toString(),
-        pageHeight: isLandscape ? pageWidth.toString() : pageHeight.toString(),
-        unit: PAGE_DIMENSIONS[pageSize].unit,
-      });
-    },
-    [handle, isLandscape],
-  );
+    void handle({
+      pageWidth: isLandscape ? pageHeight.toString() : pageWidth.toString(),
+      pageHeight: isLandscape ? pageWidth.toString() : pageHeight.toString(),
+      unit: PAGE_DIMENSIONS[pageSize].unit,
+    });
+  };
 
-  const buildColorPickerChangeHandler = useCallback(
+  const buildColorPickerChangeHandler =
     (key: keyof Settings) => (details: ColorPickerValueChangeDetails) => {
       void handle({ [key]: details.value.toString("hex") });
-    },
-    [handle],
-  );
+    };
 
   const cardSizeValue = `${formState.cardWidth}-${formState.cardHeight}`;
 

@@ -12,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useMemo, useRef } from "react";
+import { useContext, useRef } from "react";
 
 import { Kbd } from "~/components/ui/kbd";
 import { Menu } from "~/components/ui/menu";
@@ -63,37 +63,27 @@ export const CardContextMenu = ({
 
   const isBackFace = face === "back";
 
-  const absoluteIndex = useMemo(() => {
-    return images.findIndex((img) => img.uuid === image.uuid);
-  }, [images, image.uuid]);
+  const absoluteIndex = images.findIndex((img) => img.uuid === image.uuid);
 
-  const name = useMemo(() => {
-    if (getIsLocalImage(image)) {
-      return image.file?.name;
-    }
-    return image.name;
-  }, [image]);
+  const name = getIsLocalImage(image) ? image.file?.name : image.name;
 
-  const buildOnAddClick = useCallback(
-    (count: number) => () => {
-      add(count);
-    },
-    [add],
-  );
+  const buildOnAddClick = (count: number) => () => {
+    add(count);
+  };
 
-  const onRemoveClick = useCallback(() => {
+  const onRemoveClick = () => {
     onRemove(image.uuid);
-  }, [image, onRemove]);
+  };
 
-  const canAddBleed = useMemo(() => {
+  const canAddBleed = (() => {
     if (!queryData) return false;
     if ("original" in queryData) {
       return queryData.data.size === queryData.original.size;
     }
     return false;
-  }, [queryData]);
+  })();
 
-  const onAddBleedClick = useCallback(async () => {
+  const onAddBleedClick = async () => {
     if (queryData && "original" in queryData) {
       const data = await addBleedEdge(
         queryData.original,
@@ -110,9 +100,9 @@ export const CardContextMenu = ({
         }),
       );
     }
-  }, [queryData, settings.cardWidth, settings.cardHeight, queryClient, image]);
+  };
 
-  const canRevertToOriginal = useMemo(() => {
+  const canRevertToOriginal = (() => {
     if (!queryData) return false;
 
     if ("original" in queryData) {
@@ -120,9 +110,9 @@ export const CardContextMenu = ({
     }
 
     return false;
-  }, [queryData]);
+  })();
 
-  const onRevertToOriginalClick = useCallback(() => {
+  const onRevertToOriginalClick = () => {
     if (canRevertToOriginal) {
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
@@ -138,60 +128,46 @@ export const CardContextMenu = ({
         },
       );
     }
-  }, [image, canRevertToOriginal, queryClient]);
+  };
 
-  const isOnLastPage = useMemo(() => {
-    return currentPage === imageMatrix.length;
-  }, [currentPage, imageMatrix.length]);
+  const isOnLastPage = currentPage === imageMatrix.length;
 
-  const isOnFirstPage = useMemo(() => {
-    return currentPage === 1;
-  }, [currentPage]);
+  const isOnFirstPage = currentPage === 1;
 
-  const onMoveToNextPage = useCallback(() => {
+  const onMoveToNextPage = () => {
     const newIndex = absoluteIndex + cardsPerPage - index;
     onReorder([image], newIndex);
-  }, [image, absoluteIndex, index, cardsPerPage, onReorder]);
+  };
 
-  const onMoveToPreviousPage = useCallback(() => {
+  const onMoveToPreviousPage = () => {
     const newIndex = absoluteIndex - index - 1;
     onReorder([image], newIndex);
-  }, [image, absoluteIndex, index, onReorder]);
+  };
 
-  const onMoveToPage = useCallback(
-    (details: MenuSelectionDetails) => {
-      const page = parseInt(details.value);
-      const newIndex =
-        page > currentPage
-          ? (page - 1) * cardsPerPage
-          : page * cardsPerPage - 1;
-      onReorder([image], newIndex);
-    },
-    [image, currentPage, cardsPerPage, onReorder],
-  );
+  const onMoveToPage = (details: MenuSelectionDetails) => {
+    const page = parseInt(details.value);
+    const newIndex =
+      page > currentPage ? (page - 1) * cardsPerPage : page * cardsPerPage - 1;
+    onReorder([image], newIndex);
+  };
 
-  const onSetBackClick = useCallback(() => {
+  const onSetBackClick = () => {
     backInputRef.current?.click();
-  }, []);
+  };
 
-  const onBackFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || !slotId) return;
-      const hash = await createFileHash(file);
-      onAddBack(slotId, { file, hash });
-      e.target.value = "";
-    },
-    [slotId, onAddBack],
-  );
+  const onBackFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !slotId) return;
+    const hash = await createFileHash(file);
+    onAddBack(slotId, { file, hash });
+    e.target.value = "";
+  };
 
-  const onRemoveBackClick = useCallback(() => {
+  const onRemoveBackClick = () => {
     if (slotId) onRemoveBack(slotId);
-  }, [slotId, onRemoveBack]);
+  };
 
-  const hasBack = isBackFace
-    ? image.uuid.endsWith(":back")
-    : false; // only meaningful when shown on back face
+  const hasBack = isBackFace ? image.uuid.endsWith(":back") : false; // only meaningful when shown on back face
 
   return (
     <Menu.Root>
@@ -364,4 +340,3 @@ export const CardContextMenu = ({
     </Menu.Root>
   );
 };
-

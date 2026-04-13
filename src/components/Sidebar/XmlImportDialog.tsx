@@ -1,5 +1,3 @@
-import { useCallback } from "react";
-
 import { hstack, vstack } from "styled-system/patterns";
 
 import { Button } from "~/components/ui/button";
@@ -37,17 +35,16 @@ export const XmlImportDialog = ({
   onConfirm,
   onCancel,
 }: Props) => {
-  const handleCheckedChange = useCallback(
-    (details: { checked: boolean | "indeterminate" }) => {
-      onUpdateDefaultCardBackChange(details.checked === true);
-    },
-    [onUpdateDefaultCardBackChange],
-  );
+  const handleCheckedChange = (details: {
+    checked: boolean | "indeterminate";
+  }) => {
+    onUpdateDefaultCardBackChange(details.checked === true);
+  };
 
   return (
     <Dialog.Root
-     closeOnInteractOutside={false}
-     closeOnEscape={false}
+      closeOnInteractOutside={false}
+      closeOnEscape={false}
       open={pending !== null}
       onOpenChange={(details) => {
         if (!details.open) onCancel();
@@ -58,7 +55,9 @@ export const XmlImportDialog = ({
         <Dialog.Content>
           <Dialog.Title>Import Cards from XML</Dialog.Title>
           <Dialog.Description asChild>
-            <div className={vstack({ gap: "4", alignItems: "stretch", mt: "2" })}>
+            <div
+              className={vstack({ gap: "4", alignItems: "stretch", mt: "2" })}
+            >
               <p>
                 {pending
                   ? `Found ${formatCount(pending.slotAdds.length, "card")} to import.`

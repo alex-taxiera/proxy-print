@@ -1,6 +1,6 @@
 import { pointerIntersection } from "@dnd-kit/collision";
 import { useDroppable, useDragDropMonitor } from "@dnd-kit/react";
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 import { css } from "styled-system/css";
 
@@ -40,15 +40,12 @@ export const PageDrop = ({
     collisionDetector: pointerIntersection,
   });
 
-  const setHoverTimeout = useCallback(
-    (timeout?: number) => {
-      hoverTimerRef.current = setTimeout(() => {
-        onHoverTimeout?.();
-        setHoverTimeout(hoverTimeoutMs * 4);
-      }, timeout ?? hoverTimeoutMs);
-    },
-    [onHoverTimeout, hoverTimeoutMs],
-  );
+  const setHoverTimeout = useCallback((timeout?: number) => {
+    hoverTimerRef.current = setTimeout(() => {
+      onHoverTimeout?.();
+      setHoverTimeout(hoverTimeoutMs * 4);
+    }, timeout ?? hoverTimeoutMs);
+  }, [onHoverTimeout, hoverTimeoutMs]);
 
   // Handle hover timeout logic
   const handleHoverStart = useCallback(() => {
