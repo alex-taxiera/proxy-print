@@ -7,6 +7,8 @@ import {
   getIsLocalImage,
   Image as ImageType,
   ImagesContext,
+  PossiblyEmptyImage,
+  getIsEmptyImage,
 } from "~/context/ImagesContext";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { useSettingsStore } from "~/store/settingsStore";
@@ -59,7 +61,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const basePdfBytes = useSettingsStore((s) => s.basePdfBytes);
   const basePdfPageCount = useSettingsStore((s) => s.basePdfPageCount) ?? 1;
   const { images, setIsRendering } = useContext(ImagesContext);
-  const { imageMatrix, cardsPerPage } = usePreviewData();
+  const { pages, cardsPerPage } = usePreviewData();
   const cardPositionMeta = useCardPositionMeta();
 
   const generatePdf = useCallback(async () => {
@@ -78,12 +80,6 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         referenceImageContainer.getBoundingClientRect();
       const containerWidth = imageContainerRect.width;
       const containerHeight = imageContainerRect.height;
-      const referenceImg = referenceCards[0].querySelector<HTMLImageElement>(
-        "img",
-      ) as HTMLImageElement;
-      const imageRect = referenceImg.getBoundingClientRect();
-      const imageWidth = imageRect.width;
-      const imageHeight = imageRect.height;
 
       // read settings
       const pageHeight = Number(settings.pageHeight);
@@ -99,11 +95,27 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
       const pdfName = `${settings.filename}.pdf`;
       const extendedGuidesOnly = settings.extendedGuidesOnly;
+      const backPagesShowGuides = settings.backPagesShowGuides;
       const cardHeight = Number(settings.cardHeight);
       const cardWidth = Number(settings.cardWidth);
       const maxDpi = Number(settings.maxDpi);
       const convertToJpg = settings.convertToJpg;
       const jpgQuality = Number(settings.jpgQuality);
+
+      // Compute crop fractions analytically in mm-space.
+      // The <img> has CSS width = imgWidthMm, height = auto (natural aspect ratio).
+      // So rendered img height in px = imgWidth_px × (naturalH_px / naturalW_px).
+      // Crop fraction for width:  containerWidthMm / imgWidthMm × naturalW_px
+      // Crop fraction for height: containerHeightMm / rendered_imgHeight_px × naturalH_px
+      //                         = containerHeightMm / (imgWidthMm × naturalH/naturalW) × naturalH_px
+      //                         = containerHeightMm / imgWidthMm × naturalW_px   ← naturalH cancels!
+      // Both sourceWidth and sourceHeight divide by imgWidthMm and multiply by naturalWidth.
+      const enableBleedEdge = settings.enableBleedEdge;
+      const imageZoomMm = enableBleedEdge ? 6.2 : 0;
+      const imageContainerBufferMm = enableBleedEdge ? guideBorderWidth : 0;
+      const containerWidthMm = cardWidth + 2 * bleedEdgeWidth + imageContainerBufferMm;
+      const containerHeightMm = cardHeight + 2 * bleedEdgeWidth + imageContainerBufferMm;
+      const imgWidthMm = cardWidth + imageZoomMm;
 
       const physicalCardHeight =
         (cardHeight + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
@@ -112,29 +124,28 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
       let progress = 0;
       const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
-      const numberOfPages = imageMatrix.length;
+      const numberOfPages = pages.length;
       const maxWorkers = Math.min(Math.floor(numberOfPages / 2) || 1, 34);
       const cardsDone = new Map<number, number>();
       const pdfPages = new Map<number, Blob>();
 
-      // sort cards into separate lists per worker
-      const assignments = imageMatrix.map((page) =>
-        page.map((image) => image.uuid),
+      // Build per-page image assignments; each entry carries the full image object
+      const assignments: PossiblyEmptyImage[][] = pages.map((page) =>
+        page.items.map((item) => item.image),
       );
 
       const processCard = async ({
-        imageUuid,
+        image,
         relativeIndex,
       }: {
-        imageUuid?: string;
+        image: PossiblyEmptyImage;
         relativeIndex: number;
       }) => {
-        const index = imageUuid
-          ? images.findIndex((image) => image.uuid === imageUuid)
-          : relativeIndex + (imageMatrix.length - 1) * cardsPerPage;
-        const image: ImageType | undefined = images[index];
+        const typedImage: ImageType | undefined = getIsEmptyImage(image)
+          ? undefined
+          : (image as ImageType);
         console.debug(
-          `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processing`,
+          `Card (rel ${relativeIndex}) processing`,
         );
         const referenceCard = referenceCards[relativeIndex];
         const cardRect = referenceCard.getBoundingClientRect();
@@ -149,14 +160,14 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const pdfY = cardY * scaleY;
 
         let imageDataUrl = null;
-        const downloadableImageData = image
-          ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image))
+        const downloadableImageData = typedImage
+          ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(typedImage))
           : undefined;
 
         const rawMimeType = convertToJpg
           ? "image/jpeg"
-          : image && getIsLocalImage(image)
-            ? image.file.type
+          : typedImage && getIsLocalImage(typedImage)
+            ? typedImage.file.type
             : (downloadableImageData?.mimeType ?? "image/png");
         // pdf-lib does not support WEBP natively; convert to PNG at the canvas step.
         const mimeType =
@@ -166,7 +177,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
         const imgQuality = convertToJpg ? jpgQuality : 1;
 
-        if (image) {
+        if (typedImage) {
           try {
             // Get the image source URL (could be blob URL or data URL)
             const imageSrc = URL.createObjectURL(downloadableImageData!.data);
@@ -192,9 +203,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             });
 
             const sourceWidth =
-              (containerWidth / imageWidth) * tempImg.naturalWidth;
+              (containerWidthMm / imgWidthMm) * tempImg.naturalWidth;
             const sourceHeight =
-              (containerHeight / imageHeight) * tempImg.naturalHeight;
+              (containerHeightMm / imgWidthMm) * tempImg.naturalWidth;
             const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
             const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
 
@@ -264,7 +275,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
         progress++;
         console.debug(
-          `Card ${index + 1} of ${imageMatrix.length * cardsPerPage} processed`,
+          `Card (rel ${relativeIndex}) of ${pages.length * cardsPerPage} processed`,
         );
 
         const { isFirstRow, isLastRow, isFirstColumn, isLastColumn } =
@@ -302,12 +313,14 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       };
 
       const requestNextCard = (
-        data: [string, Worker],
-        cards: [string, Worker][],
+        data: [PossiblyEmptyImage, Worker],
+        cards: [PossiblyEmptyImage, Worker][],
         relativeIndex: number,
         workerInitData?: { basePdfBytes: Uint8Array; basePdfPageIndex: number },
+        pageTransformData?: { offsetX: number; offsetY: number; pageRotation: number },
+        showGuides?: boolean,
       ) => {
-        const [imageUuid, worker] = data;
+        const [image, worker] = data;
 
         progressEvents.emit("progress", {
           progress: progress,
@@ -316,7 +329,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         });
 
         processCard({
-          imageUuid,
+          image,
           relativeIndex,
         })
           .then((card) => {
@@ -325,23 +338,25 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               totalProgressAmount,
               phase: "Building PDF",
             });
+            const cardData = showGuides === false ? { ...card, guides: null } : card;
             worker.postMessage({
               type: "addImage",
               data: {
-                card,
+                card: cardData,
                 init: {
                   pageHeight: Number(settings.pageHeight),
                   pageWidth: Number(settings.pageWidth),
                   unit: settings.unit,
                   // Only sent with the first card message; worker ignores init once pdfDoc is set.
                   ...workerInitData,
+                  ...pageTransformData,
                 },
               },
             });
 
             if (cards.length > 0) {
               doTimeout(
-                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1),
+                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1, undefined, pageTransformData, showGuides),
                 50,
               );
             }
@@ -493,14 +508,25 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           ? (workerIndex - 1) % basePdfPageCount
           : undefined;
 
+        const pageType = pages[workerIndex - 1]?.pageType;
+        const isBack = pageType === "back";
+        const pageTransformData = {
+          offsetX: Number(isBack ? settings.backOffsetX : settings.offsetX),
+          offsetY: Number(isBack ? settings.backOffsetY : settings.offsetY),
+          pageRotation: Number(isBack ? settings.backPageRotation : settings.pageRotation),
+        };
+        const showGuides = isBack ? backPagesShowGuides : true;
+
         doTimeout(() => {
           requestNextCard(
             [cards.shift()!, worker],
-            cards.map((card) => [card, worker]),
+            cards.map((card) => [card, worker] as [PossiblyEmptyImage, Worker]),
             0,
             basePdfBytes !== null && basePdfPageIndex !== undefined
               ? { basePdfBytes: basePdfBytes.slice(), basePdfPageIndex }
               : undefined,
+            pageTransformData,
+            showGuides,
           );
         });
       };
@@ -520,7 +546,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
     contentRef,
     settings,
     images,
-    imageMatrix,
+    pages,
     cardsPerPage,
     cardPositionMeta,
     queryClient,
@@ -535,11 +561,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         name: "generatePdf",
         op: "pdf.generate",
         attributes: {
-          numberOfPages: imageMatrix.length,
+          numberOfPages: pages.length,
           cardsPerPage,
         },
       },
       generatePdf,
     );
-  }, [generatePdf, imageMatrix.length, cardsPerPage]);
+  }, [generatePdf, pages.length, cardsPerPage]);
 };

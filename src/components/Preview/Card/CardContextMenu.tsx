@@ -5,13 +5,14 @@ import {
   faCheck,
   faEllipsisV,
   faExpand,
+  faImagePortrait,
   faPlus,
   faTrash,
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useMemo, useRef } from "react";
 
 import { Kbd } from "~/components/ui/kbd";
 import { Menu } from "~/components/ui/menu";
@@ -22,6 +23,7 @@ import { usePreviewData } from "~/hooks/usePreviewData";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { useSettingsStore } from "~/store/settingsStore";
 import { addBleedEdge } from "~/utils/add-bleed";
+import { createFileHash } from "~/utils/create-file-hash";
 import { getKeybindLabels } from "~/utils/keybind-labels";
 
 import { SelectionMenuContent } from "../Actions";
@@ -33,6 +35,8 @@ export type CardContextMenuProps = React.PropsWithChildren<{
   index: number;
   queryData?: ImageQueryData;
   onSelectImageUuid: (uuid: string, selected: boolean) => void;
+  slotId?: string | null;
+  face?: "front" | "back";
 }>;
 
 export const CardContextMenu = ({
@@ -42,16 +46,22 @@ export const CardContextMenu = ({
   children,
   index,
   queryData,
+  slotId = null,
+  face = "front",
 }: CardContextMenuProps) => {
   const queryClient = useQueryClient();
   const { onSelectImageUuid, getIsSelected, selectedImageUuids } = useContext(
     ImageSelectionContext,
   );
   const isSelected = getIsSelected(image.uuid);
-  const { images, onRemove, onReorder } = useContext(ImagesContext);
+  const { images, onRemove, onReorder, onAddBack, onRemoveBack } =
+    useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
   const { imageMatrix, cardsPerPage } = usePreviewData();
   const settings = useSettingsStore((s) => s.settings);
+  const backInputRef = useRef<HTMLInputElement>(null);
+
+  const isBackFace = face === "back";
 
   const absoluteIndex = useMemo(() => {
     return images.findIndex((img) => img.uuid === image.uuid);
@@ -160,8 +170,38 @@ export const CardContextMenu = ({
     [image, currentPage, cardsPerPage, onReorder],
   );
 
+  const onSetBackClick = useCallback(() => {
+    backInputRef.current?.click();
+  }, []);
+
+  const onBackFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !slotId) return;
+      const hash = await createFileHash(file);
+      onAddBack(slotId, { file, hash });
+      e.target.value = "";
+    },
+    [slotId, onAddBack],
+  );
+
+  const onRemoveBackClick = useCallback(() => {
+    if (slotId) onRemoveBack(slotId);
+  }, [slotId, onRemoveBack]);
+
+  const hasBack = isBackFace
+    ? image.uuid.endsWith(":back")
+    : false; // only meaningful when shown on back face
+
   return (
     <Menu.Root>
+      <input
+        ref={backInputRef}
+        type="file"
+        accept=".jpg,.jpeg,.png,.bmp,.webp"
+        style={{ display: "none" }}
+        onChange={(e) => void onBackFileChange(e)}
+      />
       <Menu.ContextTrigger cursor="grab" tabIndex={-1}>
         {children}
       </Menu.ContextTrigger>
@@ -190,18 +230,20 @@ export const CardContextMenu = ({
                 </Menu.ItemText>
                 <Kbd size="sm">Click</Kbd>
               </Menu.Item>
-              <Menu.Item
-                value="remove"
-                color="fg.error"
-                onSelect={onRemoveClick}
-              >
-                <Menu.ItemIndicator color="fg.error">
-                  <FontAwesomeIcon icon={faTrash} />
-                </Menu.ItemIndicator>
-                <Menu.ItemText>Remove</Menu.ItemText>
-                <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
-              </Menu.Item>
-              {canAddBleed ? (
+              {!isBackFace && (
+                <Menu.Item
+                  value="remove"
+                  color="fg.error"
+                  onSelect={onRemoveClick}
+                >
+                  <Menu.ItemIndicator color="fg.error">
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Remove</Menu.ItemText>
+                  <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
+                </Menu.Item>
+              )}
+              {canAddBleed && !isBackFace ? (
                 <Menu.Item
                   value="add-bleed"
                   onSelect={() => void onAddBleedClick()}
@@ -212,7 +254,7 @@ export const CardContextMenu = ({
                   <Menu.ItemText>Add bleed</Menu.ItemText>
                 </Menu.Item>
               ) : null}
-              {canRevertToOriginal ? (
+              {canRevertToOriginal && !isBackFace ? (
                 <Menu.Item
                   value="revert-to-original"
                   onSelect={onRevertToOriginalClick}
@@ -224,74 +266,102 @@ export const CardContextMenu = ({
                 </Menu.Item>
               ) : null}
             </Menu.ItemGroup>
-            <Menu.ItemGroup>
-              <Menu.Item onSelect={buildOnAddClick(1)} value="add-1">
-                <Menu.ItemIndicator>
-                  <FontAwesomeIcon icon={faPlus} />
-                </Menu.ItemIndicator>
-                <Menu.ItemText>Add 1</Menu.ItemText>
-                <Kbd size="sm">{keybindLabels.ctrl} + Click</Kbd>
-              </Menu.Item>
-              <Menu.Item onSelect={buildOnAddClick(5)} value="add-5">
-                <Menu.ItemIndicator>
-                  <FontAwesomeIcon icon={faPlus} />
-                </Menu.ItemIndicator>
-                <Menu.ItemText>Add 5</Menu.ItemText>
-              </Menu.Item>
-            </Menu.ItemGroup>
-            <Menu.ItemGroup>
-              {!isOnLastPage ? (
-                <Menu.Item
-                  onSelect={onMoveToNextPage}
-                  value="move-to-next-page"
-                >
+            {/* Back management — available for all faces when slotId is known */}
+            {slotId ? (
+              <Menu.ItemGroup>
+                <Menu.Item value="set-back" onSelect={onSetBackClick}>
                   <Menu.ItemIndicator>
-                    <FontAwesomeIcon icon={faArrowRight} />
+                    <FontAwesomeIcon icon={faImagePortrait} />
                   </Menu.ItemIndicator>
-                  <Menu.ItemText>Move to next page</Menu.ItemText>
+                  <Menu.ItemText>Set back…</Menu.ItemText>
                 </Menu.Item>
-              ) : null}
-              {!isOnFirstPage ? (
-                <Menu.Item
-                  onSelect={onMoveToPreviousPage}
-                  value="move-to-previous-page"
-                >
+                {hasBack || isBackFace ? (
+                  <Menu.Item
+                    value="remove-back"
+                    color="fg.error"
+                    onSelect={onRemoveBackClick}
+                  >
+                    <Menu.ItemIndicator color="fg.error">
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Menu.ItemIndicator>
+                    <Menu.ItemText>Remove back</Menu.ItemText>
+                  </Menu.Item>
+                ) : null}
+              </Menu.ItemGroup>
+            ) : null}
+            {!isBackFace ? (
+              <Menu.ItemGroup>
+                <Menu.Item onSelect={buildOnAddClick(1)} value="add-1">
                   <Menu.ItemIndicator>
-                    <FontAwesomeIcon icon={faArrowLeft} />
+                    <FontAwesomeIcon icon={faPlus} />
                   </Menu.ItemIndicator>
-                  <Menu.ItemText>Move to previous page</Menu.ItemText>
+                  <Menu.ItemText>Add 1</Menu.ItemText>
+                  <Kbd size="sm">{keybindLabels.ctrl} + Click</Kbd>
                 </Menu.Item>
-              ) : null}
-              {imageMatrix.length > 1 ? (
-                <Menu.Root
-                  onSelect={onMoveToPage}
-                  positioning={{ gutter: 10, placement: "right-start" }}
-                >
-                  <Menu.TriggerItem>
-                    <FontAwesomeIcon icon={faEllipsisV} />
-                    Move to Page …
-                  </Menu.TriggerItem>
-                  <Portal>
-                    <Menu.Positioner>
-                      <Menu.Content>
-                        {imageMatrix.map((_, index) => (
-                          <Menu.Item
-                            key={index}
-                            disabled={index + 1 === currentPage}
-                            value={(index + 1).toString()}
-                          >
-                            Page {index + 1}
-                          </Menu.Item>
-                        ))}
-                      </Menu.Content>
-                    </Menu.Positioner>
-                  </Portal>
-                </Menu.Root>
-              ) : null}
-            </Menu.ItemGroup>
+                <Menu.Item onSelect={buildOnAddClick(5)} value="add-5">
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faPlus} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Add 5</Menu.ItemText>
+                </Menu.Item>
+              </Menu.ItemGroup>
+            ) : null}
+            {!isBackFace ? (
+              <Menu.ItemGroup>
+                {!isOnLastPage ? (
+                  <Menu.Item
+                    onSelect={onMoveToNextPage}
+                    value="move-to-next-page"
+                  >
+                    <Menu.ItemIndicator>
+                      <FontAwesomeIcon icon={faArrowRight} />
+                    </Menu.ItemIndicator>
+                    <Menu.ItemText>Move to next page</Menu.ItemText>
+                  </Menu.Item>
+                ) : null}
+                {!isOnFirstPage ? (
+                  <Menu.Item
+                    onSelect={onMoveToPreviousPage}
+                    value="move-to-previous-page"
+                  >
+                    <Menu.ItemIndicator>
+                      <FontAwesomeIcon icon={faArrowLeft} />
+                    </Menu.ItemIndicator>
+                    <Menu.ItemText>Move to previous page</Menu.ItemText>
+                  </Menu.Item>
+                ) : null}
+                {imageMatrix.length > 1 ? (
+                  <Menu.Root
+                    onSelect={onMoveToPage}
+                    positioning={{ gutter: 10, placement: "right-start" }}
+                  >
+                    <Menu.TriggerItem>
+                      <FontAwesomeIcon icon={faEllipsisV} />
+                      Move to Page …
+                    </Menu.TriggerItem>
+                    <Portal>
+                      <Menu.Positioner>
+                        <Menu.Content>
+                          {imageMatrix.map((_, idx) => (
+                            <Menu.Item
+                              key={idx}
+                              disabled={idx + 1 === currentPage}
+                              value={(idx + 1).toString()}
+                            >
+                              Page {idx + 1}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Content>
+                      </Menu.Positioner>
+                    </Portal>
+                  </Menu.Root>
+                ) : null}
+              </Menu.ItemGroup>
+            ) : null}
           </Menu.Content>
         </Menu.Positioner>
       </Portal>
     </Menu.Root>
   );
 };
+

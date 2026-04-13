@@ -9,9 +9,9 @@ import { Header } from "~/components/Header";
 import { Preview } from "~/components/Preview";
 import { Sidebar } from "~/components/Sidebar";
 
-import { ImageLoadingProvider } from "~/context/ImageLoadingContext";
 import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";
 import { ImagesProvider } from "~/context/ImagesProvider";
+import { useImageLoadingProgress } from "~/hooks/useImageLoadingProgress";
 import { useSettingsStore } from "~/store/settingsStore";
 import { toaster } from "~/utils/toaster";
 
@@ -28,25 +28,25 @@ declare global {
 window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 
 function AppContent() {
+  useImageLoadingProgress();
+
   return (
-    <ImageLoadingProvider>
-      <ImagesProvider>
-        <ImageSelectionProvider>
-          <Header />
-          <main
-            className={hstack({
-              alignItems: "stretch",
-              flex: 1,
-              gap: "0",
-              overflow: "hidden",
-            })}
-          >
-            <Preview />
-            <Sidebar />
-          </main>
-        </ImageSelectionProvider>
-      </ImagesProvider>
-    </ImageLoadingProvider>
+    <ImagesProvider>
+      <ImageSelectionProvider>
+        <Header />
+        <main
+          className={hstack({
+            alignItems: "stretch",
+            flex: 1,
+            gap: "0",
+            overflow: "hidden",
+          })}
+        >
+          <Preview />
+          <Sidebar />
+        </main>
+      </ImageSelectionProvider>
+    </ImagesProvider>
   );
 }
 

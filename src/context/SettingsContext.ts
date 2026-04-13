@@ -29,6 +29,12 @@ export const cardSizeToNameMap = Object.fromEntries(
 ) as Record<`${number}-${number}`, CardSize>;
 
 export type Unit = "in" | "mm";
+export type PrintMode =
+  | "duplex"
+  | "inline-faces"
+  | "fronts-only"
+  | "backs-only"
+  | "side-by-side";
 
 export const PAGE_DIMENSIONS = {
   letter: {
@@ -132,6 +138,7 @@ export const SettingsSchema = zod
       ),
     guidesAtBleedEdge: zod.boolean(),
     extendedGuidesOnly: zod.boolean(),
+    backPagesShowGuides: zod.boolean(),
     pageHeight: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
@@ -179,6 +186,31 @@ export const SettingsSchema = zod
         return num >= 0.1 && num <= 1;
       }, "Must be between 0.1 and 1"),
     upscaleScryfallImages: zod.boolean(),
+    printMode: zod.enum([
+      "duplex",
+      "side-by-side",
+      "inline-faces",
+      "fronts-only",
+      "backs-only",
+    ]),
+    offsetX: zod
+      .string()
+      .refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    offsetY: zod
+      .string()
+      .refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    pageRotation: zod
+      .string()
+      .refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    backOffsetX: zod
+      .string()
+      .refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    backOffsetY: zod
+      .string()
+      .refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    backPageRotation: zod
+      .string()
+      .refine((v) => isFinite(Number(v)), "Must be a valid number"),
   })
   .superRefine((data, ctx) => {
     const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
@@ -233,10 +265,18 @@ export const DEFAULT_SETTINGS = {
   guidesThickness: "0.265",
   guidesAtBleedEdge: false,
   extendedGuidesOnly: false,
+  backPagesShowGuides: false,
   rowGap: "0",
   columnGap: "0",
   maxDpi: "1200",
   convertToJpg: false,
   jpgQuality: "0.95",
   upscaleScryfallImages: false,
+  printMode: "inline-faces",
+  offsetX: "0",
+  offsetY: "0",
+  pageRotation: "0",
+  backOffsetX: "0",
+  backOffsetY: "0",
+  backPageRotation: "0",
 } as const satisfies Settings;

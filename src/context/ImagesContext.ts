@@ -21,6 +21,11 @@ export type EmptyImageData = {
 
 export type ImageData = GoogleImageData | LocalImageData | ScryfallImageData;
 
+export type SlotInputData = {
+  front: ImageData | null;
+  back: ImageData | null;
+};
+
 export type BaseImage = {
   uuid: string;
 };
@@ -28,6 +33,15 @@ export type BaseImage = {
 export type Image = BaseImage & ImageData;
 
 export type PossiblyEmptyImage = BaseImage & (ImageData | EmptyImageData);
+
+export type CardSlot = {
+  id: string;
+  front: Image | null;
+  back: Image | null;
+  position: number;
+};
+
+export type CardSlotsMap = Map<string, CardSlot>;
 
 export type LocalImage = BaseImage & LocalImageData;
 
@@ -61,16 +75,45 @@ export const getIsImage = (image: PossiblyEmptyImage): image is Image => {
   return !getIsEmptyImage(image);
 };
 
+export const getSortedSlots = (slots: CardSlotsMap): CardSlot[] => {
+  return Array.from(slots.values()).sort((a, b) => a.position - b.position);
+};
+
+export const getFronts = (slots: CardSlotsMap): Image[] => {
+  return getSortedSlots(slots)
+    .map((slot) => slot.front)
+    .filter((image): image is Image => image !== null);
+};
+
+export const getBacks = (slots: CardSlotsMap): Image[] => {
+  return getSortedSlots(slots)
+    .map((slot) => slot.back)
+    .filter((image): image is Image => image !== null);
+};
+
 export type ImagesContextValue = {
+  slots: CardSlotsMap;
+  sortedSlots: CardSlot[];
   images: Image[];
   imagesWithError: DownloadableImage[];
   isRendering: boolean;
   setIsRendering: React.Dispatch<React.SetStateAction<boolean>>;
+  onReorderSlots: (slotIds: string[], newPosition: number) => void;
   onReorder: (images: Image[], newIndex: number) => void;
+  /** Move slots to an absolute index, inserting empty gap-filler slots if the
+   * target index is beyond the current end of the list. */
+  onMoveSlotToAbsoluteIndex: (slotIds: string[], targetAbsoluteIndex: number) => void;
   onAdd: (
     files: (LocalImageData | GoogleImageData | ScryfallImageData)[],
     index?: number,
   ) => void;
+  onAddSlots: (slots: SlotInputData[], index?: number) => void;
+  onAddBack: (
+    slotId: string,
+    data: LocalImageData | GoogleImageData | ScryfallImageData,
+  ) => void;
+  onRemoveBack: (slotId: string) => void;
+  onInsertEmptySlot: (position: number) => void;
   onError: (image: DownloadableImage) => void;
   onRemove: (uuid: string) => void;
   onClear: (uuids?: string[]) => void;
@@ -78,12 +121,20 @@ export type ImagesContextValue = {
 };
 
 export const ImagesContext = createContext<ImagesContextValue>({
+  slots: new Map(),
+  sortedSlots: [],
   images: [],
   imagesWithError: [],
   isRendering: false,
   setIsRendering: () => {},
+  onReorderSlots: () => {},
   onReorder: () => {},
   onAdd: () => {},
+  onAddSlots: () => {},
+  onAddBack: () => {},
+  onRemoveBack: () => {},
+  onInsertEmptySlot: () => {},
+  onMoveSlotToAbsoluteIndex: () => {},
   onError: () => {},
   onRemove: () => {},
   onClear: () => {},

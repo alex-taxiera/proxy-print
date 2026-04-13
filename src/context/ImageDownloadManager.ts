@@ -2,6 +2,7 @@ import { FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
 
 import { useUpscaleImage } from "~/hooks/useUpscaleImage";
+import { useDownloadProgressStore } from "~/store/downloadProgressStore";
 import { ImageQueryData } from "~/queries/images";
 
 type Item = {
@@ -56,6 +57,7 @@ export function useImageDownloadManager({
         .then(item.resolve)
         .catch(item.reject)
         .finally(() => {
+          useDownloadProgressStore.getState().finish();
           inflightRef.current = inflightRef.current.filter((i) => i !== item);
           if (
             inflightRef.current.length < maxInflight &&
@@ -70,6 +72,9 @@ export function useImageDownloadManager({
   const add = useCallback(
     ({ uuid, queryData }: Pick<Item, "uuid" | "queryData">): Promise<void> => {
       return new Promise((resolve, reject) => {
+        // Record the download as pending before it hits the queue so the
+        // progress store is always incremented synchronously on add().
+        useDownloadProgressStore.getState().start();
         queueRef.current.push({ uuid, queryData, resolve, reject });
         if (inflightRef.current.length < maxInflight) {
           processQueue();
@@ -89,6 +94,7 @@ export function useImageDownloadManager({
     const queueItem = queueRef.current.find((i) => i.uuid === uuid);
     if (queueItem) {
       queueRef.current = queueRef.current.filter((i) => i.uuid !== uuid);
+      useDownloadProgressStore.getState().finish();
     }
   }, []);
 
@@ -98,7 +104,12 @@ export function useImageDownloadManager({
    * @remarks Downloads that are in the queue will be removed
    */
   const removeAll = useCallback(() => {
+    const removedCount = queueRef.current.length;
     queueRef.current = [];
+    if (removedCount > 0) {
+      const store = useDownloadProgressStore.getState();
+      for (let i = 0; i < removedCount; i++) store.finish();
+    }
   }, []);
 
   return {

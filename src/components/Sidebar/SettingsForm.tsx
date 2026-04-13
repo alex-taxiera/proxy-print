@@ -8,8 +8,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PDFDocument } from "pdf-lib";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
+import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
 
 import { Button } from "~/components/ui/button";
@@ -31,8 +32,99 @@ import {
 } from "~/context/SettingsContext";
 import { useSettingsFormState } from "~/hooks/useSettingsFormState";
 import { useSettingsStore } from "~/store/settingsStore";
+import { createFileHash } from "~/utils/create-file-hash";
 
 import { UpscaleSetting } from "../UpscaleSetting";
+
+const DefaultCardBackSection = () => {
+  const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
+  const setDefaultCardBack = useSettingsStore((s) => s.setDefaultCardBack);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [thumbSrc, setThumbSrc] = useState<string | null>(null);
+
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const hash = await createFileHash(file);
+      setDefaultCardBack({ file, hash });
+      const url = URL.createObjectURL(file);
+      setThumbSrc(url);
+      e.target.value = "";
+    },
+    [setDefaultCardBack],
+  );
+
+  const handleClear = useCallback(() => {
+    setDefaultCardBack(null);
+    setThumbSrc(null);
+  }, [setDefaultCardBack]);
+
+  const displayName = defaultCardBack
+    ? "file" in defaultCardBack
+      ? defaultCardBack.file.name
+      : defaultCardBack.name
+    : null;
+
+  return (
+    <Field.Root>
+      <Field.Label>Default Card Back</Field.Label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpg,.jpeg,.png,.bmp,.webp"
+        style={{ display: "none" }}
+        onChange={(e) => void handleFileChange(e)}
+      />
+      {defaultCardBack ? (
+        <div className={hstack({ gap: "2", alignItems: "center" })}>
+          {thumbSrc && (
+            <img
+              src={thumbSrc}
+              alt="Default card back thumbnail"
+              style={{
+                width: 32,
+                height: 44,
+                objectFit: "cover",
+                borderRadius: 2,
+              }}
+            />
+          )}
+          <span
+            style={{
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              fontSize: "0.75rem",
+            }}
+          >
+            {displayName}
+          </span>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            colorPalette="gray"
+            aria-label="Remove default card back"
+            onClick={handleClear}
+          >
+            <FontAwesomeIcon icon={faXmark} />
+          </IconButton>
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          colorPalette="gray"
+          onClick={() => fileInputRef.current?.click()}
+          type="button"
+        >
+          Upload card back…
+        </Button>
+      )}
+    </Field.Root>
+  );
+};
 
 const unitsCollection = createListCollection({
   items: Array.from(
@@ -568,30 +660,7 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <Field.Root invalid={formErrors.rowGap.length > 0}>
-            <Field.Label>Row Gap (mm)</Field.Label>
-            <NumberInput
-              min={0}
-              max={100}
-              value={formState.rowGap}
-              onValueChange={buildNumberInputChangeHandler("rowGap")}
-            ></NumberInput>
-            {formErrors.rowGap.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.columnGap.length > 0}>
-            <Field.Label>Column Gap (mm)</Field.Label>
-            <NumberInput
-              min={0}
-              max={100}
-              value={formState.columnGap}
-              onValueChange={buildNumberInputChangeHandler("columnGap")}
-            ></NumberInput>
-            {formErrors.columnGap.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
+          <DefaultCardBackSection />
         </Tabs.Content>
         <Tabs.Content
           value="advanced"
@@ -653,6 +722,151 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
+          <span
+            className={css({
+              fontSize: "xs",
+              color: "fg.muted",
+              fontWeight: "semibold",
+            })}
+          >
+            Card Spacing
+          </span>
+          <div className={hstack({ width: "full", gap: "2" })}>
+            <Field.Root invalid={formErrors.rowGap.length > 0}>
+              <Field.Label>Vertical (mm)</Field.Label>
+              <NumberInput
+                min={0}
+                max={100}
+                value={formState.rowGap}
+                onValueChange={buildNumberInputChangeHandler("rowGap")}
+              ></NumberInput>
+              {formErrors.rowGap.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+            <Field.Root invalid={formErrors.columnGap.length > 0}>
+              <Field.Label>Horizontal (mm)</Field.Label>
+              <NumberInput
+                min={0}
+                max={100}
+                value={formState.columnGap}
+                onValueChange={buildNumberInputChangeHandler("columnGap")}
+              ></NumberInput>
+              {formErrors.columnGap.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+          </div>
+          <span
+            className={css({
+              fontSize: "xs",
+              color: "fg.muted",
+              fontWeight: "semibold",
+            })}
+          >
+            Front Page Alignment
+          </span>
+          <div className={hstack({ width: "full", gap: "2" })}>
+            <Field.Root
+              invalid={formErrors.offsetX.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.offsetX}
+                onValueChange={buildNumberInputChangeHandler("offsetX")}
+              >
+                X Offset (mm)
+              </NumberInput>
+              {formErrors.offsetX.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+            <Field.Root
+              invalid={formErrors.offsetY.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.offsetY}
+                onValueChange={buildNumberInputChangeHandler("offsetY")}
+              >
+                Y Offset (mm)
+              </NumberInput>
+              {formErrors.offsetY.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+          </div>
+          <Field.Root invalid={formErrors.pageRotation.length > 0}>
+            <NumberInput
+              step={0.1}
+              min={-180}
+              max={180}
+              value={formState.pageRotation}
+              onValueChange={buildNumberInputChangeHandler("pageRotation")}
+            >
+              Rotation (°)
+            </NumberInput>
+            {formErrors.pageRotation.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+          <span
+            className={css({
+              fontSize: "xs",
+              color: "fg.muted",
+              fontWeight: "semibold",
+            })}
+          >
+            Back Page Alignment
+          </span>
+          <div className={hstack({ width: "full", gap: "2" })}>
+            <Field.Root
+              invalid={formErrors.backOffsetX.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.backOffsetX}
+                onValueChange={buildNumberInputChangeHandler("backOffsetX")}
+              >
+                X Offset (mm)
+              </NumberInput>
+              {formErrors.backOffsetX.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+            <Field.Root
+              invalid={formErrors.backOffsetY.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.backOffsetY}
+                onValueChange={buildNumberInputChangeHandler("backOffsetY")}
+              >
+                Y Offset (mm)
+              </NumberInput>
+              {formErrors.backOffsetY.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+          </div>
+          <Field.Root invalid={formErrors.backPageRotation.length > 0}>
+            <NumberInput
+              step={0.1}
+              min={-180}
+              max={180}
+              value={formState.backPageRotation}
+              onValueChange={buildNumberInputChangeHandler("backPageRotation")}
+            >
+              Rotation (°)
+            </NumberInput>
+            {formErrors.backPageRotation.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
           <Field.Root invalid={formErrors.extendedGuidesOnly.length > 0}>
             <Field.Label>Extended Guides Only</Field.Label>
             <Checkbox
@@ -672,6 +886,17 @@ export const SettingsForm = () => {
               onCheckedChange={buildCheckboxChangeHandler("guidesAtBleedEdge")}
             />
             {formErrors.guidesAtBleedEdge.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+          <Field.Root invalid={formErrors.backPagesShowGuides.length > 0}>
+            <Field.Label>Show Guides on Back Pages</Field.Label>
+            <Checkbox
+              size="lg"
+              checked={formState.backPagesShowGuides}
+              onCheckedChange={buildCheckboxChangeHandler("backPagesShowGuides")}
+            />
+            {formErrors.backPagesShowGuides.map((issue, i) => (
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
