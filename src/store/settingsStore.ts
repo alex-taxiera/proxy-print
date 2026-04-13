@@ -2,9 +2,12 @@ import { get, set, del } from "idb-keyval";
 import { create } from "zustand";
 import { persist, PersistStorage, StorageValue } from "zustand/middleware";
 
+import {
+  DEFAULT_SETTINGS,
+  Settings,
+  SettingsSchema,
+} from "~/context/SettingsContext";
 import { invertHexColor } from "~/utils/invert-hex-color";
-
-import { DEFAULT_SETTINGS, Settings, SettingsSchema } from "~/context/SettingsContext";
 
 // ---------------------------------------------------------------------------
 // IDB adapter — uses PersistStorage<T> (not StateStorage) so that Zustand
@@ -141,7 +144,11 @@ export const useSettingsStore = create<SettingsStore>()(
 
       setBasePdf: (data) => {
         if (data === null) {
-          set({ basePdfBytes: null, basePdfName: null, basePdfPageCount: null });
+          set({
+            basePdfBytes: null,
+            basePdfName: null,
+            basePdfPageCount: null,
+          });
         } else {
           set({
             basePdfBytes: data.bytes,

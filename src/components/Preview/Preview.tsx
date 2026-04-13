@@ -20,9 +20,9 @@ import { ProgressOverlay } from "~/components/ProgressOverlay";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { ImagesContext } from "~/context/ImagesContext";
-import { useSettingsStore, computeCssVars } from "~/store/settingsStore";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getIsSortableCardData } from "~/hooks/useSortableCard";
+import { useSettingsStore, computeCssVars } from "~/store/settingsStore";
 
 import { Actions } from "./Actions";
 import { Card } from "./Card";

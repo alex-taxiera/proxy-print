@@ -15,9 +15,9 @@ import {
   PossiblyEmptyImage,
   getIsEmptyImage,
 } from "~/context/ImagesContext";
-import { useSettingsStore } from "~/store/settingsStore";
 import { useSortableCard } from "~/hooks/useSortableCard";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { useSettingsStore } from "~/store/settingsStore";
 import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
 
 import { CardContextMenu } from "./CardContextMenu";

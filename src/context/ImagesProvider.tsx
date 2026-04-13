@@ -1,12 +1,8 @@
 import { nanoid } from "nanoid";
-import {
-  ComponentProps,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import { ComponentProps, useCallback, useMemo, useState } from "react";
 
 import { getQueryDataForImage } from "~/queries/images";
+import { useSettingsStore } from "~/store/settingsStore";
 
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import {
@@ -19,7 +15,6 @@ import {
   LocalImageData,
   ScryfallImageData,
 } from "./ImagesContext";
-import { useSettingsStore } from "~/store/settingsStore";
 
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,

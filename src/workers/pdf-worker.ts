@@ -39,7 +39,13 @@ function dataUrlToUint8Array(dataUrl: string): Uint8Array {
 // ---------------------------------------------------------------------------
 
 async function initPdf(data: InitData): Promise<void> {
-  const { pageWidth, pageHeight, unit, basePdfBytes, basePdfPageIndex = 0 } = data;
+  const {
+    pageWidth,
+    pageHeight,
+    unit,
+    basePdfBytes,
+    basePdfPageIndex = 0,
+  } = data;
 
   // Validation is also performed inside buildCardRenderOps; duplicate here so
   // the error surfaces at init time rather than on the first card.
@@ -103,9 +109,7 @@ async function renderCard(cardData: CardData): Promise<void> {
       end: { x: op.x2, y: op.y2 },
       thickness: op.thickness,
       color: rgb(r / 255, g / 255, b / 255),
-      ...(op.dashArray
-        ? { dashArray: op.dashArray, dashPhase: 0 }
-        : undefined),
+      ...(op.dashArray ? { dashArray: op.dashArray, dashPhase: 0 } : undefined),
     });
   }
 
@@ -207,7 +211,9 @@ self.onmessage = function (
       enqueue(async () => {
         try {
           const bytes = await docToSave.save();
-          const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+          const blob = new Blob([new Uint8Array(bytes)], {
+            type: "application/pdf",
+          });
 
           self.postMessage({
             type: "save",

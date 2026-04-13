@@ -9,11 +9,10 @@ import { Header } from "~/components/Header";
 import { Preview } from "~/components/Preview";
 import { Sidebar } from "~/components/Sidebar";
 
-import { useSettingsStore } from "~/store/settingsStore";
-
 import { ImageLoadingProvider } from "~/context/ImageLoadingContext";
 import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";
 import { ImagesProvider } from "~/context/ImagesProvider";
+import { useSettingsStore } from "~/store/settingsStore";
 import { toaster } from "~/utils/toaster";
 
 const queryClient = new QueryClient();

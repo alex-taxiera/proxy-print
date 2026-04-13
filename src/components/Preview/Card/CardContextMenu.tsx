@@ -18,9 +18,9 @@ import { Menu } from "~/components/ui/menu";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { getIsLocalImage, Image, ImagesContext } from "~/context/ImagesContext";
-import { useSettingsStore } from "~/store/settingsStore";
 import { usePreviewData } from "~/hooks/usePreviewData";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import { useSettingsStore } from "~/store/settingsStore";
 import { addBleedEdge } from "~/utils/add-bleed";
 import { getKeybindLabels } from "~/utils/keybind-labels";
 
