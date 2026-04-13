@@ -138,6 +138,7 @@ export const SettingsSchema = zod
       ),
     guidesAtBleedEdge: zod.boolean(),
     extendedGuidesOnly: zod.boolean(),
+    backPagesShowGuides: zod.boolean(),
     pageHeight: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
@@ -246,6 +247,7 @@ export const DEFAULT_SETTINGS = {
   guidesThickness: "0.265",
   guidesAtBleedEdge: false,
   extendedGuidesOnly: false,
+  backPagesShowGuides: false,
   rowGap: "0",
   columnGap: "0",
   maxDpi: "1200",

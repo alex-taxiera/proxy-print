@@ -93,6 +93,62 @@ const usePagination = () => {
   };
 };
 
+// Lightweight skeleton: same CSS class structure as the real card, no interactivity.
+// Used by useGeneratePdf for getBoundingClientRect() measurements free of any transform.
+// No <img> needed — image dimensions are computed from settings in useGeneratePdf.
+const MeasurementCard = () => (
+  <div className={cx("card", css({ position: "relative" }))}>
+    <div
+      className={cx(
+        "image-container",
+        center({
+          overflow: "hidden",
+          width: "var(--item-width, 63mm)",
+          height: "var(--item-height, 88mm)",
+        }),
+      )}
+    />
+  </div>
+);
+
+type PageGridProps = {
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+};
+
+const PageGrid = ({ style, children }: PageGridProps) => (
+  <div
+    className={cx(
+      "page",
+      center({
+        flexDirection: "column",
+        height: "var(--page-height, 11 var(--page-unit, in))",
+        width: "var(--page-width, 8.5 var(--page-unit, in))",
+        "--item-width":
+          "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+        "--item-height":
+          "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+      }),
+    )}
+    style={style}
+  >
+    <div
+      className={grid({
+        gap: "0",
+        gridTemplateColumns: "repeat(var(--grid-columns, 3), min-content)",
+        pageBreakAfter: "always",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+        rowGap: "var(--row-gap)",
+        columnGap: "var(--column-gap)",
+      })}
+    >
+      {children}
+    </div>
+  </div>
+);
+
 const backSideLabelClass = css({
   position: "absolute",
   top: "-6",
@@ -154,7 +210,7 @@ export const Preview = () => {
   );
 
   const pageTransformStyle = useMemo(() => {
-    if (isRendering) return undefined;
+    // if (isRendering) return undefined;
     const isBack = currentPageData.pageType === "back";
     const offsetX = Number(isBack ? settings.backOffsetX : settings.offsetX);
     const offsetY = Number(isBack ? settings.backOffsetY : settings.offsetY);
@@ -165,7 +221,7 @@ export const Preview = () => {
     return {
       transform: `rotate(${rotation}deg) translate(${offsetX}mm, ${offsetY}mm)`,
     };
-  }, [isRendering, currentPageData.pageType, settings]);
+  }, [currentPageData.pageType, settings]);
 
   // In duplex mode pages alternate front/back, so drag-to-page navigation skips
   // 2 pages to keep the user on the same face type (front→front, back→back).
@@ -396,7 +452,6 @@ export const Preview = () => {
               changePage={changePage}
             />
             <div
-              ref={contentRef}
               style={
                 {
                   "--rows-per-page": rowsPerPage.toString(),
@@ -406,9 +461,13 @@ export const Preview = () => {
               }
               className={vstack({
                 maxWidth: "100%",
+                position: "relative",
                 "--bleed-edge-width": "var(--bleed-edge, 0mm)",
                 "--image-zoom-width": "var(--image-zoom, 6.2mm)",
-                "--guide-display": "var(--guides-display, block)",
+                "--guide-display":
+                  currentPageData.pageType === "back" && !settings.backPagesShowGuides
+                    ? "none"
+                    : "var(--guides-display, block)",
                 "--guide-border-color": "var(--guides-color, #adff2f)",
                 "--guide-border-color-inverted":
                   "var(--guides-color-inverted, #ff0000)",
@@ -434,49 +493,36 @@ export const Preview = () => {
                 )}
               >
                 <PageLabels pageType={currentPageData.pageType} />
-                <div
-                  className={cx(
-                    "page",
-                    center({
-                      flexDirection: "column",
-                      height: "var(--page-height, 11 var(--page-unit, in))",
-                      width: "var(--page-width, 8.5 var(--page-unit, in))",
-                      // background: "white",
-                      // boxShadow: "md",
-                      "--item-width":
-                        "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
-                      "--item-height":
-                        "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
-                    }),
-                  )}
-                  style={pageTransformStyle}
-                >
-                  <div
-                    className={grid({
-                      gap: "0",
-                      gridTemplateColumns:
-                        "repeat(var(--grid-columns, 3), min-content)",
-                      pageBreakAfter: "always",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      textAlign: "center",
-                      rowGap: "var(--row-gap)",
-                      columnGap: "var(--column-gap)",
-                    })}
-                  >
-                    {currentCards.map((item, index) => (
-                      <Card
-                        key={item.image.uuid || `empty-${index}`}
-                        image={item.image}
-                        index={index}
-                        currentPage={currentPage}
-                        onImageLoad={index === 0 ? onImageLoad : undefined}
-                        slotId={item.slotId}
-                        face={item.face}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <PageGrid style={pageTransformStyle}>
+                  {currentCards.map((item, index) => (
+                    <Card
+                      key={item.image.uuid || `empty-${index}`}
+                      image={item.image}
+                      index={index}
+                      currentPage={currentPage}
+                      onImageLoad={index === 0 ? onImageLoad : undefined}
+                      slotId={item.slotId}
+                      face={item.face}
+                    />
+                  ))}
+                </PageGrid>
+              </div>
+              {/* Hidden measurement reference — never transformed, used by useGeneratePdf for layout measurements */}
+              <div
+                ref={contentRef}
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  top: "0",
+                  visibility: "hidden",
+                  pointerEvents: "none",
+                }}
+              >
+                <PageGrid>
+                  {Array.from({ length: currentCards.length }, (_, i) => (
+                    <MeasurementCard key={i} />
+                  ))}
+                </PageGrid>
               </div>
             </div>
           </div>

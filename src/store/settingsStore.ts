@@ -170,15 +170,16 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: "proxy-print-settings",
-      version: 2,
+      version: 3,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
           return persistedState as SettingsStore;
         }
 
+        const state = persistedState as Partial<SettingsStore>;
+
         if (version < 2) {
-          const state = persistedState as Partial<SettingsStore>;
           return {
             ...state,
             settings: {
@@ -186,6 +187,18 @@ export const useSettingsStore = create<SettingsStore>()(
               ...state.settings,
             },
             defaultCardBack: null,
+          } as SettingsStore;
+        }
+
+        if (version < 3) {
+          // Merge DEFAULT_SETTINGS so any newly-added fields get their defaults
+          // when loading persisted state that predates them.
+          return {
+            ...state,
+            settings: {
+              ...DEFAULT_SETTINGS,
+              ...state.settings,
+            },
           } as SettingsStore;
         }
 

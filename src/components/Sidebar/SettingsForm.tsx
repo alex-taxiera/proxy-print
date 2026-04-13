@@ -82,10 +82,23 @@ const DefaultCardBackSection = () => {
             <img
               src={thumbSrc}
               alt="Default card back thumbnail"
-              style={{ width: 32, height: 44, objectFit: "cover", borderRadius: 2 }}
+              style={{
+                width: 32,
+                height: 44,
+                objectFit: "cover",
+                borderRadius: 2,
+              }}
             />
           )}
-          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.75rem" }}>
+          <span
+            style={{
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              fontSize: "0.75rem",
+            }}
+          >
             {displayName}
           </span>
           <IconButton
@@ -647,30 +660,6 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <Field.Root invalid={formErrors.rowGap.length > 0}>
-            <Field.Label>Row Gap (mm)</Field.Label>
-            <NumberInput
-              min={0}
-              max={100}
-              value={formState.rowGap}
-              onValueChange={buildNumberInputChangeHandler("rowGap")}
-            ></NumberInput>
-            {formErrors.rowGap.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.columnGap.length > 0}>
-            <Field.Label>Column Gap (mm)</Field.Label>
-            <NumberInput
-              min={0}
-              max={100}
-              value={formState.columnGap}
-              onValueChange={buildNumberInputChangeHandler("columnGap")}
-            ></NumberInput>
-            {formErrors.columnGap.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
           <DefaultCardBackSection />
         </Tabs.Content>
         <Tabs.Content
@@ -733,6 +722,151 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
+          <span
+            className={css({
+              fontSize: "xs",
+              color: "fg.muted",
+              fontWeight: "semibold",
+            })}
+          >
+            Card Spacing
+          </span>
+          <div className={hstack({ width: "full", gap: "2" })}>
+            <Field.Root invalid={formErrors.rowGap.length > 0}>
+              <Field.Label>Vertical (mm)</Field.Label>
+              <NumberInput
+                min={0}
+                max={100}
+                value={formState.rowGap}
+                onValueChange={buildNumberInputChangeHandler("rowGap")}
+              ></NumberInput>
+              {formErrors.rowGap.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+            <Field.Root invalid={formErrors.columnGap.length > 0}>
+              <Field.Label>Horizontal (mm)</Field.Label>
+              <NumberInput
+                min={0}
+                max={100}
+                value={formState.columnGap}
+                onValueChange={buildNumberInputChangeHandler("columnGap")}
+              ></NumberInput>
+              {formErrors.columnGap.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+          </div>
+          <span
+            className={css({
+              fontSize: "xs",
+              color: "fg.muted",
+              fontWeight: "semibold",
+            })}
+          >
+            Front Page Alignment
+          </span>
+          <div className={hstack({ width: "full", gap: "2" })}>
+            <Field.Root
+              invalid={formErrors.offsetX.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.offsetX}
+                onValueChange={buildNumberInputChangeHandler("offsetX")}
+              >
+                X Offset (mm)
+              </NumberInput>
+              {formErrors.offsetX.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+            <Field.Root
+              invalid={formErrors.offsetY.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.offsetY}
+                onValueChange={buildNumberInputChangeHandler("offsetY")}
+              >
+                Y Offset (mm)
+              </NumberInput>
+              {formErrors.offsetY.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+          </div>
+          <Field.Root invalid={formErrors.pageRotation.length > 0}>
+            <NumberInput
+              step={0.1}
+              min={-180}
+              max={180}
+              value={formState.pageRotation}
+              onValueChange={buildNumberInputChangeHandler("pageRotation")}
+            >
+              Rotation (°)
+            </NumberInput>
+            {formErrors.pageRotation.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+          <span
+            className={css({
+              fontSize: "xs",
+              color: "fg.muted",
+              fontWeight: "semibold",
+            })}
+          >
+            Back Page Alignment
+          </span>
+          <div className={hstack({ width: "full", gap: "2" })}>
+            <Field.Root
+              invalid={formErrors.backOffsetX.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.backOffsetX}
+                onValueChange={buildNumberInputChangeHandler("backOffsetX")}
+              >
+                X Offset (mm)
+              </NumberInput>
+              {formErrors.backOffsetX.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+            <Field.Root
+              invalid={formErrors.backOffsetY.length > 0}
+              className={css({ flex: 1 })}
+            >
+              <NumberInput
+                step={0.1}
+                value={formState.backOffsetY}
+                onValueChange={buildNumberInputChangeHandler("backOffsetY")}
+              >
+                Y Offset (mm)
+              </NumberInput>
+              {formErrors.backOffsetY.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+          </div>
+          <Field.Root invalid={formErrors.backPageRotation.length > 0}>
+            <NumberInput
+              step={0.1}
+              min={-180}
+              max={180}
+              value={formState.backPageRotation}
+              onValueChange={buildNumberInputChangeHandler("backPageRotation")}
+            >
+              Rotation (°)
+            </NumberInput>
+            {formErrors.backPageRotation.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
           <Field.Root invalid={formErrors.extendedGuidesOnly.length > 0}>
             <Field.Label>Extended Guides Only</Field.Label>
             <Checkbox
@@ -755,142 +889,17 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <Collapsible.Root
-            className={vstack({
-              width: "full",
-              alignItems: "stretch",
-              alignSelf: "stretch",
-            })}
-          >
-            <div
-              className={hstack({
-                width: "full",
-                alignItems: "flex-end",
-                justifyContent: "space-between",
-              })}
-            >
-              <span>Page Alignment</span>
-              <Collapsible.Trigger asChild>
-                <Button variant="link" size="xs" colorPalette="gray">
-                  Expand
-                </Button>
-              </Collapsible.Trigger>
-            </div>
-            <Collapsible.Content
-              className={vstack({
-                width: "full",
-                alignItems: "stretch",
-                gap: "2",
-                alignSelf: "stretch",
-                justifyContent: "center",
-                paddingLeft: "4",
-                paddingTop: "2",
-              })}
-            >
-              <span
-                className={css({ fontSize: "xs", color: "fg.muted", fontWeight: "semibold" })}
-              >
-                Front pages
-              </span>
-              <div className={hstack({ width: "full", gap: "2" })}>
-                <Field.Root
-                  invalid={formErrors.offsetX.length > 0}
-                  className={css({ flex: 1 })}
-                >
-                  <NumberInput
-                    step={0.1}
-                    value={formState.offsetX}
-                    onValueChange={buildNumberInputChangeHandler("offsetX")}
-                  >
-                    X Offset (mm)
-                  </NumberInput>
-                  {formErrors.offsetX.map((issue, i) => (
-                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                  ))}
-                </Field.Root>
-                <Field.Root
-                  invalid={formErrors.offsetY.length > 0}
-                  className={css({ flex: 1 })}
-                >
-                  <NumberInput
-                    step={0.1}
-                    value={formState.offsetY}
-                    onValueChange={buildNumberInputChangeHandler("offsetY")}
-                  >
-                    Y Offset (mm)
-                  </NumberInput>
-                  {formErrors.offsetY.map((issue, i) => (
-                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                  ))}
-                </Field.Root>
-              </div>
-              <Field.Root invalid={formErrors.pageRotation.length > 0}>
-                <NumberInput
-                  step={0.1}
-                  min={-180}
-                  max={180}
-                  value={formState.pageRotation}
-                  onValueChange={buildNumberInputChangeHandler("pageRotation")}
-                >
-                  Rotation (°)
-                </NumberInput>
-                {formErrors.pageRotation.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-              <span
-                className={css({ fontSize: "xs", color: "fg.muted", fontWeight: "semibold" })}
-              >
-                Back pages
-              </span>
-              <div className={hstack({ width: "full", gap: "2" })}>
-                <Field.Root
-                  invalid={formErrors.backOffsetX.length > 0}
-                  className={css({ flex: 1 })}
-                >
-                  <NumberInput
-                    step={0.1}
-                    value={formState.backOffsetX}
-                    onValueChange={buildNumberInputChangeHandler("backOffsetX")}
-                  >
-                    X Offset (mm)
-                  </NumberInput>
-                  {formErrors.backOffsetX.map((issue, i) => (
-                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                  ))}
-                </Field.Root>
-                <Field.Root
-                  invalid={formErrors.backOffsetY.length > 0}
-                  className={css({ flex: 1 })}
-                >
-                  <NumberInput
-                    step={0.1}
-                    value={formState.backOffsetY}
-                    onValueChange={buildNumberInputChangeHandler("backOffsetY")}
-                  >
-                    Y Offset (mm)
-                  </NumberInput>
-                  {formErrors.backOffsetY.map((issue, i) => (
-                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                  ))}
-                </Field.Root>
-              </div>
-              <Field.Root invalid={formErrors.backPageRotation.length > 0}>
-                <NumberInput
-                  step={0.1}
-                  min={-180}
-                  max={180}
-                  value={formState.backPageRotation}
-                  onValueChange={buildNumberInputChangeHandler("backPageRotation")}
-                >
-                  Rotation (°)
-                </NumberInput>
-                {formErrors.backPageRotation.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-            </Collapsible.Content>
-          </Collapsible.Root>
+          <Field.Root invalid={formErrors.backPagesShowGuides.length > 0}>
+            <Field.Label>Show Guides on Back Pages</Field.Label>
+            <Checkbox
+              size="lg"
+              checked={formState.backPagesShowGuides}
+              onCheckedChange={buildCheckboxChangeHandler("backPagesShowGuides")}
+            />
+            {formErrors.backPagesShowGuides.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
         </Tabs.Content>
         <Tabs.Content
           value="experimental"

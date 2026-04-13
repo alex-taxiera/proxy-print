@@ -41,10 +41,10 @@ import { useCardActions } from "./Card/useCardActions";
 
 const PRINT_MODE_OPTIONS: { value: PrintMode; label: string }[] = [
   { value: "duplex", label: "Duplex" },
-  { value: "side-by-side", label: "Side by side" },
   { value: "inline-faces", label: "Inline faces" },
   { value: "fronts-only", label: "Fronts only" },
   { value: "backs-only", label: "Backs only" },
+  { value: "side-by-side", label: "Side by side" },
 ];
 
 const printModeCollection = createListCollection({

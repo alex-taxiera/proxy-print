@@ -70,11 +70,6 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const referencePage = contentRef.current?.querySelector<HTMLElement>(
         ".page",
       ) as HTMLElement;
-      // Temporarily clear any visual CSS transform so getBoundingClientRect()
-      // returns unmodified layout coordinates. The PDF worker applies the real
-      // offset/rotation via CTM. We restore after all measurements are taken.
-      const savedTransform = referencePage.style.transform;
-      referencePage.style.transform = "";
       const referencePageRect = referencePage.getBoundingClientRect();
       const referenceCards = Array.from(
         referencePage.querySelectorAll<HTMLElement>(".card"),
@@ -86,14 +81,6 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         referenceImageContainer.getBoundingClientRect();
       const containerWidth = imageContainerRect.width;
       const containerHeight = imageContainerRect.height;
-      const referenceImg = referenceCards[0].querySelector<HTMLImageElement>(
-        "img",
-      ) as HTMLImageElement;
-      const imageRect = referenceImg.getBoundingClientRect();
-      const imageWidth = imageRect.width;
-      const imageHeight = imageRect.height;
-      // All getBoundingClientRect() calls are done — restore the visual transform.
-      referencePage.style.transform = savedTransform;
 
       // read settings
       const pageHeight = Number(settings.pageHeight);
@@ -109,11 +96,27 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
       const pdfName = `${settings.filename}.pdf`;
       const extendedGuidesOnly = settings.extendedGuidesOnly;
+      const backPagesShowGuides = settings.backPagesShowGuides;
       const cardHeight = Number(settings.cardHeight);
       const cardWidth = Number(settings.cardWidth);
       const maxDpi = Number(settings.maxDpi);
       const convertToJpg = settings.convertToJpg;
       const jpgQuality = Number(settings.jpgQuality);
+
+      // Compute crop fractions analytically in mm-space.
+      // The <img> has CSS width = imgWidthMm, height = auto (natural aspect ratio).
+      // So rendered img height in px = imgWidth_px × (naturalH_px / naturalW_px).
+      // Crop fraction for width:  containerWidthMm / imgWidthMm × naturalW_px
+      // Crop fraction for height: containerHeightMm / rendered_imgHeight_px × naturalH_px
+      //                         = containerHeightMm / (imgWidthMm × naturalH/naturalW) × naturalH_px
+      //                         = containerHeightMm / imgWidthMm × naturalW_px   ← naturalH cancels!
+      // Both sourceWidth and sourceHeight divide by imgWidthMm and multiply by naturalWidth.
+      const enableBleedEdge = settings.enableBleedEdge;
+      const imageZoomMm = enableBleedEdge ? 6.2 : 0;
+      const imageContainerBufferMm = enableBleedEdge ? guideBorderWidth : 0;
+      const containerWidthMm = cardWidth + 2 * bleedEdgeWidth + imageContainerBufferMm;
+      const containerHeightMm = cardHeight + 2 * bleedEdgeWidth + imageContainerBufferMm;
+      const imgWidthMm = cardWidth + imageZoomMm;
 
       const physicalCardHeight =
         (cardHeight + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
@@ -201,9 +204,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
             });
 
             const sourceWidth =
-              (containerWidth / imageWidth) * tempImg.naturalWidth;
+              (containerWidthMm / imgWidthMm) * tempImg.naturalWidth;
             const sourceHeight =
-              (containerHeight / imageHeight) * tempImg.naturalHeight;
+              (containerHeightMm / imgWidthMm) * tempImg.naturalWidth;
             const sourceX = (tempImg.naturalWidth - sourceWidth) / 2;
             const sourceY = (tempImg.naturalHeight - sourceHeight) / 2;
 
@@ -316,6 +319,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         relativeIndex: number,
         workerInitData?: { basePdfBytes: Uint8Array; basePdfPageIndex: number },
         pageTransformData?: { offsetX: number; offsetY: number; pageRotation: number },
+        showGuides?: boolean,
       ) => {
         const [image, worker] = data;
 
@@ -335,10 +339,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               totalProgressAmount,
               phase: "Building PDF",
             });
+            const cardData = showGuides === false ? { ...card, guides: null } : card;
             worker.postMessage({
               type: "addImage",
               data: {
-                card,
+                card: cardData,
                 init: {
                   pageHeight: Number(settings.pageHeight),
                   pageWidth: Number(settings.pageWidth),
@@ -352,7 +357,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
             if (cards.length > 0) {
               doTimeout(
-                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1, undefined, pageTransformData),
+                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1, undefined, pageTransformData, showGuides),
                 50,
               );
             }
@@ -511,6 +516,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
           offsetY: Number(isBack ? settings.backOffsetY : settings.offsetY),
           pageRotation: Number(isBack ? settings.backPageRotation : settings.pageRotation),
         };
+        const showGuides = isBack ? backPagesShowGuides : true;
 
         doTimeout(() => {
           requestNextCard(
@@ -521,6 +527,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               ? { basePdfBytes: basePdfBytes.slice(), basePdfPageIndex }
               : undefined,
             pageTransformData,
+            showGuides,
           );
         });
       };
