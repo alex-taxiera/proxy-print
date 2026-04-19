@@ -1,4 +1,4 @@
-import { parseColor, Portal } from "@ark-ui/react";
+import { Fieldset, parseColor, Portal } from "@ark-ui/react";
 import {
   faArrowsRotate,
   faFlask,
@@ -306,7 +306,7 @@ export const SettingsForm = () => {
           className={vstack({
             width: "full",
             alignItems: "stretch",
-            gap: "2",
+            gap: "4",
             alignSelf: "stretch",
             justifyContent: "center",
           })}
@@ -393,7 +393,7 @@ export const SettingsForm = () => {
               className={vstack({
                 width: "full",
                 alignItems: "stretch",
-                gap: "2",
+                gap: "4",
                 alignSelf: "stretch",
                 justifyContent: "center",
                 paddingLeft: "4",
@@ -550,7 +550,7 @@ export const SettingsForm = () => {
               className={vstack({
                 width: "full",
                 alignItems: "stretch",
-                gap: "2",
+                gap: "4",
                 alignSelf: "stretch",
                 justifyContent: "center",
                 paddingLeft: "4",
@@ -667,47 +667,49 @@ export const SettingsForm = () => {
           className={vstack({
             width: "full",
             alignItems: "stretch",
-            gap: "2",
+            gap: "4",
             alignSelf: "stretch",
             justifyContent: "center",
           })}
         >
           <UpscaleSetting />
-          <Field.Root invalid={formErrors.convertToJpg.length > 0}>
-            <Field.Label>Convert images to JPG</Field.Label>
-            <Checkbox
-              size="lg"
-              checked={formState.convertToJpg}
-              onCheckedChange={buildCheckboxChangeHandler("convertToJpg")}
-            />
-            {formErrors.convertToJpg.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Collapsible.Root open={formState.convertToJpg}>
-            <Collapsible.Content
-              className={vstack({
-                width: "full",
-                paddingLeft: "4",
-              })}
-            >
-              <Field.Root invalid={formErrors.jpgQuality.length > 0}>
-                <NumberInput
-                  min={0.1}
-                  max={1}
-                  step={0.01}
-                  disabled={!formState.convertToJpg}
-                  value={formState.jpgQuality}
-                  onValueChange={buildNumberInputChangeHandler("jpgQuality")}
-                >
-                  JPG Quality
-                </NumberInput>
-                {formErrors.jpgQuality.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-            </Collapsible.Content>
-          </Collapsible.Root>
+          <Fieldset.Root>
+            <Field.Root invalid={formErrors.convertToJpg.length > 0}>
+              <Field.Label>Convert images to JPG</Field.Label>
+              <Checkbox
+                size="lg"
+                checked={formState.convertToJpg}
+                onCheckedChange={buildCheckboxChangeHandler("convertToJpg")}
+              />
+              {formErrors.convertToJpg.map((issue, i) => (
+                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+              ))}
+            </Field.Root>
+            <Collapsible.Root open={formState.convertToJpg}>
+              <Collapsible.Content
+                className={vstack({
+                  width: "full",
+                  paddingLeft: "4",
+                })}
+              >
+                <Field.Root invalid={formErrors.jpgQuality.length > 0}>
+                  <NumberInput
+                    min={0.1}
+                    max={1}
+                    step={0.01}
+                    disabled={!formState.convertToJpg}
+                    value={formState.jpgQuality}
+                    onValueChange={buildNumberInputChangeHandler("jpgQuality")}
+                  >
+                    JPG Quality
+                  </NumberInput>
+                  {formErrors.jpgQuality.map((issue, i) => (
+                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                  ))}
+                </Field.Root>
+              </Collapsible.Content>
+            </Collapsible.Root>
+          </Fieldset.Root>
           <Field.Root invalid={formErrors.maxDpi.length > 0}>
             <NumberInput
               min={300}
@@ -722,82 +724,74 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <span
-            className={css({
-              fontSize: "xs",
-              color: "fg.muted",
-              fontWeight: "semibold",
-            })}
-          >
-            Card Spacing
-          </span>
-          <div className={hstack({ width: "full", gap: "2" })}>
-            <Field.Root invalid={formErrors.rowGap.length > 0}>
-              <Field.Label>Vertical (mm)</Field.Label>
-              <NumberInput
-                min={0}
-                max={100}
-                value={formState.rowGap}
-                onValueChange={buildNumberInputChangeHandler("rowGap")}
-              ></NumberInput>
-              {formErrors.rowGap.map((issue, i) => (
-                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-              ))}
-            </Field.Root>
-            <Field.Root invalid={formErrors.columnGap.length > 0}>
-              <Field.Label>Horizontal (mm)</Field.Label>
-              <NumberInput
-                min={0}
-                max={100}
-                value={formState.columnGap}
-                onValueChange={buildNumberInputChangeHandler("columnGap")}
-              ></NumberInput>
-              {formErrors.columnGap.map((issue, i) => (
-                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-              ))}
-            </Field.Root>
-          </div>
-          <span
-            className={css({
-              fontSize: "xs",
-              color: "fg.muted",
-              fontWeight: "semibold",
-            })}
-          >
-            Front Page Alignment
-          </span>
-          <div className={hstack({ width: "full", gap: "2" })}>
-            <Field.Root
-              invalid={formErrors.offsetX.length > 0}
-              className={css({ flex: 1 })}
-            >
-              <NumberInput
-                step={0.1}
-                value={formState.offsetX}
-                onValueChange={buildNumberInputChangeHandler("offsetX")}
+          <Fieldset.Root>
+            <Fieldset.Legend className={css({ marginBottom: "2" })}>
+              Card Spacing
+            </Fieldset.Legend>
+            <div className={hstack({ width: "full", gap: "2" })}>
+              <Field.Root invalid={formErrors.rowGap.length > 0}>
+                <Field.Label>Vertical (mm)</Field.Label>
+                <NumberInput
+                  min={0}
+                  max={100}
+                  value={formState.rowGap}
+                  onValueChange={buildNumberInputChangeHandler("rowGap")}
+                ></NumberInput>
+                {formErrors.rowGap.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+              <Field.Root invalid={formErrors.columnGap.length > 0}>
+                <Field.Label>Horizontal (mm)</Field.Label>
+                <NumberInput
+                  min={0}
+                  max={100}
+                  value={formState.columnGap}
+                  onValueChange={buildNumberInputChangeHandler("columnGap")}
+                ></NumberInput>
+                {formErrors.columnGap.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+            </div>
+          </Fieldset.Root>
+          <Fieldset.Root>
+            <Fieldset.Legend className={css({ marginBottom: "2" })}>
+              Front Page Alignment
+            </Fieldset.Legend>
+            <div className={hstack({ width: "full", gap: "2" })}>
+              <Field.Root
+                invalid={formErrors.offsetX.length > 0}
+                className={css({ flex: 1 })}
               >
-                X Offset (mm)
-              </NumberInput>
-              {formErrors.offsetX.map((issue, i) => (
-                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-              ))}
-            </Field.Root>
-            <Field.Root
-              invalid={formErrors.offsetY.length > 0}
-              className={css({ flex: 1 })}
-            >
-              <NumberInput
-                step={0.1}
-                value={formState.offsetY}
-                onValueChange={buildNumberInputChangeHandler("offsetY")}
+                <NumberInput
+                  step={0.1}
+                  value={formState.offsetX}
+                  onValueChange={buildNumberInputChangeHandler("offsetX")}
+                >
+                  X Offset (mm)
+                </NumberInput>
+                {formErrors.offsetX.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+              <Field.Root
+                invalid={formErrors.offsetY.length > 0}
+                className={css({ flex: 1 })}
               >
-                Y Offset (mm)
-              </NumberInput>
-              {formErrors.offsetY.map((issue, i) => (
-                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-              ))}
-            </Field.Root>
-          </div>
+                <NumberInput
+                  step={0.1}
+                  value={formState.offsetY}
+                  onValueChange={buildNumberInputChangeHandler("offsetY")}
+                >
+                  Y Offset (mm)
+                </NumberInput>
+                {formErrors.offsetY.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+            </div>
+          </Fieldset.Root>
           <Field.Root invalid={formErrors.pageRotation.length > 0}>
             <NumberInput
               step={0.1}
@@ -812,47 +806,43 @@ export const SettingsForm = () => {
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>
-          <span
-            className={css({
-              fontSize: "xs",
-              color: "fg.muted",
-              fontWeight: "semibold",
-            })}
-          >
-            Back Page Alignment
-          </span>
-          <div className={hstack({ width: "full", gap: "2" })}>
-            <Field.Root
-              invalid={formErrors.backOffsetX.length > 0}
-              className={css({ flex: 1 })}
-            >
-              <NumberInput
-                step={0.1}
-                value={formState.backOffsetX}
-                onValueChange={buildNumberInputChangeHandler("backOffsetX")}
+          <Fieldset.Root>
+            <Fieldset.Legend className={css({ marginBottom: "2" })}>
+              Back Page Offset
+            </Fieldset.Legend>
+            <div className={hstack({ width: "full", gap: "2" })}>
+              <Field.Root
+                invalid={formErrors.backOffsetX.length > 0}
+                className={css({ flex: 1 })}
               >
-                X Offset (mm)
-              </NumberInput>
-              {formErrors.backOffsetX.map((issue, i) => (
-                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-              ))}
-            </Field.Root>
-            <Field.Root
-              invalid={formErrors.backOffsetY.length > 0}
-              className={css({ flex: 1 })}
-            >
-              <NumberInput
-                step={0.1}
-                value={formState.backOffsetY}
-                onValueChange={buildNumberInputChangeHandler("backOffsetY")}
+                <NumberInput
+                  step={0.1}
+                  value={formState.backOffsetX}
+                  onValueChange={buildNumberInputChangeHandler("backOffsetX")}
+                >
+                  X Offset (mm)
+                </NumberInput>
+                {formErrors.backOffsetX.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+              <Field.Root
+                invalid={formErrors.backOffsetY.length > 0}
+                className={css({ flex: 1 })}
               >
-                Y Offset (mm)
-              </NumberInput>
-              {formErrors.backOffsetY.map((issue, i) => (
-                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-              ))}
-            </Field.Root>
-          </div>
+                <NumberInput
+                  step={0.1}
+                  value={formState.backOffsetY}
+                  onValueChange={buildNumberInputChangeHandler("backOffsetY")}
+                >
+                  Y Offset (mm)
+                </NumberInput>
+                {formErrors.backOffsetY.map((issue, i) => (
+                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+                ))}
+              </Field.Root>
+            </div>
+          </Fieldset.Root>
           <Field.Root invalid={formErrors.backPageRotation.length > 0}>
             <NumberInput
               step={0.1}
@@ -894,7 +884,9 @@ export const SettingsForm = () => {
             <Checkbox
               size="lg"
               checked={formState.backPagesShowGuides}
-              onCheckedChange={buildCheckboxChangeHandler("backPagesShowGuides")}
+              onCheckedChange={buildCheckboxChangeHandler(
+                "backPagesShowGuides",
+              )}
             />
             {formErrors.backPagesShowGuides.map((issue, i) => (
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
@@ -906,7 +898,7 @@ export const SettingsForm = () => {
           className={vstack({
             width: "full",
             alignItems: "stretch",
-            gap: "2",
+            gap: "4",
             alignSelf: "stretch",
             justifyContent: "center",
           })}
