@@ -10,7 +10,7 @@ import {
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useCallback, useContext, useMemo } from "react";
+import { useContext } from "react";
 
 import { css } from "styled-system/css";
 import { VisuallyHidden } from "styled-system/jsx";
@@ -30,9 +30,9 @@ import { ImageErrors } from "~/components/ImageErrors";
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { ImagesContext } from "~/context/ImagesContext";
 import { PrintMode } from "~/context/SettingsContext";
-import { useDownloadProgressStore } from "~/store/downloadProgressStore";
 import { useGeneratePdf } from "~/hooks/useGeneratePdf";
 import { usePreviewData } from "~/hooks/usePreviewData";
+import { useDownloadProgressStore } from "~/store/downloadProgressStore";
 import { useSettingsStore } from "~/store/settingsStore";
 import { formatCount, formatSelectionCount } from "~/utils/pluralize";
 import { progressEvents } from "~/utils/progress-events";
@@ -57,13 +57,10 @@ const PrintModeToggle = () => {
   const printMode = useSettingsStore((s) => s.settings.printMode);
   const setSettings = useSettingsStore((s) => s.setSettings);
 
-  const handleChange = useCallback(
-    (details: { value: string[] }) => {
-      const mode = details.value[0] as PrintMode;
-      if (mode) setSettings((s) => ({ ...s, printMode: mode }));
-    },
-    [setSettings],
-  );
+  const handleChange = (details: { value: string[] }) => {
+    const mode = details.value[0] as PrintMode;
+    if (mode) setSettings((s) => ({ ...s, printMode: mode }));
+  };
 
   return (
     <Select.Root
@@ -109,7 +106,7 @@ const NoSelectionActions = ({
   contentRef,
 }: {
   isReferenceCardLoaded: boolean;
-  contentRef: React.RefObject<HTMLDivElement>;
+  contentRef: React.RefObject<HTMLDivElement | null>;
 }) => {
   const { isRendering, setIsRendering, images } = useContext(ImagesContext);
   const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
@@ -230,9 +227,8 @@ export const SelectionMenuContent = ({
   const { pages } = usePreviewData();
   const { selectedImageUuids } = useContext(ImageSelectionContext);
   const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
-  const selectedImages = useMemo(
-    () => images.filter((image) => selectedImageUuids.includes(image.uuid)),
-    [images, selectedImageUuids],
+  const selectedImages = images.filter((image) =>
+    selectedImageUuids.includes(image.uuid),
   );
 
   const {
@@ -253,10 +249,8 @@ export const SelectionMenuContent = ({
     currentPage,
   });
 
-  const onMoveToPage = useCallback(
-    (details: MenuSelectionDetails) => moveToPage(parseInt(details.value)),
-    [moveToPage],
-  );
+  const onMoveToPage = (details: MenuSelectionDetails) =>
+    moveToPage(parseInt(details.value));
 
   return (
     <>
@@ -389,7 +383,7 @@ export type ActionsProps = {
   isReferenceCardLoaded: boolean;
   currentPage: number;
   changePage: (page: number) => void;
-  contentRef: React.RefObject<HTMLDivElement>;
+  contentRef: React.RefObject<HTMLDivElement | null>;
 };
 
 export const Actions = ({

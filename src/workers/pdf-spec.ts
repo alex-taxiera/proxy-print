@@ -150,9 +150,19 @@ export function buildCardRenderOps(
         : guides.bleedEdgeWidth; // stays mm
 
     // crosshairSizePageUnits: arm length of the crosshair tick marks.
+    const guideLengthRaw: unknown = (guides as Record<string, unknown>)[
+      "guideLength"
+    ];
+    const customGuideLengthPageUnits =
+      typeof guideLengthRaw === "number" && guideLengthRaw > 0
+        ? guides.unit === "in"
+          ? guideLengthRaw / 25.4
+          : guideLengthRaw
+        : null;
     const crosshairSizePageUnits = guides.extendedGuidesOnly
       ? 0
-      : bleedEdgeWidthPageUnits || (guides.unit === "in" ? 1 / 25.4 : 1);
+      : (customGuideLengthPageUnits ?? bleedEdgeWidthPageUnits) ||
+        (guides.unit === "in" ? 1 / 25.4 : 1);
 
     const bleedPts = toPts(bleedEdgeWidthPageUnits);
     const crosshairPts = toPts(crosshairSizePageUnits);

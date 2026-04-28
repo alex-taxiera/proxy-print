@@ -102,7 +102,10 @@ export type ImagesContextValue = {
   onReorder: (images: Image[], newIndex: number) => void;
   /** Move slots to an absolute index, inserting empty gap-filler slots if the
    * target index is beyond the current end of the list. */
-  onMoveSlotToAbsoluteIndex: (slotIds: string[], targetAbsoluteIndex: number) => void;
+  onMoveSlotToAbsoluteIndex: (
+    slotIds: string[],
+    targetAbsoluteIndex: number,
+  ) => void;
   onAdd: (
     files: (LocalImageData | GoogleImageData | ScryfallImageData)[],
     index?: number,

@@ -7,6 +7,7 @@ const guide = sva({
       position: "absolute",
       display: "var(--guide-display)",
       zIndex: "1",
+      "--length": "var(--guide-length, calc(var(--bleed-edge-width) + 8px))",
     },
     horizontal: {
       position: "absolute",
@@ -33,12 +34,12 @@ const guide = sva({
         horizontal: {
           top: "0",
           left: "calc(-1 * var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
+          width: "var(--length)",
         },
         vertical: {
           top: "calc(-1 * var(--bleed-edge-width))",
           left: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
+          height: "var(--length)",
         },
       },
       topRight: {
@@ -49,12 +50,12 @@ const guide = sva({
         horizontal: {
           top: "0",
           right: "calc(-1 * var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
+          width: "var(--length)",
         },
         vertical: {
           top: "calc(-1 * var(--bleed-edge-width))",
           right: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
+          height: "var(--length)",
         },
       },
       bottomLeft: {
@@ -64,13 +65,13 @@ const guide = sva({
         },
         horizontal: {
           bottom: "0",
-          left: "calc(-1 *var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
+          left: "calc(-1 * var(--bleed-edge-width))",
+          width: "var(--length)",
         },
         vertical: {
           bottom: "calc(-1 * var(--bleed-edge-width))",
           left: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
+          height: "var(--length)",
         },
       },
       bottomRight: {
@@ -81,12 +82,12 @@ const guide = sva({
         horizontal: {
           bottom: "0",
           right: "calc(-1 * var(--bleed-edge-width))",
-          width: "calc(var(--bleed-edge-width) + 8px)",
+          width: "var(--length)",
         },
         vertical: {
           bottom: "calc(-1 * var(--bleed-edge-width))",
           right: "0",
-          height: "calc(var(--bleed-edge-width) + 8px)",
+          height: "var(--length)",
         },
       },
     },

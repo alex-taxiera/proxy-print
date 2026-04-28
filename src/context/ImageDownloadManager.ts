@@ -1,9 +1,9 @@
 import { FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 
 import { useUpscaleImage } from "~/hooks/useUpscaleImage";
-import { useDownloadProgressStore } from "~/store/downloadProgressStore";
 import { ImageQueryData } from "~/queries/images";
+import { useDownloadProgressStore } from "~/store/downloadProgressStore";
 
 type Item = {
   uuid: string;
@@ -24,7 +24,7 @@ export function useImageDownloadManager({
   const inflightRef = useRef<Item[]>([]);
   const { upscaleImage } = useUpscaleImage();
 
-  const processQueue = useCallback(() => {
+  const processQueue = () => {
     while (
       inflightRef.current.length < maxInflight &&
       queueRef.current.length > 0
@@ -67,22 +67,22 @@ export function useImageDownloadManager({
           }
         });
     }
-  }, [maxInflight, queryClient, upscale, upscaleImage]);
+  };
 
-  const add = useCallback(
-    ({ uuid, queryData }: Pick<Item, "uuid" | "queryData">): Promise<void> => {
-      return new Promise((resolve, reject) => {
-        // Record the download as pending before it hits the queue so the
-        // progress store is always incremented synchronously on add().
-        useDownloadProgressStore.getState().start();
-        queueRef.current.push({ uuid, queryData, resolve, reject });
-        if (inflightRef.current.length < maxInflight) {
-          processQueue();
-        }
-      });
-    },
-    [maxInflight, processQueue],
-  );
+  const add = ({
+    uuid,
+    queryData,
+  }: Pick<Item, "uuid" | "queryData">): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // Record the download as pending before it hits the queue so the
+      // progress store is always incremented synchronously on add().
+      useDownloadProgressStore.getState().start();
+      queueRef.current.push({ uuid, queryData, resolve, reject });
+      if (inflightRef.current.length < maxInflight) {
+        processQueue();
+      }
+    });
+  };
 
   /**
    * Remove a download from the queue
@@ -90,27 +90,27 @@ export function useImageDownloadManager({
    * @remarks If the download is inflight, it cannot be aborted, so it will continue to completion
    * @remarks If the download is in the queue, it will be removed
    */
-  const remove = useCallback((uuid: string) => {
+  const remove = (uuid: string) => {
     const queueItem = queueRef.current.find((i) => i.uuid === uuid);
     if (queueItem) {
       queueRef.current = queueRef.current.filter((i) => i.uuid !== uuid);
       useDownloadProgressStore.getState().finish();
     }
-  }, []);
+  };
 
   /**
    * Remove all downloads from the queue
    * @remarks Downloads that are inflight will remain
    * @remarks Downloads that are in the queue will be removed
    */
-  const removeAll = useCallback(() => {
+  const removeAll = () => {
     const removedCount = queueRef.current.length;
     queueRef.current = [];
     if (removedCount > 0) {
       const store = useDownloadProgressStore.getState();
       for (let i = 0; i < removedCount; i++) store.finish();
     }
-  }, []);
+  };
 
   return {
     add,

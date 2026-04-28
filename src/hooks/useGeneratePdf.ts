@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PDFDocument } from "pdf-lib";
-import { useCallback, useContext } from "react";
+import { useContext } from "react";
 
 import {
   getIsLocalImage,
@@ -55,7 +55,9 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
   yield new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
 }
 
-export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
+export const useGeneratePdf = (
+  contentRef: React.RefObject<HTMLElement | null>,
+) => {
   const queryClient = useQueryClient();
   const settings = useSettingsStore((s) => s.settings);
   const basePdfBytes = useSettingsStore((s) => s.basePdfBytes);
@@ -64,7 +66,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
   const { pages, cardsPerPage } = usePreviewData();
   const cardPositionMeta = useCardPositionMeta();
 
-  const generatePdf = useCallback(async () => {
+  const generatePdf = async () => {
     return new Promise((resolve, reject) => {
       const referencePage = contentRef.current?.querySelector<HTMLElement>(
         ".page",
@@ -93,6 +95,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const unit = settings.unit;
       const guidesThickness = guideBorderWidth;
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
+      const guideLength = Number(settings.guideLength);
       const pdfName = `${settings.filename}.pdf`;
       const extendedGuidesOnly = settings.extendedGuidesOnly;
       const backPagesShowGuides = settings.backPagesShowGuides;
@@ -113,8 +116,10 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       const enableBleedEdge = settings.enableBleedEdge;
       const imageZoomMm = enableBleedEdge ? 6.2 : 0;
       const imageContainerBufferMm = enableBleedEdge ? guideBorderWidth : 0;
-      const containerWidthMm = cardWidth + 2 * bleedEdgeWidth + imageContainerBufferMm;
-      const containerHeightMm = cardHeight + 2 * bleedEdgeWidth + imageContainerBufferMm;
+      const containerWidthMm =
+        cardWidth + 2 * bleedEdgeWidth + imageContainerBufferMm;
+      const containerHeightMm =
+        cardHeight + 2 * bleedEdgeWidth + imageContainerBufferMm;
       const imgWidthMm = cardWidth + imageZoomMm;
 
       const physicalCardHeight =
@@ -144,9 +149,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const typedImage: ImageType | undefined = getIsEmptyImage(image)
           ? undefined
           : (image as ImageType);
-        console.debug(
-          `Card (rel ${relativeIndex}) processing`,
-        );
+        console.debug(`Card (rel ${relativeIndex}) processing`);
         const referenceCard = referenceCards[relativeIndex];
         const cardRect = referenceCard.getBoundingClientRect();
 
@@ -161,7 +164,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
         let imageDataUrl = null;
         const downloadableImageData = typedImage
-          ? queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(typedImage))
+          ? queryClient.getQueryData<ImageQueryData>(
+              getQueryKeyForImage(typedImage),
+            )
           : undefined;
 
         const rawMimeType = convertToJpg
@@ -307,6 +312,7 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
                 guidesThickness,
                 guidesAtBleedEdge,
                 extendedGuidesOnly,
+                guideLength,
               }
             : null,
         };
@@ -317,7 +323,11 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         cards: [PossiblyEmptyImage, Worker][],
         relativeIndex: number,
         workerInitData?: { basePdfBytes: Uint8Array; basePdfPageIndex: number },
-        pageTransformData?: { offsetX: number; offsetY: number; pageRotation: number },
+        pageTransformData?: {
+          offsetX: number;
+          offsetY: number;
+          pageRotation: number;
+        },
         showGuides?: boolean,
       ) => {
         const [image, worker] = data;
@@ -338,7 +348,8 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
               totalProgressAmount,
               phase: "Building PDF",
             });
-            const cardData = showGuides === false ? { ...card, guides: null } : card;
+            const cardData =
+              showGuides === false ? { ...card, guides: null } : card;
             worker.postMessage({
               type: "addImage",
               data: {
@@ -356,7 +367,15 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
 
             if (cards.length > 0) {
               doTimeout(
-                () => requestNextCard(cards.shift()!, cards, relativeIndex + 1, undefined, pageTransformData, showGuides),
+                () =>
+                  requestNextCard(
+                    cards.shift()!,
+                    cards,
+                    relativeIndex + 1,
+                    undefined,
+                    pageTransformData,
+                    showGuides,
+                  ),
                 50,
               );
             }
@@ -513,7 +532,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         const pageTransformData = {
           offsetX: Number(isBack ? settings.backOffsetX : settings.offsetX),
           offsetY: Number(isBack ? settings.backOffsetY : settings.offsetY),
-          pageRotation: Number(isBack ? settings.backPageRotation : settings.pageRotation),
+          pageRotation: Number(
+            isBack ? settings.backPageRotation : settings.pageRotation,
+          ),
         };
         const showGuides = isBack ? backPagesShowGuides : true;
 
@@ -542,20 +563,9 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
         startWorker();
       }
     });
-  }, [
-    contentRef,
-    settings,
-    images,
-    pages,
-    cardsPerPage,
-    cardPositionMeta,
-    queryClient,
-    setIsRendering,
-    basePdfBytes,
-    basePdfPageCount,
-  ]);
+  };
 
-  return useCallback(() => {
+  return () => {
     void Sentry.startSpan(
       {
         name: "generatePdf",
@@ -567,5 +577,5 @@ export const useGeneratePdf = (contentRef: React.RefObject<HTMLElement>) => {
       },
       generatePdf,
     );
-  }, [generatePdf, pages.length, cardsPerPage]);
+  };
 };

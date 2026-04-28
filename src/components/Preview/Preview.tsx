@@ -2,14 +2,7 @@ import { DragDropProvider, DragDropEventHandlers } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  useContext,
-  useCallback,
-  useRef,
-  useState,
-  useMemo,
-  useEffect,
-} from "react";
+import { useContext, useRef, useState, useEffect, useCallback } from "react";
 
 import { css, cx } from "styled-system/css";
 import { center, grid, hstack, vstack } from "styled-system/patterns";
@@ -41,17 +34,13 @@ const usePagination = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isReferenceCardLoaded, setIsReferenceCardLoaded] = useState(false);
 
-  const currentPageData = useMemo(
-    () =>
-      pages[currentPage - 1] ?? {
-        items: [],
-        pageType: "front" as const,
-        gridColumns: 3,
-      },
-    [pages, currentPage],
-  );
+  const currentPageData = pages[currentPage - 1] ?? {
+    items: [],
+    pageType: "front" as const,
+    gridColumns: 3,
+  };
 
-  const currentCards = useMemo(() => currentPageData.items, [currentPageData]);
+  const currentCards = currentPageData.items;
 
   const changePage = useCallback(
     (page: number) => {
@@ -61,19 +50,19 @@ const usePagination = () => {
     [pages.length],
   );
 
-  const nextPage = useCallback(() => {
+  const nextPage = () => {
     setCurrentPage((old) => Math.min(old + 1, pages.length));
     setIsReferenceCardLoaded(false);
-  }, [pages.length]);
+  };
 
-  const previousPage = useCallback(() => {
+  const previousPage = () => {
     setCurrentPage((old) => Math.max(old - 1, 1));
     setIsReferenceCardLoaded(false);
-  }, []);
+  };
 
-  const onImageLoad = useCallback(() => {
+  const onImageLoad = () => {
     setIsReferenceCardLoaded(true);
-  }, []);
+  };
 
   useEffect(() => {
     if (currentPage > pages.length) {
@@ -154,7 +143,7 @@ const PageGrid = ({ style, children }: PageGridProps) => (
 
 export const Preview = () => {
   const settings = useSettingsStore((s) => s.settings);
-  const cssVars = useMemo(() => computeCssVars(settings), [settings]);
+  const cssVars = computeCssVars(settings);
 
   const {
     images,
@@ -184,13 +173,10 @@ export const Preview = () => {
     onImageLoad,
   } = usePagination();
 
-  const isFirstPage = useMemo(() => currentPage === 1, [currentPage]);
-  const isLastPage = useMemo(
-    () => currentPage === pages.length,
-    [currentPage, pages.length],
-  );
+  const isFirstPage = currentPage === 1;
+  const isLastPage = currentPage === pages.length;
 
-  const pageTransformStyle = useMemo(() => {
+  const pageTransformStyle = (() => {
     // if (isRendering) return undefined;
     const isBack = currentPageData.pageType === "back";
     const offsetX = Number(isBack ? settings.backOffsetX : settings.offsetX);
@@ -202,7 +188,7 @@ export const Preview = () => {
     return {
       transform: `rotate(${rotation}deg) translate(${offsetX}mm, ${offsetY}mm)`,
     };
-  }, [currentPageData.pageType, settings]);
+  })();
 
   // In duplex mode pages alternate front/back, so drag-to-page navigation skips
   // 2 pages to keep the user on the same face type (front→front, back→back).
@@ -215,139 +201,117 @@ export const Preview = () => {
     ? currentPage >= pages.length - 1
     : isLastPage;
 
-  const dragPreviousPage = useCallback(() => {
+  const dragPreviousPage = () => {
     changePage(Math.max(1, currentPage - dragPageStep));
-  }, [changePage, currentPage, dragPageStep]);
+  };
 
-  const dragNextPage = useCallback(() => {
+  const dragNextPage = () => {
     changePage(Math.min(pages.length, currentPage + dragPageStep));
-  }, [changePage, pages.length, currentPage, dragPageStep]);
+  };
 
   const [dragOverlayOffset, setDragOverlayOffset] = useState<{
     x: number;
     y: number;
   } | null>(null);
 
-  const onDragStart: DragDropEventHandlers["onDragStart"] = useCallback(
-    (event) => {
-      const coordinates = event.operation.position.initial;
-      // Get the mouse position relative to the viewport
-      const mouseX = coordinates?.x ?? 0;
-      const mouseY = coordinates?.y ?? 0;
+  const onDragStart: DragDropEventHandlers["onDragStart"] = (event) => {
+    const coordinates = event.operation.position.initial;
+    // Get the mouse position relative to the viewport
+    const mouseX = coordinates?.x ?? 0;
+    const mouseY = coordinates?.y ?? 0;
 
-      // Get the overlay's position in the viewport
-      const overlayRect =
-        event.operation.source?.element?.getBoundingClientRect();
+    // Get the overlay's position in the viewport
+    const overlayRect =
+      event.operation.source?.element?.getBoundingClientRect();
 
-      // Calculate the offset from the overlay's top-left corner to the mouse position
-      // This gives us the relative position within the overlay
-      const relativeX = overlayRect ? mouseX - overlayRect.x : 0;
-      const relativeY = overlayRect ? mouseY - overlayRect.y : 0;
-      setDragOverlayOffset({ x: relativeX, y: relativeY });
-    },
-    [],
-  );
+    // Calculate the offset from the overlay's top-left corner to the mouse position
+    // This gives us the relative position within the overlay
+    const relativeX = overlayRect ? mouseX - overlayRect.x : 0;
+    const relativeY = overlayRect ? mouseY - overlayRect.y : 0;
+    setDragOverlayOffset({ x: relativeX, y: relativeY });
+  };
 
   // Strip `:back`, `:front-empty`, `:back-empty`, `:back-preview` suffixes to get the base slot ID.
-  const toSlotId = useCallback((uuid: string) => uuid.split(":")[0], []);
+  const toSlotId = (uuid: string) => uuid.split(":")[0];
 
-  const onDragEnd: DragDropEventHandlers["onDragEnd"] = useCallback(
-    (event) => {
-      const { source, target } = event.operation;
+  const onDragEnd: DragDropEventHandlers["onDragEnd"] = (event) => {
+    const { source, target } = event.operation;
 
-      if (!source || !target) {
-        return;
-      }
+    if (!source || !target) {
+      return;
+    }
 
-      if (isSortable(source) && getIsSortableCardData(source.data)) {
-        if (getIsSortableCardData(target.data)) {
-          const imagesToMove = source.data.images;
-          const dragTargetId = target.id as string;
+    if (isSortable(source) && getIsSortableCardData(source.data)) {
+      if (getIsSortableCardData(target.data)) {
+        const imagesToMove = source.data.images;
+        const dragTargetId = target.id as string;
 
-          if (imagesToMove.length > 0) {
-            // Use slot IDs so back-face drags work correctly
-            const slotIdsToMove = [
-              ...new Set(imagesToMove.map((img) => toSlotId(img.uuid))),
-            ];
-            const targetSlotId = toSlotId(dragTargetId);
-            const newIndex = sortedSlots.findIndex(
-              (s) => s.id === targetSlotId,
+        if (imagesToMove.length > 0) {
+          // Use slot IDs so back-face drags work correctly
+          const slotIdsToMove = [
+            ...new Set(imagesToMove.map((img) => toSlotId(img.uuid))),
+          ];
+          const targetSlotId = toSlotId(dragTargetId);
+          const newIndex = sortedSlots.findIndex((s) => s.id === targetSlotId);
+          if (newIndex >= 0) {
+            onReorderSlots(slotIdsToMove, newIndex);
+          } else {
+            // Target is a padding slot (slotId=null). Place the card at the
+            // exact visual position, inserting empty gap-filler slots as needed.
+            const pageDat = pages[currentPage - 1];
+            const paddingIdx =
+              pageDat?.items.findIndex((c) => c.image.uuid === dragTargetId) ??
+              -1;
+            if (paddingIdx >= 0 && pageDat) {
+              onMoveSlotToAbsoluteIndex(
+                slotIdsToMove,
+                pageDat.insertBoundary.first + paddingIdx,
+              );
+            }
+          }
+        }
+      } else if (target.type === "page") {
+        // In duplex mode skip 2 pages so the card lands on the same face type.
+        // slotGroup maps a page number to its underlying slot-range index:
+        //   duplex: every 2 pages share one group → floor((page-1)/2)
+        //   others: each page is its own group  → page-1
+        switch (target.id) {
+          case "prev-page": {
+            const targetPage = Math.max(1, currentPage - dragPageStep);
+            const targetBoundary = pages[targetPage - 1]?.insertBoundary;
+            onReorder(
+              source.data.images,
+              targetBoundary?.last ??
+                (Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) + 1) *
+                  cardsPerPage -
+                  1,
             );
-            if (newIndex >= 0) {
-              onReorderSlots(slotIdsToMove, newIndex);
-            } else {
-              // Target is a padding slot (slotId=null). Place the card at the
-              // exact visual position, inserting empty gap-filler slots as needed.
-              const pageDat = pages[currentPage - 1];
-              const paddingIdx = pageDat?.items.findIndex(
-                (c) => c.image.uuid === dragTargetId,
-              ) ?? -1;
-              if (paddingIdx >= 0 && pageDat) {
-                onMoveSlotToAbsoluteIndex(
-                  slotIdsToMove,
-                  pageDat.insertBoundary.first + paddingIdx,
-                );
-              }
-            }
+            changePage(targetPage);
+            break;
           }
-        } else if (target.type === "page") {
-          // In duplex mode skip 2 pages so the card lands on the same face type.
-          // slotGroup maps a page number to its underlying slot-range index:
-          //   duplex: every 2 pages share one group → floor((page-1)/2)
-          //   others: each page is its own group  → page-1
-          switch (target.id) {
-            case "prev-page": {
-              const targetPage = Math.max(1, currentPage - dragPageStep);
-              const targetBoundary = pages[targetPage - 1]?.insertBoundary;
-              onReorder(
-                source.data.images,
-                targetBoundary?.last ??
-                  (Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) + 1) *
-                    cardsPerPage -
-                    1,
-              );
-              changePage(targetPage);
-              break;
-            }
-            case "next-page": {
-              const targetPage = Math.min(
-                pages.length,
-                currentPage + dragPageStep,
-              );
-              const targetBoundary = pages[targetPage - 1]?.insertBoundary;
-              onReorder(
-                source.data.images,
-                targetBoundary?.first ??
-                  Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) *
-                    cardsPerPage,
-              );
-              changePage(targetPage);
-              break;
-            }
+          case "next-page": {
+            const targetPage = Math.min(
+              pages.length,
+              currentPage + dragPageStep,
+            );
+            const targetBoundary = pages[targetPage - 1]?.insertBoundary;
+            onReorder(
+              source.data.images,
+              targetBoundary?.first ??
+                Math.floor((targetPage - 1) / (isDuplex ? 2 : 1)) *
+                  cardsPerPage,
+            );
+            changePage(targetPage);
+            break;
           }
-        }
-
-        if (getIsSelected(source.id as string)) {
-          onSelectAllImages(false);
         }
       }
-    },
-    [
-      onReorder,
-      onReorderSlots,
-      onMoveSlotToAbsoluteIndex,
-      sortedSlots,
-      toSlotId,
-      cardsPerPage,
-      changePage,
-      currentPage,
-      isDuplex,
-      dragPageStep,
-      pages,
-      onSelectAllImages,
-      getIsSelected,
-    ],
-  );
+
+      if (getIsSelected(source.id as string)) {
+        onSelectAllImages(false);
+      }
+    }
+  };
 
   if (images.length === 0 && imagesWithError.length === 0) {
     return (
@@ -460,7 +424,8 @@ export const Preview = () => {
                 "--bleed-edge-width": "var(--bleed-edge, 0mm)",
                 "--image-zoom-width": "var(--image-zoom, 6.2mm)",
                 "--guide-display":
-                  currentPageData.pageType === "back" && !settings.backPagesShowGuides
+                  currentPageData.pageType === "back" &&
+                  !settings.backPagesShowGuides
                     ? "none"
                     : "var(--guides-display, block)",
                 "--guide-border-color": "var(--guides-color, #adff2f)",

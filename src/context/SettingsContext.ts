@@ -139,6 +139,10 @@ export const SettingsSchema = zod
     guidesAtBleedEdge: zod.boolean(),
     extendedGuidesOnly: zod.boolean(),
     backPagesShowGuides: zod.boolean(),
+    guideLength: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater"),
     pageHeight: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
@@ -213,9 +217,24 @@ export const SettingsSchema = zod
       .refine((v) => isFinite(Number(v)), "Must be a valid number"),
   })
   .superRefine((data, ctx) => {
-    const { pageWidth, pageHeight, guidesThickness, bleedEdge } = data;
+    const {
+      pageWidth,
+      pageHeight,
+      guidesThickness,
+      bleedEdge,
+      guideLength,
+      cardWidth,
+    } = data;
     const minPageWidth = getMinSize(data, "pageWidth");
     const minPageHeight = getMinSize(data, "pageHeight");
+
+    if (Number(guideLength) > Number(cardWidth) / 2) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Guide length must be less than or equal to half of card width (${Number(cardWidth) / 2}mm)`,
+        path: ["guideLength"],
+      });
+    }
 
     if (Number(guidesThickness) + Number(bleedEdge) > 3) {
       ctx.addIssue({
@@ -279,4 +298,5 @@ export const DEFAULT_SETTINGS = {
   backOffsetX: "0",
   backOffsetY: "0",
   backPageRotation: "0",
+  guideLength: "0",
 } as const satisfies Settings;

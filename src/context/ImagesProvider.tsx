@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { ComponentProps, useCallback, useMemo, useState } from "react";
+import { ComponentProps, useState } from "react";
 
 import { getQueryDataForImage } from "~/queries/images";
 import { useSettingsStore } from "~/store/settingsStore";
@@ -49,10 +49,10 @@ export const ImagesProvider = (
   );
   const [isRendering, setIsRendering] = useState(false);
 
-  const sortedSlots = useMemo(() => getSortedSlots(slots), [slots]);
-  const images = useMemo(() => getFronts(slots), [slots]);
+  const sortedSlots = getSortedSlots(slots);
+  const images = getFronts(slots);
 
-  const onError = useCallback((image: DownloadableImage) => {
+  const onError = (image: DownloadableImage) => {
     const uuid = image.uuid;
     setSlots((old) => {
       const next = getSortedSlots(old)
@@ -68,207 +68,176 @@ export const ImagesProvider = (
 
       return old.concat(image);
     });
-  }, []);
+  };
 
-  const onClearErrors = useCallback(() => {
+  const onClearErrors = () => {
     setImagesWithError([]);
-  }, []);
+  };
 
-  const onRemove = useCallback(
-    (uuid: string) => {
-      googleDownloadManager.remove(uuid);
-      scryfallDownloadManager.remove(uuid);
-      localDownloadManager.remove(uuid);
+  const onRemove = (uuid: string) => {
+    googleDownloadManager.remove(uuid);
+    scryfallDownloadManager.remove(uuid);
+    localDownloadManager.remove(uuid);
+    setSlots((old) => {
+      const next = getSortedSlots(old)
+        .filter((slot) => slot.id !== uuid)
+        .map((slot, index) => ({ ...slot, position: index }));
+      return toSlotMap(next);
+    });
+  };
+
+  const onClear = (uuids?: string[]) => {
+    if (uuids) {
       setSlots((old) => {
+        const toRemove = new Set(uuids);
         const next = getSortedSlots(old)
-          .filter((slot) => slot.id !== uuid)
+          .filter((slot) => !toRemove.has(slot.id))
           .map((slot, index) => ({ ...slot, position: index }));
         return toSlotMap(next);
       });
-    },
-    [googleDownloadManager, scryfallDownloadManager, localDownloadManager],
-  );
+      for (const uuid of uuids) {
+        googleDownloadManager.remove(uuid);
+        scryfallDownloadManager.remove(uuid);
+        localDownloadManager.remove(uuid);
+      }
+    } else {
+      googleDownloadManager.removeAll();
+      scryfallDownloadManager.removeAll();
+      localDownloadManager.removeAll();
+      onClearErrors();
+      setSlots(new Map());
+    }
+  };
 
-  const onClear = useCallback(
-    (uuids?: string[]) => {
-      if (uuids) {
-        setSlots((old) => {
-          const toRemove = new Set(uuids);
-          const next = getSortedSlots(old)
-            .filter((slot) => !toRemove.has(slot.id))
-            .map((slot, index) => ({ ...slot, position: index }));
-          return toSlotMap(next);
-        });
-        for (const uuid of uuids) {
-          googleDownloadManager.remove(uuid);
-          scryfallDownloadManager.remove(uuid);
-          localDownloadManager.remove(uuid);
-        }
+  const downloadImage = async (image: DownloadableImage) => {
+    const isGoogleImage = getIsGoogleImage(image);
+    const queryData = getQueryDataForImage(image, settings);
+    try {
+      if (isGoogleImage) {
+        await googleDownloadManager.add({ uuid: image.uuid, queryData });
       } else {
-        googleDownloadManager.removeAll();
-        scryfallDownloadManager.removeAll();
-        localDownloadManager.removeAll();
-        onClearErrors();
-        setSlots(new Map());
+        await scryfallDownloadManager.add({ uuid: image.uuid, queryData });
       }
-    },
-    [
-      googleDownloadManager,
-      scryfallDownloadManager,
-      localDownloadManager,
-      onClearErrors,
-    ],
-  );
+    } catch {
+      onError(image);
+    }
+  };
 
-  const downloadImage = useCallback(
-    async (image: DownloadableImage) => {
-      const isGoogleImage = getIsGoogleImage(image);
-      const queryData = getQueryDataForImage(image, settings);
-      try {
-        if (isGoogleImage) {
-          await googleDownloadManager.add({ uuid: image.uuid, queryData });
-        } else {
-          await scryfallDownloadManager.add({ uuid: image.uuid, queryData });
-        }
-      } catch {
-        onError(image);
+  const loadLocalImage = async (image: LocalImage) => {
+    const queryData = getQueryDataForImage(image, settings);
+    await localDownloadManager.add({
+      uuid: image.uuid,
+      queryData,
+    });
+  };
+
+  const onAddSlots = (data: SlotInputData[], index?: number) => {
+    // Pre-generate all slot objects (pure, no side effects).
+    const newSlots: CardSlot[] = data.map((item) => {
+      const slotId = nanoid();
+      const front = item.front
+        ? ({ ...item.front, uuid: slotId } as Image)
+        : null;
+      const back = item.back
+        ? ({ ...item.back, uuid: `${slotId}:back` } as Image)
+        : null;
+      return { id: slotId, front, back, position: 0 } satisfies CardSlot;
+    });
+
+    // Trigger all downloads OUTSIDE the state updater. React may invoke state
+    // updater functions more than once (StrictMode / Concurrent features), so
+    // side effects must never live inside them.
+    const currentCardBack = useSettingsStore.getState().defaultCardBack;
+    if (currentCardBack && newSlots.length > 0) {
+      const cbImage = {
+        ...currentCardBack,
+        uuid: "default-card-back",
+      } as Image;
+      if (getIsLocalImage(cbImage)) void loadLocalImage(cbImage as LocalImage);
+      else void downloadImage(cbImage as DownloadableImage);
+    }
+    for (const slot of newSlots) {
+      if (slot.front) {
+        if ("file" in slot.front) void loadLocalImage(slot.front as LocalImage);
+        else void downloadImage(slot.front as DownloadableImage);
       }
-    },
-    [googleDownloadManager, scryfallDownloadManager, onError, settings],
-  );
-
-  const loadLocalImage = useCallback(
-    async (image: LocalImage) => {
-      const queryData = getQueryDataForImage(image, settings);
-      await localDownloadManager.add({
-        uuid: image.uuid,
-        queryData,
-      });
-    },
-    [localDownloadManager, settings],
-  );
-
-  const onAddSlots = useCallback(
-    (data: SlotInputData[], index?: number) => {
-      // Pre-generate all slot objects (pure, no side effects).
-      const newSlots: CardSlot[] = data.map((item) => {
-        const slotId = nanoid();
-        const front = item.front
-          ? ({ ...item.front, uuid: slotId } as Image)
-          : null;
-        const back = item.back
-          ? ({ ...item.back, uuid: `${slotId}:back` } as Image)
-          : null;
-        return { id: slotId, front, back, position: 0 } satisfies CardSlot;
-      });
-
-      // Trigger all downloads OUTSIDE the state updater. React may invoke state
-      // updater functions more than once (StrictMode / Concurrent features), so
-      // side effects must never live inside them.
-      const currentCardBack = useSettingsStore.getState().defaultCardBack;
-      if (currentCardBack && newSlots.length > 0) {
-        const cbImage = {
-          ...currentCardBack,
-          uuid: "default-card-back",
-        } as Image;
-        if (getIsLocalImage(cbImage))
-          void loadLocalImage(cbImage as LocalImage);
-        else void downloadImage(cbImage as DownloadableImage);
+      if (slot.back) {
+        if ("file" in slot.back) void loadLocalImage(slot.back as LocalImage);
+        else void downloadImage(slot.back as DownloadableImage);
       }
-      for (const slot of newSlots) {
-        if (slot.front) {
-          if ("file" in slot.front)
-            void loadLocalImage(slot.front as LocalImage);
-          else void downloadImage(slot.front as DownloadableImage);
-        }
-        if (slot.back) {
-          if ("file" in slot.back) void loadLocalImage(slot.back as LocalImage);
-          else void downloadImage(slot.back as DownloadableImage);
-        }
+    }
+
+    // Pure state update — no side effects.
+    setSlots((old) => {
+      const oldSlots = getSortedSlots(old);
+      if (index === undefined) {
+        return toSlotMap(normalizeSlots(oldSlots.concat(newSlots)));
       }
+      const insertAt = Math.max(0, Math.min(index, oldSlots.length));
+      const updated = oldSlots.toSpliced(insertAt, 0, ...newSlots);
+      return toSlotMap(normalizeSlots(updated));
+    });
+  };
 
-      // Pure state update — no side effects.
-      setSlots((old) => {
-        const oldSlots = getSortedSlots(old);
-        if (index === undefined) {
-          return toSlotMap(normalizeSlots(oldSlots.concat(newSlots)));
-        }
-        const insertAt = Math.max(0, Math.min(index, oldSlots.length));
-        const updated = oldSlots.toSpliced(insertAt, 0, ...newSlots);
-        return toSlotMap(normalizeSlots(updated));
-      });
-    },
-    [loadLocalImage, downloadImage],
-  );
+  const onAdd = (
+    data: (LocalImageData | GoogleImageData | ScryfallImageData)[],
+    index?: number,
+  ) => {
+    onAddSlots(
+      data.map((item) => ({
+        front: item,
+        back: null,
+      })),
+      index,
+    );
+  };
 
-  const onAdd = useCallback(
-    (
-      data: (LocalImageData | GoogleImageData | ScryfallImageData)[],
-      index?: number,
-    ) => {
-      onAddSlots(
-        data.map((item) => ({
-          front: item,
-          back: null,
-        })),
-        index,
-      );
-    },
-    [onAddSlots],
-  );
+  const onAddBack = (
+    slotId: string,
+    data: LocalImageData | GoogleImageData | ScryfallImageData,
+  ) => {
+    // Trigger the download outside the state updater to avoid side effects
+    // inside a potentially re-invoked updater function.
+    const backUuid = `${slotId}:back`;
+    const back: Image = { ...data, uuid: backUuid };
+    if ("file" in back) {
+      void loadLocalImage(back);
+    } else {
+      void downloadImage(back);
+    }
 
-  const onAddBack = useCallback(
-    (
-      slotId: string,
-      data: LocalImageData | GoogleImageData | ScryfallImageData,
-    ) => {
-      // Trigger the download outside the state updater to avoid side effects
-      // inside a potentially re-invoked updater function.
-      const backUuid = `${slotId}:back`;
-      const back: Image = { ...data, uuid: backUuid };
-      if ("file" in back) {
-        void loadLocalImage(back);
-      } else {
-        void downloadImage(back);
+    setSlots((old) => {
+      const currentSlot = old.get(slotId);
+      if (!currentSlot) {
+        return old;
+      }
+      const next = new Map(old);
+      next.set(slotId, { ...currentSlot, back });
+      return next;
+    });
+  };
+
+  const onRemoveBack = (slotId: string) => {
+    setSlots((old) => {
+      const currentSlot = old.get(slotId);
+      if (!currentSlot?.back) {
+        return old;
       }
 
-      setSlots((old) => {
-        const currentSlot = old.get(slotId);
-        if (!currentSlot) {
-          return old;
-        }
-        const next = new Map(old);
-        next.set(slotId, { ...currentSlot, back });
-        return next;
+      googleDownloadManager.remove(currentSlot.back.uuid);
+      scryfallDownloadManager.remove(currentSlot.back.uuid);
+      localDownloadManager.remove(currentSlot.back.uuid);
+
+      const next = new Map(old);
+      next.set(slotId, {
+        ...currentSlot,
+        back: null,
       });
-    },
-    [loadLocalImage, downloadImage],
-  );
+      return next;
+    });
+  };
 
-  const onRemoveBack = useCallback(
-    (slotId: string) => {
-      setSlots((old) => {
-        const currentSlot = old.get(slotId);
-        if (!currentSlot?.back) {
-          return old;
-        }
-
-        googleDownloadManager.remove(currentSlot.back.uuid);
-        scryfallDownloadManager.remove(currentSlot.back.uuid);
-        localDownloadManager.remove(currentSlot.back.uuid);
-
-        const next = new Map(old);
-        next.set(slotId, {
-          ...currentSlot,
-          back: null,
-        });
-        return next;
-      });
-    },
-    [googleDownloadManager, scryfallDownloadManager, localDownloadManager],
-  );
-
-  const onInsertEmptySlot = useCallback((position: number) => {
+  const onInsertEmptySlot = (position: number) => {
     setSlots((old) => {
       const oldSlots = getSortedSlots(old);
       const newSlot: CardSlot = {
@@ -282,115 +251,87 @@ export const ImagesProvider = (
       const updated = oldSlots.toSpliced(insertAt, 0, newSlot);
       return toSlotMap(normalizeSlots(updated));
     });
-  }, []);
+  };
 
-  const onReorderSlots = useCallback(
-    (slotIds: string[], newPosition: number) => {
-      setSlots((old) => {
-        const sorted = getSortedSlots(old);
-        const idsToMove = new Set(slotIds);
-        const moved = sorted.filter((slot) => idsToMove.has(slot.id));
+  const onReorderSlots = (slotIds: string[], newPosition: number) => {
+    setSlots((old) => {
+      const sorted = getSortedSlots(old);
+      const idsToMove = new Set(slotIds);
+      const moved = sorted.filter((slot) => idsToMove.has(slot.id));
 
-        if (
-          moved.length === 0 ||
-          newPosition < 0 ||
-          newPosition >= sorted.length
-        ) {
-          return old;
-        }
+      if (
+        moved.length === 0 ||
+        newPosition < 0 ||
+        newPosition >= sorted.length
+      ) {
+        return old;
+      }
 
-        const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
-        const insertAt = Math.max(0, Math.min(newPosition, remaining.length));
-        const updated = remaining.toSpliced(insertAt, 0, ...moved);
-        return toSlotMap(normalizeSlots(updated));
-      });
-    },
-    [],
-  );
+      const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
+      const insertAt = Math.max(0, Math.min(newPosition, remaining.length));
+      const updated = remaining.toSpliced(insertAt, 0, ...moved);
+      return toSlotMap(normalizeSlots(updated));
+    });
+  };
 
-  const onReorder = useCallback(
-    (imagesToMove: Image[], newIndex: number) => {
-      onReorderSlots(
-        imagesToMove.map((image) => image.uuid),
-        newIndex,
-      );
-    },
-    [onReorderSlots],
-  );
+  const onReorder = (imagesToMove: Image[], newIndex: number) => {
+    onReorderSlots(
+      imagesToMove.map((image) => image.uuid),
+      newIndex,
+    );
+  };
 
-  const onMoveSlotToAbsoluteIndex = useCallback(
-    (slotIds: string[], targetAbsoluteIndex: number) => {
-      setSlots((old) => {
-        const sorted = getSortedSlots(old);
-        const idsToMove = new Set(slotIds);
-        const moved = sorted.filter((slot) => idsToMove.has(slot.id));
+  const onMoveSlotToAbsoluteIndex = (
+    slotIds: string[],
+    targetAbsoluteIndex: number,
+  ) => {
+    setSlots((old) => {
+      const sorted = getSortedSlots(old);
+      const idsToMove = new Set(slotIds);
+      const moved = sorted.filter((slot) => idsToMove.has(slot.id));
 
-        if (moved.length === 0 || targetAbsoluteIndex < 0) return old;
+      if (moved.length === 0 || targetAbsoluteIndex < 0) return old;
 
-        const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
-        // How many empty filler slots we need to insert before the moved slots
-        const gapCount = Math.max(0, targetAbsoluteIndex - remaining.length);
-        const insertAt = targetAbsoluteIndex - gapCount;
-        const emptySlots: CardSlot[] = Array.from({ length: gapCount }, () => ({
-          id: nanoid(),
-          front: null,
-          back: null,
-          position: 0,
-        }));
-        const updated = [
-          ...remaining.slice(0, insertAt),
-          ...emptySlots,
-          ...moved,
-          ...remaining.slice(insertAt),
-        ];
-        return toSlotMap(normalizeSlots(updated));
-      });
-    },
-    [],
-  );
+      const remaining = sorted.filter((slot) => !idsToMove.has(slot.id));
+      // How many empty filler slots we need to insert before the moved slots
+      const gapCount = Math.max(0, targetAbsoluteIndex - remaining.length);
+      const insertAt = targetAbsoluteIndex - gapCount;
+      const emptySlots: CardSlot[] = Array.from({ length: gapCount }, () => ({
+        id: nanoid(),
+        front: null,
+        back: null,
+        position: 0,
+      }));
+      const updated = [
+        ...remaining.slice(0, insertAt),
+        ...emptySlots,
+        ...moved,
+        ...remaining.slice(insertAt),
+      ];
+      return toSlotMap(normalizeSlots(updated));
+    });
+  };
 
-  const contextValue = useMemo(
-    () => ({
-      slots,
-      sortedSlots,
-      images,
-      imagesWithError,
-      onClear,
-      onRemove,
-      onAdd,
-      onAddSlots,
-      onAddBack,
-      onRemoveBack,
-      onInsertEmptySlot,
-      onError,
-      onClearErrors,
-      isRendering,
-      setIsRendering,
-      onReorderSlots,
-      onReorder,
-      onMoveSlotToAbsoluteIndex,
-    }),
-    [
-      slots,
-      sortedSlots,
-      images,
-      imagesWithError,
-      onClear,
-      onRemove,
-      onAdd,
-      onAddSlots,
-      onAddBack,
-      onRemoveBack,
-      onInsertEmptySlot,
-      onError,
-      onClearErrors,
-      isRendering,
-      setIsRendering,
-      onReorderSlots,
-      onReorder,
-      onMoveSlotToAbsoluteIndex,
-    ],
-  );
+  const contextValue = {
+    slots,
+    sortedSlots,
+    images,
+    imagesWithError,
+    onClear,
+    onRemove,
+    onAdd,
+    onAddSlots,
+    onAddBack,
+    onRemoveBack,
+    onInsertEmptySlot,
+    onError,
+    onClearErrors,
+    isRendering,
+    setIsRendering,
+    onReorderSlots,
+    onReorder,
+    onMoveSlotToAbsoluteIndex,
+  };
 
   return <ImagesContext.Provider {...props} value={contextValue} />;
 };

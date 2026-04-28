@@ -41,6 +41,7 @@ const GUIDES_DEFAULT: NonNullable<CardData["guides"]> = {
   invertedGuideColor: "#ffffff",
   unit: "mm",
   guidesThickness: 0.5, // raw mm
+  guideLength: 0,
   guidesAtBleedEdge: false,
   extendedGuidesOnly: false,
 };
@@ -504,6 +505,7 @@ describe("snapshot", () => {
           invertedGuideColor: "#ffff7f",
           unit: "mm",
           guidesThickness: 0.5,
+          guideLength: 0,
           guidesAtBleedEdge: false,
           extendedGuidesOnly: false,
         },

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 export type UpscaleQueueItem = {
   id: string;
@@ -24,14 +24,11 @@ export function useUpscaleQueueManager() {
   const upscaleWorkerRef = useRef<((src: Blob) => Promise<Blob>) | null>(null);
 
   // Set the upscale worker function
-  const setUpscaleWorker = useCallback(
-    (upscaleWorker: (src: Blob) => Promise<Blob>) => {
-      upscaleWorkerRef.current = upscaleWorker;
-    },
-    [],
-  );
+  const setUpscaleWorker = (upscaleWorker: (src: Blob) => Promise<Blob>) => {
+    upscaleWorkerRef.current = upscaleWorker;
+  };
 
-  const updateStatus = useCallback(() => {
+  const updateStatus = () => {
     setStatus({
       isProcessing: processingRef.current,
       queueLength: queueRef.current.length,
@@ -40,9 +37,9 @@ export function useUpscaleQueueManager() {
           ? queueRef.current[0].id
           : null,
     });
-  }, []);
+  };
 
-  const processQueue = useCallback(async () => {
+  const processQueue = async () => {
     // Prevent multiple concurrent processing
     if (
       processingRef.current ||
@@ -86,43 +83,37 @@ export function useUpscaleQueueManager() {
       processingRef.current = false;
       updateStatus();
     }
-  }, [updateStatus]);
+  };
 
-  const addToQueue = useCallback(
-    (id: string, src: Blob): Promise<Blob> => {
-      return new Promise<Blob>((resolve, reject) => {
-        const item: UpscaleQueueItem = {
-          id,
-          src,
-          resolve,
-          reject,
-        };
+  const addToQueue = (id: string, src: Blob): Promise<Blob> => {
+    return new Promise<Blob>((resolve, reject) => {
+      const item: UpscaleQueueItem = {
+        id,
+        src,
+        resolve,
+        reject,
+      };
 
-        queueRef.current.push(item);
-        updateStatus();
+      queueRef.current.push(item);
+      updateStatus();
 
-        // Start processing if not already processing
-        if (!processingRef.current) {
-          void processQueue();
-        }
-      });
-    },
-    [processQueue, updateStatus],
-  );
-
-  const removeFromQueue = useCallback(
-    (id: string) => {
-      const initialLength = queueRef.current.length;
-      queueRef.current = queueRef.current.filter((item) => item.id !== id);
-
-      if (queueRef.current.length !== initialLength) {
-        updateStatus();
+      // Start processing if not already processing
+      if (!processingRef.current) {
+        void processQueue();
       }
-    },
-    [updateStatus],
-  );
+    });
+  };
 
-  const clearQueue = useCallback(() => {
+  const removeFromQueue = (id: string) => {
+    const initialLength = queueRef.current.length;
+    queueRef.current = queueRef.current.filter((item) => item.id !== id);
+
+    if (queueRef.current.length !== initialLength) {
+      updateStatus();
+    }
+  };
+
+  const clearQueue = () => {
     // Reject all pending items
     queueRef.current.forEach((item) => {
       item.reject(new Error("Queue cleared"));
@@ -130,11 +121,11 @@ export function useUpscaleQueueManager() {
 
     queueRef.current = [];
     updateStatus();
-  }, [updateStatus]);
+  };
 
-  const getQueuePosition = useCallback((id: string): number => {
+  const getQueuePosition = (id: string): number => {
     return queueRef.current.findIndex((item) => item.id === id);
-  }, []);
+  };
 
   return {
     addToQueue,
