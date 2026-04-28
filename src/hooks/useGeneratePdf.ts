@@ -95,6 +95,7 @@ export const useGeneratePdf = (
       const unit = settings.unit;
       const guidesThickness = guideBorderWidth;
       const guidesAtBleedEdge = settings.guidesAtBleedEdge;
+      const guideLength = Number(settings.guideLength);
       const pdfName = `${settings.filename}.pdf`;
       const extendedGuidesOnly = settings.extendedGuidesOnly;
       const backPagesShowGuides = settings.backPagesShowGuides;
@@ -311,6 +312,7 @@ export const useGeneratePdf = (
                 guidesThickness,
                 guidesAtBleedEdge,
                 extendedGuidesOnly,
+                guideLength,
               }
             : null,
         };

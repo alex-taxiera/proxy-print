@@ -54,6 +54,8 @@ export type CardData = {
     guidesThickness: number;
     guidesAtBleedEdge: boolean;
     extendedGuidesOnly: boolean;
+    /** Custom guide arm length in mm; 0 means derive from bleed edge */
+    guideLength: number;
   } | null;
 };
 

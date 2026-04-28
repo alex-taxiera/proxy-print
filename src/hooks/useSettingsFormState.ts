@@ -5,7 +5,6 @@ import {
   ColorPickerValueChangeDetails,
 } from "@ark-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 
 import {
   Settings,
@@ -118,33 +117,15 @@ const calculatePageDimensions = (value: string, unit: Settings["unit"]) => {
 };
 
 export const useSettingsFormState = () => {
-  const settings = useSettingsStore((s) => s.settings);
-  const setSettings = useSettingsStore((s) => s.setSettings);
-  const hasHydrated = useSettingsStore((s) => s._hasHydrated);
-
-  const [formState, setFormState] = useState<Settings>(settings);
-
-  // When the store hydrates from IDB, sync formState to the persisted settings.
-  useEffect(() => {
-    if (hasHydrated) {
-      setFormState(settings);
-    }
-    // Only run when hydration completes; subsequent settings changes are
-    // driven through handle() which updates formState directly.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasHydrated]);
-
-  // Keep formState in sync for settings changed outside the form (e.g. printMode toggle).
-  useEffect(() => {
-    setFormState((prev) => ({ ...prev, printMode: settings.printMode }));
-  }, [settings.printMode]);
+  const formState = useSettingsStore((s) => s.formState);
+  const setFormState = useSettingsStore((s) => s.setFormState);
 
   const handleBleedEdgeForCardSizeChange =
     useHandleBleedEdgeForCardSizeChange();
 
   const formErrors = (() => {
     const { error } = SettingsSchema.safeParse(formState);
-    const keys = Object.keys(settings) as Array<keyof Settings>;
+    const keys = Object.keys(DEFAULT_SETTINGS) as Array<keyof Settings>;
 
     return keys.reduce(
       (errorMap, key) => ({
@@ -191,33 +172,6 @@ export const useSettingsFormState = () => {
     }
 
     setFormState(nextState);
-    setSettings((old) => {
-      const updatedSettings = {
-        ...old,
-        ...nextState,
-      };
-
-      const { data, success, error } =
-        SettingsSchema.safeParse(updatedSettings);
-      if (success) {
-        return data;
-      } else {
-        // Return an object with keys that don't have errors, mixed on top of formState
-        const validKeys = Object.keys(updatedSettings).filter(
-          (key) => !error.issues?.some((issue) => issue.path.includes(key)),
-        );
-
-        const validSettings = validKeys.reduce(
-          (acc, key) => {
-            acc[key as keyof Settings] = updatedSettings[key as keyof Settings];
-            return acc;
-          },
-          {} as Record<string, string | boolean>,
-        );
-
-        return { ...old, ...validSettings };
-      }
-    });
   };
 
   const buildTextInputChangeHandler =

@@ -100,6 +100,7 @@ const DefaultCardBackSection = () => {
           </span>
           <IconButton
             size="xs"
+            type="button"
             variant="ghost"
             colorPalette="gray"
             aria-label="Remove default card back"
@@ -221,6 +222,8 @@ export const SettingsForm = () => {
     Math.round((MAX_BLEED - Number(formState.bleedEdge)) * 10000) / 10000,
   );
   const maxBleedEdge = MAX_BLEED - Number(formState.guidesThickness);
+
+  const maxGuideLength = Number(formState.cardWidth) / 2;
 
   return (
     <Tabs.Root asChild defaultValue="basic">
@@ -843,6 +846,20 @@ export const SettingsForm = () => {
               Rotation (°)
             </NumberInput>
             {formErrors.backPageRotation.map((issue, i) => (
+              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
+            ))}
+          </Field.Root>
+          <Field.Root invalid={formErrors.guideLength.length > 0}>
+            <NumberInput
+              min={0}
+              max={maxGuideLength}
+              step={0.5}
+              value={formState.guideLength}
+              onValueChange={buildNumberInputChangeHandler("guideLength")}
+            >
+              Guide Length (mm, 0 = auto)
+            </NumberInput>
+            {formErrors.guideLength.map((issue, i) => (
               <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
             ))}
           </Field.Root>

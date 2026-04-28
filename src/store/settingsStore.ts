@@ -56,6 +56,12 @@ export function computeCssVars(value: Settings): Record<string, string> {
   const enableBleedEdge = true; // value.enableBleedEdge
   const guideThickness = enableBleedEdge ? Number(value.guidesThickness) : 1;
   const imageContainerBuffer = enableBleedEdge ? guideThickness : 0;
+  const guideLengthMm =
+    Number(value.guideLength) > 0
+      ? Number(value.guideLength)
+      : enableBleedEdge
+        ? Number(value.bleedEdge)
+        : 0;
 
   return {
     "--page-unit": value.unit,
@@ -68,6 +74,7 @@ export function computeCssVars(value: Settings): Record<string, string> {
     "--guides-thickness": `${guideThickness}mm`,
     "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
     "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
+    "--guide-length": guideLengthMm > 0 ? `${guideLengthMm}mm` : "initial",
     "--image-container-buffer": `${imageContainerBuffer}mm`,
     "--image-zoom": enableBleedEdge ? "6.2mm" : "0mm",
     "--card-width": `${value.cardWidth}mm`,
@@ -83,6 +90,7 @@ export function computeCssVars(value: Settings): Record<string, string> {
 
 export interface SettingsStoreState {
   settings: Settings;
+  formState: Settings;
   basePdfBytes: Uint8Array | null;
   basePdfName: string | null;
   basePdfPageCount: number | null;
@@ -92,6 +100,7 @@ export interface SettingsStoreState {
 
 export interface SettingsStoreActions {
   setSettings: (updater: (old: Settings) => Settings) => void;
+  setFormState: (next: Settings) => void;
   setBasePdf: (
     data: { bytes: Uint8Array; name: string; pageCount: number } | null,
   ) => void;
@@ -140,18 +149,50 @@ function loadInitialSettings(): Settings {
 // Zustand store
 // ---------------------------------------------------------------------------
 
+const applyValidKeysToSettings = (
+  current: Settings,
+  next: Settings,
+): Settings => {
+  const updatedSettings = { ...current, ...next };
+  const { data, success, error } = SettingsSchema.safeParse(updatedSettings);
+  if (success) {
+    return data;
+  }
+  const validKeys = Object.keys(updatedSettings).filter(
+    (key) => !error.issues?.some((issue) => issue.path.includes(key)),
+  );
+  return {
+    ...current,
+    ...Object.fromEntries(
+      validKeys.map((key) => [key, updatedSettings[key as keyof Settings]]),
+    ),
+  } as Settings;
+};
+
 export const useSettingsStore = create<SettingsStore>()(
   persist(
-    (set) => ({
-      settings: loadInitialSettings(),
-      basePdfBytes: null,
-      basePdfName: null,
-      basePdfPageCount: null,
-      defaultCardBack: null,
-      _hasHydrated: false,
+    (set) => {
+      const initialSettings = loadInitialSettings();
+      return {
+        settings: initialSettings,
+        formState: initialSettings,
+        basePdfBytes: null,
+        basePdfName: null,
+        basePdfPageCount: null,
+        defaultCardBack: null,
+        _hasHydrated: false,
 
-      setSettings: (updater) =>
-        set((state) => ({ settings: updater(state.settings) })),
+        setSettings: (updater) =>
+          set((state) => {
+            const newSettings = updater(state.settings);
+            return { settings: newSettings, formState: newSettings };
+          }),
+
+        setFormState: (next) =>
+          set((state) => ({
+            formState: next,
+            settings: applyValidKeysToSettings(state.settings, next),
+          })),
 
       setBasePdf: (data) => {
         if (data === null) {
@@ -174,10 +215,11 @@ export const useSettingsStore = create<SettingsStore>()(
       },
 
       setHasHydrated: (value) => set({ _hasHydrated: value }),
-    }),
+      };
+    },
     {
       name: "proxy-print-settings",
-      version: 3,
+      version: 4,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
@@ -186,20 +228,8 @@ export const useSettingsStore = create<SettingsStore>()(
 
         const state = persistedState as Partial<SettingsStore>;
 
-        if (version < 2) {
-          return {
-            ...state,
-            settings: {
-              ...DEFAULT_SETTINGS,
-              ...state.settings,
-            },
-            defaultCardBack: null,
-          } as SettingsStore;
-        }
 
-        if (version < 3) {
-          // Merge DEFAULT_SETTINGS so any newly-added fields get their defaults
-          // when loading persisted state that predates them.
+        if (version < 4) {
           return {
             ...state,
             settings: {
@@ -221,6 +251,10 @@ export const useSettingsStore = create<SettingsStore>()(
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
+        // Sync formState to the persisted settings now that they've loaded.
+        if (state) {
+          state.setFormState(state.settings);
+        }
       },
     },
   ),
