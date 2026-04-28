@@ -161,8 +161,8 @@ export function buildCardRenderOps(
         : null;
     const crosshairSizePageUnits = guides.extendedGuidesOnly
       ? 0
-      : ((customGuideLengthPageUnits ?? bleedEdgeWidthPageUnits) ||
-          (guides.unit === "in" ? 1 / 25.4 : 1));
+      : (customGuideLengthPageUnits ?? bleedEdgeWidthPageUnits) ||
+        (guides.unit === "in" ? 1 / 25.4 : 1);
 
     const bleedPts = toPts(bleedEdgeWidthPageUnits);
     const crosshairPts = toPts(crosshairSizePageUnits);

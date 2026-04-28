@@ -194,27 +194,27 @@ export const useSettingsStore = create<SettingsStore>()(
             settings: applyValidKeysToSettings(state.settings, next),
           })),
 
-      setBasePdf: (data) => {
-        if (data === null) {
-          set({
-            basePdfBytes: null,
-            basePdfName: null,
-            basePdfPageCount: null,
-          });
-        } else {
-          set({
-            basePdfBytes: data.bytes,
-            basePdfName: data.name,
-            basePdfPageCount: data.pageCount,
-          });
-        }
-      },
+        setBasePdf: (data) => {
+          if (data === null) {
+            set({
+              basePdfBytes: null,
+              basePdfName: null,
+              basePdfPageCount: null,
+            });
+          } else {
+            set({
+              basePdfBytes: data.bytes,
+              basePdfName: data.name,
+              basePdfPageCount: data.pageCount,
+            });
+          }
+        },
 
-      setDefaultCardBack: (data) => {
-        set({ defaultCardBack: data });
-      },
+        setDefaultCardBack: (data) => {
+          set({ defaultCardBack: data });
+        },
 
-      setHasHydrated: (value) => set({ _hasHydrated: value }),
+        setHasHydrated: (value) => set({ _hasHydrated: value }),
       };
     },
     {
@@ -227,7 +227,6 @@ export const useSettingsStore = create<SettingsStore>()(
         }
 
         const state = persistedState as Partial<SettingsStore>;
-
 
         if (version < 4) {
           return {

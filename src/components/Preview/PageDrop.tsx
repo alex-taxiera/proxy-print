@@ -40,12 +40,15 @@ export const PageDrop = ({
     collisionDetector: pointerIntersection,
   });
 
-  const setHoverTimeout = useCallback((timeout?: number) => {
-    hoverTimerRef.current = setTimeout(() => {
-      onHoverTimeout?.();
-      setHoverTimeout(hoverTimeoutMs * 4);
-    }, timeout ?? hoverTimeoutMs);
-  }, [onHoverTimeout, hoverTimeoutMs]);
+  const setHoverTimeout = useCallback(
+    (timeout?: number) => {
+      hoverTimerRef.current = setTimeout(() => {
+        onHoverTimeout?.();
+        setHoverTimeout(hoverTimeoutMs * 4);
+      }, timeout ?? hoverTimeoutMs);
+    },
+    [onHoverTimeout, hoverTimeoutMs],
+  );
 
   // Handle hover timeout logic
   const handleHoverStart = useCallback(() => {
