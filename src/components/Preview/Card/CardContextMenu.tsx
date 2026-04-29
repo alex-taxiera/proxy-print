@@ -3,9 +3,12 @@ import {
   faArrowLeft,
   faArrowRight,
   faCheck,
+  faCompress,
   faEllipsisV,
   faExpand,
   faImagePortrait,
+  faMagnifyingGlassMinus,
+  faMagnifyingGlassPlus,
   faPlus,
   faTrash,
   faUndo,
@@ -20,6 +23,7 @@ import { Menu } from "~/components/ui/menu";
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { getIsLocalImage, Image, ImagesContext } from "~/context/ImagesContext";
 import { usePreviewData } from "~/hooks/usePreviewData";
+import { useUpscaleImage } from "~/hooks/useUpscaleImage";
 import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
 import { useSettingsStore } from "~/store/settingsStore";
 import { addBleedEdge } from "~/utils/add-bleed";
@@ -61,6 +65,8 @@ export const CardContextMenu = ({
   const settings = useSettingsStore((s) => s.settings);
   const backInputRef = useRef<HTMLInputElement>(null);
 
+  const { upscaleImage } = useUpscaleImage();
+
   const isBackFace = face === "back";
 
   const absoluteIndex = images.findIndex((img) => img.uuid === image.uuid);
@@ -75,57 +81,114 @@ export const CardContextMenu = ({
     onRemove(image.uuid);
   };
 
-  const canAddBleed = (() => {
-    if (!queryData) return false;
-    if ("original" in queryData) {
-      return queryData.data.size === queryData.original.size;
+  const hasOriginalData = queryData && "original" in queryData;
+
+  const canAddBleed = hasOriginalData ? !queryData.hasBleed : false;
+  const canRemoveBleed = hasOriginalData ? queryData.hasBleed : false;
+  const canUpscale = hasOriginalData ? !queryData.isUpscaled : false;
+  const canRemoveUpscale = hasOriginalData ? queryData.isUpscaled : false;
+  const canRevertToOriginal = hasOriginalData
+    ? queryData.isUpscaled || queryData.hasBleed
+    : false;
+
+  const setProcessing = (processing: boolean) => {
+    if (queryData && "original" in queryData) {
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        () => ({ ...queryData, isProcessing: processing }),
+      );
     }
-    return false;
-  })();
+  };
 
   const onAddBleedClick = async () => {
-    if (queryData && "original" in queryData) {
+    if (queryData && "original" in queryData && !queryData.hasBleed) {
+      setProcessing(true);
+      const base = queryData.upscaledOriginal ?? queryData.original;
       const data = await addBleedEdge(
-        queryData.original,
+        base,
         queryData.mimeType,
         Number(settings.cardWidth),
         Number(settings.cardHeight),
       );
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        () => ({ ...queryData, data, hasBleed: true }),
+      );
+    }
+  };
 
+  const onRemoveBleedClick = () => {
+    if (queryData && "original" in queryData && queryData.hasBleed) {
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
         () => ({
           ...queryData,
-          data,
+          data: queryData.upscaledOriginal ?? queryData.original,
+          hasBleed: false,
         }),
       );
     }
   };
 
-  const canRevertToOriginal = (() => {
-    if (!queryData) return false;
-
-    if ("original" in queryData) {
-      return queryData.original.size !== queryData.data.size;
-    }
-
-    return false;
-  })();
-
-  const onRevertToOriginalClick = () => {
-    if (canRevertToOriginal) {
+  const onUpscaleClick = async () => {
+    if (queryData && "original" in queryData && !queryData.isUpscaled) {
+      setProcessing(true);
+      const upscaledOriginal = await upscaleImage(queryData.original);
+      let data: Blob;
+      if (queryData.hasBleed) {
+        data = await addBleedEdge(
+          upscaledOriginal,
+          queryData.mimeType,
+          Number(settings.cardWidth),
+          Number(settings.cardHeight),
+        );
+      } else {
+        data = upscaledOriginal;
+      }
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
-        (old) => {
-          if (!old || !("original" in old)) {
-            return undefined;
-          }
+        () => ({ ...queryData, data, upscaledOriginal, isUpscaled: true }),
+      );
+    }
+  };
 
-          return {
-            ...old,
-            data: old.original,
-          };
-        },
+  const onRemoveUpscaleClick = async () => {
+    if (queryData && "original" in queryData && queryData.isUpscaled) {
+      setProcessing(true);
+      let data: Blob;
+      if (queryData.hasBleed) {
+        data = await addBleedEdge(
+          queryData.original,
+          queryData.mimeType,
+          Number(settings.cardWidth),
+          Number(settings.cardHeight),
+        );
+      } else {
+        data = queryData.original;
+      }
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        () => ({
+          ...queryData,
+          data,
+          upscaledOriginal: undefined,
+          isUpscaled: false,
+        }),
+      );
+    }
+  };
+
+  const onRevertToOriginalClick = () => {
+    if (canRevertToOriginal && queryData && "original" in queryData) {
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        () => ({
+          ...queryData,
+          data: queryData.original,
+          upscaledOriginal: undefined,
+          isUpscaled: false,
+          hasBleed: false,
+        }),
       );
     }
   };
@@ -219,6 +282,28 @@ export const CardContextMenu = ({
                   <Kbd size="sm">{keybindLabels.alt} + Click</Kbd>
                 </Menu.Item>
               )}
+              {canUpscale && !isBackFace ? (
+                <Menu.Item
+                  value="upscale"
+                  onSelect={() => void onUpscaleClick()}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Upscale</Menu.ItemText>
+                </Menu.Item>
+              ) : null}
+              {canRemoveUpscale && !isBackFace ? (
+                <Menu.Item
+                  value="remove-upscale"
+                  onSelect={() => void onRemoveUpscaleClick()}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Remove upscale</Menu.ItemText>
+                </Menu.Item>
+              ) : null}
               {canAddBleed && !isBackFace ? (
                 <Menu.Item
                   value="add-bleed"
@@ -228,6 +313,17 @@ export const CardContextMenu = ({
                     <FontAwesomeIcon icon={faExpand} />
                   </Menu.ItemIndicator>
                   <Menu.ItemText>Add bleed</Menu.ItemText>
+                </Menu.Item>
+              ) : null}
+              {canRemoveBleed && !isBackFace ? (
+                <Menu.Item
+                  value="remove-bleed"
+                  onSelect={onRemoveBleedClick}
+                >
+                  <Menu.ItemIndicator>
+                    <FontAwesomeIcon icon={faCompress} />
+                  </Menu.ItemIndicator>
+                  <Menu.ItemText>Remove bleed</Menu.ItemText>
                 </Menu.Item>
               ) : null}
               {canRevertToOriginal && !isBackFace ? (

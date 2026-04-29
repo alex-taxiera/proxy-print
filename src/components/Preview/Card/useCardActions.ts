@@ -4,6 +4,7 @@ import { useContext, useState, useEffect } from "react";
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { Image, ImagesContext, getIsLocalImage } from "~/context/ImagesContext";
 import { usePreviewData } from "~/hooks/usePreviewData";
+import { useUpscaleImage } from "~/hooks/useUpscaleImage";
 import {
   getIsDownloadableImageCacheEvent,
   ImageQueryData,
@@ -23,12 +24,10 @@ const generateDownloadName = (name: string, uuid: string, mimeType: string) => {
   const nameHasExtension = /\.[a-zA-Z0-9]+$/.test(name);
   const extension = getExtensionFromMimeType(mimeType);
   if (nameHasExtension) {
-    // Insert uuid before the extension
     const lastDotIndex = name.lastIndexOf(".");
     if (lastDotIndex !== -1) {
       return `${name.slice(0, lastDotIndex)} (${uuid})${name.slice(lastDotIndex)}`;
     }
-    // Fallback, should not happen if nameHasExtension is true
     return `${name} (${uuid})${extension}`;
   } else {
     return `${name} (${uuid})${extension}`;
@@ -116,40 +115,41 @@ const useDownloadImages = (images: Image[]) => {
   };
 };
 
-const useGetCanAddBleed = (images: Image[]) => {
+const hasOriginal = (queryData: ImageQueryData): queryData is ImageQueryData & {
+  original: Blob | File;
+  isUpscaled: boolean;
+  hasBleed: boolean;
+  upscaledOriginal?: Blob;
+} => "original" in queryData;
+
+const useImageStates = (images: Image[]) => {
   const queryClient = useQueryClient();
 
-  return () => {
-    const data = images.map((image) =>
+  const getStates = () => {
+    const allData = images.map((image) =>
       queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image)),
     );
 
-    return data.some((queryData) => {
-      if (!queryData) return false;
-      if ("original" in queryData) {
-        return queryData.data.size === queryData.original.size;
-      }
-      return false;
-    });
+    return {
+      canAddBleed: allData.some(
+        (d) => d && hasOriginal(d) && !d.hasBleed,
+      ),
+      canRemoveBleed: allData.some(
+        (d) => d && hasOriginal(d) && d.hasBleed,
+      ),
+      canUpscale: allData.some(
+        (d) => d && hasOriginal(d) && !d.isUpscaled,
+      ),
+      canRemoveUpscale: allData.some(
+        (d) => d && hasOriginal(d) && d.isUpscaled,
+      ),
+      canRevertToOriginal: allData.some(
+        (d) => d && hasOriginal(d) && (d.isUpscaled || d.hasBleed),
+      ),
+    };
   };
-};
 
-const useGetCanRevertToOriginal = (images: Image[]) => {
-  const queryClient = useQueryClient();
-
-  return () => {
-    const data = images.map((image) =>
-      queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image)),
-    );
-
-    return data.some((queryData) => {
-      if (!queryData) return false;
-      if ("original" in queryData) {
-        return queryData.original.size !== queryData.data.size;
-      }
-      return false;
-    });
-  };
+  return getStates;
 };
 
 export type UseCardActionsProps = {
@@ -166,36 +166,20 @@ export const useCardActions = ({
   const { onSelectAllImages } = useContext(ImageSelectionContext);
   const settings = useSettingsStore((s) => s.settings);
   const queryClient = useQueryClient();
+  const { upscaleImage } = useUpscaleImage();
 
-  const getCanAddBleed = useGetCanAddBleed(images);
-  const getCanRevertToOriginal = useGetCanRevertToOriginal(images);
+  const getStates = useImageStates(images);
 
-  const [canAddBleed, setCanAddBleed] = useState(getCanAddBleed);
-  const [canRevertToOriginal, setCanRevertToOriginal] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      const isDownloadableImageCacheEvent =
-        getIsDownloadableImageCacheEvent(event);
-
-      if (isDownloadableImageCacheEvent) {
-        setCanAddBleed(getCanAddBleed());
-      }
-    });
-    return unsubscribe;
-  }, [queryClient, getCanAddBleed]);
+  const [states, setStates] = useState(getStates);
 
   useEffect(() => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      const isDownloadableImageCacheEvent =
-        getIsDownloadableImageCacheEvent(event);
-
-      if (isDownloadableImageCacheEvent) {
-        setCanRevertToOriginal(getCanRevertToOriginal());
+      if (getIsDownloadableImageCacheEvent(event)) {
+        setStates(getStates());
       }
     });
     return unsubscribe;
-  }, [queryClient, getCanRevertToOriginal]);
+  }, [queryClient, getStates]);
 
   const { isDownloading, downloadImages } = useDownloadImages(images);
 
@@ -204,47 +188,132 @@ export const useCardActions = ({
   };
 
   const addBleed = () => {
-    if (getCanAddBleed()) {
-      void Promise.all(
-        images.map(async (image) => {
-          const queryData = queryClient.getQueryData<ImageQueryData>(
+    void Promise.all(
+      images.map(async (image) => {
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+        );
+        if (queryData && hasOriginal(queryData) && !queryData.hasBleed) {
+          queryClient.setQueryData<ImageQueryData>(
             getQueryKeyForImage(image),
+            () => ({ ...queryData, isProcessing: true }),
           );
-          if (queryData && "original" in queryData) {
-            const data = await addBleedEdge(
+          const base = queryData.upscaledOriginal ?? queryData.original;
+          const data = await addBleedEdge(
+            base,
+            queryData.mimeType,
+            Number(settings.cardWidth),
+            Number(settings.cardHeight),
+          );
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, data, hasBleed: true }),
+          );
+        }
+      }),
+    );
+  };
+
+  const removeBleed = () => {
+    images.forEach((image) => {
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        (old) => {
+          if (!old || !hasOriginal(old) || !old.hasBleed) return old;
+          return {
+            ...old,
+            data: old.upscaledOriginal ?? old.original,
+            hasBleed: false,
+          };
+        },
+      );
+    });
+  };
+
+  const upscale = () => {
+    void Promise.all(
+      images.map(async (image) => {
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+        );
+        if (queryData && hasOriginal(queryData) && !queryData.isUpscaled) {
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, isProcessing: true }),
+          );
+          const upscaledOriginal = await upscaleImage(queryData.original);
+          let data: Blob;
+          if (queryData.hasBleed) {
+            data = await addBleedEdge(
+              upscaledOriginal,
+              queryData.mimeType,
+              Number(settings.cardWidth),
+              Number(settings.cardHeight),
+            );
+          } else {
+            data = upscaledOriginal;
+          }
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, data, upscaledOriginal, isUpscaled: true }),
+          );
+        }
+      }),
+    );
+  };
+
+  const removeUpscale = () => {
+    void Promise.all(
+      images.map(async (image) => {
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+        );
+        if (queryData && hasOriginal(queryData) && queryData.isUpscaled) {
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, isProcessing: true }),
+          );
+          let data: Blob;
+          if (queryData.hasBleed) {
+            data = await addBleedEdge(
               queryData.original,
               queryData.mimeType,
               Number(settings.cardWidth),
               Number(settings.cardHeight),
             );
-            queryClient.setQueryData<ImageQueryData>(
-              getQueryKeyForImage(image),
-              () => ({ ...queryData, data }),
-            );
+          } else {
+            data = queryData.original;
           }
-        }),
-      );
-    }
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({
+              ...queryData,
+              data,
+              upscaledOriginal: undefined,
+              isUpscaled: false,
+            }),
+          );
+        }
+      }),
+    );
   };
 
   const revertToOriginal = () => {
-    if (getCanRevertToOriginal()) {
-      images.forEach((image) => {
-        queryClient.setQueryData<ImageQueryData>(
-          getQueryKeyForImage(image),
-          (old) => {
-            if (!old || !("original" in old)) {
-              return undefined;
-            }
-
-            return {
-              ...old,
-              data: old.original,
-            };
-          },
-        );
-      });
-    }
+    images.forEach((image) => {
+      queryClient.setQueryData<ImageQueryData>(
+        getQueryKeyForImage(image),
+        (old) => {
+          if (!old || !hasOriginal(old)) return old;
+          return {
+            ...old,
+            data: old.original,
+            upscaledOriginal: undefined,
+            isUpscaled: false,
+            hasBleed: false,
+          };
+        },
+      );
+    });
   };
 
   const canMoveToNextPage = currentPage === imageMatrix.length;
@@ -266,9 +335,15 @@ export const useCardActions = ({
 
   return {
     remove,
-    canAddBleed,
+    canAddBleed: states.canAddBleed,
     addBleed,
-    canRevertToOriginal,
+    canRemoveBleed: states.canRemoveBleed,
+    removeBleed,
+    canUpscale: states.canUpscale,
+    upscale,
+    canRemoveUpscale: states.canRemoveUpscale,
+    removeUpscale,
+    canRevertToOriginal: states.canRevertToOriginal,
     revertToOriginal,
     canMoveToNextPage,
     canMoveToPreviousPage,

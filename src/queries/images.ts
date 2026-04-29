@@ -73,10 +73,18 @@ export type GoogleImageQueryData = BaseImageQueryData;
 
 export type ScryfallImageQueryData = BaseImageQueryData & {
   original: Blob;
+  upscaledOriginal?: Blob;
+  isUpscaled: boolean;
+  hasBleed: boolean;
+  isProcessing?: boolean;
 };
 
 export type LocalImageQueryData = BaseImageQueryData & {
   original: File;
+  upscaledOriginal?: Blob;
+  isUpscaled: boolean;
+  hasBleed: boolean;
+  isProcessing?: boolean;
 };
 
 export type ImageQueryData =
@@ -120,7 +128,7 @@ const buildScryfallImageQueryFn =
       Number(settings.cardHeight),
     );
 
-    return { original: blob, data, mimeType };
+    return { original: blob, data, mimeType, isUpscaled: false, hasBleed: true };
   };
 
 const buildLocalImageQueryFn =
@@ -139,7 +147,7 @@ const buildLocalImageQueryFn =
           Number(settings.cardHeight),
         )
       : file;
-    return { original: file, data, mimeType: file.type };
+    return { original: file, data, mimeType: file.type, isUpscaled: false, hasBleed: needsBleedEdge };
   };
 
 const baseQueryOptions: Pick<

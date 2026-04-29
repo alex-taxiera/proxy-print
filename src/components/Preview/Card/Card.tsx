@@ -1,3 +1,8 @@
+import {
+  faExpand,
+  faMagicWandSparkles,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
 
@@ -6,6 +11,7 @@ import { center, visuallyHidden } from "styled-system/patterns";
 
 import { Checkbox } from "~/components/ui/checkbox";
 import { Spinner } from "~/components/ui/spinner";
+import { Tooltip } from "~/components/ui/tooltip";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import {
@@ -16,13 +22,23 @@ import {
   getIsEmptyImage,
 } from "~/context/ImagesContext";
 import { useSortableCard } from "~/hooks/useSortableCard";
-import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
+import {
+  getQueryKeyForImage,
+  ImageQueryData,
+  LocalImageQueryData,
+  ScryfallImageQueryData,
+} from "~/queries/images";
 import { useSettingsStore } from "~/store/settingsStore";
 import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
 
 import { CardContextMenu } from "./CardContextMenu";
 import { Guides } from "./Guides";
 import { useCardClassName } from "./useCardClassName";
+
+const hasTransformFlags = (
+  d: ImageQueryData,
+): d is ScryfallImageQueryData | LocalImageQueryData =>
+  "isUpscaled" in d && "hasBleed" in d;
 
 const useQueryData = (image: PossiblyEmptyImage) => {
   const queryClient = useQueryClient();
@@ -102,7 +118,9 @@ export const Card = ({
   const isEmpty = getIsEmptyImage(image);
 
   const [isLoading, setIsLoading] = useState(true);
-  const isPending = isLoading || isFetching;
+  const isTransformProcessing =
+    !!queryData && hasTransformFlags(queryData) && !!queryData.isProcessing;
+  const isPending = isLoading || isFetching || isTransformProcessing;
 
   const imageSrc = src;
 
@@ -267,7 +285,7 @@ export const Card = ({
                 left: 0,
                 width: "100%",
                 height: "100%",
-                backgroundColor: "white",
+                backgroundColor: "white/50",
               })}
             >
               <Spinner size="xl" />
@@ -276,6 +294,56 @@ export const Card = ({
         </>
       </div>
       {!settings.extendedGuidesOnly && <Guides />}
+      {!isEmpty &&
+      !isPending &&
+      !isRendering &&
+      queryData &&
+      hasTransformFlags(queryData) &&
+      (queryData.isUpscaled || queryData.hasBleed) ? (
+        <div
+          className={css({
+            position: "absolute",
+            top: 1,
+            right: 2,
+            display: "flex",
+            gap: 1,
+            zIndex: 1,
+          })}
+        >
+          {queryData.isUpscaled && (
+            <Tooltip.Root positioning={{ placement: "top" }} openDelay={200}>
+              <Tooltip.Trigger
+                height="6"
+                aspectRatio="1/1"
+                color="fg.default"
+                bg="bg.subtle/75"
+                borderRadius="sm"
+              >
+                <FontAwesomeIcon icon={faMagicWandSparkles} size="sm" />
+              </Tooltip.Trigger>
+              <Tooltip.Positioner>
+                <Tooltip.Content>Upscaled</Tooltip.Content>
+              </Tooltip.Positioner>
+            </Tooltip.Root>
+          )}
+          {queryData.hasBleed && (
+            <Tooltip.Root positioning={{ placement: "top" }} openDelay={200}>
+              <Tooltip.Trigger
+                height="6"
+                aspectRatio="1/1"
+                color="fg.default"
+                bg="bg.subtle/75"
+                borderRadius="sm"
+              >
+                <FontAwesomeIcon icon={faExpand} size="sm" />
+              </Tooltip.Trigger>
+              <Tooltip.Positioner>
+                <Tooltip.Content>Has generated bleed</Tooltip.Content>
+              </Tooltip.Positioner>
+            </Tooltip.Root>
+          )}
+        </div>
+      ) : null}
       {!isEmpty && !isPending ? (
         <Checkbox
           className={css({

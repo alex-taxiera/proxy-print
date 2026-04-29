@@ -38,6 +38,8 @@ export const ImagesProvider = (
   const scryfallDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,
     upscale: settings.upscaleScryfallImages,
+    cardWidth: Number(settings.cardWidth),
+    cardHeight: Number(settings.cardHeight),
   });
   const localDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,

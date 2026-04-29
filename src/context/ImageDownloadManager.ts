@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useUpscaleImage } from "~/hooks/useUpscaleImage";
 import { ImageQueryData } from "~/queries/images";
 import { useDownloadProgressStore } from "~/store/downloadProgressStore";
+import { addBleedEdge } from "~/utils/add-bleed";
 
 type Item = {
   uuid: string;
@@ -15,9 +16,13 @@ type Item = {
 export function useImageDownloadManager({
   maxInflight = 20,
   upscale,
+  cardWidth,
+  cardHeight,
 }: {
   maxInflight?: number;
   upscale?: boolean;
+  cardWidth?: number;
+  cardHeight?: number;
 } = {}) {
   const queryClient = useQueryClient();
   const queueRef = useRef<Item[]>([]);
@@ -37,13 +42,29 @@ export function useImageDownloadManager({
             ...item.queryData,
             queryFn: async (...args: unknown[]) => {
               if (typeof item.queryData.queryFn === "function") {
-                const data = await item.queryData.queryFn(
+                const result = await item.queryData.queryFn(
                   ...(args as Parameters<typeof item.queryData.queryFn>),
                 );
-                const upscaled = await upscaleImage(data.data);
+                if (!("original" in result)) {
+                  return result;
+                }
+                const upscaledOriginal = await upscaleImage(result.original);
+                let data: Blob;
+                if (result.hasBleed && cardWidth && cardHeight) {
+                  data = await addBleedEdge(
+                    upscaledOriginal,
+                    result.mimeType,
+                    cardWidth,
+                    cardHeight,
+                  );
+                } else {
+                  data = upscaledOriginal;
+                }
                 return {
-                  ...data,
-                  data: upscaled,
+                  ...result,
+                  data,
+                  upscaledOriginal,
+                  isUpscaled: true,
                 };
               }
 

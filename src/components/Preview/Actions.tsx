@@ -3,9 +3,13 @@ import {
   faArrowLeft,
   faArrowRight,
   faCheck,
+  faCompress,
   faDownload,
   faEllipsisV,
   faExpand,
+  faMagnifyingGlassMinus,
+  faMagnifyingGlassPlus,
+  faRotateLeft,
   faTrash,
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
@@ -235,6 +239,12 @@ export const SelectionMenuContent = ({
     remove,
     canAddBleed,
     addBleed,
+    canRemoveBleed,
+    removeBleed,
+    canUpscale,
+    upscale,
+    canRemoveUpscale,
+    removeUpscale,
     canRevertToOriginal,
     revertToOriginal,
     moveToPage,
@@ -283,12 +293,36 @@ export const SelectionMenuContent = ({
           </Menu.ItemIndicator>
           <Menu.ItemText>Download all (ZIP)</Menu.ItemText>
         </Menu.Item>
+        {canUpscale ? (
+          <Menu.Item value="upscale-all" onSelect={() => upscale()}>
+            <Menu.ItemIndicator>
+              <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+            </Menu.ItemIndicator>
+            <Menu.ItemText>Upscale all</Menu.ItemText>
+          </Menu.Item>
+        ) : null}
+        {canRemoveUpscale ? (
+          <Menu.Item value="remove-upscale-all" onSelect={() => removeUpscale()}>
+            <Menu.ItemIndicator>
+              <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
+            </Menu.ItemIndicator>
+            <Menu.ItemText>Remove upscale from all</Menu.ItemText>
+          </Menu.Item>
+        ) : null}
         {canAddBleed ? (
           <Menu.Item value="add-bleed-all" onSelect={() => addBleed()}>
             <Menu.ItemIndicator>
               <FontAwesomeIcon icon={faExpand} />
             </Menu.ItemIndicator>
             <Menu.ItemText>Add bleed to all</Menu.ItemText>
+          </Menu.Item>
+        ) : null}
+        {canRemoveBleed ? (
+          <Menu.Item value="remove-bleed-all" onSelect={() => removeBleed()}>
+            <Menu.ItemIndicator>
+              <FontAwesomeIcon icon={faCompress} />
+            </Menu.ItemIndicator>
+            <Menu.ItemText>Remove bleed from all</Menu.ItemText>
           </Menu.Item>
         ) : null}
         {canRevertToOriginal ? (
