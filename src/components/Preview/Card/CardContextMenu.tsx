@@ -316,10 +316,7 @@ export const CardContextMenu = ({
                 </Menu.Item>
               ) : null}
               {canRemoveBleed && !isBackFace ? (
-                <Menu.Item
-                  value="remove-bleed"
-                  onSelect={onRemoveBleedClick}
-                >
+                <Menu.Item value="remove-bleed" onSelect={onRemoveBleedClick}>
                   <Menu.ItemIndicator>
                     <FontAwesomeIcon icon={faCompress} />
                   </Menu.ItemIndicator>

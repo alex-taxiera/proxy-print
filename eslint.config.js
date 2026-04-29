@@ -17,6 +17,7 @@ export default tseslint.config(
       "src/components/ui/styled/utils/create-style-context.tsx",
       "src/asm/**",
       "src/types/wasm.d.ts",
+      "storybook-static/**",
     ],
   },
   {

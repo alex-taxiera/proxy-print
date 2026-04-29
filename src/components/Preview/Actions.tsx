@@ -9,7 +9,6 @@ import {
   faExpand,
   faMagnifyingGlassMinus,
   faMagnifyingGlassPlus,
-  faRotateLeft,
   faTrash,
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
@@ -302,7 +301,10 @@ export const SelectionMenuContent = ({
           </Menu.Item>
         ) : null}
         {canRemoveUpscale ? (
-          <Menu.Item value="remove-upscale-all" onSelect={() => removeUpscale()}>
+          <Menu.Item
+            value="remove-upscale-all"
+            onSelect={() => removeUpscale()}
+          >
             <Menu.ItemIndicator>
               <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
             </Menu.ItemIndicator>

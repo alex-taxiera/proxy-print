@@ -115,7 +115,9 @@ const useDownloadImages = (images: Image[]) => {
   };
 };
 
-const hasOriginal = (queryData: ImageQueryData): queryData is ImageQueryData & {
+const hasOriginal = (
+  queryData: ImageQueryData,
+): queryData is ImageQueryData & {
   original: Blob | File;
   isUpscaled: boolean;
   hasBleed: boolean;
@@ -131,15 +133,9 @@ const useImageStates = (images: Image[]) => {
     );
 
     return {
-      canAddBleed: allData.some(
-        (d) => d && hasOriginal(d) && !d.hasBleed,
-      ),
-      canRemoveBleed: allData.some(
-        (d) => d && hasOriginal(d) && d.hasBleed,
-      ),
-      canUpscale: allData.some(
-        (d) => d && hasOriginal(d) && !d.isUpscaled,
-      ),
+      canAddBleed: allData.some((d) => d && hasOriginal(d) && !d.hasBleed),
+      canRemoveBleed: allData.some((d) => d && hasOriginal(d) && d.hasBleed),
+      canUpscale: allData.some((d) => d && hasOriginal(d) && !d.isUpscaled),
       canRemoveUpscale: allData.some(
         (d) => d && hasOriginal(d) && d.isUpscaled,
       ),

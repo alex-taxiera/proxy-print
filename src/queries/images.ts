@@ -128,7 +128,13 @@ const buildScryfallImageQueryFn =
       Number(settings.cardHeight),
     );
 
-    return { original: blob, data, mimeType, isUpscaled: false, hasBleed: true };
+    return {
+      original: blob,
+      data,
+      mimeType,
+      isUpscaled: false,
+      hasBleed: true,
+    };
   };
 
 const buildLocalImageQueryFn =
@@ -147,7 +153,13 @@ const buildLocalImageQueryFn =
           Number(settings.cardHeight),
         )
       : file;
-    return { original: file, data, mimeType: file.type, isUpscaled: false, hasBleed: needsBleedEdge };
+    return {
+      original: file,
+      data,
+      mimeType: file.type,
+      isUpscaled: false,
+      hasBleed: needsBleedEdge,
+    };
   };
 
 const baseQueryOptions: Pick<
