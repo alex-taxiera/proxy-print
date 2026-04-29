@@ -1,19 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { hstack } from "styled-system/patterns";
 
 import { Toaster } from "~/components/ui/styled/toast";
 import { AlertToast } from "~/components/ui/toast";
 
-import { Header } from "~/components/Header";
-import { Preview } from "~/components/Preview";
-import { Sidebar } from "~/components/Sidebar";
 
 import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";
 import { ImagesProvider } from "~/context/ImagesProvider";
 import { useImageLoadingProgress } from "~/hooks/useImageLoadingProgress";
 import { useSettingsStore } from "~/store/settingsStore";
 import { toaster } from "~/utils/toaster";
+import { Layout } from "./Layout";
 
 const queryClient = new QueryClient();
 
@@ -33,18 +30,7 @@ function AppContent() {
   return (
     <ImagesProvider>
       <ImageSelectionProvider>
-        <Header />
-        <main
-          className={hstack({
-            alignItems: "stretch",
-            flex: 1,
-            gap: "0",
-            overflow: "hidden",
-          })}
-        >
-          <Preview />
-          <Sidebar />
-        </main>
+        <Layout />
       </ImageSelectionProvider>
     </ImagesProvider>
   );

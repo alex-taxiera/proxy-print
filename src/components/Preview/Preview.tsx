@@ -7,7 +7,6 @@ import { useContext, useRef, useState, useEffect, useCallback } from "react";
 import { css, cx } from "styled-system/css";
 import { center, grid, hstack, vstack } from "styled-system/patterns";
 
-import { Link } from "~/components/ui/link";
 
 import { ProgressOverlay } from "~/components/ProgressOverlay";
 
@@ -21,12 +20,6 @@ import { Actions } from "./Actions";
 import { Card } from "./Card";
 import { CardDragOverlay } from "./CardDragOverlay";
 import { PageDrop } from "./PageDrop";
-
-const containerStyles = css.raw({
-  flex: 1,
-  minWidth: 0,
-  overflow: "auto",
-});
 
 const usePagination = () => {
   const { pages, cardsPerPage, rowsPerPage } = usePreviewData();
@@ -146,9 +139,7 @@ export const Preview = () => {
   const cssVars = computeCssVars(settings);
 
   const {
-    images,
     isRendering,
-    imagesWithError,
     onReorder,
     onReorderSlots,
     onMoveSlotToAbsoluteIndex,
@@ -313,38 +304,8 @@ export const Preview = () => {
     }
   };
 
-  if (images.length === 0 && imagesWithError.length === 0) {
-    return (
-      <div className={css(containerStyles)}>
-        <div
-          className={vstack({
-            paddingY: "6",
-            paddingX: "2",
-            gap: "6",
-            justifyContent: "center",
-            alignItems: "center",
-            flex: 1,
-            height: "full",
-          })}
-        >
-          <p>Add images to get started.</p>
-          <p>
-            Upload an XML from{" "}
-            <Link asChild>
-              <a href="https://mpcfill.com/" target="_blank" rel="noreferrer">
-                MPC Autofill
-              </a>
-            </Link>{" "}
-            &quot;Download XML&quot; option.
-          </p>
-          <p>Or import a decklist from your favorite deckbuilder!</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={css(containerStyles)} style={cssVars}>
+    <div style={cssVars}>
       <ProgressOverlay />
       {/* TODO: use grid so that actions and pagination don't need to be inside dragdrop provider */}
       <DragDropProvider
