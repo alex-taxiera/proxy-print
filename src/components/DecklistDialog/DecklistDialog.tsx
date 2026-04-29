@@ -14,9 +14,13 @@ export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
       <Dialog.Positioner>
         <Dialog.Content className={vstack({ gap: "4", alignItems: "stretch" })}>
           <Dialog.Title>Decklist</Dialog.Title>
-          <Dialog.Description asChild>
-            <DecklistForm />
-          </Dialog.Description>
+          <Dialog.Context>
+            {(dialog) => (
+              <Dialog.Description asChild>
+                <DecklistForm key={String(dialog.open)} />
+              </Dialog.Description>
+            )}
+          </Dialog.Context>
           <Dialog.CloseButton aria-label="Close" />
         </Dialog.Content>
       </Dialog.Positioner>

@@ -24,14 +24,12 @@ export const DecklistForm = () => {
   const getCardsForDecklist = useGetCardsForDecklist();
 
   const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>,
+    event: React.SubmitEvent<HTMLFormElement>,
     dialog: UseDialogContext,
   ) => {
     event.preventDefault();
-    const formData = new FormData(event.target as HTMLFormElement);
+    const formData = new FormData(event.target);
     const decklist = formData.get("decklist") as string;
-
-    const form = event.target as HTMLFormElement;
 
     if (decklist) {
       const result = await getCardsForDecklist(decklist);
@@ -42,7 +40,6 @@ export const DecklistForm = () => {
         onAdd(result.items);
       }
       result.errors.forEach(onError);
-      form.reset();
       dialog.setOpen(false);
     }
   };
