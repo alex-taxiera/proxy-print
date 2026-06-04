@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PDFDocument } from "pdf-lib";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
@@ -42,19 +42,26 @@ const DefaultCardBackSection = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [thumbSrc, setThumbSrc] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!defaultCardBack || !("file" in defaultCardBack)) {
+      setThumbSrc(null);
+      return;
+    }
+    const url = URL.createObjectURL(defaultCardBack.file);
+    setThumbSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [defaultCardBack]);
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const hash = await createFileHash(file);
     setDefaultCardBack({ file, hash });
-    const url = URL.createObjectURL(file);
-    setThumbSrc(url);
     e.target.value = "";
   };
 
   const handleClear = () => {
     setDefaultCardBack(null);
-    setThumbSrc(null);
   };
 
   const displayName = defaultCardBack

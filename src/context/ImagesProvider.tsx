@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { ComponentProps, useState } from "react";
+import { ComponentProps, useEffect, useState } from "react";
 
 import { getQueryDataForImage } from "~/queries/images";
 import { useSettingsStore } from "~/store/settingsStore";
@@ -43,7 +43,10 @@ export const ImagesProvider = (
   });
   const localDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,
+    trackProgress: false,
   });
+
+  const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
 
   const [slots, setSlots] = useState<Map<string, CardSlot>>(new Map());
   const [imagesWithError, setImagesWithError] = useState<DownloadableImage[]>(
@@ -132,6 +135,24 @@ export const ImagesProvider = (
       queryData,
     });
   };
+
+  // When defaultCardBack changes to a local file, load it into the query cache
+  // so the preview grid can display it without waiting for onAddSlots.
+  useEffect(() => {
+    if (!defaultCardBack || !("file" in defaultCardBack)) return;
+    const cbImage = {
+      ...defaultCardBack,
+      uuid: "default-card-back",
+    } as LocalImage;
+    const queryData = getQueryDataForImage(
+      cbImage,
+      useSettingsStore.getState().settings,
+    );
+    void localDownloadManager.add({ uuid: cbImage.uuid, queryData });
+    // localDownloadManager is intentionally omitted — its add() always uses the
+    // same stable internal refs regardless of which render's closure we hold.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultCardBack]);
 
   const onAddSlots = (data: SlotInputData[], index?: number) => {
     // Pre-generate all slot objects (pure, no side effects).

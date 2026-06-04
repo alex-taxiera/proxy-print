@@ -18,11 +18,13 @@ export function useImageDownloadManager({
   upscale,
   cardWidth,
   cardHeight,
+  trackProgress = true,
 }: {
   maxInflight?: number;
   upscale?: boolean;
   cardWidth?: number;
   cardHeight?: number;
+  trackProgress?: boolean;
 } = {}) {
   const queryClient = useQueryClient();
   const queueRef = useRef<Item[]>([]);
@@ -78,7 +80,7 @@ export function useImageDownloadManager({
         .then(item.resolve)
         .catch(item.reject)
         .finally(() => {
-          useDownloadProgressStore.getState().finish();
+          if (trackProgress) useDownloadProgressStore.getState().finish();
           inflightRef.current = inflightRef.current.filter((i) => i !== item);
           if (
             inflightRef.current.length < maxInflight &&
@@ -95,9 +97,7 @@ export function useImageDownloadManager({
     queryData,
   }: Pick<Item, "uuid" | "queryData">): Promise<void> => {
     return new Promise((resolve, reject) => {
-      // Record the download as pending before it hits the queue so the
-      // progress store is always incremented synchronously on add().
-      useDownloadProgressStore.getState().start();
+      if (trackProgress) useDownloadProgressStore.getState().start();
       queueRef.current.push({ uuid, queryData, resolve, reject });
       if (inflightRef.current.length < maxInflight) {
         processQueue();
@@ -115,7 +115,7 @@ export function useImageDownloadManager({
     const queueItem = queueRef.current.find((i) => i.uuid === uuid);
     if (queueItem) {
       queueRef.current = queueRef.current.filter((i) => i.uuid !== uuid);
-      useDownloadProgressStore.getState().finish();
+      if (trackProgress) useDownloadProgressStore.getState().finish();
     }
   };
 
@@ -127,7 +127,7 @@ export function useImageDownloadManager({
   const removeAll = () => {
     const removedCount = queueRef.current.length;
     queueRef.current = [];
-    if (removedCount > 0) {
+    if (trackProgress && removedCount > 0) {
       const store = useDownloadProgressStore.getState();
       for (let i = 0; i < removedCount; i++) store.finish();
     }
