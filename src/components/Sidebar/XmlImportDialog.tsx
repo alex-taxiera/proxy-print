@@ -1,8 +1,8 @@
 import { hstack, vstack } from "styled-system/patterns";
 
-import { Button } from "~/components/ui/button";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Dialog } from "~/components/ui/dialog";
+import { Button } from "~/components/ui-old/button";
+import { Checkbox } from "~/components/ui-old/checkbox";
+import { Dialog } from "~/components/ui-old/dialog";
 
 import { GoogleImageData, SlotInputData } from "~/context/ImagesContext";
 import { formatCount } from "~/utils/pluralize";

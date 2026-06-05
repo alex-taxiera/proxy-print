@@ -9,9 +9,9 @@ import { useContext, useEffect, useState } from "react";
 import { css, cx } from "styled-system/css";
 import { center, visuallyHidden } from "styled-system/patterns";
 
-import { Checkbox } from "~/components/ui/checkbox";
-import { Spinner } from "~/components/ui/spinner";
-import { Tooltip } from "~/components/ui/tooltip";
+import { Checkbox } from "~/components/ui-old/checkbox";
+import { Spinner } from "~/components/ui-old/spinner";
+import { Tooltip } from "~/components/ui-old/tooltip";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import {

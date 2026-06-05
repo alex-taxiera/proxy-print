@@ -5,9 +5,9 @@ import { useContext } from "react";
 import { css } from "styled-system/css";
 import { hstack, vstack, visuallyHidden } from "styled-system/patterns";
 
-import { Button } from "~/components/ui/button";
-import { Dialog } from "~/components/ui/dialog";
-import { Field } from "~/components/ui/field";
+import { Button } from "~/components/ui-old/button";
+import { Dialog } from "~/components/ui-old/dialog";
+import { Field } from "~/components/ui-old/field";
 
 import { ImagesContext } from "~/context/ImagesContext";
 import { useGetCardsForDecklist } from "~/hooks/useGetCardsForDecklist";

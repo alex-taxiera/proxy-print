@@ -1,7 +1,7 @@
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 
-import { Alert } from "~/components/ui/alert";
+import { Alert } from "~/components/ui-old/alert";
 
 import { DownloadableImage, getIsGoogleImage } from "~/context/ImagesContext";
 

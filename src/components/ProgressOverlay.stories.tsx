@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { css } from "styled-system/css";
 
-import { Button } from "~/components/ui/button";
+import { Button } from "~/components/ui-old/button";
 
 import { progressEvents } from "~/utils/progress-events";
 

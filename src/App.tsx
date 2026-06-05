@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 
-import { Toaster } from "~/components/ui/styled/toast";
-import { AlertToast } from "~/components/ui/toast";
+import { Toaster } from "~/components/ui-old/styled/toast";
+import { AlertToast } from "~/components/ui-old/toast";
 
 
 import { ImageSelectionProvider } from "~/context/ImageSelectionProvider";

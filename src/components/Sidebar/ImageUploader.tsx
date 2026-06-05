@@ -8,8 +8,8 @@ import { useContext, useEffect, useState } from "react";
 import { css } from "styled-system/css";
 import { center, vstack } from "styled-system/patterns";
 
-import { Button } from "~/components/ui/button";
-import { FileUpload } from "~/components/ui/file-upload";
+import { Button } from "~/components/ui-old/button";
+import { FileUpload } from "~/components/ui-old/file-upload";
 
 import { DecklistDialog } from "~/components/DecklistDialog";
 

@@ -1,6 +1,6 @@
 import { vstack } from "styled-system/patterns";
 
-import { Dialog, type DialogType } from "~/components/ui/dialog";
+import { Dialog, type DialogType } from "~/components/ui-old/dialog";
 
 import { DecklistForm } from "./DecklistForm";
 

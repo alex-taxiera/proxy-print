@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { css } from "styled-system/css";
 import { vstack } from "styled-system/patterns";
 
-import { Button } from "~/components/ui/button";
-import { Collapsible } from "~/components/ui/collapsible";
+import { Button } from "~/components/ui-old/button";
+import { Collapsible } from "~/components/ui-old/collapsible";
 
 import { ImageUploader } from "./ImageUploader";
 import { SettingsForm } from "./SettingsForm";

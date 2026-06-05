@@ -1,6 +1,6 @@
 import { vstack } from "styled-system/patterns";
 
-import { Link } from "~/components/ui/link";
+import { Link } from "~/components/ui-old/link";
 
 export const Empty = () => {
   return (

@@ -19,14 +19,14 @@ import { css } from "styled-system/css";
 import { VisuallyHidden } from "styled-system/jsx";
 import { hstack, vstack } from "styled-system/patterns";
 
-import { Button } from "~/components/ui/button";
-import { IconButton } from "~/components/ui/icon-button";
-import { Link } from "~/components/ui/link";
-import { Menu } from "~/components/ui/menu";
-import { Pagination } from "~/components/ui/pagination";
-import { createListCollection, Select } from "~/components/ui/select";
-import { Spinner } from "~/components/ui/spinner";
-import { Tooltip } from "~/components/ui/tooltip";
+import { Button } from "~/components/ui-old/button";
+import { IconButton } from "~/components/ui-old/icon-button";
+import { Link } from "~/components/ui-old/link";
+import { Menu } from "~/components/ui-old/menu";
+import { Pagination } from "~/components/ui-old/pagination";
+import { createListCollection, Select } from "~/components/ui-old/select";
+import { Spinner } from "~/components/ui-old/spinner";
+import { Tooltip } from "~/components/ui-old/tooltip";
 
 import { ImageErrors } from "~/components/ImageErrors";
 

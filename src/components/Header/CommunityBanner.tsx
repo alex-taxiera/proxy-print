@@ -1,6 +1,6 @@
 import { css } from "styled-system/css";
 
-import { Link } from "~/components/ui/link";
+import { Link } from "~/components/ui-old/link";
 
 export const CommunityBanner = () => {
   return (

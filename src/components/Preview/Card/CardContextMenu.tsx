@@ -17,8 +17,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useRef } from "react";
 
-import { Kbd } from "~/components/ui/kbd";
-import { Menu } from "~/components/ui/menu";
+import { Kbd } from "~/components/ui-old/kbd";
+import { Menu } from "~/components/ui-old/menu";
 
 import { ImageSelectionContext } from "~/context/ImageSelectionContext";
 import { getIsLocalImage, Image, ImagesContext } from "~/context/ImagesContext";
