@@ -1,29 +1,62 @@
-import { vstack } from "styled-system/patterns";
+import { Button } from "@chakra-ui/react";
+import { useIsMutating } from "@tanstack/react-query";
 
-import { Dialog, type DialogType } from "~/components/ui-old/dialog";
+import {
+  DialogRoot,
+  DialogContent,
+  DialogTitle,
+  DialogContext,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogActionTrigger,
+  DialogCloseTrigger,
+} from "@/components/ui/dialog";
+
+import { getScryfallCardsCollectionQueryKey } from "@/queries/useScryfallCardsCollection";
 
 import { DecklistForm } from "./DecklistForm";
 
-export type DecklistDialogProps = DialogType.RootProps;
+export type DecklistDialogProps = React.ComponentProps<typeof DialogRoot>;
+
+const formId = "decklist-form";
 
 export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
+  const isMutating = useIsMutating({
+    mutationKey: getScryfallCardsCollectionQueryKey(),
+  });
+
+  const isSubmitting = !!isMutating;
+
   return (
-    <Dialog.Root {...props}>
+    <DialogRoot {...props}>
       {children}
-      <Dialog.Backdrop />
-      <Dialog.Positioner>
-        <Dialog.Content className={vstack({ gap: "4", alignItems: "stretch" })}>
-          <Dialog.Title>Decklist</Dialog.Title>
-          <Dialog.Context>
-            {(dialog) => (
-              <Dialog.Description asChild>
-                <DecklistForm key={String(dialog.open)} />
-              </Dialog.Description>
+      <DialogContent gap="4" alignItems="stretch">
+        <DialogHeader>
+          <DialogTitle>Decklist</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <DialogContext>
+            {(store) => (
+              <DecklistForm formId={formId} key={String(store.open)} />
             )}
-          </Dialog.Context>
-          <Dialog.CloseButton aria-label="Close" />
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Dialog.Root>
+          </DialogContext>
+        </DialogBody>
+        <DialogFooter>
+          <DialogActionTrigger asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogActionTrigger>
+          <Button
+            type="submit"
+            form={formId}
+            loading={isSubmitting}
+            loadingText="Submitting..."
+          >
+            Submit
+          </Button>
+        </DialogFooter>
+        <DialogCloseTrigger aria-label="Close" />
+      </DialogContent>
+    </DialogRoot>
   );
 };

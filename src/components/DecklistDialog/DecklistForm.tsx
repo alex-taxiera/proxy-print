@@ -5,17 +5,21 @@ import { useContext } from "react";
 import { css } from "styled-system/css";
 import { hstack, vstack, visuallyHidden } from "styled-system/patterns";
 
-import { Button } from "~/components/ui-old/button";
-import { Dialog } from "~/components/ui-old/dialog";
-import { Field } from "~/components/ui-old/field";
+import { Button } from "@/components/ui-old/button";
+import { Dialog } from "@/components/ui-old/dialog";
+import { Field } from "@/components/ui-old/field";
 
-import { ImagesContext } from "~/context/ImagesContext";
-import { useGetCardsForDecklist } from "~/hooks/useGetCardsForDecklist";
-import { getScryfallCardsCollectionQueryKey } from "~/queries/useScryfallCardsCollection";
+import { ImagesContext } from "@/context/ImagesContext";
+import { useGetCardsForDecklist } from "@/hooks/useGetCardsForDecklist";
+import { getScryfallCardsCollectionQueryKey } from "@/queries/useScryfallCardsCollection";
 
 import { UpscaleSetting } from "../UpscaleSetting";
 
-export const DecklistForm = () => {
+export type DecklistFormProps = {
+  formId?: string;
+};
+
+export const DecklistForm = ({ formId }: DecklistFormProps) => {
   const { onAdd, onAddSlots, onError } = useContext(ImagesContext);
   const isMutating = useIsMutating({
     mutationKey: getScryfallCardsCollectionQueryKey(),
@@ -50,6 +54,7 @@ export const DecklistForm = () => {
     <Dialog.Context>
       {(dialog) => (
         <form
+          id={formId}
           onSubmit={(event) => {
             void handleSubmit(event, dialog);
           }}
@@ -78,7 +83,7 @@ export const DecklistForm = () => {
             <UpscaleSetting className={css({ flexDirection: "row-reverse" })}>
               Upscale Images
             </UpscaleSetting>
-            <div
+            {/* <div
               className={hstack({
                 gap: "2",
               })}
@@ -95,7 +100,7 @@ export const DecklistForm = () => {
               >
                 Submit
               </Button>
-            </div>
+            </div> */}
           </div>
         </form>
       )}

@@ -2,12 +2,12 @@ import { pointerIntersection } from "@dnd-kit/collision";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { useContext } from "react";
 
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
 import {
   PossiblyEmptyImage,
   ImagesContext,
   getIsEmptyImage,
-} from "~/context/ImagesContext";
+} from "@/context/ImagesContext";
 
 export type SortableCardData = ReturnType<
   typeof useSortableCard

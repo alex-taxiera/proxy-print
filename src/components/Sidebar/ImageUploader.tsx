@@ -1,26 +1,24 @@
-import {
-  Dialog,
-  useFileUpload,
-  type FileUploadFileAcceptDetails,
-} from "@ark-ui/react";
+import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
 import { useContext, useEffect, useState } from "react";
 
 import { css } from "styled-system/css";
 import { center, vstack } from "styled-system/patterns";
 
-import { Button } from "~/components/ui-old/button";
-import { FileUpload } from "~/components/ui-old/file-upload";
+import { Button } from "@/components/ui-old/button";
+import { FileUpload } from "@/components/ui-old/file-upload";
 
-import { DecklistDialog } from "~/components/DecklistDialog";
+import { DialogTrigger } from "@/components/ui/dialog";
+
+import { DecklistDialog } from "@/components/DecklistDialog";
 
 import {
   GoogleImageData,
   ImagesContext,
   LocalImageData,
   SlotInputData,
-} from "~/context/ImagesContext";
-import { useSettingsStore } from "~/store/settingsStore";
-import { createFileHash } from "~/utils/create-file-hash";
+} from "@/context/ImagesContext";
+import { useSettingsStore } from "@/store/settingsStore";
+import { createFileHash } from "@/utils/create-file-hash";
 
 import { XmlImportDialog, XmlImportPending } from "./XmlImportDialog";
 
@@ -232,11 +230,11 @@ export function ImageUploader() {
         <FileUpload.HiddenInput />
       </FileUpload.RootProvider>
       <DecklistDialog>
-        <Dialog.Trigger asChild>
+        <DialogTrigger asChild>
           <Button variant="link" size="xs" colorPalette="gray">
             Import from Decklist
           </Button>
-        </Dialog.Trigger>
+        </DialogTrigger>
       </DecklistDialog>
     </div>
   );

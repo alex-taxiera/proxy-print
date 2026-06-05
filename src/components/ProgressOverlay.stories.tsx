@@ -3,9 +3,9 @@ import { useState } from "react";
 
 import { css } from "styled-system/css";
 
-import { Button } from "~/components/ui-old/button";
+import { Button } from "@/components/ui-old/button";
 
-import { progressEvents } from "~/utils/progress-events";
+import { progressEvents } from "@/utils/progress-events";
 
 import { ProgressOverlay } from "./ProgressOverlay";
 

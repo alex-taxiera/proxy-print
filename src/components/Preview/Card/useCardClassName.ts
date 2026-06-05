@@ -1,6 +1,6 @@
 import { css, cx, Styles } from "styled-system/css";
 
-import { useCardPositionMeta } from "~/hooks/useCardClassNames";
+import { useCardPositionMeta } from "@/hooks/useCardClassNames";
 
 export const useCardClassName = (props: {
   isEmpty: boolean;

@@ -3,13 +3,13 @@ import { useContext } from "react";
 import { css } from "styled-system/css";
 import { hstack } from "styled-system/patterns";
 
-import { Header } from "~/components/Header";
-import { Sidebar } from "~/components/Sidebar";
+import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
 
 import { Empty } from "./components/Empty";
 import { ImagesContext } from "./context/ImagesContext";
 
-const Preview = await import("~/components/Preview").then((mod) => mod.Preview);
+const Preview = await import("@/components/Preview").then((mod) => mod.Preview);
 
 export const Layout = () => {
   const { images, imagesWithError } = useContext(ImagesContext);

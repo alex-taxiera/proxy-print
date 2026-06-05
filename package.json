@@ -4,15 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run watch-css & vite",
+    "dev": "npm run watch-chakra & vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:ci": "prettier --check .",
     "preview": "vite preview",
-    "prepare": "npx panda codegen",
-    "watch-css": "npx panda codegen --watch",
-    "storybook": "npm run watch-css & storybook dev -p 6006",
+    "typegen": "chakra typegen src/theme.ts",
+    "prepare": "npm run typegen",
+    "watch-chakra": "npm run typegen -- --watch",
+    "storybook": "npm run watch-chakra & storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest",
     "test:run": "vitest run",
@@ -24,9 +25,10 @@
     ],
     "importOrder": [
       "^styled-system/(.*)$",
-      "^~/components/ui-old/(.*)$",
-      "^~/components/(.*)$",
-      "^~/(.*)$",
+      "^@/components/ui-old/(.*)$",
+      "^@/components/ui/(.*)$",
+      "^@/components/(.*)$",
+      "^@/(.*)$",
       "^[./]"
     ],
     "importOrderSeparation": true
@@ -61,6 +63,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@chakra-ui/cli": "^3.35.0",
     "@chromatic-com/storybook": "^4.1.0",
     "@eslint/js": "^9.33.0",
     "@pandacss/dev": "^0.54.0",
@@ -71,7 +74,7 @@
     "@storybook/addon-vitest": "^9.1.2",
     "@storybook/react-vite": "^9.1.2",
     "@tanstack/eslint-plugin-query": "^5.83.1",
-    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.7.0",

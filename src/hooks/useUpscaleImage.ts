@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-import Module from "~/asm/imghelper.js";
-import { useUpscaleQueueManager } from "~/context/UpscaleQueueManager";
-import { CustomImage } from "~/image";
-import UpscaleWorker from "~/workers/upscale-worker?worker";
+import Module from "@/asm/imghelper.js";
+import { useUpscaleQueueManager } from "@/context/UpscaleQueueManager";
+import { CustomImage } from "@/image";
+import UpscaleWorker from "@/workers/upscale-worker?worker";
 
 const wasmModule = Module();
 

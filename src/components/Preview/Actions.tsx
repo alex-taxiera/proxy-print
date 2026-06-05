@@ -19,26 +19,26 @@ import { css } from "styled-system/css";
 import { VisuallyHidden } from "styled-system/jsx";
 import { hstack, vstack } from "styled-system/patterns";
 
-import { Button } from "~/components/ui-old/button";
-import { IconButton } from "~/components/ui-old/icon-button";
-import { Link } from "~/components/ui-old/link";
-import { Menu } from "~/components/ui-old/menu";
-import { Pagination } from "~/components/ui-old/pagination";
-import { createListCollection, Select } from "~/components/ui-old/select";
-import { Spinner } from "~/components/ui-old/spinner";
-import { Tooltip } from "~/components/ui-old/tooltip";
+import { Button } from "@/components/ui-old/button";
+import { IconButton } from "@/components/ui-old/icon-button";
+import { Link } from "@/components/ui-old/link";
+import { Menu } from "@/components/ui-old/menu";
+import { Pagination } from "@/components/ui-old/pagination";
+import { createListCollection, Select } from "@/components/ui-old/select";
+import { Spinner } from "@/components/ui-old/spinner";
+import { Tooltip } from "@/components/ui-old/tooltip";
 
-import { ImageErrors } from "~/components/ImageErrors";
+import { ImageErrors } from "@/components/ImageErrors";
 
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { ImagesContext } from "~/context/ImagesContext";
-import { PrintMode } from "~/context/SettingsContext";
-import { useGeneratePdf } from "~/hooks/useGeneratePdf";
-import { usePreviewData } from "~/hooks/usePreviewData";
-import { useDownloadProgressStore } from "~/store/downloadProgressStore";
-import { useSettingsStore } from "~/store/settingsStore";
-import { formatCount, formatSelectionCount } from "~/utils/pluralize";
-import { progressEvents } from "~/utils/progress-events";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
+import { ImagesContext } from "@/context/ImagesContext";
+import { PrintMode } from "@/context/SettingsContext";
+import { useGeneratePdf } from "@/hooks/useGeneratePdf";
+import { usePreviewData } from "@/hooks/usePreviewData";
+import { useDownloadProgressStore } from "@/store/downloadProgressStore";
+import { useSettingsStore } from "@/store/settingsStore";
+import { formatCount, formatSelectionCount } from "@/utils/pluralize";
+import { progressEvents } from "@/utils/progress-events";
 
 import { useCardActions } from "./Card/useCardActions";
 

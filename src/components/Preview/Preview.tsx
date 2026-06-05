@@ -7,14 +7,13 @@ import { useContext, useRef, useState, useEffect, useCallback } from "react";
 import { css, cx } from "styled-system/css";
 import { center, grid, hstack, vstack } from "styled-system/patterns";
 
+import { ProgressOverlay } from "@/components/ProgressOverlay";
 
-import { ProgressOverlay } from "~/components/ProgressOverlay";
-
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { ImagesContext } from "~/context/ImagesContext";
-import { usePreviewData } from "~/hooks/usePreviewData";
-import { getIsSortableCardData } from "~/hooks/useSortableCard";
-import { useSettingsStore, computeCssVars } from "~/store/settingsStore";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
+import { ImagesContext } from "@/context/ImagesContext";
+import { usePreviewData } from "@/hooks/usePreviewData";
+import { getIsSortableCardData } from "@/hooks/useSortableCard";
+import { useSettingsStore, computeCssVars } from "@/store/settingsStore";
 
 import { Actions } from "./Actions";
 import { Card } from "./Card";

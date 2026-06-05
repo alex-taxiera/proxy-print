@@ -1,11 +1,11 @@
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { useSettingsFormState } from "~/hooks/useSettingsFormState";
+import { Checkbox } from "@/components/ui-old/checkbox";
+import { Field } from "@/components/ui-old/field";
+import { Tooltip } from "@/components/ui-old/tooltip";
 
-import { Checkbox } from "./ui/checkbox";
-import { Field } from "./ui/field";
-import { Tooltip } from "./ui/tooltip";
+import { useSettingsFormState } from "@/hooks/useSettingsFormState";
 
 export const UpscaleSetting = ({
   className,

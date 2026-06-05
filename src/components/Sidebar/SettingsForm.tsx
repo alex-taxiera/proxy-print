@@ -13,26 +13,26 @@ import { useEffect, useRef, useState } from "react";
 import { css } from "styled-system/css";
 import { hstack, vstack } from "styled-system/patterns";
 
-import { Button } from "~/components/ui-old/button";
-import { Checkbox } from "~/components/ui-old/checkbox";
-import { Collapsible } from "~/components/ui-old/collapsible";
-import { ColorPicker } from "~/components/ui-old/color-picker";
-import { Field } from "~/components/ui-old/field";
-import { IconButton } from "~/components/ui-old/icon-button";
-import { NumberInput } from "~/components/ui-old/number-input";
-import { Select, createListCollection } from "~/components/ui-old/select";
-import { Tabs } from "~/components/ui-old/tabs";
-import { Tooltip } from "~/components/ui-old/tooltip";
+import { Button } from "@/components/ui-old/button";
+import { Checkbox } from "@/components/ui-old/checkbox";
+import { Collapsible } from "@/components/ui-old/collapsible";
+import { ColorPicker } from "@/components/ui-old/color-picker";
+import { Field } from "@/components/ui-old/field";
+import { IconButton } from "@/components/ui-old/icon-button";
+import { NumberInput } from "@/components/ui-old/number-input";
+import { Select, createListCollection } from "@/components/ui-old/select";
+import { Tabs } from "@/components/ui-old/tabs";
+import { Tooltip } from "@/components/ui-old/tooltip";
 
 import {
   CARD_DIMENSIONS,
   MAX_BLEED,
   MAX_GUIDES_THICKNESS,
   PAGE_DIMENSIONS,
-} from "~/context/SettingsContext";
-import { useSettingsFormState } from "~/hooks/useSettingsFormState";
-import { useSettingsStore } from "~/store/settingsStore";
-import { createFileHash } from "~/utils/create-file-hash";
+} from "@/context/SettingsContext";
+import { useSettingsFormState } from "@/hooks/useSettingsFormState";
+import { useSettingsStore } from "@/store/settingsStore";
+import { createFileHash } from "@/utils/create-file-hash";
 
 import { UpscaleSetting } from "../UpscaleSetting";
 

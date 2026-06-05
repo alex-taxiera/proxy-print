@@ -1,9 +1,9 @@
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 
-import { Alert } from "~/components/ui-old/alert";
+import { Alert } from "@/components/ui-old/alert";
 
-import { DownloadableImage, getIsGoogleImage } from "~/context/ImagesContext";
+import { DownloadableImage, getIsGoogleImage } from "@/context/ImagesContext";
 
 export type ImageErrorsProps = {
   onDismiss: () => void;

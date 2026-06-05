@@ -9,9 +9,9 @@ import {
   getIsLocalImage,
   getIsScryfallImage,
   Image,
-} from "~/context/ImagesContext";
-import { Settings } from "~/context/SettingsContext";
-import { addBleedEdge, needsBleedFromFile } from "~/utils/add-bleed";
+} from "@/context/ImagesContext";
+import { Settings } from "@/context/SettingsContext";
+import { addBleedEdge, needsBleedFromFile } from "@/utils/add-bleed";
 
 const getMpcImageUri = (id: string) => {
   return `https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec?id=${id}`;

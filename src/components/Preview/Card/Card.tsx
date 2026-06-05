@@ -9,27 +9,27 @@ import { useContext, useEffect, useState } from "react";
 import { css, cx } from "styled-system/css";
 import { center, visuallyHidden } from "styled-system/patterns";
 
-import { Checkbox } from "~/components/ui-old/checkbox";
-import { Spinner } from "~/components/ui-old/spinner";
-import { Tooltip } from "~/components/ui-old/tooltip";
+import { Checkbox } from "@/components/ui-old/checkbox";
+import { Spinner } from "@/components/ui-old/spinner";
+import { Tooltip } from "@/components/ui-old/tooltip";
 
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
 import {
   getIsLocalImage,
   ImagesContext,
   getIsDownloadableImage,
   PossiblyEmptyImage,
   getIsEmptyImage,
-} from "~/context/ImagesContext";
-import { useSortableCard } from "~/hooks/useSortableCard";
+} from "@/context/ImagesContext";
+import { useSortableCard } from "@/hooks/useSortableCard";
 import {
   getQueryKeyForImage,
   ImageQueryData,
   LocalImageQueryData,
   ScryfallImageQueryData,
-} from "~/queries/images";
-import { useSettingsStore } from "~/store/settingsStore";
-import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
+} from "@/queries/images";
+import { useSettingsStore } from "@/store/settingsStore";
+import { ctrlOrMeta } from "@/utils/ctrl-or-meta";
 
 import { CardContextMenu } from "./CardContextMenu";
 import { Guides } from "./Guides";

@@ -17,18 +17,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useRef } from "react";
 
-import { Kbd } from "~/components/ui-old/kbd";
-import { Menu } from "~/components/ui-old/menu";
+import { Kbd } from "@/components/ui-old/kbd";
+import { Menu } from "@/components/ui-old/menu";
 
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { getIsLocalImage, Image, ImagesContext } from "~/context/ImagesContext";
-import { usePreviewData } from "~/hooks/usePreviewData";
-import { useUpscaleImage } from "~/hooks/useUpscaleImage";
-import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
-import { useSettingsStore } from "~/store/settingsStore";
-import { addBleedEdge } from "~/utils/add-bleed";
-import { createFileHash } from "~/utils/create-file-hash";
-import { getKeybindLabels } from "~/utils/keybind-labels";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
+import { getIsLocalImage, Image, ImagesContext } from "@/context/ImagesContext";
+import { usePreviewData } from "@/hooks/usePreviewData";
+import { useUpscaleImage } from "@/hooks/useUpscaleImage";
+import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
+import { useSettingsStore } from "@/store/settingsStore";
+import { addBleedEdge } from "@/utils/add-bleed";
+import { createFileHash } from "@/utils/create-file-hash";
+import { getKeybindLabels } from "@/utils/keybind-labels";
 
 import { SelectionMenuContent } from "../Actions";
 

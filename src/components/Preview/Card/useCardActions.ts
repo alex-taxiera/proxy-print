@@ -1,19 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useState, useEffect } from "react";
 
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { Image, ImagesContext, getIsLocalImage } from "~/context/ImagesContext";
-import { usePreviewData } from "~/hooks/usePreviewData";
-import { useUpscaleImage } from "~/hooks/useUpscaleImage";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
+import { Image, ImagesContext, getIsLocalImage } from "@/context/ImagesContext";
+import { usePreviewData } from "@/hooks/usePreviewData";
+import { useUpscaleImage } from "@/hooks/useUpscaleImage";
 import {
   getIsDownloadableImageCacheEvent,
   ImageQueryData,
   getQueryKeyForImage,
-} from "~/queries/images";
-import { useSettingsStore } from "~/store/settingsStore";
-import { addBleedEdge } from "~/utils/add-bleed";
-import { toaster } from "~/utils/toaster";
-import ZipWorker from "~/workers/zip-worker?worker";
+} from "@/queries/images";
+import { useSettingsStore } from "@/store/settingsStore";
+import { addBleedEdge } from "@/utils/add-bleed";
+import { toaster } from "@/utils/toaster";
+import ZipWorker from "@/workers/zip-worker?worker";
 
 const getExtensionFromMimeType = (mimeType: string) => {
   const extension = mimeType.split("/").pop();
