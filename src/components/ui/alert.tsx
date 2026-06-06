@@ -1,19 +1,38 @@
-import { Alert as ChakraAlert } from "@chakra-ui/react";
+import { Alert as ChakraAlert, useAlertStyles } from "@chakra-ui/react";
 import * as React from "react";
+import { LuInfo, LuCircleCheck, LuTriangleAlert } from "react-icons/lu";
 
-export interface AlertProps extends Omit<ChakraAlert.RootProps, "title"> {
+import { AlertVariant } from "styled-system/recipes/alert";
+
+import { CloseButton } from "./close-button";
+
+export interface AlertProps
+  extends Omit<ChakraAlert.RootProps, "title" | "status"> {
   startElement?: React.ReactNode;
   endElement?: React.ReactNode;
   title?: React.ReactNode;
   icon?: React.ReactElement;
+  status?: AlertVariant["status"]; // remove conditional types to simplify usage
 }
+
+const STATUS_ICON_MAP = {
+  info: <LuInfo />,
+  neutral: <LuInfo />,
+  success: <LuCircleCheck />,
+  warning: <LuTriangleAlert />,
+  error: <LuTriangleAlert />,
+} as const;
 
 export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   function Alert(props, ref) {
     const { title, children, icon, startElement, endElement, ...rest } = props;
+    const statusIcon = STATUS_ICON_MAP[props.status || "info"];
+
     return (
       <ChakraAlert.Root ref={ref} {...rest}>
-        {startElement || <ChakraAlert.Indicator>{icon}</ChakraAlert.Indicator>}
+        {startElement || (
+          <ChakraAlert.Indicator>{icon ?? statusIcon}</ChakraAlert.Indicator>
+        )}
         {children ? (
           <ChakraAlert.Content>
             <ChakraAlert.Title>{title}</ChakraAlert.Title>
@@ -27,3 +46,11 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     );
   },
 );
+
+export type AlertDismissButtonProps = React.ComponentProps<typeof CloseButton>;
+
+export const AlertDismissButton = (props: AlertDismissButtonProps) => {
+  const styles = useAlertStyles();
+
+  return <CloseButton css={styles.dismissButton} {...props} />;
+};

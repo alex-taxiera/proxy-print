@@ -1,7 +1,8 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import type { Preview, ReactRenderer } from "@storybook/react-vite";
 
-import "../src/index.css";
+import { Provider } from "@/components/ui/provider";
+
 
 const preview: Preview = {
   parameters: {
@@ -22,6 +23,11 @@ const preview: Preview = {
     },
   },
   decorators: [
+    (Story) => (
+      <Provider>
+        <Story />
+      </Provider>
+    ),
     withThemeByClassName<ReactRenderer>({
       themes: {
         light: "",

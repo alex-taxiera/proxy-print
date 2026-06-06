@@ -14,6 +14,12 @@ import {
 import * as React from "react";
 import { LuFile, LuUpload, LuX } from "react-icons/lu";
 
+import {
+  HoverCardRoot,
+  HoverCardTrigger,
+  HoverCardContent,
+} from "@/components/ui/hover-card";
+
 export interface FileUploadRootProps extends ChakraFileUpload.RootProps {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
@@ -28,6 +34,24 @@ export const FileUploadRoot = React.forwardRef<
       <ChakraFileUpload.HiddenInput ref={ref} {...inputProps} />
       {children}
     </ChakraFileUpload.Root>
+  );
+});
+
+export interface FileUploadRootProviderProps
+  extends ChakraFileUpload.RootProviderProps {
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+}
+
+export const FileUploadRootProvider = React.forwardRef<
+  HTMLInputElement,
+  FileUploadRootProviderProps
+>(function FileUploadRoot(props, ref) {
+  const { children, inputProps, ...rest } = props;
+  return (
+    <ChakraFileUpload.RootProvider {...rest}>
+      <ChakraFileUpload.HiddenInput ref={ref} {...inputProps} />
+      {children}
+    </ChakraFileUpload.RootProvider>
   );
 });
 
@@ -56,6 +80,21 @@ export const FileUploadDropzone = React.forwardRef<
   );
 });
 
+const FileUploadItemPreview = React.forwardRef<
+  HTMLDivElement,
+  ChakraFileUpload.ItemPreviewProps
+>(function FileUploadItemPreview(props, ref) {
+  return (
+    <ChakraFileUpload.ItemPreview asChild ref={ref} {...props}>
+      <Icon fontSize="lg" color="fg.muted">
+        <LuFile />
+      </Icon>
+    </ChakraFileUpload.ItemPreview>
+  );
+});
+
+const getIsImage = (file: File) => file.type.startsWith("image/");
+
 interface VisibilityProps {
   showSize?: boolean;
   clearable?: boolean;
@@ -68,13 +107,21 @@ interface FileUploadItemProps extends VisibilityProps {
 const FileUploadItem = React.forwardRef<HTMLLIElement, FileUploadItemProps>(
   function FileUploadItem(props, ref) {
     const { file, showSize, clearable } = props;
+    const isImage = getIsImage(file);
     return (
       <ChakraFileUpload.Item file={file} ref={ref}>
-        <ChakraFileUpload.ItemPreview asChild>
-          <Icon fontSize="lg" color="fg.muted">
-            <LuFile />
-          </Icon>
-        </ChakraFileUpload.ItemPreview>
+        {isImage ? (
+          <HoverCardRoot>
+            <HoverCardTrigger asChild>
+              <FileUploadItemPreview />
+            </HoverCardTrigger>
+            <HoverCardContent padding="0" overflow="hidden">
+              <ChakraFileUpload.ItemPreviewImage />
+            </HoverCardContent>
+          </HoverCardRoot>
+        ) : (
+          <FileUploadItemPreview />
+        )}
 
         {showSize ? (
           <ChakraFileUpload.ItemContent>

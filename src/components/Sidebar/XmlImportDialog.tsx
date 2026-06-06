@@ -1,8 +1,15 @@
-import { hstack, vstack } from "styled-system/patterns";
+import { Button, Box, VStack } from "@chakra-ui/react";
 
-import { Button } from "@/components/ui-old/button";
-import { Checkbox } from "@/components/ui-old/checkbox";
-import { Dialog } from "@/components/ui-old/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+  DialogActionTrigger,
+} from "@/components/ui/dialog";
 
 import { GoogleImageData, SlotInputData } from "@/context/ImagesContext";
 import { formatCount } from "@/utils/pluralize";
@@ -42,7 +49,7 @@ export const XmlImportDialog = ({
   };
 
   return (
-    <Dialog.Root
+    <DialogRoot
       closeOnInteractOutside={false}
       closeOnEscape={false}
       open={pending !== null}
@@ -50,50 +57,41 @@ export const XmlImportDialog = ({
         if (!details.open) onCancel();
       }}
     >
-      <Dialog.Backdrop />
-      <Dialog.Positioner>
-        <Dialog.Content>
-          <Dialog.Title>Import Cards from XML</Dialog.Title>
-          <Dialog.Description asChild>
-            <div
-              className={vstack({ gap: "4", alignItems: "stretch", mt: "2" })}
-            >
-              <p>
-                {pending
-                  ? `Found ${formatCount(pending.slotAdds.length, "card")} to import.`
-                  : ""}
-              </p>
-              {pending?.xmlDefaultCardBack && (
-                <Checkbox
-                  checked={updateDefaultCardBack}
-                  onCheckedChange={handleCheckedChange}
-                >
-                  Update default card back
-                  {hasExistingCardBack && (
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        opacity: 0.6,
-                        marginLeft: "0.25rem",
-                      }}
-                    >
-                      (replaces existing)
-                    </span>
-                  )}
-                </Checkbox>
-              )}
-              <div className={hstack({ gap: "2", justifyContent: "flex-end" })}>
-                <Dialog.CloseTrigger asChild>
-                  <Button variant="outline" onClick={onCancel}>
-                    Cancel
-                  </Button>
-                </Dialog.CloseTrigger>
-                <Button onClick={onConfirm}>Import</Button>
-              </div>
-            </div>
-          </Dialog.Description>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Dialog.Root>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Import Cards from XML</DialogTitle>
+        </DialogHeader>
+        <DialogBody asChild>
+          <VStack gap="4" alignItems="stretch" marginTop="2">
+            <p>
+              {pending
+                ? `Found ${formatCount(pending.slotAdds.length, "card")} to import.`
+                : ""}
+            </p>
+            {pending?.xmlDefaultCardBack && (
+              <Checkbox
+                checked={updateDefaultCardBack}
+                onCheckedChange={handleCheckedChange}
+              >
+                Update default card back
+                {hasExistingCardBack && (
+                  <Box as="span" color="fg.muted">
+                    (replaces existing)
+                  </Box>
+                )}
+              </Checkbox>
+            )}
+          </VStack>
+        </DialogBody>
+        <DialogFooter>
+          <DialogActionTrigger asChild>
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          </DialogActionTrigger>
+          <Button onClick={onConfirm}>Import</Button>
+        </DialogFooter>
+      </DialogContent>
+    </DialogRoot>
   );
 };

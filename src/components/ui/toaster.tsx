@@ -6,13 +6,28 @@ import {
   Spinner,
   Stack,
   Toast,
+  ToastOptions,
   createToaster,
 } from "@chakra-ui/react";
 
+import {
+  ProgressCircleRoot,
+  ProgressCircleRing,
+} from "@/components/ui/progress-circle";
+
 export const toaster = createToaster({
-  placement: "bottom-end",
+  placement: "bottom-start",
   pauseOnPageIdle: true,
 });
+
+export type ProgressMeta = {
+  progress: number | null;
+  totalProgressAmount?: number;
+};
+
+const isProgressMeta = (meta: ToastOptions["meta"]): meta is ProgressMeta => {
+  return !!meta && "progress" in meta;
+};
 
 export const Toaster = () => {
   return (
@@ -20,7 +35,15 @@ export const Toaster = () => {
       <ChakraToaster toaster={toaster} insetInline={{ mdDown: "4" }}>
         {(toast) => (
           <Toast.Root width={{ md: "sm" }}>
-            {toast.type === "loading" ? (
+            {isProgressMeta(toast.meta) ? (
+              <ProgressCircleRoot
+                value={toast.meta.progress}
+                max={toast.meta.totalProgressAmount ?? 100}
+                size="sm"
+              >
+                <ProgressCircleRing />
+              </ProgressCircleRoot>
+            ) : toast.type === "loading" ? (
               <Spinner size="sm" color="blue.solid" />
             ) : (
               <Toast.Indicator />

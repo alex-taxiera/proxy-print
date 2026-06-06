@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { useDownloadProgressStore } from "@/store/downloadProgressStore";
-import { toaster } from "@/utils/toaster";
+import { toaster } from "@/components/ui/toaster";
 
 /**
  * Subscribes to the download progress Zustand store and manages a progress

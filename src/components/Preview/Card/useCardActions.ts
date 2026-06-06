@@ -1,6 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useState, useEffect } from "react";
 
+import { toaster } from "@/components/ui/toaster";
+
 import { ImageSelectionContext } from "@/context/ImageSelectionContext";
 import { Image, ImagesContext, getIsLocalImage } from "@/context/ImagesContext";
 import { usePreviewData } from "@/hooks/usePreviewData";
@@ -12,7 +14,6 @@ import {
 } from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
 import { addBleedEdge } from "@/utils/add-bleed";
-import { toaster } from "@/utils/toaster";
 import ZipWorker from "@/workers/zip-worker?worker";
 
 const getExtensionFromMimeType = (mimeType: string) => {

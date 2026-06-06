@@ -1,38 +1,45 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
+import { alert } from "@/components/ui/alert.recipe";
 import { button } from "@/components/ui/button.recipe";
+import { checkbox } from "@/components/ui/checkbox.recipe";
+import { collapsible } from "@/components/ui/collapsible.recipe";
+import { colorPicker } from "@/components/ui/color-picker.recipe";
+import { fileUpload } from "@/components/ui/file-upload.recipe";
+import { input } from "@/components/ui/input.recipe";
+import { numberInput } from "@/components/ui/number-input.recipe";
+import { select } from "@/components/ui/select.recipe";
+import { textarea } from "@/components/ui/textarea.recipe";
 
 const customConfig = defineConfig({
   theme: {
     tokens: {
       colors: {
         accent: {
-          50: { value: "#e0dffe" },
-          100: { value: "#b1a9ff" },
-          200: { value: "#6e6ade" },
-          300: { value: "#5b5bd6" },
-          400: { value: "#5958b1" },
-          500: { value: "#4a4a95" },
-          600: { value: "#3d3e82" },
-          700: { value: "#303374" },
-          800: { value: "#262a65" },
-          900: { value: "#202248" },
-          950: { value: "#171625" },
-          1000: { value: "#13131e" },
+          50: { value: "#f4f4fc" },
+          100: { value: "#e7e7f9" },
+          200: { value: "#d1d1f3" },
+          300: { value: "#abaeeb" },
+          400: { value: "#8484df" },
+          500: { value: "#6767d8" },
+          600: { value: "#5b5bd6" },
+          700: { value: "#4d4db8" },
+          800: { value: "#3f3f96" },
+          900: { value: "#343475" },
+          950: { value: "#21214a" },
         },
         gray: {
-          50: { value: "#edeef0" },
-          100: { value: "#b0b4ba" },
-          200: { value: "#777b84" },
-          300: { value: "#696e77" },
-          400: { value: "#5a6169" },
-          500: { value: "#43484e" },
-          600: { value: "#363a3f" },
-          700: { value: "#2e3135" },
-          800: { value: "#272a2d" },
-          900: { value: "#212225" },
-          950: { value: "#18191b" },
-          1000: { value: "#111113" },
+          50: { value: "#f8f9fb" },
+          100: { value: "#f1f3f6" },
+          200: { value: "#dfe2e8" },
+          300: { value: "#c1c6ce" },
+          400: { value: "#a0a7b1" },
+          500: { value: "#828a95" },
+          600: { value: "#696e77" },
+          700: { value: "#535860" },
+          800: { value: "#3d4249" },
+          900: { value: "#282b30" },
+          950: { value: "#16181b" },
         },
       },
     },
@@ -89,6 +96,17 @@ const customConfig = defineConfig({
     },
     recipes: {
       button,
+      input,
+      textarea,
+    },
+    slotRecipes: {
+      alert,
+      checkbox,
+      collapsible,
+      colorPicker,
+      fileUpload,
+      numberInput,
+      select
     },
   },
   globalCss: {

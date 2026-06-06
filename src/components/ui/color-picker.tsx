@@ -212,9 +212,40 @@ export const ColorPickerChannelSliders = React.forwardRef<
   );
 });
 
+const presets = [
+  "hsl(10, 81%, 59%)",
+  "hsl(60, 81%, 59%)",
+  "hsl(100, 81%, 59%)",
+  "hsl(175, 81%, 59%)",
+  "hsl(190, 81%, 59%)",
+  "hsl(205, 81%, 59%)",
+  "hsl(220, 81%, 59%)",
+  "hsl(250, 81%, 59%)",
+  "hsl(280, 81%, 59%)",
+  "hsl(350, 81%, 59%)",
+];
+
+export interface ColorPickerSwatchGroupProps
+  extends ChakraColorPicker.SwatchGroupProps {
+  swatches?: string[];
+}
+
+export const ColorPickerSwatchGroup = React.forwardRef<
+  HTMLDivElement,
+  ColorPickerSwatchGroupProps
+>(function ColorPickerSwatchGroup({ swatches = presets, ...props }, ref) {
+  return (
+    <ChakraColorPicker.SwatchGroup ref={ref} {...props}>
+      {props.children ??
+        swatches.map((swatch) => (
+          <ColorPickerSwatchTrigger key={swatch} value={swatch} />
+        ))}
+    </ChakraColorPicker.SwatchGroup>
+  );
+});
+
 export const ColorPickerLabel = ChakraColorPicker.Label;
 export const ColorPickerControl = ChakraColorPicker.Control;
 export const ColorPickerValueText = ChakraColorPicker.ValueText;
 export const ColorPickerValueSwatch = ChakraColorPicker.ValueSwatch;
 export const ColorPickerChannelInput = ChakraColorPicker.ChannelInput;
-export const ColorPickerSwatchGroup = ChakraColorPicker.SwatchGroup;

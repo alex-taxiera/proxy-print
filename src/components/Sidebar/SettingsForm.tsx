@@ -1,28 +1,69 @@
-import { Fieldset, parseColor, Portal } from "@ark-ui/react";
 import {
-  faArrowsRotate,
-  faFlask,
-  faUser,
-  faUserGraduate,
-  faXmark,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { PDFDocument } from "pdf-lib";
-import { useEffect, useRef, useState } from "react";
+  Button,
+  IconButton,
+  Tabs,
+  Input,
+  parseColor,
+  Bleed,
+  Icon,
+  Link,
+  HStack,
+  VStack,
+  createListCollection,
+  StackProps,
+  Collapsible,
+} from "@chakra-ui/react";
+import {
+  LuFlaskConical,
+  LuGraduationCap,
+  LuRefreshCcw,
+  LuUser,
+} from "react-icons/lu";
 
-import { css } from "styled-system/css";
-import { hstack, vstack } from "styled-system/patterns";
-
-import { Button } from "@/components/ui-old/button";
-import { Checkbox } from "@/components/ui-old/checkbox";
-import { Collapsible } from "@/components/ui-old/collapsible";
-import { ColorPicker } from "@/components/ui-old/color-picker";
-import { Field } from "@/components/ui-old/field";
-import { IconButton } from "@/components/ui-old/icon-button";
-import { NumberInput } from "@/components/ui-old/number-input";
-import { Select, createListCollection } from "@/components/ui-old/select";
-import { Tabs } from "@/components/ui-old/tabs";
-import { Tooltip } from "@/components/ui-old/tooltip";
+import {
+  AccordionItem,
+  AccordionItemContent,
+  AccordionItemTrigger,
+  AccordionRoot,
+} from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  ColorPickerRoot,
+  ColorPickerLabel,
+  ColorPickerControl,
+  ColorPickerInput,
+  ColorPickerTrigger,
+  ColorPickerContent,
+  ColorPickerArea,
+  ColorPickerEyeDropper,
+  ColorPickerSliders,
+  ColorPickerSwatchGroup,
+} from "@/components/ui/color-picker";
+import { Field } from "@/components/ui/field";
+import { Fieldset } from "@/components/ui/fieldset";
+import {
+  FileUploadRoot,
+  FileUploadTrigger,
+  FileUploadList,
+} from "@/components/ui/file-upload";
+import {
+  NumberInputRoot,
+  NumberInputField,
+} from "@/components/ui/number-input";
+import {
+  SelectRoot,
+  SelectLabel,
+  SelectTrigger,
+  SelectValueText,
+  SelectContent,
+  SelectItemGroup,
+  SelectItem,
+  SelectItemText,
+  SelectControl,
+  SelectIndicatorGroup,
+  SelectIndicator,
+} from "@/components/ui/select";
+import { Tooltip } from "@/components/ui/tooltip";
 
 import {
   CARD_DIMENSIONS,
@@ -35,99 +76,46 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
 
 import { UpscaleSetting } from "../UpscaleSetting";
+import { BasePDFInput } from "./BasePDFInput";
 
 const DefaultCardBackSection = () => {
   const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
   const setDefaultCardBack = useSettingsStore((s) => s.setDefaultCardBack);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [thumbSrc, setThumbSrc] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!defaultCardBack || !("file" in defaultCardBack)) {
-      setThumbSrc(null);
-      return;
-    }
-    const url = URL.createObjectURL(defaultCardBack.file);
-    setThumbSrc(url);
-    return () => URL.revokeObjectURL(url);
-  }, [defaultCardBack]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const hash = await createFileHash(file);
-    setDefaultCardBack({ file, hash });
-    e.target.value = "";
-  };
-
-  const handleClear = () => {
-    setDefaultCardBack(null);
-  };
-
-  const displayName = defaultCardBack
+  const acceptedFile = defaultCardBack
     ? "file" in defaultCardBack
-      ? defaultCardBack.file.name
-      : defaultCardBack.name
+      ? defaultCardBack.file
+      : new File([new ArrayBuffer(0)], defaultCardBack.name)
     : null;
 
   return (
-    <Field.Root>
-      <Field.Label>Default Card Back</Field.Label>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".jpg,.jpeg,.png,.bmp,.webp"
-        style={{ display: "none" }}
-        onChange={(e) => void handleFileChange(e)}
-      />
-      {defaultCardBack ? (
-        <div className={hstack({ gap: "2", alignItems: "center" })}>
-          {thumbSrc && (
-            <img
-              src={thumbSrc}
-              alt="Default card back thumbnail"
-              style={{
-                width: 32,
-                height: 44,
-                objectFit: "cover",
-                borderRadius: 2,
-              }}
-            />
-          )}
-          <span
-            style={{
-              flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              fontSize: "0.75rem",
-            }}
-          >
-            {displayName}
-          </span>
-          <IconButton
-            size="xs"
-            type="button"
-            variant="ghost"
-            colorPalette="gray"
-            aria-label="Remove default card back"
-            onClick={handleClear}
-          >
-            <FontAwesomeIcon icon={faXmark} />
-          </IconButton>
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          colorPalette="gray"
-          onClick={() => fileInputRef.current?.click()}
-          type="button"
-        >
-          Upload card back…
-        </Button>
-      )}
-    </Field.Root>
+    <Field label="Default Card Back">
+      <FileUploadRoot
+        maxFiles={1}
+        accept={{ "image/*": [".jpg", ".jpeg", ".png", ".bmp", ".webp"] }}
+        onFileChange={(details) => {
+          const file = details.acceptedFiles[0];
+          if (!file) {
+            setDefaultCardBack(null);
+          } else {
+            void createFileHash(file).then((hash) => {
+              setDefaultCardBack({ file, hash });
+            });
+          }
+        }}
+        acceptedFiles={acceptedFile ? [acceptedFile] : []}
+      >
+        {defaultCardBack ? (
+          <FileUploadList clearable />
+        ) : (
+          <FileUploadTrigger asChild>
+            <Button variant="outline" size="sm" type="button">
+              Upload card back…
+            </Button>
+          </FileUploadTrigger>
+        )}
+      </FileUploadRoot>
+    </Field>
   );
 };
 
@@ -139,6 +127,26 @@ const unitsCollection = createListCollection({
     label: unit,
   })),
 });
+
+const PAGE_SIZE_OPTIONS = Object.entries(PAGE_DIMENSIONS).map(
+  ([label, dimensions]) => ({
+    label,
+    unit: dimensions.unit,
+    value: `${dimensions.width}${dimensions.unit}-${dimensions.height}${dimensions.unit}`,
+    hidden: false,
+  }),
+);
+
+const Container = (props: StackProps) => (
+  <VStack
+    width="full"
+    gap="4"
+    alignItems="stretch"
+    alignSelf="stretch"
+    justifyContent="center"
+    {...props}
+  />
+);
 
 export const SettingsForm = () => {
   const {
@@ -172,20 +180,19 @@ export const SettingsForm = () => {
 
   const pageSizeCollection = createListCollection({
     groupBy: (item) => item.unit,
-    items: Object.entries(PAGE_DIMENSIONS)
-      .map(([label, dimensions]) => ({
-        label,
-        unit: dimensions.unit,
-        value: `${dimensions.width}${dimensions.unit}-${dimensions.height}${dimensions.unit}`,
-        hidden: false,
-      }))
-      .concat({
-        label: "Custom",
-        unit: formState.unit,
-        value: pageSizeValue,
-        hidden: true,
-      }),
+    items: PAGE_SIZE_OPTIONS.concat({
+      label: "Custom",
+      unit: formState.unit,
+      value: "custom",
+      hidden: true,
+    }),
   });
+
+  const displayPageSizeValue = PAGE_SIZE_OPTIONS.some(
+    (option) => option.value === pageSizeValue,
+  )
+    ? pageSizeValue
+    : "custom";
 
   const rotatePage = () => {
     void handle({
@@ -195,34 +202,7 @@ export const SettingsForm = () => {
   };
 
   const basePdfName = useSettingsStore((s) => s.basePdfName);
-  const setBasePdf = useSettingsStore((s) => s.setBasePdf);
-  const basePdfInputRef = useRef<HTMLInputElement>(null);
   const isPageSizeLocked = basePdfName !== null;
-
-  const handleBasePdfChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const bytes = await file.arrayBuffer();
-    const bytesArray = new Uint8Array(bytes);
-    const doc = await PDFDocument.load(bytesArray);
-    const page = doc.getPage(0);
-    const { width: widthPts, height: heightPts } = page.getSize();
-    const pageCount = doc.getPageCount();
-
-    // Convert pts to the current unit.
-    const ptsPerUnit = formState.unit === "mm" ? 72 / 25.4 : 72;
-    const pageWidth = (widthPts / ptsPerUnit).toFixed(3);
-    const pageHeight = (heightPts / ptsPerUnit).toFixed(3);
-
-    setBasePdf({ bytes: bytesArray, name: file.name, pageCount });
-    void handle({ pageWidth, pageHeight });
-
-    // Reset so the same file can be re-selected.
-    e.target.value = "";
-  };
 
   const maxGuidesThickness = Math.min(
     MAX_GUIDES_THICKNESS,
@@ -233,744 +213,632 @@ export const SettingsForm = () => {
   const maxGuideLength = Number(formState.cardWidth) / 2;
 
   return (
-    <Tabs.Root asChild defaultValue="basic">
+    <Tabs.Root asChild defaultValue="basic" fitted width="full">
       <form>
-        <Tabs.List justifyContent="space-evenly">
-          <Tabs.Trigger value="basic" aria-label="Basic Settings">
-            <Tooltip.Root
-              openDelay={100}
-              closeDelay={200}
-              positioning={{
-                placement: "top",
-              }}
-            >
-              <Tooltip.Trigger asChild>
-                <FontAwesomeIcon icon={faUser} size="lg" />
-              </Tooltip.Trigger>
-              <Portal>
-                <Tooltip.Positioner>
-                  <Tooltip.Arrow>
-                    <Tooltip.ArrowTip />
-                  </Tooltip.Arrow>
-                  <Tooltip.Content>Basic Settings</Tooltip.Content>
-                </Tooltip.Positioner>
-              </Portal>
-            </Tooltip.Root>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="advanced" aria-label="Advanced Settings">
-            <Tooltip.Root
-              openDelay={100}
-              closeDelay={200}
-              positioning={{
-                placement: "top",
-              }}
-            >
-              <Tooltip.Trigger asChild>
-                <FontAwesomeIcon icon={faUserGraduate} size="lg" />
-              </Tooltip.Trigger>
-              <Portal>
-                <Tooltip.Positioner>
-                  <Tooltip.Arrow>
-                    <Tooltip.ArrowTip />
-                  </Tooltip.Arrow>
-                  <Tooltip.Content>Advanced Settings</Tooltip.Content>
-                </Tooltip.Positioner>
-              </Portal>
-            </Tooltip.Root>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="experimental" aria-label="Experimental Settings">
-            <Tooltip.Root
-              openDelay={100}
-              closeDelay={200}
-              positioning={{
-                placement: "top",
-              }}
-            >
-              <Tooltip.Trigger asChild>
-                <FontAwesomeIcon icon={faFlask} size="lg" />
-              </Tooltip.Trigger>
-              <Portal>
-                <Tooltip.Positioner>
-                  <Tooltip.Arrow>
-                    <Tooltip.ArrowTip />
-                  </Tooltip.Arrow>
-                  <Tooltip.Content>Experimental Settings</Tooltip.Content>
-                </Tooltip.Positioner>
-              </Portal>
-            </Tooltip.Root>
-          </Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content
-          value="basic"
-          className={vstack({
-            width: "full",
-            alignItems: "stretch",
-            gap: "4",
-            alignSelf: "stretch",
-            justifyContent: "center",
-          })}
-        >
-          <Field.Root invalid={formErrors.filename.length > 0}>
-            <Field.Label>Filename</Field.Label>
-            <Field.Input
-              minLength={1}
-              maxLength={50}
-              value={formState.filename}
-              onChange={buildTextInputChangeHandler("filename")}
-            />
-            {formErrors.filename.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.guidesColor.length > 0}>
-            <ColorPicker
-              value={parseColor(formState.guidesColor)}
-              onValueChange={buildColorPickerChangeHandler("guidesColor")}
-            >
-              Guides Color
-            </ColorPicker>
-            {formErrors.guidesColor.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Collapsible.Root
-            className={vstack({
-              width: "full",
-              alignItems: "stretch",
-              alignSelf: "stretch",
-            })}
-          >
-            <Field.Root>
-              <Select.Root
-                collection={cardSizeCollection}
-                value={[cardSizeValue]}
-                onValueChange={cardSizeChangeHandler}
+        <Bleed inline={{ base: "2", lg: "4" }}>
+          <Tabs.List>
+            <Tabs.Trigger value="basic" aria-label="Basic Settings">
+              <Tooltip
+                openDelay={100}
+                closeDelay={200}
+                positioning={{
+                  placement: "top",
+                }}
+                content="Basic Settings"
               >
-                <div
-                  className={hstack({
-                    width: "full",
-                    alignItems: "flex-end",
-                    justifyContent: "space-between",
-                  })}
-                >
-                  <Select.Label>Card Size</Select.Label>
-                  <Collapsible.Trigger asChild>
-                    <Button variant="link" size="xs" colorPalette="gray">
-                      Customize
-                    </Button>
-                  </Collapsible.Trigger>
-                </div>
-                <Select.Control>
-                  <Select.Trigger>
-                    <Select.ValueText textTransform="capitalize" />
-                    <Select.Indicator asChild>
-                      <Select.IndicatorIcon />
-                    </Select.Indicator>
-                  </Select.Trigger>
-                </Select.Control>
-                <Select.Positioner>
-                  <Select.Content>
-                    <Select.List>
-                      {cardSizeCollection.items
-                        .filter((item) => !item.hidden)
-                        .map((item) => (
-                          <Select.Item key={item.value} item={item}>
-                            <Select.ItemText textTransform="capitalize">
-                              {item.label}
-                            </Select.ItemText>
-                            <Select.ItemIndicator asChild>
-                              <Select.ItemIndicatorIcon />
-                            </Select.ItemIndicator>
-                          </Select.Item>
-                        ))}
-                    </Select.List>
-                  </Select.Content>
-                </Select.Positioner>
-              </Select.Root>
-            </Field.Root>
-            <Collapsible.Content
-              className={vstack({
-                width: "full",
-                alignItems: "stretch",
-                gap: "4",
-                alignSelf: "stretch",
-                justifyContent: "center",
-                paddingLeft: "4",
-              })}
-            >
-              <Field.Root invalid={formErrors.cardWidth.length > 0}>
-                <NumberInput
-                  min={1}
-                  value={formState.cardWidth}
-                  onValueChange={buildNumberInputChangeHandler("cardWidth")}
-                >
-                  Card Width (mm)
-                </NumberInput>
-                {formErrors.cardWidth.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-              <Field.Root invalid={formErrors.cardHeight.length > 0}>
-                <NumberInput
-                  min={1}
-                  value={formState.cardHeight}
-                  onValueChange={buildNumberInputChangeHandler("cardHeight")}
-                >
-                  Card Height (mm)
-                </NumberInput>
-                {formErrors.cardHeight.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-            </Collapsible.Content>
-          </Collapsible.Root>
-          <Collapsible.Root
-            className={vstack({
-              width: "full",
-              alignItems: "stretch",
-              alignSelf: "stretch",
-            })}
-          >
-            <Field.Root>
-              <Select.Root
-                collection={pageSizeCollection}
-                value={[pageSizeValue]}
-                onValueChange={pageSizeChangeHandler}
-                disabled={isPageSizeLocked}
+                <Icon fontSize="2xl">
+                  <LuUser />
+                </Icon>
+              </Tooltip>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="advanced" aria-label="Advanced Settings">
+              <Tooltip
+                openDelay={100}
+                closeDelay={200}
+                positioning={{
+                  placement: "top",
+                }}
+                content="Advanced Settings"
               >
-                <div
-                  className={hstack({
-                    width: "full",
-                    alignItems: "flex-end",
-                    justifyContent: "space-between",
-                  })}
+                <Icon fontSize="2xl">
+                  <LuGraduationCap />
+                </Icon>
+              </Tooltip>
+            </Tabs.Trigger>
+            <Tabs.Trigger
+              value="experimental"
+              aria-label="Experimental Settings"
+            >
+              <Tooltip
+                openDelay={100}
+                closeDelay={200}
+                positioning={{
+                  placement: "top",
+                }}
+                content="Experimental Settings"
+              >
+                <Icon fontSize="2xl">
+                  <LuFlaskConical />
+                </Icon>
+              </Tooltip>
+            </Tabs.Trigger>
+          </Tabs.List>
+        </Bleed>
+        <Tabs.Content value="basic" asChild>
+          <Container>
+            <Field
+              label="Output Filename"
+              invalid={formErrors.filename.length > 0}
+              errorText={formErrors.filename[0]?.message}
+            >
+              <Input
+                minLength={1}
+                maxLength={50}
+                value={formState.filename}
+                onChange={buildTextInputChangeHandler("filename")}
+              />
+            </Field>
+
+            <Collapsible.Root gap="3">
+              <Field>
+                <SelectRoot
+                  collection={cardSizeCollection}
+                  value={[cardSizeValue]}
+                  onValueChange={cardSizeChangeHandler}
                 >
-                  <Select.Label>Page Size</Select.Label>
-                  <Collapsible.Trigger asChild>
-                    <Button
-                      alignSelf="flex-end"
-                      variant="link"
-                      size="xs"
-                      colorPalette="gray"
-                    >
-                      Customize
-                    </Button>
-                  </Collapsible.Trigger>
-                </div>
-                <Tooltip.Root
-                  disabled={!isPageSizeLocked}
-                  openDelay={100}
-                  closeDelay={200}
-                >
-                  <Tooltip.Trigger asChild>
-                    <Select.Control position="relative">
-                      <Select.Trigger>
-                        <Select.ValueText textTransform="capitalize" />
-                      </Select.Trigger>
-                      <div
-                        className={hstack({
-                          position: "absolute",
-                          right: "3",
-                          top: "0",
-                          height: "full",
-                          pointerEvents: "none",
-                          gap: "1",
-                        })}
+                  <HStack
+                    width="full"
+                    alignItems="flex-end"
+                    justifyContent="space-between"
+                  >
+                    <SelectLabel>Card Size</SelectLabel>
+                    <Collapsible.Trigger asChild>
+                      <Link
+                        as="button"
+                        fontWeight="semibold"
+                        fontSize="xs"
+                        colorPalette="accent"
                       >
-                        <Tooltip.Root openDelay={100} closeDelay={200}>
-                          <Tooltip.Trigger asChild>
-                            <IconButton
-                              type="button"
-                              pointerEvents="auto"
-                              size="xs"
-                              aria-label="Rotate Page"
-                              disabled={isPageSizeLocked}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                rotatePage();
-                              }}
-                            >
-                              <FontAwesomeIcon
-                                icon={faArrowsRotate}
-                                size="lg"
-                              />
-                            </IconButton>
-                          </Tooltip.Trigger>
-                          <Tooltip.Positioner>
-                            <Tooltip.Arrow>
-                              <Tooltip.ArrowTip />
-                            </Tooltip.Arrow>
-                            <Tooltip.Content>Rotate Page</Tooltip.Content>
-                          </Tooltip.Positioner>
-                        </Tooltip.Root>
-                        <Select.Indicator asChild>
-                          <Select.IndicatorIcon />
-                        </Select.Indicator>
-                      </div>
-                    </Select.Control>
-                  </Tooltip.Trigger>
-                  <Portal>
-                    <Tooltip.Positioner>
-                      <Tooltip.Arrow>
-                        <Tooltip.ArrowTip />
-                      </Tooltip.Arrow>
-                      <Tooltip.Content>
-                        Locked to Base PDF dimensions{" "}
-                      </Tooltip.Content>
-                    </Tooltip.Positioner>
-                  </Portal>
-                </Tooltip.Root>
-                <Select.Positioner>
-                  <Select.Content>
+                        Customize
+                      </Link>
+                    </Collapsible.Trigger>
+                  </HStack>
+                  <SelectControl>
+                    <SelectTrigger>
+                      <SelectValueText textTransform="capitalize" />
+                    </SelectTrigger>
+                    <SelectIndicatorGroup />
+                  </SelectControl>
+                  <SelectContent>
+                    {cardSizeCollection.items
+                      .filter((item) => !item.hidden)
+                      .map((item) => (
+                        <SelectItem key={item.value} item={item}>
+                          <SelectItemText textTransform="capitalize">
+                            {item.label}
+                          </SelectItemText>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </SelectRoot>
+              </Field>
+              <Collapsible.Content>
+                <VStack
+                  width="full"
+                  gap="4"
+                  alignItems="stretch"
+                  alignSelf="stretch"
+                  justifyContent="center"
+                  paddingLeft="4"
+                >
+                  <Field
+                    label="Card Width (mm)"
+                    invalid={formErrors.cardWidth.length > 0}
+                    errorText={formErrors.cardWidth[0]?.message}
+                  >
+                    <NumberInputRoot
+                      min={1}
+                      value={formState.cardWidth}
+                      onValueChange={buildNumberInputChangeHandler("cardWidth")}
+                    >
+                      <NumberInputField />
+                    </NumberInputRoot>
+                  </Field>
+                  <Field
+                    label="Card Height (mm)"
+                    invalid={formErrors.cardHeight.length > 0}
+                    errorText={formErrors.cardHeight[0]?.message}
+                  >
+                    <NumberInputRoot
+                      min={1}
+                      value={formState.cardHeight}
+                      onValueChange={buildNumberInputChangeHandler(
+                        "cardHeight",
+                      )}
+                    >
+                      <NumberInputField />
+                    </NumberInputRoot>
+                  </Field>
+                </VStack>
+              </Collapsible.Content>
+            </Collapsible.Root>
+
+            <Collapsible.Root gap="3">
+              <Field>
+                <SelectRoot
+                  collection={pageSizeCollection}
+                  value={[displayPageSizeValue]}
+                  onValueChange={pageSizeChangeHandler}
+                  disabled={isPageSizeLocked}
+                >
+                  <HStack
+                    width="full"
+                    alignItems="flex-end"
+                    justifyContent="space-between"
+                  >
+                    <SelectLabel>Page Size</SelectLabel>
+                    <Collapsible.Trigger asChild>
+                      <Link
+                        as="button"
+                        fontWeight="semibold"
+                        fontSize="xs"
+                        colorPalette="accent"
+                      >
+                        Customize
+                      </Link>
+                    </Collapsible.Trigger>
+                  </HStack>
+                  <Tooltip
+                    disabled={!isPageSizeLocked}
+                    openDelay={100}
+                    closeDelay={200}
+                    content="Locked to Base PDF dimensions"
+                  >
+                    <SelectControl>
+                      <SelectTrigger>
+                        <SelectValueText textTransform="capitalize" />
+                      </SelectTrigger>
+                      <SelectIndicatorGroup>
+                        <Tooltip
+                          openDelay={100}
+                          closeDelay={200}
+                          content="Rotate Page"
+                        >
+                          <IconButton
+                            type="button"
+                            variant="ghost"
+                            pointerEvents="auto"
+                            size="xs"
+                            aria-label="Rotate Page"
+                            disabled={isPageSizeLocked}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              rotatePage();
+                            }}
+                          >
+                            <LuRefreshCcw />
+                          </IconButton>
+                        </Tooltip>
+                        <SelectIndicator />
+                      </SelectIndicatorGroup>
+                    </SelectControl>
+                  </Tooltip>
+                  <SelectContent>
                     {pageSizeCollection.group().map(([type, group]) => (
-                      <Select.ItemGroup key={type}>
-                        <Select.ItemGroupLabel>
-                          {type === "mm" ? "ISO" : "US"}
-                        </Select.ItemGroupLabel>
+                      <SelectItemGroup
+                        key={type}
+                        label={type === "mm" ? "ISO" : "US"}
+                      >
                         {group
                           .filter((item) => !item.hidden)
                           .map((item) => (
-                            <Select.Item key={item.value} item={item}>
-                              <Select.ItemText textTransform="capitalize">
+                            <SelectItem key={item.value} item={item}>
+                              <SelectItemText textTransform="capitalize">
                                 {item.label}
-                              </Select.ItemText>
-                              <Select.ItemIndicator asChild>
-                                <Select.ItemIndicatorIcon />
-                              </Select.ItemIndicator>
-                            </Select.Item>
+                              </SelectItemText>
+                            </SelectItem>
                           ))}
-                      </Select.ItemGroup>
+                      </SelectItemGroup>
                     ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Select.Root>
-            </Field.Root>
-            <Collapsible.Content
-              className={vstack({
-                width: "full",
-                alignItems: "stretch",
-                gap: "4",
-                alignSelf: "stretch",
-                justifyContent: "center",
-                paddingLeft: "4",
-              })}
-            >
-              <Field.Root
-                invalid={formErrors.unit.length > 0}
-                disabled={isPageSizeLocked}
-              >
-                {/* TODO: Make more simple Select */}
-                <Select.Root
-                  collection={unitsCollection}
-                  value={[formState.unit]}
-                  onValueChange={buildSelectChangeHandler("unit")}
-                  disabled={isPageSizeLocked}
+                  </SelectContent>
+                </SelectRoot>
+              </Field>
+              <Collapsible.Content>
+                <VStack
+                  width="full"
+                  gap="4"
+                  alignItems="stretch"
+                  alignSelf="stretch"
+                  justifyContent="center"
+                  paddingLeft="4"
                 >
-                  <Select.Label>Page Unit</Select.Label>
-                  <Select.Control>
-                    <Select.Trigger>
-                      <Select.ValueText />
-                      <Select.Indicator asChild>
-                        <Select.IndicatorIcon />
-                      </Select.Indicator>
-                    </Select.Trigger>
-                  </Select.Control>
-                  <Select.Positioner>
-                    <Select.Content>
-                      <Select.List>
+                  <Field disabled={isPageSizeLocked}>
+                    <SelectRoot
+                      collection={unitsCollection}
+                      value={[formState.unit]}
+                      onValueChange={buildSelectChangeHandler("unit")}
+                      disabled={isPageSizeLocked}
+                    >
+                      <SelectLabel>Page Unit</SelectLabel>
+                      <SelectControl>
+                        <SelectTrigger>
+                          <SelectValueText />
+                        </SelectTrigger>
+                        <SelectIndicatorGroup />
+                      </SelectControl>
+                      <SelectContent>
                         {unitsCollection.items.map((item) => (
-                          <Select.Item key={item.value} item={item}>
-                            <Select.ItemText>{item.label}</Select.ItemText>
-                            <Select.ItemIndicator asChild>
-                              <Select.ItemIndicatorIcon />
-                            </Select.ItemIndicator>
-                          </Select.Item>
+                          <SelectItem key={item.value} item={item}>
+                            <SelectItemText>{item.label}</SelectItemText>
+                          </SelectItem>
                         ))}
-                      </Select.List>
-                    </Select.Content>
-                  </Select.Positioner>
-                </Select.Root>
-                {formErrors.unit.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-              <Field.Root
-                invalid={formErrors.pageWidth.length > 0}
-                disabled={isPageSizeLocked}
-              >
-                <NumberInput
-                  min={1}
-                  value={formState.pageWidth}
-                  onValueChange={buildNumberInputChangeHandler("pageWidth")}
-                  disabled={isPageSizeLocked}
-                >
-                  Page Width ({formState.unit})
-                </NumberInput>
-                {formErrors.pageWidth.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-              <Field.Root
-                invalid={formErrors.pageHeight.length > 0}
-                disabled={isPageSizeLocked}
-              >
-                <NumberInput
-                  min={1}
-                  value={formState.pageHeight}
-                  onValueChange={buildNumberInputChangeHandler("pageHeight")}
-                  disabled={isPageSizeLocked}
-                >
-                  Page Height ({formState.unit})
-                </NumberInput>
-                {formErrors.pageHeight.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-            </Collapsible.Content>
-          </Collapsible.Root>
-          <Field.Root
-            disabled={!formState.enableBleedEdge}
-            invalid={formErrors.bleedEdge.length > 0}
-          >
-            <NumberInput
-              min={0}
-              max={maxBleedEdge}
-              step={0.5}
-              value={formState.bleedEdge}
-              onValueChange={buildNumberInputChangeHandler("bleedEdge")}
-            >
-              Bleed Edge (mm)
-            </NumberInput>
-            {formErrors.bleedEdge.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.guidesThickness.length > 0}>
-            <NumberInput
-              min={0}
-              max={maxGuidesThickness}
-              step={0.01}
-              value={formState.guidesThickness}
-              onValueChange={buildNumberInputChangeHandler("guidesThickness")}
-            >
-              Guides Width (mm)
-            </NumberInput>
-            {formErrors.guidesThickness.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <DefaultCardBackSection />
-        </Tabs.Content>
-        <Tabs.Content
-          value="advanced"
-          className={vstack({
-            width: "full",
-            alignItems: "stretch",
-            gap: "4",
-            alignSelf: "stretch",
-            justifyContent: "center",
-          })}
-        >
-          <UpscaleSetting />
-          <Fieldset.Root>
-            <Field.Root invalid={formErrors.convertToJpg.length > 0}>
-              <Field.Label>Convert images to JPG</Field.Label>
-              <Checkbox
-                size="lg"
-                checked={formState.convertToJpg}
-                onCheckedChange={buildCheckboxChangeHandler("convertToJpg")}
-              />
-              {formErrors.convertToJpg.map((issue, i) => (
-                <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-              ))}
-            </Field.Root>
-            <Collapsible.Root open={formState.convertToJpg}>
-              <Collapsible.Content
-                className={vstack({
-                  width: "full",
-                  paddingLeft: "4",
-                })}
-              >
-                <Field.Root invalid={formErrors.jpgQuality.length > 0}>
-                  <NumberInput
-                    min={0.1}
-                    max={1}
-                    step={0.01}
-                    disabled={!formState.convertToJpg}
-                    value={formState.jpgQuality}
-                    onValueChange={buildNumberInputChangeHandler("jpgQuality")}
+                      </SelectContent>
+                    </SelectRoot>
+                  </Field>
+                  <Field
+                    label={`Page Width (${formState.unit})`}
+                    invalid={formErrors.pageWidth.length > 0}
+                    disabled={isPageSizeLocked}
+                    errorText={formErrors.pageWidth[0]?.message}
                   >
-                    JPG Quality
-                  </NumberInput>
-                  {formErrors.jpgQuality.map((issue, i) => (
-                    <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                  ))}
-                </Field.Root>
+                    <NumberInputRoot
+                      min={1}
+                      value={formState.pageWidth}
+                      onValueChange={buildNumberInputChangeHandler("pageWidth")}
+                      disabled={isPageSizeLocked}
+                    >
+                      <NumberInputField />
+                    </NumberInputRoot>
+                  </Field>
+                  <Field
+                    label={`Page Height (${formState.unit})`}
+                    invalid={formErrors.pageHeight.length > 0}
+                    disabled={isPageSizeLocked}
+                    errorText={formErrors.pageHeight[0]?.message}
+                  >
+                    <NumberInputRoot
+                      min={1}
+                      value={formState.pageHeight}
+                      onValueChange={buildNumberInputChangeHandler(
+                        "pageHeight",
+                      )}
+                      disabled={isPageSizeLocked}
+                    >
+                      <NumberInputField />
+                    </NumberInputRoot>
+                  </Field>
+                </VStack>
               </Collapsible.Content>
             </Collapsible.Root>
-          </Fieldset.Root>
-          <Field.Root invalid={formErrors.maxDpi.length > 0}>
-            <NumberInput
-              min={300}
-              max={1200}
-              step={100}
-              value={formState.maxDpi}
-              onValueChange={buildNumberInputChangeHandler("maxDpi")}
+
+            <Field
+              label="Bleed Edge (mm)"
+              disabled={!formState.enableBleedEdge}
+              invalid={formErrors.bleedEdge.length > 0}
+              errorText={formErrors.bleedEdge[0]?.message}
             >
-              Max DPI
-            </NumberInput>
-            {formErrors.maxDpi.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Fieldset.Root>
-            <Fieldset.Legend className={css({ marginBottom: "2" })}>
-              Card Spacing
-            </Fieldset.Legend>
-            <div className={hstack({ width: "full", gap: "2" })}>
-              <Field.Root invalid={formErrors.rowGap.length > 0}>
-                <Field.Label>Vertical (mm)</Field.Label>
-                <NumberInput
-                  min={0}
-                  max={100}
-                  value={formState.rowGap}
-                  onValueChange={buildNumberInputChangeHandler("rowGap")}
-                ></NumberInput>
-                {formErrors.rowGap.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-              <Field.Root invalid={formErrors.columnGap.length > 0}>
-                <Field.Label>Horizontal (mm)</Field.Label>
-                <NumberInput
-                  min={0}
-                  max={100}
-                  value={formState.columnGap}
-                  onValueChange={buildNumberInputChangeHandler("columnGap")}
-                ></NumberInput>
-                {formErrors.columnGap.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-            </div>
-          </Fieldset.Root>
-          <Fieldset.Root>
-            <Fieldset.Legend className={css({ marginBottom: "2" })}>
-              Front Page Alignment
-            </Fieldset.Legend>
-            <div className={hstack({ width: "full", gap: "2" })}>
-              <Field.Root
-                invalid={formErrors.offsetX.length > 0}
-                className={css({ flex: 1 })}
+              <NumberInputRoot
+                min={0}
+                max={maxBleedEdge}
+                step={0.5}
+                value={formState.bleedEdge}
+                onValueChange={buildNumberInputChangeHandler("bleedEdge")}
               >
-                <NumberInput
-                  step={0.1}
-                  value={formState.offsetX}
-                  onValueChange={buildNumberInputChangeHandler("offsetX")}
-                >
-                  X Offset (mm)
-                </NumberInput>
-                {formErrors.offsetX.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-              <Field.Root
-                invalid={formErrors.offsetY.length > 0}
-                className={css({ flex: 1 })}
-              >
-                <NumberInput
-                  step={0.1}
-                  value={formState.offsetY}
-                  onValueChange={buildNumberInputChangeHandler("offsetY")}
-                >
-                  Y Offset (mm)
-                </NumberInput>
-                {formErrors.offsetY.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-            </div>
-          </Fieldset.Root>
-          <Field.Root invalid={formErrors.pageRotation.length > 0}>
-            <NumberInput
-              step={0.1}
-              min={-180}
-              max={180}
-              value={formState.pageRotation}
-              onValueChange={buildNumberInputChangeHandler("pageRotation")}
+                <NumberInputField />
+              </NumberInputRoot>
+            </Field>
+            <Field
+              label="Guides Width (mm)"
+              invalid={formErrors.guidesThickness.length > 0}
+              errorText={formErrors.guidesThickness[0]?.message}
             >
-              Rotation (°)
-            </NumberInput>
-            {formErrors.pageRotation.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Fieldset.Root>
-            <Fieldset.Legend className={css({ marginBottom: "2" })}>
-              Back Page Offset
-            </Fieldset.Legend>
-            <div className={hstack({ width: "full", gap: "2" })}>
-              <Field.Root
-                invalid={formErrors.backOffsetX.length > 0}
-                className={css({ flex: 1 })}
+              <NumberInputRoot
+                min={0}
+                max={maxGuidesThickness}
+                step={0.01}
+                value={formState.guidesThickness}
+                onValueChange={buildNumberInputChangeHandler("guidesThickness")}
               >
-                <NumberInput
-                  step={0.1}
-                  value={formState.backOffsetX}
-                  onValueChange={buildNumberInputChangeHandler("backOffsetX")}
-                >
-                  X Offset (mm)
-                </NumberInput>
-                {formErrors.backOffsetX.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-              <Field.Root
-                invalid={formErrors.backOffsetY.length > 0}
-                className={css({ flex: 1 })}
+                <NumberInputField />
+              </NumberInputRoot>
+            </Field>
+            <Field
+              invalid={formErrors.guidesColor.length > 0}
+              errorText={formErrors.guidesColor[0]?.message}
+            >
+              <ColorPickerRoot
+                value={parseColor(formState.guidesColor)}
+                onValueChange={buildColorPickerChangeHandler("guidesColor")}
               >
-                <NumberInput
-                  step={0.1}
-                  value={formState.backOffsetY}
-                  onValueChange={buildNumberInputChangeHandler("backOffsetY")}
-                >
-                  Y Offset (mm)
-                </NumberInput>
-                {formErrors.backOffsetY.map((issue, i) => (
-                  <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-                ))}
-              </Field.Root>
-            </div>
-          </Fieldset.Root>
-          <Field.Root invalid={formErrors.backPageRotation.length > 0}>
-            <NumberInput
-              step={0.1}
-              min={-180}
-              max={180}
-              value={formState.backPageRotation}
-              onValueChange={buildNumberInputChangeHandler("backPageRotation")}
-            >
-              Rotation (°)
-            </NumberInput>
-            {formErrors.backPageRotation.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.guideLength.length > 0}>
-            <NumberInput
-              min={0}
-              max={maxGuideLength}
-              step={0.5}
-              value={formState.guideLength}
-              onValueChange={buildNumberInputChangeHandler("guideLength")}
-            >
-              Guide Length (mm, 0 = auto)
-            </NumberInput>
-            {formErrors.guideLength.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.extendedGuidesOnly.length > 0}>
-            <Field.Label>Extended Guides Only</Field.Label>
-            <Checkbox
-              size="lg"
-              checked={formState.extendedGuidesOnly}
-              onCheckedChange={buildCheckboxChangeHandler("extendedGuidesOnly")}
-            />
-            {formErrors.extendedGuidesOnly.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.guidesAtBleedEdge.length > 0}>
-            <Field.Label>Guides at Bleed Edge</Field.Label>
-            <Checkbox
-              size="lg"
-              checked={formState.guidesAtBleedEdge}
-              onCheckedChange={buildCheckboxChangeHandler("guidesAtBleedEdge")}
-            />
-            {formErrors.guidesAtBleedEdge.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
-          <Field.Root invalid={formErrors.backPagesShowGuides.length > 0}>
-            <Field.Label>Show Guides on Back Pages</Field.Label>
-            <Checkbox
-              size="lg"
-              checked={formState.backPagesShowGuides}
-              onCheckedChange={buildCheckboxChangeHandler(
-                "backPagesShowGuides",
-              )}
-            />
-            {formErrors.backPagesShowGuides.map((issue, i) => (
-              <Field.ErrorText key={i}>{issue.message}</Field.ErrorText>
-            ))}
-          </Field.Root>
+                <ColorPickerLabel>Guides Color</ColorPickerLabel>
+                <ColorPickerControl>
+                  <ColorPickerInput />
+                  <ColorPickerTrigger />
+                </ColorPickerControl>
+                <ColorPickerContent>
+                  <ColorPickerArea />
+                  <ColorPickerEyeDropper />
+                  <ColorPickerSliders />
+                  <ColorPickerSwatchGroup />
+                </ColorPickerContent>
+              </ColorPickerRoot>
+            </Field>
+            <DefaultCardBackSection />
+          </Container>
         </Tabs.Content>
-        <Tabs.Content
-          value="experimental"
-          className={vstack({
-            width: "full",
-            alignItems: "stretch",
-            gap: "4",
-            alignSelf: "stretch",
-            justifyContent: "center",
-          })}
-        >
-          <Field.Root>
-            <Field.Label>Base PDF</Field.Label>
-            <Field.HelperText>
-              Cards will be printed on top of this PDF. Page size is locked to
-              the PDF&apos;s dimensions.
-            </Field.HelperText>
-            <input
-              ref={basePdfInputRef}
-              type="file"
-              accept=".pdf,application/pdf"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                void handleBasePdfChange(e);
-              }}
-            />
-            {basePdfName ? (
-              <div
-                className={hstack({
-                  width: "full",
-                  gap: "2",
-                  alignItems: "center",
-                })}
-              >
-                <span
-                  style={{
-                    flex: 1,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {basePdfName}
-                </span>
-                <IconButton
-                  type="button"
-                  size="xs"
-                  variant="ghost"
-                  aria-label="Remove base PDF"
-                  onClick={() => setBasePdf(null)}
-                >
-                  <FontAwesomeIcon icon={faXmark} />
-                </IconButton>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                alignSelf="flex-start"
-                onClick={() => basePdfInputRef.current?.click()}
-              >
-                Choose PDF…
-              </Button>
-            )}
-          </Field.Root>
+        <Tabs.Content value="advanced" asChild width="unset">
+          <Bleed inline={{ base: "2", lg: "4" }}>
+            <AccordionRoot collapsible defaultValue={["image-quality"]}>
+              <AccordionItem value="image-quality">
+                <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
+                  Image Quality
+                </AccordionItemTrigger>
+                <AccordionItemContent asChild>
+                  <Container paddingX={{ base: "2", lg: "4" }}>
+                    <UpscaleSetting />
+                    <Fieldset>
+                      <Checkbox
+                        size="md"
+                        checked={formState.convertToJpg}
+                        onCheckedChange={buildCheckboxChangeHandler(
+                          "convertToJpg",
+                        )}
+                      >
+                        Convert images to JPG
+                      </Checkbox>
+                      <Collapsible.Root open={formState.convertToJpg}>
+                        <Collapsible.Content>
+                          <Field
+                            label="JPG Quality"
+                            invalid={formErrors.jpgQuality.length > 0}
+                            errorText={formErrors.jpgQuality[0]?.message}
+                          >
+                            <NumberInputRoot
+                              min={0.1}
+                              max={1}
+                              step={0.01}
+                              disabled={!formState.convertToJpg}
+                              value={formState.jpgQuality}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "jpgQuality",
+                              )}
+                            >
+                              <NumberInputField />
+                            </NumberInputRoot>
+                          </Field>
+                        </Collapsible.Content>
+                      </Collapsible.Root>
+                    </Fieldset>
+                    <Field
+                      label="Max DPI"
+                      invalid={formErrors.maxDpi.length > 0}
+                      errorText={formErrors.maxDpi[0]?.message}
+                    >
+                      <NumberInputRoot
+                        min={300}
+                        max={1200}
+                        step={100}
+                        value={formState.maxDpi}
+                        onValueChange={buildNumberInputChangeHandler("maxDpi")}
+                      >
+                        <NumberInputField />
+                      </NumberInputRoot>
+                    </Field>
+                  </Container>
+                </AccordionItemContent>
+              </AccordionItem>
+              <AccordionItem value="alignment">
+                <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
+                  Alignment
+                </AccordionItemTrigger>
+                <AccordionItemContent asChild>
+                  <Container paddingX={{ base: "2", lg: "4" }}>
+                    <Fieldset legend="Card Spacing">
+                      <HStack width="full" gap="2">
+                        <Field
+                          label="Vertical (mm)"
+                          invalid={formErrors.rowGap.length > 0}
+                          errorText={formErrors.rowGap[0]?.message}
+                        >
+                          <NumberInputRoot
+                            min={0}
+                            max={100}
+                            value={formState.rowGap}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "rowGap",
+                            )}
+                          >
+                            <NumberInputField />
+                          </NumberInputRoot>
+                        </Field>
+                        <Field
+                          label="Horizontal (mm)"
+                          invalid={formErrors.columnGap.length > 0}
+                          errorText={formErrors.columnGap[0]?.message}
+                        >
+                          <NumberInputRoot
+                            min={0}
+                            max={100}
+                            value={formState.columnGap}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "columnGap",
+                            )}
+                          >
+                            <NumberInputField />
+                          </NumberInputRoot>
+                        </Field>
+                      </HStack>
+                    </Fieldset>
+                    <Fieldset legend="Front Page Offset">
+                      <HStack width="full" gap="2">
+                        <Field
+                          label="X Offset (mm)"
+                          invalid={formErrors.offsetX.length > 0}
+                          errorText={formErrors.offsetX[0]?.message}
+                          flex="1"
+                        >
+                          <NumberInputRoot
+                            step={0.1}
+                            value={formState.offsetX}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "offsetX",
+                            )}
+                          >
+                            <NumberInputField />
+                          </NumberInputRoot>
+                        </Field>
+                        <Field
+                          label="Y Offset (mm)"
+                          invalid={formErrors.offsetY.length > 0}
+                          errorText={formErrors.offsetY[0]?.message}
+                          flex="1"
+                        >
+                          <NumberInputRoot
+                            step={0.1}
+                            value={formState.offsetY}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "offsetY",
+                            )}
+                          >
+                            <NumberInputField />
+                          </NumberInputRoot>
+                        </Field>
+                      </HStack>
+                    </Fieldset>
+                    <Field
+                      label="Rotation (°)"
+                      invalid={formErrors.pageRotation.length > 0}
+                      errorText={formErrors.pageRotation[0]?.message}
+                    >
+                      <NumberInputRoot
+                        step={0.1}
+                        min={-180}
+                        max={180}
+                        value={formState.pageRotation}
+                        onValueChange={buildNumberInputChangeHandler(
+                          "pageRotation",
+                        )}
+                      >
+                        <NumberInputField />
+                      </NumberInputRoot>
+                    </Field>
+                    <Fieldset legend="Back Page Offset">
+                      <HStack width="full" gap="2">
+                        <Field
+                          label="X Offset (mm)"
+                          invalid={formErrors.backOffsetX.length > 0}
+                          errorText={formErrors.backOffsetX[0]?.message}
+                          flex="1"
+                        >
+                          <NumberInputRoot
+                            step={0.1}
+                            value={formState.backOffsetX}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "backOffsetX",
+                            )}
+                          >
+                            <NumberInputField />
+                          </NumberInputRoot>
+                        </Field>
+                        <Field
+                          label="Y Offset (mm)"
+                          invalid={formErrors.backOffsetY.length > 0}
+                          errorText={formErrors.backOffsetY[0]?.message}
+                          flex="1"
+                        >
+                          <NumberInputRoot
+                            step={0.1}
+                            value={formState.backOffsetY}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "backOffsetY",
+                            )}
+                          >
+                            <NumberInputField />
+                          </NumberInputRoot>
+                        </Field>
+                      </HStack>
+                    </Fieldset>
+                    <Field
+                      label="Rotation (°)"
+                      invalid={formErrors.backPageRotation.length > 0}
+                      errorText={formErrors.backPageRotation[0]?.message}
+                    >
+                      <NumberInputRoot
+                        step={0.1}
+                        min={-180}
+                        max={180}
+                        value={formState.backPageRotation}
+                        onValueChange={buildNumberInputChangeHandler(
+                          "backPageRotation",
+                        )}
+                      >
+                        <NumberInputField />
+                      </NumberInputRoot>
+                    </Field>
+                  </Container>
+                </AccordionItemContent>
+              </AccordionItem>
+              <AccordionItem value="guides">
+                <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
+                  Guides
+                </AccordionItemTrigger>
+                <AccordionItemContent asChild>
+                  <Container paddingX={{ base: "2", lg: "4" }}>
+                    <Field
+                      label="Guide Length (mm)"
+                      helperText="Set to 0 for auto length"
+                      invalid={formErrors.guideLength.length > 0}
+                      errorText={formErrors.guideLength[0]?.message}
+                    >
+                      <NumberInputRoot
+                        min={0}
+                        max={maxGuideLength}
+                        step={0.5}
+                        value={formState.guideLength}
+                        onValueChange={buildNumberInputChangeHandler(
+                          "guideLength",
+                        )}
+                      >
+                        <NumberInputField />
+                      </NumberInputRoot>
+                    </Field>
+                    <Checkbox
+                      size="md"
+                      checked={formState.extendedGuidesOnly}
+                      onCheckedChange={buildCheckboxChangeHandler(
+                        "extendedGuidesOnly",
+                      )}
+                    >
+                      Extended Guides Only
+                    </Checkbox>
+                    <Checkbox
+                      size="md"
+                      checked={formState.guidesAtBleedEdge}
+                      onCheckedChange={buildCheckboxChangeHandler(
+                        "guidesAtBleedEdge",
+                      )}
+                    >
+                      Guides at Bleed Edge
+                    </Checkbox>
+                    <Checkbox
+                      size="md"
+                      checked={formState.backPagesShowGuides}
+                      onCheckedChange={buildCheckboxChangeHandler(
+                        "backPagesShowGuides",
+                      )}
+                    >
+                      Show Guides on Back Pages
+                    </Checkbox>
+                  </Container>
+                </AccordionItemContent>
+              </AccordionItem>
+            </AccordionRoot>
+          </Bleed>
+        </Tabs.Content>
+        <Tabs.Content value="experimental" asChild>
+          <Container>
+            <BasePDFInput />
+          </Container>
         </Tabs.Content>
       </form>
     </Tabs.Root>

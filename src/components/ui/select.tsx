@@ -6,23 +6,25 @@ import * as React from "react";
 
 import { CloseButton } from "./close-button";
 
-interface SelectTriggerProps extends ChakraSelect.ControlProps {
+interface SelectIndicatorGroupProps extends ChakraSelect.IndicatorGroupProps {
   clearable?: boolean;
 }
 
-export const SelectTrigger = React.forwardRef<
-  HTMLButtonElement,
-  SelectTriggerProps
->(function SelectTrigger(props, ref) {
+export const SelectIndicatorGroup = React.forwardRef<
+  HTMLDivElement,
+  SelectIndicatorGroupProps
+>(function SelectIndicatorGroup(props, ref) {
   const { children, clearable, ...rest } = props;
+
   return (
-    <ChakraSelect.Control {...rest}>
-      <ChakraSelect.Trigger ref={ref}>{children}</ChakraSelect.Trigger>
-      <ChakraSelect.IndicatorGroup>
-        {clearable && <SelectClearTrigger />}
-        <ChakraSelect.Indicator />
-      </ChakraSelect.IndicatorGroup>
-    </ChakraSelect.Control>
+    <ChakraSelect.IndicatorGroup ref={ref} {...rest}>
+      {children ?? (
+        <>
+          {clearable && <SelectClearTrigger />}
+          <SelectIndicator />
+        </>
+      )}
+    </ChakraSelect.IndicatorGroup>
   );
 });
 
@@ -142,3 +144,6 @@ export const SelectItemGroup = React.forwardRef<
 
 export const SelectLabel = ChakraSelect.Label;
 export const SelectItemText = ChakraSelect.ItemText;
+export const SelectControl = ChakraSelect.Control;
+export const SelectTrigger = ChakraSelect.Trigger;
+export const SelectIndicator = ChakraSelect.Indicator;

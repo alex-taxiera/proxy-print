@@ -1,9 +1,6 @@
+import { Box, Button } from "@chakra-ui/react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-
-import { css } from "styled-system/css";
-
-import { Button } from "@/components/ui-old/button";
 
 import { progressEvents } from "@/utils/progress-events";
 
@@ -15,18 +12,11 @@ const meta: Meta<typeof ProgressOverlay> = {
   parameters: {
     layout: "fullscreen",
   },
-  tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div
-        className={css({
-          p: "4",
-          margin: "auto",
-          width: "100%",
-        })}
-      >
+      <Box padding="4" margin="auto" width="100%">
         <Story />
-      </div>
+      </Box>
     ),
   ],
 };

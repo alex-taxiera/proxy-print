@@ -1,15 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { Toaster } from "@/components/ui-old/styled/toast";
-import { AlertToast } from "@/components/ui-old/toast";
-
 import { Provider } from "@/components/ui/provider";
+import { Toaster } from "@/components/ui/toaster";
 
 import { ImageSelectionProvider } from "@/context/ImageSelectionProvider";
 import { ImagesProvider } from "@/context/ImagesProvider";
 import { useImageLoadingProgress } from "@/hooks/useImageLoadingProgress";
 import { useSettingsStore } from "@/store/settingsStore";
-import { toaster } from "@/utils/toaster";
 
 import { Layout } from "./Layout";
 
@@ -43,9 +40,7 @@ function App() {
   return (
     <Provider>
       <QueryClientProvider client={queryClient}>
-        <Toaster toaster={toaster}>
-          {(toast) => <AlertToast toast={toast} />}
-        </Toaster>
+        <Toaster />
         {hasHydrated ? <AppContent /> : null}
       </QueryClientProvider>
     </Provider>
