@@ -65,6 +65,7 @@ export const ComboboxItem = React.forwardRef<
   HTMLDivElement,
   ChakraCombobox.ItemProps
 >(function ComboboxItem(props, ref) {
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
   const { item, children, ...rest } = props;
   return (
     <ChakraCombobox.Item key={item.value} item={item} {...rest} ref={ref}>
@@ -72,6 +73,7 @@ export const ComboboxItem = React.forwardRef<
       <ChakraCombobox.ItemIndicator />
     </ChakraCombobox.Item>
   );
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 });
 
 export const ComboboxRoot = React.forwardRef<

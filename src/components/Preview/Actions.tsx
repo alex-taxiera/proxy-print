@@ -371,7 +371,9 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
         </MenuContent>
       </MenuRoot>
       <span>{formatCount(selectedImageCount, "card")} selected</span>
-      <Link colorPalette="accent" onClick={() => onSelectAllImages(false)}>Deselect all</Link>
+      <Link colorPalette="accent" onClick={() => onSelectAllImages(false)}>
+        Deselect all
+      </Link>
     </HStack>
   );
 };

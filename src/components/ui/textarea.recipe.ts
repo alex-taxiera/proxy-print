@@ -5,5 +5,5 @@ export const textarea = defineRecipe({
     colorPalette: "accent",
     transitionProperty: "common",
     transitionDuration: "moderate",
-  }
-})
+  },
+});

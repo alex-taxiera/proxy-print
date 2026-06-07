@@ -22,7 +22,6 @@ import {
   MenuItem,
   MenuItemCommand,
   MenuItemGroup,
-  MenuItemGroupLabel,
   MenuItemText,
   MenuRoot,
   MenuTriggerItem,

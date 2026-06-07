@@ -68,6 +68,7 @@ export const SelectItem = React.forwardRef<
   HTMLDivElement,
   ChakraSelect.ItemProps
 >(function SelectItem(props, ref) {
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
   const { item, children, ...rest } = props;
   return (
     <ChakraSelect.Item key={item.value} item={item} {...rest} ref={ref}>
@@ -75,6 +76,7 @@ export const SelectItem = React.forwardRef<
       <ChakraSelect.ItemIndicator />
     </ChakraSelect.Item>
   );
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 });
 
 interface SelectValueTextProps
@@ -86,6 +88,7 @@ export const SelectValueText = React.forwardRef<
   HTMLSpanElement,
   SelectValueTextProps
 >(function SelectValueText(props, ref) {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const { children, ...rest } = props;
   return (
     <ChakraSelect.ValueText {...rest} ref={ref}>

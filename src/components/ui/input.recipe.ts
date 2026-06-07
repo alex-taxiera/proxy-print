@@ -5,5 +5,5 @@ export const input = defineRecipe({
     colorPalette: "accent",
     transitionProperty: "common",
     transitionDuration: "moderate",
-  }
-})
+  },
+});

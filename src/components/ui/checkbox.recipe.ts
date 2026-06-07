@@ -1,7 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
-import {
-  checkboxAnatomy,
-} from "@chakra-ui/react/anatomy";
+import { checkboxAnatomy } from "@chakra-ui/react/anatomy";
 
 export const checkbox = defineSlotRecipe({
   slots: checkboxAnatomy.keys(),
@@ -13,6 +11,6 @@ export const checkbox = defineSlotRecipe({
     },
     control: {
       colorPalette: "accent",
-    }
-  }
-})
+    },
+  },
+});

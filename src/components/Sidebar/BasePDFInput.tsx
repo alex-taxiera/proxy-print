@@ -52,7 +52,7 @@ export const BasePDFInput = () => {
         onFileChange={(details) => {
           const file = details.acceptedFiles[0];
           if (!file) {
-            setBasePdf(null)
+            setBasePdf(null);
           } else {
             void handleBasePdfChange(file);
           }

@@ -8,8 +8,8 @@ export interface InputGroupProps extends BoxProps {
   startElement?: React.ReactNode;
   endElement?: React.ReactNode;
   children: React.ReactElement<InputElementProps>;
-  startOffset?: InputElementProps["paddingStart"];
-  endOffset?: InputElementProps["paddingEnd"];
+  startOffset?: `var(--${string})` | (string & {});
+  endOffset?: `var(--${string})` | (string & {});
 }
 
 export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(

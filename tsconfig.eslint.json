@@ -3,9 +3,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": [
-    "src",
-    ".storybook/**/*",
-    "vitest.config.ts"
-  ]
+  "include": ["src", ".storybook/**/*", "vitest.config.ts"]
 }

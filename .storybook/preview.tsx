@@ -3,7 +3,6 @@ import type { Preview, ReactRenderer } from "@storybook/react-vite";
 
 import { Provider } from "@/components/ui/provider";
 
-
 const preview: Preview = {
   parameters: {
     controls: {

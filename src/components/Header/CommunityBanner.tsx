@@ -2,12 +2,7 @@ import { Box, Link } from "@chakra-ui/react";
 
 export const CommunityBanner = () => {
   return (
-    <Box
-      bg="accent.solid"
-      paddingY="1"
-      textAlign="center"
-      alignSelf="stretch"
-    >
+    <Box bg="accent.solid" paddingY="1" textAlign="center" alignSelf="stretch">
       <Link
         fontSize="sm"
         color="white"

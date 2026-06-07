@@ -95,7 +95,9 @@ export const PageDrop = ({
     <Box
       ref={ref}
       visibility={!disabled && isDragging ? "visible" : "hidden"}
-      bg={isDropTarget ? "accent.900" : isDragging ? "bg.default" : "transparent"}
+      bg={
+        isDropTarget ? "accent.900" : isDragging ? "bg.default" : "transparent"
+      }
       borderColor="border.default"
       borderStyle="solid"
       borderWidth="1px"

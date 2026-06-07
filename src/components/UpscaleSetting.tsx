@@ -7,10 +7,7 @@ import { useSettingsFormState } from "@/hooks/useSettingsFormState";
 
 export type UpscaleSettingProps = React.ComponentProps<typeof Checkbox>;
 
-export const UpscaleSetting = ({
-  children,
-  ...props
-}: UpscaleSettingProps) => {
+export const UpscaleSetting = ({ children, ...props }: UpscaleSettingProps) => {
   const { formState, buildCheckboxChangeHandler } = useSettingsFormState();
   return (
     <Checkbox

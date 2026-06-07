@@ -1,4 +1,9 @@
-import { defineSlotRecipe, useSlotRecipe, Box, RecipeVariantProps } from "@chakra-ui/react";
+import {
+  defineSlotRecipe,
+  useSlotRecipe,
+  Box,
+  RecipeVariantProps,
+} from "@chakra-ui/react";
 
 export const guide = defineSlotRecipe({
   slots: ["root", "horizontal", "vertical"],
@@ -97,8 +102,8 @@ export const guide = defineSlotRecipe({
 export type GuideProps = RecipeVariantProps<typeof guide>;
 
 const Guide = ({ position = "topLeft" }: GuideProps) => {
-  const recipe = useSlotRecipe({ key: "guide" })
-  const styles = recipe({ position })
+  const recipe = useSlotRecipe({ key: "guide" });
+  const styles = recipe({ position });
   return (
     <Box css={styles.root}>
       <Box css={styles.horizontal} />
