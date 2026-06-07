@@ -241,7 +241,14 @@ export const Card = ({
       position="relative"
       transitionProperty="common"
       transitionDuration="moderate"
+      outlineColor="transparent"
       opacity={sortable.isDragging ? 0.5 : 1}
+      css={{
+        "--horizontal-guide-length":
+          "calc(calc(var(--page-width) - calc(var(--item-width) * var(--columns-per-page))) / 2)",
+        "--vertical-guide-length":
+          "calc(calc(var(--page-height) - calc(var(--item-height) * var(--rows-per-page))) / 2)",
+      }}
       _before={cardBefore}
       _after={cardAfter}
       _hover={!isEmpty && !isPending ? cardHighlightStyles : undefined}

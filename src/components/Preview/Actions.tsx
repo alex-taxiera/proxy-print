@@ -362,7 +362,7 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
     <HStack gap="2">
       <MenuRoot onSelect={() => onSelectAllImages(false)}>
         <MenuTrigger asChild>
-          <Button colorPalette="gray" type="button">
+          <Button variant="outline" type="button">
             Actions
           </Button>
         </MenuTrigger>
@@ -371,7 +371,7 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
         </MenuContent>
       </MenuRoot>
       <span>{formatCount(selectedImageCount, "card")} selected</span>
-      <Link onClick={() => onSelectAllImages(false)}>Deselect all</Link>
+      <Link colorPalette="accent" onClick={() => onSelectAllImages(false)}>Deselect all</Link>
     </HStack>
   );
 };

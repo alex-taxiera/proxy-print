@@ -118,7 +118,7 @@ const customConfig = defineConfig({
   },
   globalCss: {
     "#root": {
-      minHeight: "100vh",
+      height: "100vh",
       display: "flex",
       flexDirection: "column",
     },
