@@ -24,8 +24,6 @@
       "@trivago/prettier-plugin-sort-imports"
     ],
     "importOrder": [
-      "^styled-system/(.*)$",
-      "^@/components/ui-old/(.*)$",
       "^@/components/ui/(.*)$",
       "^@/components/(.*)$",
       "^@/(.*)$",

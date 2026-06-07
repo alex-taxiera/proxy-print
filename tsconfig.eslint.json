@@ -5,8 +5,6 @@
   },
   "include": [
     "src",
-    "styled-system",
-    "panda.config.ts",
     ".storybook/**/*",
     "vitest.config.ts"
   ]

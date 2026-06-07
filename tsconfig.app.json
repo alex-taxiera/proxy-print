@@ -24,9 +24,8 @@
 
     /* Path mapping */
     "paths": {
-      "styled-system/*": ["./styled-system/*"],
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "styled-system", "panda.config.ts"]
+  "include": ["src"]
 }

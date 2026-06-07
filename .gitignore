@@ -30,14 +30,9 @@ coverage
 # Docker
 docker-compose.override.yml
 
-# Panda
-styled-system
-styled-system-studio
+# Storybook
 *storybook.log
 storybook-static
-
-# copied part recipes
-src/components/ui-old/preset/theme/recipes/**
 
 # Sentry Config File
 .env.sentry-build-plugin
