@@ -2,9 +2,9 @@ import { Alert as ChakraAlert, useAlertStyles } from "@chakra-ui/react";
 import * as React from "react";
 import { LuInfo, LuCircleCheck, LuTriangleAlert } from "react-icons/lu";
 
-import { AlertVariant } from "styled-system/recipes/alert";
-
 import { CloseButton } from "./close-button";
+
+export type AlertStatus = "info" | "warning" | "success" | "error" | "neutral";
 
 export interface AlertProps
   extends Omit<ChakraAlert.RootProps, "title" | "status"> {
@@ -12,7 +12,7 @@ export interface AlertProps
   endElement?: React.ReactNode;
   title?: React.ReactNode;
   icon?: React.ReactElement;
-  status?: AlertVariant["status"]; // remove conditional types to simplify usage
+  status?: AlertStatus; // remove conditional types to simplify usage
 }
 
 const STATUS_ICON_MAP = {

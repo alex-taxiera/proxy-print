@@ -1,6 +1,5 @@
+import { Box } from "@chakra-ui/react";
 import { DragOverlay } from "@dnd-kit/react";
-
-import { css } from "styled-system/css";
 
 import { getIsSortableCardData } from "@/hooks/useSortableCard";
 import { formatCount } from "@/utils/pluralize";
@@ -19,33 +18,27 @@ export const CardDragOverlay = ({
     <DragOverlay>
       {(source) => {
         return (
-          <div
-            className={css({
-              height: "full",
-              position: "relative",
-              width: "100%",
-              overflow: "visible",
-            })}
+          <Box
+            height="full"
+            position="relative"
+            width="full"
+            overflow="visible"
           >
-            <div
-              style={{
-                left: `${dragOverlayOffset?.x}px`,
-                top: `${dragOverlayOffset?.y}px`,
-              }}
-              className={css({
-                background: "accent.default",
-                borderRadius: "l2",
-                color: "accent.fg",
-                padding: "2",
-                fontSize: "sm",
-                textAlign: "center",
-                width: "max",
-                maxWidth: "var(--card-width)",
-                wordBreak: "break-all",
-                position: "absolute",
-                zIndex: "1",
-                pointerEvents: "none",
-              })}
+            <Box
+              left={`${dragOverlayOffset?.x}px`}
+              top={`${dragOverlayOffset?.y}px`}
+              background="accent.solid"
+              borderRadius="md"
+              color="white"
+              padding="2"
+              fontSize="sm"
+              textAlign="center"
+              width="max"
+              maxWidth="var(--card-width)"
+              wordBreak="break-all"
+              position="absolute"
+              zIndex="1"
+              pointerEvents="none"
             >
               {getIsSortableCardData(source.data)
                 ? source.data.images.length === 1
@@ -54,8 +47,8 @@ export const CardDragOverlay = ({
                     : source.data.images[0].file.name
                   : formatCount(source.data.images.length, "card")
                 : "unknown"}
-            </div>
-          </div>
+            </Box>
+          </Box>
         );
       }}
     </DragOverlay>

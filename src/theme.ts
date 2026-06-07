@@ -1,5 +1,6 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
+import { accordion } from "@/components/ui/accordion.recipe";
 import { alert } from "@/components/ui/alert.recipe";
 import { button } from "@/components/ui/button.recipe";
 import { checkbox } from "@/components/ui/checkbox.recipe";
@@ -7,9 +8,12 @@ import { collapsible } from "@/components/ui/collapsible.recipe";
 import { colorPicker } from "@/components/ui/color-picker.recipe";
 import { fileUpload } from "@/components/ui/file-upload.recipe";
 import { input } from "@/components/ui/input.recipe";
+import { menu } from "@/components/ui/menu.recipe";
 import { numberInput } from "@/components/ui/number-input.recipe";
 import { select } from "@/components/ui/select.recipe";
 import { textarea } from "@/components/ui/textarea.recipe";
+
+import { guide } from "@/components/Preview/Card/Guides";
 
 const customConfig = defineConfig({
   theme: {
@@ -51,13 +55,13 @@ const customConfig = defineConfig({
           },
           fg: {
             value: {
-              _light: "{colors.accent.700}",
-              _dark: "{colors.accent.300}",
+              _light: "{colors.accent.800}",
+              _dark: "{colors.accent.400}",
             },
           },
           subtle: {
             value: {
-              _light: "{colors.accent.100}",
+              _light: "{colors.accent.300}",
               _dark: "{colors.accent.900}",
             },
           },
@@ -100,13 +104,16 @@ const customConfig = defineConfig({
       textarea,
     },
     slotRecipes: {
+      accordion,
       alert,
       checkbox,
       collapsible,
       colorPicker,
       fileUpload,
+      menu,
       numberInput,
-      select
+      select,
+      guide,
     },
   },
   globalCss: {

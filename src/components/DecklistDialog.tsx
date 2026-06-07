@@ -30,8 +30,6 @@ import { UpscaleSetting } from "./UpscaleSetting";
 
 export type DecklistDialogProps = React.ComponentProps<typeof DialogRoot>;
 
-const formId = "decklist-form";
-
 export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
   const { onAdd, onAddSlots, onError } = useContext(ImagesContext);
   const isMutating = useIsMutating({
@@ -105,7 +103,6 @@ export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
                   </DialogActionTrigger>
                   <Button
                     type="submit"
-                    form={formId}
                     loading={isSubmitting}
                     loadingText="Submitting..."
                   >
