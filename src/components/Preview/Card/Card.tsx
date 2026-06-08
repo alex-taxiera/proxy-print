@@ -125,6 +125,13 @@ export const Card = ({
 
   const imageSrc = src;
 
+  // react-hooks/refs: useSortableCard calls @dnd-kit/react's useSortable, which
+  // returns getter properties (isDragging, isDropTarget, isDropping, ref) backed
+  // by useDeepSignal — a ref-based reactive primitive that dnd-kit intentionally
+  // exposes for render-time access. The library tracks which getters are read and
+  // schedules re-renders on change, so these ARE safe to access during render.
+  // Fixing these errors would require replacing dnd-kit's built-in reactive state
+  // with manual useDragDropMonitor subscriptions — a significant refactor.
   const sortable = useSortableCard({
     image,
     index,
@@ -162,11 +169,17 @@ export const Card = ({
 
   const name = getIsLocalImage(image) ? image.file?.name : image.name;
 
+  // react-hooks/set-state-in-effect: setSrc is called synchronously inside this
+  // effect. The alternative (useMemo) is unsafe here because URL.createObjectURL
+  // is a side effect — React may speculatively call useMemo multiple times in
+  // concurrent mode, leaking object URLs with no cleanup path. The effect pattern
+  // is the only correct way to pair URL creation with its revocation on cleanup.
   useEffect(() => {
     let url: string | undefined;
 
     if (queryData) {
       url = URL.createObjectURL(queryData.data);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSrc(url);
     }
 
@@ -232,6 +245,7 @@ export const Card = ({
     zIndex: "1",
   };
 
+  /* eslint-disable react-hooks/refs */
   return (
     <Box
       className="card group"
@@ -399,4 +413,5 @@ export const Card = ({
       ) : null}
     </Box>
   );
+  /* eslint-enable react-hooks/refs */
 };

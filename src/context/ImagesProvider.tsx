@@ -158,12 +158,8 @@ export const ImagesProvider = (
     // Pre-generate all slot objects (pure, no side effects).
     const newSlots: CardSlot[] = data.map((item) => {
       const slotId = nanoid();
-      const front = item.front
-        ? ({ ...item.front, uuid: slotId } as Image)
-        : null;
-      const back = item.back
-        ? ({ ...item.back, uuid: `${slotId}:back` } as Image)
-        : null;
+      const front = item.front ? { ...item.front, uuid: slotId } : null;
+      const back = item.back ? { ...item.back, uuid: `${slotId}:back` } : null;
       return { id: slotId, front, back, position: 0 } satisfies CardSlot;
     });
 
@@ -175,18 +171,18 @@ export const ImagesProvider = (
       const cbImage = {
         ...currentCardBack,
         uuid: "default-card-back",
-      } as Image;
-      if (getIsLocalImage(cbImage)) void loadLocalImage(cbImage as LocalImage);
-      else void downloadImage(cbImage as DownloadableImage);
+      };
+      if (getIsLocalImage(cbImage)) void loadLocalImage(cbImage);
+      else void downloadImage(cbImage);
     }
     for (const slot of newSlots) {
       if (slot.front) {
-        if ("file" in slot.front) void loadLocalImage(slot.front as LocalImage);
-        else void downloadImage(slot.front as DownloadableImage);
+        if ("file" in slot.front) void loadLocalImage(slot.front);
+        else void downloadImage(slot.front);
       }
       if (slot.back) {
-        if ("file" in slot.back) void loadLocalImage(slot.back as LocalImage);
-        else void downloadImage(slot.back as DownloadableImage);
+        if ("file" in slot.back) void loadLocalImage(slot.back);
+        else void downloadImage(slot.back);
       }
     }
 

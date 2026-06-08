@@ -79,8 +79,10 @@ export const SelectItem = React.forwardRef<
   /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 });
 
-interface SelectValueTextProps
-  extends Omit<ChakraSelect.ValueTextProps, "children"> {
+interface SelectValueTextProps extends Omit<
+  ChakraSelect.ValueTextProps,
+  "children"
+> {
   children?(items: CollectionItem[]): React.ReactNode;
 }
 

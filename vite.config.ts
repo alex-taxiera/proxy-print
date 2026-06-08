@@ -35,10 +35,8 @@ export default defineConfig({
       output: {
         manualChunks: (moduleId) => {
           // console.log("Module ID:", moduleId);
-          return (
-            ["chakra-ui", "pdf-lib", "sentry"].find(
-              (lib) => moduleId.includes(lib),
-            )
+          return ["chakra-ui", "pdf-lib", "sentry"].find((lib) =>
+            moduleId.includes(lib),
           );
         },
       },

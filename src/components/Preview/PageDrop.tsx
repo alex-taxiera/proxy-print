@@ -16,14 +16,15 @@ export const PageDrop = ({
   hoverTimeoutMs?: number;
 }>) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
+  // Ref instead of state — only used for logic, never drives rendering
+  const isHoveringRef = useRef(false);
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useDragDropMonitor({
     onDragStart: () => setIsDragging(true),
     onDragEnd: () => {
       setIsDragging(false);
-      setIsHovering(false);
+      isHoveringRef.current = false;
       if (hoverTimerRef.current) {
         clearTimeout(hoverTimerRef.current);
         hoverTimerRef.current = null;
@@ -39,48 +40,41 @@ export const PageDrop = ({
     collisionDetector: pointerIntersection,
   });
 
+  // Ref breaks the self-reference that useCallback can't express without a TDZ violation
+  const setHoverTimeoutRef = useRef<(timeout?: number) => void>(() => {});
+
   const setHoverTimeout = useCallback(
     (timeout?: number) => {
       hoverTimerRef.current = setTimeout(() => {
         onHoverTimeout?.();
-        setHoverTimeout(hoverTimeoutMs * 4);
+        setHoverTimeoutRef.current(hoverTimeoutMs * 4);
       }, timeout ?? hoverTimeoutMs);
     },
     [onHoverTimeout, hoverTimeoutMs],
   );
 
-  // Handle hover timeout logic
-  const handleHoverStart = useCallback(() => {
-    if (disabled || !onHoverTimeout) return;
-
-    setIsHovering(true);
-
-    // Clear any existing timer
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-    }
-
-    // Set new timer
-    setHoverTimeout();
-  }, [disabled, onHoverTimeout, setHoverTimeout]);
-
-  const handleHoverEnd = useCallback(() => {
-    setIsHovering(false);
-
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  }, []);
-
-  // Monitor when we become a drop target (hovering over)
+  // Keep ref in sync so the scheduled callback always calls the latest version
   useEffect(() => {
-    if (isDropTarget && !isHovering) {
-      handleHoverStart();
-    } else if (!isDropTarget && isHovering) {
-      handleHoverEnd();
+    setHoverTimeoutRef.current = setHoverTimeout;
+  }, [setHoverTimeout]);
+
+  // Monitor when we become a drop target — use refs to avoid setState-in-effect
+  useEffect(() => {
+    if (isDropTarget && !isHoveringRef.current) {
+      if (disabled || !onHoverTimeout) return;
+      isHoveringRef.current = true;
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+      setHoverTimeout();
+    } else if (!isDropTarget && isHoveringRef.current) {
+      isHoveringRef.current = false;
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = null;
+      }
     }
-  }, [isDropTarget, isHovering, handleHoverStart, handleHoverEnd]);
+  }, [isDropTarget, setHoverTimeout, disabled, onHoverTimeout]);
 
   // Cleanup timer on unmount
   useEffect(() => {

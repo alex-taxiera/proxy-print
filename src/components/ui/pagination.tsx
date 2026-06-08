@@ -35,8 +35,10 @@ const [RootPropsProvider, useRootProps] = createContext<ButtonVariantContext>({
   name: "RootPropsProvider",
 });
 
-export interface PaginationRootProps
-  extends Omit<ChakraPagination.RootProps, "type"> {
+export interface PaginationRootProps extends Omit<
+  ChakraPagination.RootProps,
+  "type"
+> {
   size?: ButtonProps["size"];
   variant?: PaginationVariant;
   getHref?: (page: number) => string;

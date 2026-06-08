@@ -1,8 +1,10 @@
 import { Fieldset as ChakraFieldset, Stack } from "@chakra-ui/react";
 import * as React from "react";
 
-export interface FieldsetProps
-  extends Omit<ChakraFieldset.RootProps, "legend"> {
+export interface FieldsetProps extends Omit<
+  ChakraFieldset.RootProps,
+  "legend"
+> {
   legend?: React.ReactNode;
   helperText?: React.ReactNode;
 }

@@ -166,7 +166,7 @@ const applyValidKeysToSettings = (
     ...Object.fromEntries(
       validKeys.map((key) => [key, updatedSettings[key as keyof Settings]]),
     ),
-  } as Settings;
+  };
 };
 
 export const useSettingsStore = create<SettingsStore>()(

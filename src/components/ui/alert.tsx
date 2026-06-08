@@ -6,8 +6,10 @@ import { CloseButton } from "./close-button";
 
 export type AlertStatus = "info" | "warning" | "success" | "error" | "neutral";
 
-export interface AlertProps
-  extends Omit<ChakraAlert.RootProps, "title" | "status"> {
+export interface AlertProps extends Omit<
+  ChakraAlert.RootProps,
+  "title" | "status"
+> {
   startElement?: React.ReactNode;
   endElement?: React.ReactNode;
   title?: React.ReactNode;

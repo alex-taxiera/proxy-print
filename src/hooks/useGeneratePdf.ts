@@ -148,7 +148,7 @@ export const useGeneratePdf = (
       }) => {
         const typedImage: ImageType | undefined = getIsEmptyImage(image)
           ? undefined
-          : (image as ImageType);
+          : image;
         console.debug(`Card (rel ${relativeIndex}) processing`);
         const referenceCard = referenceCards[relativeIndex];
         const cardRect = referenceCard.getBoundingClientRect();
@@ -274,7 +274,7 @@ export const useGeneratePdf = (
             tempImg.src = "";
           } catch (error) {
             console.error("Error processing image for PDF:", error);
-            reject(error as Error);
+            reject(error instanceof Error ? error : new Error(String(error)));
           }
         }
 
@@ -422,7 +422,7 @@ export const useGeneratePdf = (
           resolve(void 0);
         } catch (error) {
           console.error("Error merging PDFs", error);
-          reject(error as Error);
+          reject(error instanceof Error ? error : new Error(String(error)));
           console.timeEnd("save");
           setIsRendering(false);
           progressEvents.emit("complete");

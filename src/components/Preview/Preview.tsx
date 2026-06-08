@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { DragDropProvider, DragDropEventHandlers } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
-import { useContext, useRef, useState, useEffect, useCallback } from "react";
+import { useContext, useRef, useState, useCallback } from "react";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
 import { ProgressOverlay } from "@/components/ProgressOverlay";
@@ -30,7 +30,11 @@ const usePagination = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isReferenceCardLoaded, setIsReferenceCardLoaded] = useState(false);
 
-  const currentPageData = pages[currentPage - 1] ?? {
+  // Clamp to valid range without a synchronous setState-in-effect
+  const clampedCurrentPage =
+    pages.length > 0 ? Math.min(currentPage, pages.length) : 1;
+
+  const currentPageData = pages[clampedCurrentPage - 1] ?? {
     items: [],
     pageType: "front" as const,
     gridColumns: 3,
@@ -47,12 +51,12 @@ const usePagination = () => {
   );
 
   const nextPage = () => {
-    setCurrentPage((old) => Math.min(old + 1, pages.length));
+    setCurrentPage(Math.min(clampedCurrentPage + 1, pages.length));
     setIsReferenceCardLoaded(false);
   };
 
   const previousPage = () => {
-    setCurrentPage((old) => Math.max(old - 1, 1));
+    setCurrentPage(Math.max(clampedCurrentPage - 1, 1));
     setIsReferenceCardLoaded(false);
   };
 
@@ -60,17 +64,11 @@ const usePagination = () => {
     setIsReferenceCardLoaded(true);
   };
 
-  useEffect(() => {
-    if (currentPage > pages.length) {
-      changePage(pages.length || 1);
-    }
-  }, [currentPage, pages.length, changePage]);
-
   return {
     pages,
     cardsPerPage,
     rowsPerPage,
-    currentPage,
+    currentPage: clampedCurrentPage,
     currentPageData,
     currentCards,
     isReferenceCardLoaded,
