@@ -366,6 +366,17 @@ export const Preview = () => {
                   "var(--image-container-buffer, var(--guide-border-width))",
                 "--guide-corner-offset":
                   "calc(calc(-0.5 * var(--guide-border-width)) + calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1)))",
+                ...(currentPageData.pageType === "back" &&
+                settings.useBackCardSpacing
+                  ? {
+                      "--row-gap": `${settings.backRowGap}mm`,
+                      "--column-gap": `${settings.backColumnGap}mm`,
+                    }
+                  : {}),
+                ...(currentPageData.pageType === "back" &&
+                settings.useBackBleedEdge
+                  ? { "--bleed-edge": `${settings.backBleedEdge}mm` }
+                  : {}),
               }}
             >
               <Box

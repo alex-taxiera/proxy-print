@@ -219,7 +219,7 @@ export const useSettingsStore = create<SettingsStore>()(
     },
     {
       name: "proxy-print-settings",
-      version: 4,
+      version: 5,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
@@ -228,7 +228,7 @@ export const useSettingsStore = create<SettingsStore>()(
 
         const state = persistedState as Partial<SettingsStore>;
 
-        if (version < 4) {
+        if (version < 5) {
           return {
             ...state,
             settings: {

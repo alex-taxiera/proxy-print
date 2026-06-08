@@ -215,6 +215,26 @@ export const SettingsSchema = zod
     backPageRotation: zod
       .string()
       .refine((v) => isFinite(Number(v)), "Must be a valid number"),
+    useBackCardSpacing: zod.boolean(),
+    backRowGap: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
+      .refine((val) => parseInt(val) <= 100, "Must be 100 or less"),
+    backColumnGap: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .refine((val) => parseInt(val) >= 0, "Must be 0 or greater")
+      .refine((val) => parseInt(val) <= 100, "Must be 100 or less"),
+    useBackBleedEdge: zod.boolean(),
+    backBleedEdge: zod
+      .string()
+      .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
+      .refine((val) => parseFloat(val) >= 0, "Must be 0 or greater")
+      .refine(
+        (val) => parseFloat(val) <= MAX_BLEED,
+        `Must be ${MAX_BLEED} or less`,
+      ),
   })
   .superRefine((data, ctx) => {
     const {
@@ -248,6 +268,18 @@ export const SettingsSchema = zod
         message:
           "Bleed edge and guides thickness must be less than or equal to 3",
         path: ["bleedEdge"],
+      });
+    }
+
+    if (
+      data.useBackBleedEdge &&
+      Number(guidesThickness) + Number(data.backBleedEdge) > 3
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Back bleed edge and guides thickness must be less than or equal to 3",
+        path: ["backBleedEdge"],
       });
     }
 
@@ -299,4 +331,9 @@ export const DEFAULT_SETTINGS = {
   backOffsetY: "0",
   backPageRotation: "0",
   guideLength: "0",
+  useBackCardSpacing: false,
+  backRowGap: "0",
+  backColumnGap: "0",
+  useBackBleedEdge: false,
+  backBleedEdge: "0",
 } as const satisfies Settings;

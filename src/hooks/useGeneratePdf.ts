@@ -116,16 +116,7 @@ export const useGeneratePdf = (
       const enableBleedEdge = settings.enableBleedEdge;
       const imageZoomMm = enableBleedEdge ? 6.2 : 0;
       const imageContainerBufferMm = enableBleedEdge ? guideBorderWidth : 0;
-      const containerWidthMm =
-        cardWidth + 2 * bleedEdgeWidth + imageContainerBufferMm;
-      const containerHeightMm =
-        cardHeight + 2 * bleedEdgeWidth + imageContainerBufferMm;
       const imgWidthMm = cardWidth + imageZoomMm;
-
-      const physicalCardHeight =
-        (cardHeight + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
-      const physicalCardWidth =
-        (cardWidth + 2 * bleedEdgeWidth + guideBorderWidth) / 25.4;
 
       let progress = 0;
       const totalProgressAmount = images.length * 2; // 1 for processing 1 for adding to pdf
@@ -142,10 +133,20 @@ export const useGeneratePdf = (
       const processCard = async ({
         image,
         relativeIndex,
+        effectiveBleedEdgeWidth,
       }: {
         image: PossiblyEmptyImage;
         relativeIndex: number;
+        effectiveBleedEdgeWidth: number;
       }) => {
+        const containerWidthMm =
+          cardWidth + 2 * effectiveBleedEdgeWidth + imageContainerBufferMm;
+        const containerHeightMm =
+          cardHeight + 2 * effectiveBleedEdgeWidth + imageContainerBufferMm;
+        const physicalCardHeight =
+          (cardHeight + 2 * effectiveBleedEdgeWidth + guideBorderWidth) / 25.4;
+        const physicalCardWidth =
+          (cardWidth + 2 * effectiveBleedEdgeWidth + guideBorderWidth) / 25.4;
         const typedImage: ImageType | undefined = getIsEmptyImage(image)
           ? undefined
           : image;
@@ -305,7 +306,7 @@ export const useGeneratePdf = (
             ? {
                 enabled: true,
                 thickness: pdfGuideBorderWidth,
-                bleedEdgeWidth,
+                bleedEdgeWidth: effectiveBleedEdgeWidth,
                 guideColor,
                 invertedGuideColor,
                 unit,
@@ -329,6 +330,7 @@ export const useGeneratePdf = (
           pageRotation: number;
         },
         showGuides?: boolean,
+        effectiveBleedEdgeWidth: number = bleedEdgeWidth,
       ) => {
         const [image, worker] = data;
 
@@ -341,6 +343,7 @@ export const useGeneratePdf = (
         processCard({
           image,
           relativeIndex,
+          effectiveBleedEdgeWidth,
         })
           .then((card) => {
             progressEvents.emit("progress", {
@@ -375,6 +378,7 @@ export const useGeneratePdf = (
                     undefined,
                     pageTransformData,
                     showGuides,
+                    effectiveBleedEdgeWidth,
                   ),
                 50,
               );
@@ -537,6 +541,10 @@ export const useGeneratePdf = (
           ),
         };
         const showGuides = isBack ? backPagesShowGuides : true;
+        const pageBleedEdgeWidth =
+          isBack && settings.useBackBleedEdge
+            ? Number(settings.backBleedEdge)
+            : bleedEdgeWidth;
 
         doTimeout(() => {
           requestNextCard(
@@ -548,6 +556,7 @@ export const useGeneratePdf = (
               : undefined,
             pageTransformData,
             showGuides,
+            pageBleedEdgeWidth,
           );
         });
       };

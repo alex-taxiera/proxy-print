@@ -2,6 +2,7 @@ import {
   Button,
   IconButton,
   Tabs,
+  Box,
   Input,
   parseColor,
   Bleed,
@@ -576,39 +577,6 @@ export const SettingsForm = () => {
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
                     <UpscaleSetting />
-                    <Fieldset>
-                      <Checkbox
-                        size="md"
-                        checked={formState.convertToJpg}
-                        onCheckedChange={buildCheckboxChangeHandler(
-                          "convertToJpg",
-                        )}
-                      >
-                        Convert images to JPG
-                      </Checkbox>
-                      <Collapsible.Root open={formState.convertToJpg}>
-                        <Collapsible.Content>
-                          <Field
-                            label="JPG Quality"
-                            invalid={formErrors.jpgQuality.length > 0}
-                            errorText={formErrors.jpgQuality[0]?.message}
-                          >
-                            <NumberInputRoot
-                              min={0.1}
-                              max={1}
-                              step={0.01}
-                              disabled={!formState.convertToJpg}
-                              value={formState.jpgQuality}
-                              onValueChange={buildNumberInputChangeHandler(
-                                "jpgQuality",
-                              )}
-                            >
-                              <NumberInputField />
-                            </NumberInputRoot>
-                          </Field>
-                        </Collapsible.Content>
-                      </Collapsible.Root>
-                    </Fieldset>
                     <Field
                       label="Max DPI"
                       invalid={formErrors.maxDpi.length > 0}
@@ -624,6 +592,38 @@ export const SettingsForm = () => {
                         <NumberInputField />
                       </NumberInputRoot>
                     </Field>
+                    <Bleed inline={{ base: "2", lg: "4" }}>
+                      <Box bg="bg" padding={{ base: "2", lg: "4" }}>
+                        <Checkbox
+                          size="md"
+                          checked={formState.convertToJpg}
+                          onCheckedChange={buildCheckboxChangeHandler(
+                            "convertToJpg",
+                          )}
+                        >
+                          Convert images to JPG
+                        </Checkbox>
+                        <Field
+                          label="JPG Quality"
+                          invalid={formErrors.jpgQuality.length > 0}
+                          errorText={formErrors.jpgQuality[0]?.message}
+                          disabled={!formState.convertToJpg}
+                        >
+                          <NumberInputRoot
+                            min={0.1}
+                            max={1}
+                            step={0.01}
+                            disabled={!formState.convertToJpg}
+                            value={formState.jpgQuality}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "jpgQuality",
+                            )}
+                          >
+                            <NumberInputField />
+                          </NumberInputRoot>
+                        </Field>
+                      </Box>
+                    </Bleed>
                   </Container>
                 </AccordionItemContent>
               </AccordionItem>
@@ -668,6 +668,86 @@ export const SettingsForm = () => {
                           </NumberInputRoot>
                         </Field>
                       </HStack>
+                      <Bleed inline={{ base: "2", lg: "4" }}>
+                        <Box bg="bg" padding={{ base: "2", lg: "4" }}>
+                          <Checkbox
+                            size="md"
+                            checked={formState.useBackCardSpacing}
+                            onCheckedChange={buildCheckboxChangeHandler(
+                              "useBackCardSpacing",
+                            )}
+                          >
+                            Different spacing for backs
+                          </Checkbox>
+                          <HStack width="full" gap="2">
+                            <Field
+                              label="Vertical (mm)"
+                              invalid={formErrors.backRowGap.length > 0}
+                              errorText={formErrors.backRowGap[0]?.message}
+                              disabled={!formState.useBackCardSpacing}
+                            >
+                              <NumberInputRoot
+                                min={0}
+                                max={100}
+                                value={formState.backRowGap}
+                                onValueChange={buildNumberInputChangeHandler(
+                                  "backRowGap",
+                                )}
+                              >
+                                <NumberInputField />
+                              </NumberInputRoot>
+                            </Field>
+                            <Field
+                              label="Horizontal (mm)"
+                              invalid={formErrors.backColumnGap.length > 0}
+                              errorText={formErrors.backColumnGap[0]?.message}
+                              disabled={!formState.useBackCardSpacing}
+                            >
+                              <NumberInputRoot
+                                min={0}
+                                max={100}
+                                value={formState.backColumnGap}
+                                onValueChange={buildNumberInputChangeHandler(
+                                  "backColumnGap",
+                                )}
+                              >
+                                <NumberInputField />
+                              </NumberInputRoot>
+                            </Field>
+                          </HStack>
+                        </Box>
+                      </Bleed>
+                      <Bleed inline={{ base: "2", lg: "4" }}>
+                        <Box bg="bg" padding={{ base: "2", lg: "4" }}>
+                          <Checkbox
+                            size="md"
+                            checked={formState.useBackBleedEdge}
+                            onCheckedChange={buildCheckboxChangeHandler(
+                              "useBackBleedEdge",
+                            )}
+                          >
+                            Different bleed for backs
+                          </Checkbox>
+                          <Field
+                            label="Back Bleed Edge (mm)"
+                            invalid={formErrors.backBleedEdge.length > 0}
+                            errorText={formErrors.backBleedEdge[0]?.message}
+                            disabled={!formState.useBackBleedEdge}
+                          >
+                            <NumberInputRoot
+                              min={0}
+                              max={MAX_BLEED}
+                              step={0.1}
+                              value={formState.backBleedEdge}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "backBleedEdge",
+                              )}
+                            >
+                              <NumberInputField />
+                            </NumberInputRoot>
+                          </Field>
+                        </Box>
+                      </Bleed>
                     </Fieldset>
                     <Fieldset legend="Front Page Offset">
                       <HStack width="full" gap="2">
@@ -704,24 +784,24 @@ export const SettingsForm = () => {
                           </NumberInputRoot>
                         </Field>
                       </HStack>
-                    </Fieldset>
-                    <Field
-                      label="Rotation (°)"
-                      invalid={formErrors.pageRotation.length > 0}
-                      errorText={formErrors.pageRotation[0]?.message}
-                    >
-                      <NumberInputRoot
-                        step={0.1}
-                        min={-180}
-                        max={180}
-                        value={formState.pageRotation}
-                        onValueChange={buildNumberInputChangeHandler(
-                          "pageRotation",
-                        )}
+                      <Field
+                        label="Rotation (°)"
+                        invalid={formErrors.pageRotation.length > 0}
+                        errorText={formErrors.pageRotation[0]?.message}
                       >
-                        <NumberInputField />
-                      </NumberInputRoot>
-                    </Field>
+                        <NumberInputRoot
+                          step={0.1}
+                          min={-180}
+                          max={180}
+                          value={formState.pageRotation}
+                          onValueChange={buildNumberInputChangeHandler(
+                            "pageRotation",
+                          )}
+                        >
+                          <NumberInputField />
+                        </NumberInputRoot>
+                      </Field>
+                    </Fieldset>
                     <Fieldset legend="Back Page Offset">
                       <HStack width="full" gap="2">
                         <Field
@@ -757,24 +837,24 @@ export const SettingsForm = () => {
                           </NumberInputRoot>
                         </Field>
                       </HStack>
-                    </Fieldset>
-                    <Field
-                      label="Rotation (°)"
-                      invalid={formErrors.backPageRotation.length > 0}
-                      errorText={formErrors.backPageRotation[0]?.message}
-                    >
-                      <NumberInputRoot
-                        step={0.1}
-                        min={-180}
-                        max={180}
-                        value={formState.backPageRotation}
-                        onValueChange={buildNumberInputChangeHandler(
-                          "backPageRotation",
-                        )}
+                      <Field
+                        label="Rotation (°)"
+                        invalid={formErrors.backPageRotation.length > 0}
+                        errorText={formErrors.backPageRotation[0]?.message}
                       >
-                        <NumberInputField />
-                      </NumberInputRoot>
-                    </Field>
+                        <NumberInputRoot
+                          step={0.1}
+                          min={-180}
+                          max={180}
+                          value={formState.backPageRotation}
+                          onValueChange={buildNumberInputChangeHandler(
+                            "backPageRotation",
+                          )}
+                        >
+                          <NumberInputField />
+                        </NumberInputRoot>
+                      </Field>
+                    </Fieldset>
                   </Container>
                 </AccordionItemContent>
               </AccordionItem>
