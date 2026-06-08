@@ -1,14 +1,14 @@
-import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
-import { VStack, Link } from "@chakra-ui/react";
+import {
+  BoxProps,
+  useFileUpload,
+  type FileUploadFileAcceptDetails,
+} from "@chakra-ui/react";
 import { useContext, useEffect, useState } from "react";
 
-import { DialogTrigger } from "@/components/ui/dialog";
 import {
   FileUploadRootProvider,
   FileUploadDropzone,
 } from "@/components/ui/file-upload";
-
-import { DecklistDialog } from "@/components/DecklistDialog";
 
 import {
   GoogleImageData,
@@ -134,7 +134,7 @@ const processFiles = async (files: File[]): Promise<ProcessFilesResult> => {
   };
 };
 
-export function ImageUploader() {
+export function ImageUploader(props: BoxProps) {
   const { onAdd, onAddSlots } = useContext(ImagesContext);
   const setDefaultCardBack = useSettingsStore((s) => s.setDefaultCardBack);
   const existingCardBack = useSettingsStore((s) => s.defaultCardBack);
@@ -195,7 +195,7 @@ export function ImageUploader() {
   }, [acceptedFiles, fileUpload]);
 
   return (
-    <VStack gap="2" alignItems="flex-start" width="full">
+    <>
       <XmlImportDialog
         pending={xmlPending}
         hasExistingCardBack={existingCardBack !== null}
@@ -204,7 +204,7 @@ export function ImageUploader() {
         onConfirm={handleXmlConfirm}
         onCancel={handleXmlCancel}
       />
-      <FileUploadRootProvider value={fileUpload}>
+      <FileUploadRootProvider value={fileUpload} {...props}>
         <FileUploadDropzone
           gap="2"
           width="full"
@@ -214,13 +214,6 @@ export function ImageUploader() {
           description="click to browse"
         />
       </FileUploadRootProvider>
-      <DecklistDialog>
-        <DialogTrigger asChild>
-          <Link fontSize="sm" as="button" colorPalette="accent">
-            Import from Decklist
-          </Link>
-        </DialogTrigger>
-      </DecklistDialog>
-    </VStack>
+    </>
   );
 }
