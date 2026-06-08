@@ -2,6 +2,7 @@ import { sentryVitePlugin } from "@sentry/vite-plugin";
 /// <reference types="vitest/config" />
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import react from "@vitejs/plugin-react";
+import { playwright } from "@vitest/browser-playwright";
 // https://vite.dev/config/
 import { fileURLToPath } from "node:url";
 import path from "path";
@@ -15,11 +16,7 @@ const dirname =
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [["babel-plugin-react-compiler", {}]],
-      },
-    }),
+    react(),
     sentryVitePlugin({
       org: "proxy-print",
       project: "proxy-print",
@@ -36,20 +33,18 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          "ark-ui": ["@ark-ui/react"],
-          "pdf-lib": ["pdf-lib"],
-          sentry: ["@sentry/react"],
+        manualChunks: (moduleId) => {
+          // console.log("Module ID:", moduleId);
+          return (
+            ["chakra-ui", "pdf-lib", "sentry"].find(
+              (lib) => moduleId.includes(lib),
+            )
+          );
         },
       },
     },
 
     sourcemap: true,
-  },
-  esbuild: {
-    supported: {
-      "top-level-await": true, //browsers can handle top-level-await features
-    },
   },
   test: {
     projects: [
@@ -60,6 +55,7 @@ export default defineConfig({
           // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
           storybookTest({
             configDir: path.join(dirname, ".storybook"),
+            storybookScript: "npm run storybook --no-open",
           }),
         ],
         test: {
@@ -67,7 +63,7 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
-            provider: "playwright",
+            provider: playwright({}),
             instances: [
               {
                 browser: "chromium",
