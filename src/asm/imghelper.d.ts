@@ -1,4 +1,4 @@
-import { WasmModule, WasmModuleFactory } from "~/types/wasm";
+import { WasmModule, WasmModuleFactory } from "@/types/wasm";
 
 declare const Module: WasmModuleFactory;
 export default Module;

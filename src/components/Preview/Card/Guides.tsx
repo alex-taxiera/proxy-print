@@ -1,6 +1,11 @@
-import { RecipeVariantProps, sva } from "styled-system/css";
+import {
+  defineSlotRecipe,
+  useSlotRecipe,
+  Box,
+  RecipeVariantProps,
+} from "@chakra-ui/react";
 
-const guide = sva({
+export const guide = defineSlotRecipe({
   slots: ["root", "horizontal", "vertical"],
   base: {
     root: {
@@ -94,17 +99,16 @@ const guide = sva({
   },
 });
 
-export type GuideVariants = RecipeVariantProps<typeof guide>;
-
-type GuideProps = NonNullable<GuideVariants>;
+export type GuideProps = RecipeVariantProps<typeof guide>;
 
 const Guide = ({ position = "topLeft" }: GuideProps) => {
-  const styles = guide({ position });
+  const recipe = useSlotRecipe({ key: "guide" });
+  const styles = recipe({ position });
   return (
-    <div className={styles.root}>
-      <div className={styles.horizontal} />
-      <div className={styles.vertical} />
-    </div>
+    <Box css={styles.root}>
+      <Box css={styles.horizontal} />
+      <Box css={styles.vertical} />
+    </Box>
   );
 };
 

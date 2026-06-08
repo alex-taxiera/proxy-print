@@ -1,32 +1,65 @@
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { forwardRef } from "react";
+import { Dialog as ChakraDialog, Portal } from "@chakra-ui/react";
+import * as React from "react";
 
-import { IconButton, type IconButtonProps } from "./icon-button";
-import * as Styled from "./styled/dialog";
+import { CloseButton } from "./close-button";
 
-const CloseButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  (props, ref) => (
-    <Styled.CloseTrigger asChild>
-      <IconButton
-        ref={ref}
-        position="absolute"
-        right="2"
-        top="2"
-        size="xs"
-        {...props}
-      >
-        <FontAwesomeIcon size="xl" icon={faXmark} />
-      </IconButton>
-    </Styled.CloseTrigger>
-  ),
-);
+interface DialogContentProps extends ChakraDialog.ContentProps {
+  portalled?: boolean;
+  portalRef?: React.RefObject<HTMLElement | null>;
+  backdrop?: boolean;
+}
 
-CloseButton.displayName = "CloseButton";
+export const DialogContent = React.forwardRef<
+  HTMLDivElement,
+  DialogContentProps
+>(function DialogContent(props, ref) {
+  const {
+    children,
+    portalled = true,
+    portalRef,
+    backdrop = true,
+    ...rest
+  } = props;
 
-export type * as DialogType from "./styled/dialog";
+  return (
+    <Portal disabled={!portalled} container={portalRef}>
+      {backdrop && <ChakraDialog.Backdrop />}
+      <ChakraDialog.Positioner>
+        <ChakraDialog.Content ref={ref} {...rest} asChild={false}>
+          {children}
+        </ChakraDialog.Content>
+      </ChakraDialog.Positioner>
+    </Portal>
+  );
+});
 
-export const Dialog = {
-  ...Styled,
-  CloseButton,
-} as const;
+export const DialogCloseTrigger = React.forwardRef<
+  HTMLButtonElement,
+  ChakraDialog.CloseTriggerProps
+>(function DialogCloseTrigger(props, ref) {
+  return (
+    <ChakraDialog.CloseTrigger
+      position="absolute"
+      top="2"
+      insetEnd="2"
+      {...props}
+      asChild
+    >
+      <CloseButton size="sm" ref={ref}>
+        {props.children}
+      </CloseButton>
+    </ChakraDialog.CloseTrigger>
+  );
+});
+
+export const DialogContext = ChakraDialog.Context;
+
+export const DialogRoot = ChakraDialog.Root;
+export const DialogFooter = ChakraDialog.Footer;
+export const DialogHeader = ChakraDialog.Header;
+export const DialogBody = ChakraDialog.Body;
+export const DialogBackdrop = ChakraDialog.Backdrop;
+export const DialogTitle = ChakraDialog.Title;
+export const DialogDescription = ChakraDialog.Description;
+export const DialogTrigger = ChakraDialog.Trigger;
+export const DialogActionTrigger = ChakraDialog.ActionTrigger;

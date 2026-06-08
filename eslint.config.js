@@ -13,8 +13,6 @@ export default tseslint.config(
   {
     ignores: [
       "dist",
-      "styled-system/**",
-      "src/components/ui/styled/utils/create-style-context.tsx",
       "src/asm/**",
       "src/types/wasm.d.ts",
       "storybook-static/**",

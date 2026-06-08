@@ -1,26 +1,23 @@
-import {
-  Dialog,
-  useFileUpload,
-  type FileUploadFileAcceptDetails,
-} from "@ark-ui/react";
+import { useFileUpload, type FileUploadFileAcceptDetails } from "@ark-ui/react";
+import { VStack, Link } from "@chakra-ui/react";
 import { useContext, useEffect, useState } from "react";
 
-import { css } from "styled-system/css";
-import { center, vstack } from "styled-system/patterns";
+import { DialogTrigger } from "@/components/ui/dialog";
+import {
+  FileUploadRootProvider,
+  FileUploadDropzone,
+} from "@/components/ui/file-upload";
 
-import { Button } from "~/components/ui/button";
-import { FileUpload } from "~/components/ui/file-upload";
-
-import { DecklistDialog } from "~/components/DecklistDialog";
+import { DecklistDialog } from "@/components/DecklistDialog";
 
 import {
   GoogleImageData,
   ImagesContext,
   LocalImageData,
   SlotInputData,
-} from "~/context/ImagesContext";
-import { useSettingsStore } from "~/store/settingsStore";
-import { createFileHash } from "~/utils/create-file-hash";
+} from "@/context/ImagesContext";
+import { useSettingsStore } from "@/store/settingsStore";
+import { createFileHash } from "@/utils/create-file-hash";
 
 import { XmlImportDialog, XmlImportPending } from "./XmlImportDialog";
 
@@ -198,9 +195,7 @@ export function ImageUploader() {
   }, [acceptedFiles, fileUpload]);
 
   return (
-    <div
-      className={vstack({ gap: "2", alignItems: "flex-start", width: "full" })}
-    >
+    <VStack gap="2" alignItems="flex-start" width="full">
       <XmlImportDialog
         pending={xmlPending}
         hasExistingCardBack={existingCardBack !== null}
@@ -209,35 +204,23 @@ export function ImageUploader() {
         onConfirm={handleXmlConfirm}
         onCancel={handleXmlCancel}
       />
-      <FileUpload.RootProvider value={fileUpload}>
-        <FileUpload.Trigger asChild>
-          <FileUpload.Dropzone
-            className={css({ cursor: "pointer" })}
-            onClick={(e) => e.preventDefault()}
-          >
-            <FileUpload.Label className={center({ flexDirection: "column" })}>
-              <span>{fileUpload.dragging ? "Drop!" : "Drop files here"}</span>
-              <span
-                className={css({
-                  color: "fg.muted",
-                  fontSize: "xs",
-                  visibility: fileUpload.dragging ? "hidden" : "visible",
-                })}
-              >
-                or click to browse
-              </span>
-            </FileUpload.Label>
-          </FileUpload.Dropzone>
-        </FileUpload.Trigger>
-        <FileUpload.HiddenInput />
-      </FileUpload.RootProvider>
+      <FileUploadRootProvider value={fileUpload}>
+        <FileUploadDropzone
+          gap="2"
+          width="full"
+          minHeight="0"
+          py="4"
+          label={fileUpload.dragging ? "Drop!" : "Drop XML or image files"}
+          description="click to browse"
+        />
+      </FileUploadRootProvider>
       <DecklistDialog>
-        <Dialog.Trigger asChild>
-          <Button variant="link" size="xs" colorPalette="gray">
+        <DialogTrigger asChild>
+          <Link fontSize="sm" as="button" colorPalette="accent">
             Import from Decklist
-          </Button>
-        </Dialog.Trigger>
+          </Link>
+        </DialogTrigger>
       </DecklistDialog>
-    </div>
+    </VStack>
   );
 }

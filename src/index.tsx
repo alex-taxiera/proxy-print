@@ -3,7 +3,6 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import App from "./App.tsx";
-import "./index.css";
 
 const SENTRY_ENV =
   typeof import.meta.env.VITE_SENTRY_ENV === "string"

@@ -9,12 +9,12 @@ import {
   ImagesContext,
   PossiblyEmptyImage,
   getIsEmptyImage,
-} from "~/context/ImagesContext";
-import { getQueryKeyForImage, ImageQueryData } from "~/queries/images";
-import { useSettingsStore } from "~/store/settingsStore";
-import { invertHexColor } from "~/utils/invert-hex-color";
-import { progressEvents } from "~/utils/progress-events";
-import PdfWorker from "~/workers/pdf-worker?worker";
+} from "@/context/ImagesContext";
+import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
+import { useSettingsStore } from "@/store/settingsStore";
+import { invertHexColor } from "@/utils/invert-hex-color";
+import { progressEvents } from "@/utils/progress-events";
+import PdfWorker from "@/workers/pdf-worker?worker";
 
 import { useCardPositionMeta } from "./useCardClassNames";
 import { usePreviewData } from "./usePreviewData";

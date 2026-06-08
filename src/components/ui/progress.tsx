@@ -1,56 +1,35 @@
-import { forwardRef } from "react";
+import { Progress as ChakraProgress } from "@chakra-ui/react";
+import * as React from "react";
 
-import * as StyledProgress from "./styled/progress";
+import { InfoTip } from "./toggle-tip";
 
-export interface ProgressProps extends StyledProgress.RootProps {
-  /**
-   * The type of progress to render.
-   * @default linear
-   */
-  type?: "linear" | "circular";
-  /**
-   * Whether to show the value text.
-   * @default true
-   */
-  showValue?: boolean;
+export const ProgressBar = React.forwardRef<
+  HTMLDivElement,
+  ChakraProgress.TrackProps
+>(function ProgressBar(props, ref) {
+  return (
+    <ChakraProgress.Track {...props} ref={ref}>
+      <ChakraProgress.Range />
+    </ChakraProgress.Track>
+  );
+});
+
+export interface ProgressLabelProps extends ChakraProgress.LabelProps {
+  info?: React.ReactNode;
 }
 
-export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
-  (props, ref) => {
-    const {
-      children,
-      type = "linear",
-      showValue = true,
-      value,
-      ...rootProps
-    } = props;
+export const ProgressLabel = React.forwardRef<
+  HTMLDivElement,
+  ProgressLabelProps
+>(function ProgressLabel(props, ref) {
+  const { children, info, ...rest } = props;
+  return (
+    <ChakraProgress.Label {...rest} ref={ref}>
+      {children}
+      {info && <InfoTip>{info}</InfoTip>}
+    </ChakraProgress.Label>
+  );
+});
 
-    const isIndeterminate = value === null;
-
-    return (
-      <StyledProgress.Root ref={ref} value={value} {...rootProps}>
-        {children && <StyledProgress.Label>{children}</StyledProgress.Label>}
-        {type === "linear" && (
-          <StyledProgress.Track>
-            <StyledProgress.Range
-              data-state={isIndeterminate ? "indeterminate" : undefined}
-              style={isIndeterminate ? { width: "100%" } : undefined}
-            />
-          </StyledProgress.Track>
-        )}
-        {type === "circular" && (
-          <StyledProgress.Circle>
-            <StyledProgress.CircleTrack />
-            <StyledProgress.CircleRange
-              data-state={isIndeterminate ? "indeterminate" : undefined}
-            />
-            {showValue && <StyledProgress.ValueText />}
-          </StyledProgress.Circle>
-        )}
-        {showValue && !isIndeterminate && <StyledProgress.ValueText />}
-      </StyledProgress.Root>
-    );
-  },
-);
-
-Progress.displayName = "Progress";
+export const ProgressRoot = ChakraProgress.Root;
+export const ProgressValueText = ChakraProgress.ValueText;

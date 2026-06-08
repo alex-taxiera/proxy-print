@@ -1,39 +1,40 @@
 import {
-  faExpand,
-  faMagicWandSparkles,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+  Box,
+  Flex,
+  Spinner,
+  Image,
+  Center,
+  VisuallyHidden,
+  SystemStyleObject,
+} from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
+import { LuExpand, LuWandSparkles } from "react-icons/lu";
 
-import { css, cx } from "styled-system/css";
-import { center, visuallyHidden } from "styled-system/patterns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip } from "@/components/ui/tooltip";
 
-import { Checkbox } from "~/components/ui/checkbox";
-import { Spinner } from "~/components/ui/spinner";
-import { Tooltip } from "~/components/ui/tooltip";
-
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
 import {
   getIsLocalImage,
   ImagesContext,
   getIsDownloadableImage,
   PossiblyEmptyImage,
   getIsEmptyImage,
-} from "~/context/ImagesContext";
-import { useSortableCard } from "~/hooks/useSortableCard";
+} from "@/context/ImagesContext";
+import { useCardPositionMeta } from "@/hooks/useCardClassNames";
+import { useSortableCard } from "@/hooks/useSortableCard";
 import {
   getQueryKeyForImage,
   ImageQueryData,
   LocalImageQueryData,
   ScryfallImageQueryData,
-} from "~/queries/images";
-import { useSettingsStore } from "~/store/settingsStore";
-import { ctrlOrMeta } from "~/utils/ctrl-or-meta";
+} from "@/queries/images";
+import { useSettingsStore } from "@/store/settingsStore";
+import { ctrlOrMeta } from "@/utils/ctrl-or-meta";
 
 import { CardContextMenu } from "./CardContextMenu";
 import { Guides } from "./Guides";
-import { useCardClassName } from "./useCardClassName";
 
 const hasTransformFlags = (
   d: ImageQueryData,
@@ -134,13 +135,6 @@ export const Card = ({
     face,
   });
 
-  const className = useCardClassName({
-    isEmpty,
-    isPending,
-    index,
-    isDragging: sortable.isDragging,
-  });
-
   const add = (count: number) => {
     if (isEmpty) {
       return;
@@ -184,55 +178,117 @@ export const Card = ({
     };
   }, [queryData, image]);
 
+  const positions = useCardPositionMeta();
+
+  const { isFirstColumn, isFirstRow, isLastColumn, isLastRow } =
+    positions[index];
+
+  const cardBeforeAfter: SystemStyleObject = {
+    pointerEvents: "none",
+    display: sortable.isDragging ? "none" : "var(--guide-display)",
+    borderColor: "black",
+    borderStyle: "solid",
+    borderWidth: "0",
+  };
+
+  const cardBefore: SystemStyleObject = {
+    ...cardBeforeAfter,
+    ...(isFirstColumn || isLastColumn
+      ? {
+          content: '""',
+          position: "absolute",
+          width: "var(--horizontal-guide-length)",
+          top: "var(--guide-corner-offset)",
+          bottom: "var(--guide-corner-offset)",
+          borderTopWidth: "var(--guide-border-width)",
+          borderBottomWidth: "var(--guide-border-width)",
+        }
+      : {}),
+    right: isFirstColumn ? "100%" : undefined,
+    left: isLastColumn ? "100%" : undefined,
+  };
+
+  const cardAfter: SystemStyleObject = {
+    ...cardBeforeAfter,
+    ...(isFirstRow || isLastRow
+      ? {
+          content: '""',
+          position: "absolute",
+          height: "var(--vertical-guide-length)",
+          left: "var(--guide-corner-offset)",
+          right: "var(--guide-corner-offset)",
+          borderLeftWidth: "var(--guide-border-width)",
+          borderRightWidth: "var(--guide-border-width)",
+        }
+      : {}),
+    bottom: isFirstRow ? "100%" : undefined,
+    top: isLastRow ? "100%" : undefined,
+  };
+
+  const cardHighlightStyles: SystemStyleObject = {
+    outlineWidth: "4",
+    outlineColor: "accent.solid",
+    outlineStyle: "solid",
+    zIndex: "1",
+  };
+
   return (
-    <div
-      className={className}
+    <Box
+      className="card group"
       ref={sortable.ref}
       id={image.uuid}
       tabIndex={isEmpty || isPending || isRendering ? -1 : 0}
+      position="relative"
+      transitionProperty="common"
+      transitionDuration="moderate"
+      outlineColor="transparent"
+      opacity={sortable.isDragging ? 0.5 : 1}
+      css={{
+        "--horizontal-guide-length":
+          "calc(calc(var(--page-width) - calc(var(--item-width) * var(--columns-per-page))) / 2)",
+        "--vertical-guide-length":
+          "calc(calc(var(--page-height) - calc(var(--item-height) * var(--rows-per-page))) / 2)",
+      }}
+      _before={cardBefore}
+      _after={cardAfter}
+      _hover={!isEmpty && !isPending ? cardHighlightStyles : undefined}
+      _focusVisible={!isEmpty && !isPending ? cardHighlightStyles : undefined}
     >
-      <div
-        className={cx(
-          "image-container",
-          center({
-            overflow: "hidden",
-            width: "var(--item-width, 63mm)",
-            height: "var(--item-height, 88mm)",
-            ...(sortable.isDropTarget &&
-            !sortable.isDragging &&
-            !sortable.isDropping
-              ? {
-                  _after: {
-                    content: "''",
-                    position: "absolute",
-                    top: "0",
-                    left: "0",
-                    height: "full",
-                    width: "full",
-                    background: "accent.a4",
-                    zIndex: 5,
-                  },
-                }
-              : null),
-          }),
-        )}
+      <Center
+        className="image-container"
+        overflow="hidden"
+        width="var(--item-width, 63mm)"
+        height="var(--item-height, 88mm)"
+        _after={
+          sortable.isDropTarget && !sortable.isDragging && !sortable.isDropping
+            ? {
+                content: "''",
+                position: "absolute",
+                top: "0",
+                left: "0",
+                height: "full",
+                width: "full",
+                background: "accent.emphasized/50",
+                zIndex: 5,
+              }
+            : {}
+        }
       >
         <>
           {isEmpty ? (
-            <span
-              className={css({
-                _after: {
-                  content: '""',
-                  position: "absolute",
-                  top: "var(--guide-corner-offset)",
-                  left: "var(--guide-corner-offset)",
-                  right: "var(--guide-corner-offset)",
-                  bottom: "var(--guide-corner-offset)",
-                  borderColor: "black",
-                  borderStyle: "solid",
-                  borderWidth: "var(--guide-border-width)",
-                },
-              })}
+            <Box
+              as="span"
+              _after={{
+                content: '""',
+                position: "absolute",
+                top: "var(--guide-corner-offset)",
+                left: "var(--guide-corner-offset)",
+                right: "var(--guide-corner-offset)",
+                bottom: "var(--guide-corner-offset)",
+                borderColor: "black",
+                borderStyle: "solid",
+                borderWidth: "var(--guide-border-width)",
+              }}
             />
           ) : imageSrc ? (
             <CardContextMenu
@@ -245,16 +301,13 @@ export const Card = ({
               slotId={slotId}
               face={face}
             >
-              <img
+              <Image
                 src={imageSrc}
                 alt={name}
-                className={css({
-                  width:
-                    "calc(var(--card-width, 63mm) + var(--image-zoom-width))",
-                  maxWidth: "unset",
-                  objectFit: "cover",
-                  position: "relative",
-                })}
+                width="calc(var(--card-width, 63mm) + var(--image-zoom-width))"
+                maxWidth="unset"
+                objectFit="cover"
+                position="relative"
                 onClick={handleClick}
                 onLoad={() => {
                   setIsLoading(false);
@@ -263,36 +316,34 @@ export const Card = ({
               />
             </CardContextMenu>
           ) : (
-            <span
-              className={css({
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: "error.fg",
-                fontSize: "3",
-                userSelect: "none",
-              })}
+            <Box
+              as="span"
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+              color="fg.error"
+              fontSize="3"
+              userSelect="none"
             >
               Error!
-            </span>
+            </Box>
           )}
           {isPending && !isEmpty && (
-            <span
-              className={center({
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                backgroundColor: "white/50",
-              })}
+            <Center
+              as="span"
+              position="absolute"
+              top="0"
+              left="0"
+              width="full"
+              height="full"
+              bg="white/50"
             >
               <Spinner size="xl" />
-            </span>
+            </Center>
           )}
         </>
-      </div>
+      </Center>
       {!settings.extendedGuidesOnly && <Guides />}
       {!isEmpty &&
       !isPending &&
@@ -300,75 +351,52 @@ export const Card = ({
       queryData &&
       hasTransformFlags(queryData) &&
       (queryData.isUpscaled || queryData.hasBleed) ? (
-        <div
-          className={css({
-            position: "absolute",
-            top: 1,
-            right: 2,
-            display: "flex",
-            gap: 1,
-            zIndex: 1,
-          })}
-        >
+        <Flex position="absolute" top="1" right="2" gap="1" zIndex="1">
           {queryData.isUpscaled && (
-            <Tooltip.Root positioning={{ placement: "top" }} openDelay={200}>
-              <Tooltip.Trigger
-                height="6"
-                aspectRatio="1/1"
-                color="fg.default"
-                bg="bg.subtle/75"
-                borderRadius="sm"
-              >
-                <FontAwesomeIcon icon={faMagicWandSparkles} size="sm" />
-              </Tooltip.Trigger>
-              <Tooltip.Positioner>
-                <Tooltip.Content>Upscaled</Tooltip.Content>
-              </Tooltip.Positioner>
-            </Tooltip.Root>
+            <Tooltip
+              content="Upscaled"
+              positioning={{ placement: "top" }}
+              openDelay={200}
+            >
+              <LuWandSparkles />
+            </Tooltip>
           )}
           {queryData.hasBleed && (
-            <Tooltip.Root positioning={{ placement: "top" }} openDelay={200}>
-              <Tooltip.Trigger
-                height="6"
-                aspectRatio="1/1"
-                color="fg.default"
-                bg="bg.subtle/75"
-                borderRadius="sm"
-              >
-                <FontAwesomeIcon icon={faExpand} size="sm" />
-              </Tooltip.Trigger>
-              <Tooltip.Positioner>
-                <Tooltip.Content>Has generated bleed</Tooltip.Content>
-              </Tooltip.Positioner>
-            </Tooltip.Root>
+            <Tooltip
+              content="Has generated bleed"
+              positioning={{ placement: "top" }}
+              openDelay={200}
+            >
+              <LuExpand />
+            </Tooltip>
           )}
-        </div>
+        </Flex>
       ) : null}
       {!isEmpty && !isPending ? (
         <Checkbox
-          className={css({
-            visibility: isSelected ? "visible" : "hidden",
-            position: "absolute",
-            top: 2,
-            left: 2,
-            zIndex: 1,
-            gap: 0,
-            _groupHover: {
-              visibility: "visible",
-            },
+          visibility={isSelected ? "visible" : "hidden"}
+          position="absolute"
+          top="2"
+          left="2"
+          zIndex="1"
+          gap="0"
+          _groupHover={{
+            visibility: "visible",
+          }}
+          css={{
             "& [data-part='control'][data-state='unchecked']": {
               backgroundColor: "bg.emphasized",
             },
-          })}
+          }}
           checked={isSelected}
           onCheckedChange={(details) =>
             onSelectImageUuid(image.uuid, details.checked === true)
           }
           size="md"
         >
-          <span className={visuallyHidden()}>Select {name}</span>
+          <VisuallyHidden>Select {name}</VisuallyHidden>
         </Checkbox>
       ) : null}
-    </div>
+    </Box>
   );
 };

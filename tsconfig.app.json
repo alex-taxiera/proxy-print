@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "ES2023",
+    "target": "ESNext",
     "useDefineForClassFields": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable", "WebWorker"],
     "module": "ESNext",
@@ -23,11 +23,9 @@
     "noUncheckedSideEffectImports": true,
 
     /* Path mapping */
-    "baseUrl": ".",
     "paths": {
-      "styled-system/*": ["styled-system/*"],
-      "~/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "styled-system", "panda.config.ts"]
+  "include": ["src"]
 }

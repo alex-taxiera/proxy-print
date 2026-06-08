@@ -15,7 +15,7 @@ import {
   CARD_DIMENSIONS,
   pageSizeToNameMap,
   Unit,
-} from "~/context/SettingsContext";
+} from "@/context/SettingsContext";
 import {
   ScryfallImageQueryData,
   scryfallImagesQueryKey,
@@ -23,9 +23,9 @@ import {
   LocalImageQueryData,
   localImagesQueryKey,
   LocalImageQueryKey,
-} from "~/queries/images";
-import { useSettingsStore } from "~/store/settingsStore";
-import { addBleedEdge, needsBleedFromFile } from "~/utils/add-bleed";
+} from "@/queries/images";
+import { useSettingsStore } from "@/store/settingsStore";
+import { addBleedEdge, needsBleedFromFile } from "@/utils/add-bleed";
 
 const useHandleBleedEdgeForCardSizeChange = () => {
   const queryClient = useQueryClient();

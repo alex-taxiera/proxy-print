@@ -1,10 +1,10 @@
 import { FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 
-import { useUpscaleImage } from "~/hooks/useUpscaleImage";
-import { ImageQueryData } from "~/queries/images";
-import { useDownloadProgressStore } from "~/store/downloadProgressStore";
-import { addBleedEdge } from "~/utils/add-bleed";
+import { useUpscaleImage } from "@/hooks/useUpscaleImage";
+import { ImageQueryData } from "@/queries/images";
+import { useDownloadProgressStore } from "@/store/downloadProgressStore";
+import { addBleedEdge } from "@/utils/add-bleed";
 
 type Item = {
   uuid: string;

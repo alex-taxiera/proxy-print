@@ -1,30 +1,25 @@
-import { faCheck, faMinus } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { forwardRef } from "react";
+import { Checkbox as ChakraCheckbox } from "@chakra-ui/react";
+import * as React from "react";
 
-import * as StyledCheckbox from "./styled/checkbox";
+export interface CheckboxProps extends ChakraCheckbox.RootProps {
+  icon?: React.ReactNode;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  rootRef?: React.RefObject<HTMLLabelElement | null>;
+}
 
-export type CheckboxProps = StyledCheckbox.RootProps;
-
-export const Checkbox = forwardRef<HTMLLabelElement, CheckboxProps>(
-  (props, ref) => {
-    const { children, ...rootProps } = props;
-
+export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+  function Checkbox(props, ref) {
+    const { icon, children, inputProps, rootRef, ...rest } = props;
     return (
-      <StyledCheckbox.Root ref={ref} {...rootProps}>
-        <StyledCheckbox.Control>
-          <StyledCheckbox.Indicator>
-            <FontAwesomeIcon icon={faCheck} size="xs" />
-          </StyledCheckbox.Indicator>
-          <StyledCheckbox.Indicator indeterminate>
-            <FontAwesomeIcon icon={faMinus} size="xs" />
-          </StyledCheckbox.Indicator>
-        </StyledCheckbox.Control>
-        {children && <StyledCheckbox.Label>{children}</StyledCheckbox.Label>}
-        <StyledCheckbox.HiddenInput />
-      </StyledCheckbox.Root>
+      <ChakraCheckbox.Root ref={rootRef} {...rest}>
+        <ChakraCheckbox.HiddenInput ref={ref} {...inputProps} />
+        <ChakraCheckbox.Control>
+          {icon || <ChakraCheckbox.Indicator />}
+        </ChakraCheckbox.Control>
+        {children != null && (
+          <ChakraCheckbox.Label>{children}</ChakraCheckbox.Label>
+        )}
+      </ChakraCheckbox.Root>
     );
   },
 );
-
-Checkbox.displayName = "Checkbox";

@@ -1,75 +1,60 @@
-import { css } from "styled-system/css";
-import { center, hstack } from "styled-system/patterns";
-
-import { Link } from "~/components/ui/link";
+import { Link, Center, HStack } from "@chakra-ui/react";
 
 import { CommunityBanner } from "./CommunityBanner";
 import { SocialLinks } from "./SocialLinks";
 
 export const Header = () => {
   return (
-    <header
-      className={center({
-        flexDirection: "column",
-        boxShadow: "sm",
-        backgroundColor: "bg.emphasized",
-        alignItems: "center",
-        zIndex: "2",
-      })}
+    <Center
+      as="header"
+      flexDirection="column"
+      boxShadow="sm"
+      backgroundColor="bg.muted"
+      alignItems="center"
+      zIndex="2"
     >
-      <h1
-        className={hstack({
-          width: "full",
-          maxWidth: "8xl",
-          justifyContent: "space-between",
-          paddingY: "1",
-          paddingX: "4",
-        })}
+      <HStack
+        as="h1"
+        width="full"
+        maxWidth="8xl"
+        justifyContent="space-between"
+        paddingY="1"
+        paddingX="4"
       >
-        <span
-          className={hstack({
-            gap: "2",
-            fontSize: "2xl",
-            fontWeight: "bold",
-            alignItems: "flex-end",
-            display: "inline-flex",
-          })}
+        <HStack
+          as="span"
+          gap="2"
+          fontSize="2xl"
+          fontWeight="bold"
+          alignItems="flex-end"
+          display="inline-flex"
         >
           Proxy Print Setup
-          <span
-            className={hstack({
-              gap: "0",
-              display: "none",
-              sm: { display: "inline-flex" },
-              fontSize: "xs",
-              lineHeight: "1.75rem",
-              fontWeight: "normal",
-              color: "fg.muted",
-            })}
+          <HStack
+            as="span"
+            gap="0"
+            display={{ base: "none", sm: "inline-flex" }}
+            fontSize="xs"
+            lineHeight="1.75rem"
+            fontWeight="normal"
+            color="fg.muted"
           >
             by&nbsp;
             <Link
-              asChild
-              color="colorPalette.fg"
-              className={css({
-                fontSize: "inherit",
-                fontWeight: "inherit",
-                color: "inherit",
-              })}
+              fontSize="inherit"
+              fontWeight="inherit"
+              color="inherit"
+              href="https://github.com/alex-taxiera"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a
-                href="https://github.com/alex-taxiera"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Alex Taxiera
-              </a>
+              Alex Taxiera
             </Link>
-          </span>
-        </span>
+          </HStack>
+        </HStack>
         <SocialLinks />
-      </h1>
+      </HStack>
       <CommunityBanner />
-    </header>
+    </Center>
   );
 };

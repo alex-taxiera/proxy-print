@@ -1,58 +1,56 @@
-import {
-  faInfoCircle,
-  faExclamationTriangle,
-  faCheckCircle,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ComponentProps, forwardRef } from "react";
-import type { OverrideProperties } from "type-fest";
+import { Alert as ChakraAlert, useAlertStyles } from "@chakra-ui/react";
+import * as React from "react";
+import { LuInfo, LuCircleCheck, LuTriangleAlert } from "react-icons/lu";
 
-import { AlertVariant, AlertVariantProps } from "styled-system/recipes";
+import { CloseButton } from "./close-button";
 
-import { AlertProvider, useAlertContext } from "./alert-context";
-import * as Styled from "./styled/alert";
+export type AlertStatus = "info" | "warning" | "success" | "error" | "neutral";
 
-export type RootProps = React.PropsWithChildren<
-  OverrideProperties<AlertVariantProps, AlertVariant>
->;
+export interface AlertProps
+  extends Omit<ChakraAlert.RootProps, "title" | "status"> {
+  startElement?: React.ReactNode;
+  endElement?: React.ReactNode;
+  title?: React.ReactNode;
+  icon?: React.ReactElement;
+  status?: AlertStatus; // remove conditional types to simplify usage
+}
 
-const Root = forwardRef<HTMLDivElement, RootProps>(
-  ({ children, ...props }, ref) => {
+const STATUS_ICON_MAP = {
+  info: <LuInfo />,
+  neutral: <LuInfo />,
+  success: <LuCircleCheck />,
+  warning: <LuTriangleAlert />,
+  error: <LuTriangleAlert />,
+} as const;
+
+export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  function Alert(props, ref) {
+    const { title, children, icon, startElement, endElement, ...rest } = props;
+    const statusIcon = STATUS_ICON_MAP[props.status || "info"];
+
     return (
-      <AlertProvider status={props.status}>
-        <Styled.Root {...props} ref={ref}>
-          {children}
-        </Styled.Root>
-      </AlertProvider>
+      <ChakraAlert.Root ref={ref} {...rest}>
+        {startElement || (
+          <ChakraAlert.Indicator>{icon ?? statusIcon}</ChakraAlert.Indicator>
+        )}
+        {children ? (
+          <ChakraAlert.Content>
+            <ChakraAlert.Title>{title}</ChakraAlert.Title>
+            <ChakraAlert.Description>{children}</ChakraAlert.Description>
+          </ChakraAlert.Content>
+        ) : (
+          <ChakraAlert.Title flex="1">{title}</ChakraAlert.Title>
+        )}
+        {endElement}
+      </ChakraAlert.Root>
     );
   },
 );
 
-Root.displayName = "Root";
+export type AlertDismissButtonProps = React.ComponentProps<typeof CloseButton>;
 
-const STATUS_ICON_MAP = {
-  info: faInfoCircle,
-  success: faCheckCircle,
-  warning: faExclamationTriangle,
-  error: faExclamationTriangle,
+export const AlertDismissButton = (props: AlertDismissButtonProps) => {
+  const styles = useAlertStyles();
+
+  return <CloseButton css={styles.dismissButton} {...props} />;
 };
-
-const StatusIcon = forwardRef<
-  HTMLOrSVGElement,
-  ComponentProps<typeof Styled.Icon>
->((props, ref) => {
-  const { status } = useAlertContext();
-  return (
-    <Styled.Icon {...props} ref={ref}>
-      <FontAwesomeIcon icon={STATUS_ICON_MAP[status]} />
-    </Styled.Icon>
-  );
-});
-
-StatusIcon.displayName = "StatusIcon";
-
-export const Alert = {
-  ...Styled,
-  Root,
-  StatusIcon,
-} as const;

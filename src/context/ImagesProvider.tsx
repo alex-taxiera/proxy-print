@@ -1,8 +1,8 @@
 import { nanoid } from "nanoid";
 import { ComponentProps, useEffect, useState } from "react";
 
-import { getQueryDataForImage } from "~/queries/images";
-import { useSettingsStore } from "~/store/settingsStore";
+import { getQueryDataForImage } from "@/queries/images";
+import { useSettingsStore } from "@/store/settingsStore";
 
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import {

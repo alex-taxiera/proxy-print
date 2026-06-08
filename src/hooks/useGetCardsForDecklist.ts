@@ -1,12 +1,12 @@
 import { ScryfallCard } from "@scryfall/api-types";
 import { nanoid } from "nanoid";
 
-import { DownloadableImage, ScryfallImageData } from "~/context/ImagesContext";
+import { DownloadableImage, ScryfallImageData } from "@/context/ImagesContext";
 import {
   ScryfallCardsCollectionIdentifier,
   useScryfallCardsCollection,
-} from "~/queries/useScryfallCardsCollection";
-import { parseDecklist } from "~/utils/parse-decklist";
+} from "@/queries/useScryfallCardsCollection";
+import { parseDecklist } from "@/utils/parse-decklist";
 
 /**
  * Converts a decklist string to Scryfall card image data

@@ -8,7 +8,6 @@ const meta: Meta<typeof Header> = {
   parameters: {
     layout: "fullscreen",
   },
-  tags: ["autodocs"],
   argTypes: {
     // Header component doesn't accept props, so no argTypes needed
   },
@@ -19,16 +18,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {},
-};
-
-export const WithLongTitle: Story = {
-  args: {},
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "The header displays the main title and community banner. The title is centered and uses large typography.",
-      },
-    },
-  },
 };

@@ -3,11 +3,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": [
-    "src",
-    "styled-system",
-    "panda.config.ts",
-    ".storybook/**/*",
-    "vitest.config.ts"
-  ]
+  "include": ["src", ".storybook/**/*", "vitest.config.ts"]
 }

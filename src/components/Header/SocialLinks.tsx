@@ -1,20 +1,11 @@
-import {
-  faDiscord,
-  faGithub,
-  faPaypal,
-} from "@fortawesome/free-brands-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
-import { hstack } from "styled-system/patterns";
-
-import { Link } from "~/components/ui/link";
+import { ButtonGroup, IconButton } from "@chakra-ui/react";
+import { FaGithub, FaDiscord, FaPaypal } from "react-icons/fa";
 
 export const SocialLinks = () => {
   return (
-    <div className={hstack({ gap: "4", color: "fg.default" })}>
-      <Link
+    <ButtonGroup gap="4" color="fg" variant="ghost">
+      <IconButton
         asChild
-        color="inherit"
         aria-label="View the Proxy Print Setup GitHub repository"
       >
         <a
@@ -22,10 +13,10 @@ export const SocialLinks = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <FontAwesomeIcon icon={faGithub} />
+          <FaGithub />
         </a>
-      </Link>
-      <Link
+      </IconButton>
+      <IconButton
         asChild
         color="inherit"
         aria-label="Join the Proxy Community Discord"
@@ -35,18 +26,18 @@ export const SocialLinks = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <FontAwesomeIcon icon={faDiscord} />
+          <FaDiscord />
         </a>
-      </Link>
-      <Link asChild color="inherit" aria-label="Donate via PayPal">
+      </IconButton>
+      <IconButton asChild color="inherit" aria-label="Donate via PayPal">
         <a
           href="https://www.paypal.me/alextaxiera"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <FontAwesomeIcon icon={faPaypal} />
+          <FaPaypal />
         </a>
-      </Link>
-    </div>
+      </IconButton>
+    </ButtonGroup>
   );
 };

@@ -1,44 +1,69 @@
-import { MenuSelectionDetails, Portal } from "@ark-ui/react";
 import {
-  faArrowLeft,
-  faArrowRight,
-  faCheck,
-  faCompress,
-  faDownload,
-  faEllipsisV,
-  faExpand,
-  faMagnifyingGlassMinus,
-  faMagnifyingGlassPlus,
-  faTrash,
-  faUndo,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+  Button,
+  Spinner,
+  IconButton,
+  Link,
+  MenuSelectionDetails,
+  VisuallyHidden,
+  createListCollection,
+  HStack,
+  VStack,
+  Box,
+} from "@chakra-ui/react";
 import { useContext } from "react";
+import {
+  LuArrowLeft,
+  LuArrowRight,
+  LuDownload,
+  LuExpand,
+  LuImageDown,
+  LuImageUpscale,
+  LuShrink,
+  LuTrash,
+  LuUndo,
+  LuEllipsis,
+  LuCheck,
+} from "react-icons/lu";
 
-import { css } from "styled-system/css";
-import { VisuallyHidden } from "styled-system/jsx";
-import { hstack, vstack } from "styled-system/patterns";
+import {
+  MenuItem,
+  MenuContent,
+  MenuItemGroup,
+  MenuItemText,
+  MenuRoot,
+  MenuTriggerItem,
+  MenuTrigger,
+} from "@/components/ui/menu";
+import {
+  PaginationItems,
+  PaginationNextTrigger,
+  PaginationPrevTrigger,
+  PaginationRoot,
+} from "@/components/ui/pagination";
+import {
+  SelectRoot,
+  SelectLabel,
+  SelectTrigger,
+  SelectControl,
+  SelectValueText,
+  SelectContent,
+  SelectItem,
+  SelectItemText,
+  SelectIndicatorGroup,
+} from "@/components/ui/select";
+import { Tooltip } from "@/components/ui/tooltip";
 
-import { Button } from "~/components/ui/button";
-import { IconButton } from "~/components/ui/icon-button";
-import { Link } from "~/components/ui/link";
-import { Menu } from "~/components/ui/menu";
-import { Pagination } from "~/components/ui/pagination";
-import { createListCollection, Select } from "~/components/ui/select";
-import { Spinner } from "~/components/ui/spinner";
-import { Tooltip } from "~/components/ui/tooltip";
+import { ImageErrors } from "@/components/ImageErrors";
 
-import { ImageErrors } from "~/components/ImageErrors";
-
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { ImagesContext } from "~/context/ImagesContext";
-import { PrintMode } from "~/context/SettingsContext";
-import { useGeneratePdf } from "~/hooks/useGeneratePdf";
-import { usePreviewData } from "~/hooks/usePreviewData";
-import { useDownloadProgressStore } from "~/store/downloadProgressStore";
-import { useSettingsStore } from "~/store/settingsStore";
-import { formatCount, formatSelectionCount } from "~/utils/pluralize";
-import { progressEvents } from "~/utils/progress-events";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
+import { ImagesContext } from "@/context/ImagesContext";
+import { PrintMode } from "@/context/SettingsContext";
+import { useGeneratePdf } from "@/hooks/useGeneratePdf";
+import { usePreviewData } from "@/hooks/usePreviewData";
+import { useDownloadProgressStore } from "@/store/downloadProgressStore";
+import { useSettingsStore } from "@/store/settingsStore";
+import { formatCount, formatSelectionCount } from "@/utils/pluralize";
+import { progressEvents } from "@/utils/progress-events";
 
 import { useCardActions } from "./Card/useCardActions";
 
@@ -66,41 +91,30 @@ const PrintModeToggle = () => {
   };
 
   return (
-    <Select.Root
+    <SelectRoot
       collection={printModeCollection}
       value={[printMode]}
       onValueChange={handleChange}
       size="md"
       width="44"
     >
-      <Select.Label asChild>
+      <SelectLabel asChild>
         <VisuallyHidden>Card Size</VisuallyHidden>
-      </Select.Label>
-      <Select.Control>
-        <Select.Trigger>
-          <Select.ValueText />
-          <Select.Indicator asChild>
-            <Select.IndicatorIcon />
-          </Select.Indicator>
-        </Select.Trigger>
-      </Select.Control>
-      <Portal>
-        <Select.Positioner>
-          <Select.Content>
-            <Select.List>
-              {printModeCollection.items.map((opt) => (
-                <Select.Item key={opt.value} item={opt}>
-                  <Select.ItemText>{opt.label}</Select.ItemText>
-                  <Select.ItemIndicator asChild>
-                    <Select.ItemIndicatorIcon />
-                  </Select.ItemIndicator>
-                </Select.Item>
-              ))}
-            </Select.List>
-          </Select.Content>
-        </Select.Positioner>
-      </Portal>
-    </Select.Root>
+      </SelectLabel>
+      <SelectControl>
+        <SelectTrigger>
+          <SelectValueText />
+        </SelectTrigger>
+        <SelectIndicatorGroup />
+      </SelectControl>
+      <SelectContent>
+        {printModeCollection.items.map((opt) => (
+          <SelectItem key={opt.value} item={opt}>
+            <SelectItemText>{opt.label}</SelectItemText>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </SelectRoot>
   );
 };
 
@@ -132,92 +146,71 @@ const NoSelectionActions = ({
   });
 
   return (
-    <div className={hstack({ gap: "2", flexWrap: "wrap" })}>
+    <HStack gap="2" flexWrap="wrap">
       <PrintModeToggle />
-      <Tooltip.Root
+      <Tooltip
         disabled={!isRendering && !isLoadingImages && isReferenceCardLoaded}
         positioning={{
           placement: "top",
         }}
+        content={
+          isRendering
+            ? "Generating PDF..."
+            : isLoadingImages
+              ? "Downloading images..."
+              : !isReferenceCardLoaded
+                ? "Loading images..."
+                : ""
+        }
       >
-        <Tooltip.Trigger asChild>
-          <Button
-            disabled={isRendering || isLoadingImages || !isReferenceCardLoaded}
-            onClick={() => handleSave()}
-          >
-            Generate PDF
-          </Button>
-        </Tooltip.Trigger>
-        <Tooltip.Positioner>
-          <Tooltip.Arrow>
-            <Tooltip.ArrowTip />
-          </Tooltip.Arrow>
-          <Tooltip.Content>
-            {isRendering
-              ? "Generating PDF..."
-              : isLoadingImages
-                ? "Downloading images..."
-                : !isReferenceCardLoaded
-                  ? "Loading images..."
-                  : ""}
-          </Tooltip.Content>
-        </Tooltip.Positioner>
-      </Tooltip.Root>
-      <Menu.Root>
-        <Menu.Trigger asChild>
+        <Button
+          disabled={isRendering || isLoadingImages || !isReferenceCardLoaded}
+          onClick={() => handleSave()}
+        >
+          Generate PDF
+        </Button>
+      </Tooltip>
+      <MenuRoot>
+        <MenuTrigger asChild>
           <IconButton
             variant="outline"
             colorPalette="gray"
             aria-label="Actions"
             type="button"
           >
-            <FontAwesomeIcon icon={faEllipsisV} size="lg" />
+            <LuEllipsis />
           </IconButton>
-        </Menu.Trigger>
-        <Portal>
-          <Menu.Positioner>
-            <Menu.Content>
-              <Menu.ItemGroup>
-                <Menu.Item
-                  value="select-all"
-                  onSelect={() => onSelectAllImages(true)}
-                >
-                  <Menu.ItemIndicator>
-                    <FontAwesomeIcon icon={faCheck} />
-                  </Menu.ItemIndicator>
-                  <Menu.ItemText>Select all</Menu.ItemText>
-                </Menu.Item>
-                <Menu.Item
-                  value="remove-all"
-                  onSelect={() => remove()}
-                  disabled={isRendering}
-                  color="fg.error"
-                >
-                  <Menu.ItemIndicator color="fg.error">
-                    <FontAwesomeIcon icon={faTrash} />
-                  </Menu.ItemIndicator>
-                  <Menu.ItemText>Remove all</Menu.ItemText>
-                </Menu.Item>
-                <Menu.Item
-                  value="downloadZip"
-                  onSelect={() => downloadImages()}
-                  disabled={isLoadingImages || isDownloading}
-                >
-                  <Menu.ItemIndicator>
-                    {isDownloading ? (
-                      <Spinner size="sm" mr="1px" />
-                    ) : (
-                      <FontAwesomeIcon icon={faDownload} />
-                    )}
-                  </Menu.ItemIndicator>
-                  <Menu.ItemText>Download all (ZIP)</Menu.ItemText>
-                </Menu.Item>
-              </Menu.ItemGroup>
-            </Menu.Content>
-          </Menu.Positioner>
-        </Portal>
-      </Menu.Root>
-    </div>
+        </MenuTrigger>
+        <MenuContent>
+          <>
+            <MenuItem
+              value="select-all"
+              onSelect={() => onSelectAllImages(true)}
+            >
+              <LuCheck />
+              <MenuItemText>Select all</MenuItemText>
+            </MenuItem>
+            <MenuItem
+              value="remove-all"
+              onSelect={() => remove()}
+              disabled={isRendering}
+              color="fg.error"
+            >
+              <LuTrash />
+              <MenuItemText>Remove all</MenuItemText>
+            </MenuItem>
+            <MenuItem
+              value="downloadZip"
+              onSelect={() => downloadImages()}
+              disabled={isLoadingImages || isDownloading}
+            >
+              {isDownloading ? <Spinner size="sm" mr="1px" /> : <LuDownload />}
+              <MenuItemText>Download all (ZIP)</MenuItemText>
+            </MenuItem>
+          </>
+        </MenuContent>
+      </MenuRoot>
+    </HStack>
   );
 };
 
@@ -263,126 +256,98 @@ export const SelectionMenuContent = ({
 
   return (
     <>
-      <Menu.ItemGroup>
-        <Menu.ItemGroupLabel>
-          {formatSelectionCount(selectedImageUuids.length, "card")}
-        </Menu.ItemGroupLabel>
-        <Menu.Item
+      <MenuItemGroup
+        title={formatSelectionCount(selectedImageUuids.length, "card")}
+      >
+        <MenuItem
           value="clear-all"
           onSelect={() => remove()}
           disabled={isRendering}
           color="fg.error"
         >
-          <Menu.ItemIndicator color="fg.error">
-            <FontAwesomeIcon icon={faTrash} />
-          </Menu.ItemIndicator>
-          <Menu.ItemText>Remove all</Menu.ItemText>
-        </Menu.Item>
-        <Menu.Item
+          <LuTrash />
+          <MenuItemText>Remove all</MenuItemText>
+        </MenuItem>
+        <MenuItem
           value="download-all"
           onSelect={() => downloadImages()}
           disabled={isLoadingImages || isDownloading}
         >
-          <Menu.ItemIndicator>
-            {isDownloading ? (
-              <Spinner size="sm" mr="1px" />
-            ) : (
-              <FontAwesomeIcon icon={faDownload} />
-            )}
-          </Menu.ItemIndicator>
-          <Menu.ItemText>Download all (ZIP)</Menu.ItemText>
-        </Menu.Item>
+          {isDownloading ? <Spinner size="sm" mr="1px" /> : <LuDownload />}
+          <MenuItemText>Download all (ZIP)</MenuItemText>
+        </MenuItem>
         {canUpscale ? (
-          <Menu.Item value="upscale-all" onSelect={() => upscale()}>
-            <Menu.ItemIndicator>
-              <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
-            </Menu.ItemIndicator>
-            <Menu.ItemText>Upscale all</Menu.ItemText>
-          </Menu.Item>
+          <MenuItem value="upscale-all" onSelect={() => upscale()}>
+            <LuImageUpscale />
+            <MenuItemText>Upscale all</MenuItemText>
+          </MenuItem>
         ) : null}
         {canRemoveUpscale ? (
-          <Menu.Item
-            value="remove-upscale-all"
-            onSelect={() => removeUpscale()}
-          >
-            <Menu.ItemIndicator>
-              <FontAwesomeIcon icon={faMagnifyingGlassMinus} />
-            </Menu.ItemIndicator>
-            <Menu.ItemText>Remove upscale from all</Menu.ItemText>
-          </Menu.Item>
+          <MenuItem value="remove-upscale-all" onSelect={() => removeUpscale()}>
+            <LuImageDown />
+            <MenuItemText>Remove upscale from all</MenuItemText>
+          </MenuItem>
         ) : null}
         {canAddBleed ? (
-          <Menu.Item value="add-bleed-all" onSelect={() => addBleed()}>
-            <Menu.ItemIndicator>
-              <FontAwesomeIcon icon={faExpand} />
-            </Menu.ItemIndicator>
-            <Menu.ItemText>Add bleed to all</Menu.ItemText>
-          </Menu.Item>
+          <MenuItem value="add-bleed-all" onSelect={() => addBleed()}>
+            <LuExpand />
+            <MenuItemText>Add bleed to all</MenuItemText>
+          </MenuItem>
         ) : null}
         {canRemoveBleed ? (
-          <Menu.Item value="remove-bleed-all" onSelect={() => removeBleed()}>
-            <Menu.ItemIndicator>
-              <FontAwesomeIcon icon={faCompress} />
-            </Menu.ItemIndicator>
-            <Menu.ItemText>Remove bleed from all</Menu.ItemText>
-          </Menu.Item>
+          <MenuItem value="remove-bleed-all" onSelect={() => removeBleed()}>
+            <LuShrink />
+            <MenuItemText>Remove bleed from all</MenuItemText>
+          </MenuItem>
         ) : null}
         {canRevertToOriginal ? (
-          <Menu.Item value="revert-to-original-all" onSelect={revertToOriginal}>
-            <Menu.ItemIndicator>
-              <FontAwesomeIcon icon={faUndo} />
-            </Menu.ItemIndicator>
-            <Menu.ItemText>Revert all to original</Menu.ItemText>
-          </Menu.Item>
+          <MenuItem value="revert-to-original-all" onSelect={revertToOriginal}>
+            <LuUndo />
+            <MenuItemText>Revert all to original</MenuItemText>
+          </MenuItem>
         ) : null}
-      </Menu.ItemGroup>
-      <Menu.ItemGroup>
+      </MenuItemGroup>
+      <>
         {!canMoveToNextPage ? (
-          <Menu.Item onSelect={moveToNextPage} value="move-to-next-page-all">
-            <Menu.ItemIndicator>
-              <FontAwesomeIcon icon={faArrowRight} />
-            </Menu.ItemIndicator>
-            <Menu.ItemText>Move all to next page</Menu.ItemText>
-          </Menu.Item>
+          <MenuItem onSelect={moveToNextPage} value="move-to-next-page-all">
+            <LuArrowRight />
+            <MenuItemText>Move all to next page</MenuItemText>
+          </MenuItem>
         ) : null}
         {!canMoveToPreviousPage ? (
-          <Menu.Item
+          <MenuItem
             onSelect={moveToPreviousPage}
             value="move-to-previous-page-all"
           >
-            <Menu.ItemIndicator>
-              <FontAwesomeIcon icon={faArrowLeft} />
-            </Menu.ItemIndicator>
-            <Menu.ItemText>Move all to previous page</Menu.ItemText>
-          </Menu.Item>
+            <LuArrowLeft />
+            <MenuItemText>Move all to previous page</MenuItemText>
+          </MenuItem>
         ) : null}
         {pages.length > 1 ? (
-          <Menu.Root
+          <MenuRoot
             onSelect={onMoveToPage}
             positioning={{ gutter: 10, placement: "right-start" }}
           >
-            <Menu.TriggerItem>
-              <FontAwesomeIcon icon={faEllipsisV} />
-              Move all to ...
-            </Menu.TriggerItem>
-            <Portal>
-              <Menu.Positioner>
-                <Menu.Content>
-                  {pages.map((_, index) => (
-                    <Menu.Item
-                      key={index}
-                      disabled={index + 1 === currentPage}
-                      value={`${(index + 1).toString()}-all`}
-                    >
-                      Page {index + 1}
-                    </Menu.Item>
-                  ))}
-                </Menu.Content>
-              </Menu.Positioner>
-            </Portal>
-          </Menu.Root>
+            <MenuTriggerItem
+              value="move-to-page-all"
+              startIcon={<LuEllipsis />}
+            >
+              <MenuItemText>Move all to ...</MenuItemText>
+            </MenuTriggerItem>
+            <MenuContent>
+              {pages.map((_, index) => (
+                <MenuItem
+                  key={index}
+                  disabled={index + 1 === currentPage}
+                  value={`${(index + 1).toString()}-all`}
+                >
+                  Page {index + 1}
+                </MenuItem>
+              ))}
+            </MenuContent>
+          </MenuRoot>
         ) : null}
-      </Menu.ItemGroup>
+      </>
     </>
   );
 };
@@ -394,24 +359,22 @@ const SelectionActions = ({ currentPage }: { currentPage: number }) => {
   const selectedImageCount = selectedImageUuids.length;
 
   return (
-    <div className={hstack({ gap: "2" })}>
-      <Menu.Root onSelect={() => onSelectAllImages(false)}>
-        <Menu.Trigger asChild>
-          <Button colorPalette="gray" type="button">
+    <HStack gap="2">
+      <MenuRoot onSelect={() => onSelectAllImages(false)}>
+        <MenuTrigger asChild>
+          <Button variant="outline" type="button">
             Actions
           </Button>
-        </Menu.Trigger>
-        <Portal>
-          <Menu.Positioner>
-            <Menu.Content>
-              <SelectionMenuContent currentPage={currentPage} />
-            </Menu.Content>
-          </Menu.Positioner>
-        </Portal>
-      </Menu.Root>
+        </MenuTrigger>
+        <MenuContent>
+          <SelectionMenuContent currentPage={currentPage} />
+        </MenuContent>
+      </MenuRoot>
       <span>{formatCount(selectedImageCount, "card")} selected</span>
-      <Link onClick={() => onSelectAllImages(false)}>Deselect all</Link>
-    </div>
+      <Link colorPalette="accent" onClick={() => onSelectAllImages(false)}>
+        Deselect all
+      </Link>
+    </HStack>
   );
 };
 
@@ -434,27 +397,23 @@ export const Actions = ({
   const { pages, cardsPerPage } = usePreviewData();
 
   return (
-    <div
-      className={vstack({
-        gap: "2",
-        width: "var(--page-width)",
-        minWidth: "max",
-        maxWidth: "full",
-        alignItems: "stretch",
-        position: "sticky",
-        left: "0",
-      })}
+    <VStack
+      gap="2"
+      width="var(--page-width)"
+      minWidth="max"
+      maxWidth="full"
+      alignItems="stretch"
+      position="sticky"
+      left="0"
     >
-      <div
-        className={hstack({
-          gap: "2",
-          paddingLeft: "2",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
-          paddingBottom: "3",
-          borderTopRadius: "md",
-          backgroundColor: selectedImageUuids.length > 0 ? "bg.info" : "unset",
-        })}
+      <HStack
+        gap="2"
+        paddingLeft="2"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        paddingBottom="3"
+        borderTopRadius="md"
+        backgroundColor={selectedImageUuids.length > 0 ? "bg.info" : "unset"}
       >
         {selectedImageUuids.length === 0 ? (
           <NoSelectionActions
@@ -464,29 +423,31 @@ export const Actions = ({
         ) : (
           <SelectionActions currentPage={currentPage} />
         )}
-        <div
-          className={vstack({
-            alignItems: "center",
-            gap: "2",
-            visibility: pages.length > 1 ? "visible" : "hidden",
-          })}
+        <VStack
+          alignItems="center"
+          gap="2"
+          visibility={pages.length > 1 ? "visible" : "hidden"}
         >
-          <span className={css({ fontSize: "xs", color: "fg.muted" })}>
+          <Box as="span" fontSize="xs" color="fg.muted">
             Page {currentPage} of {pages.length}
-          </span>
-          <Pagination
+          </Box>
+          <PaginationRoot
             siblingCount={0}
             count={pages.length * cardsPerPage}
             page={currentPage}
             pageSize={cardsPerPage}
             onPageChange={({ page }) => changePage(page)}
-          />
-        </div>
-      </div>
+          >
+            <PaginationPrevTrigger />
+            <PaginationItems />
+            <PaginationNextTrigger />
+          </PaginationRoot>
+        </VStack>
+      </HStack>
       <ImageErrors
         onDismiss={onClearErrors}
         imagesWithError={imagesWithError}
       />
-    </div>
+    </VStack>
   );
 };

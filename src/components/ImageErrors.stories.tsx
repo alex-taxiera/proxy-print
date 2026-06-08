@@ -5,7 +5,6 @@ import { ImageErrors } from "./ImageErrors";
 const meta: Meta<typeof ImageErrors> = {
   title: "Components/ImageErrors",
   component: ImageErrors,
-  tags: ["autodocs"],
   argTypes: {
     imagesWithError: {
       control: { type: "object" },

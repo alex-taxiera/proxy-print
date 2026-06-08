@@ -1,11 +1,8 @@
+import { Box, Button } from "@chakra-ui/react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 
-import { css } from "styled-system/css";
-
-import { Button } from "~/components/ui/button";
-
-import { progressEvents } from "~/utils/progress-events";
+import { progressEvents } from "@/utils/progress-events";
 
 import { ProgressOverlay } from "./ProgressOverlay";
 
@@ -15,18 +12,11 @@ const meta: Meta<typeof ProgressOverlay> = {
   parameters: {
     layout: "fullscreen",
   },
-  tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div
-        className={css({
-          p: "4",
-          margin: "auto",
-          width: "100%",
-        })}
-      >
+      <Box padding="4" margin="auto" width="100%">
         <Story />
-      </div>
+      </Box>
     ),
   ],
 };
@@ -105,31 +95,6 @@ export const Default: Story = {
   },
 };
 
-export const DetailedProgress: Story = {
-  render: () => {
-    return (
-      <>
-        <ProgressOverlay />
-        <ProgressTrigger
-          phases={[
-            "Initializing PDF generator...",
-            "Loading image files...",
-            "Processing image 1 of 5...",
-            "Processing image 2 of 5...",
-            "Processing image 3 of 5...",
-            "Processing image 4 of 5...",
-            "Processing image 5 of 5...",
-            "Compressing images...",
-            "Generating PDF document...",
-            "Finalizing and saving...",
-          ]}
-          duration={8000}
-        />
-      </>
-    );
-  },
-};
-
 export const IndeterminateProgress: Story = {
   render: () => {
     const startIndeterminate = () => {
@@ -149,39 +114,6 @@ export const IndeterminateProgress: Story = {
         <Button onClick={startIndeterminate}>
           Start Indeterminate Progress
         </Button>
-      </>
-    );
-  },
-};
-
-export const CustomTotalAmount: Story = {
-  render: () => {
-    const startCustomProgress = () => {
-      let progress = 0;
-      const total = 250;
-      const interval = setInterval(() => {
-        progress += 10;
-
-        if (progress >= total) {
-          progress = total;
-          clearInterval(interval);
-          setTimeout(() => {
-            progressEvents.emit("complete");
-          }, 1000);
-        }
-
-        progressEvents.emit("progress", {
-          progress,
-          totalProgressAmount: total,
-          phase: `Processing step ${Math.floor(progress / 25) + 1} of 10...`,
-        });
-      }, 200);
-    };
-
-    return (
-      <>
-        <ProgressOverlay />
-        <Button onClick={startCustomProgress}>Start Custom Total (250)</Button>
       </>
     );
   },

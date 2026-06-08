@@ -6,8 +6,8 @@ import {
   ImageData,
   ImagesContext,
   PossiblyEmptyImage,
-} from "~/context/ImagesContext";
-import { useSettingsStore } from "~/store/settingsStore";
+} from "@/context/ImagesContext";
+import { useSettingsStore } from "@/store/settingsStore";
 
 export const usePageLimits = () => {
   const settings = useSettingsStore((s) => s.settings);

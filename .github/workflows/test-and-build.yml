@@ -51,14 +51,6 @@ jobs:
             **/node_modules
             ~/.npm
           key: ${{ hashFiles('**/package-lock.json') }}
-
-      - name: CSS Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/styled-system
-          key: ${{ hashFiles('**/src/**/*.tsx') }}
-
       - name: Generate CSS
         run: npm run prepare
 
@@ -82,13 +74,6 @@ jobs:
             **/node_modules
             ~/.npm
           key: ${{ hashFiles('**/package-lock.json') }}
-
-      - name: CSS Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/styled-system
-          key: ${{ hashFiles('**/src/**/*.tsx') }}
 
       - name: Lint project
         run: npm run lint
@@ -136,14 +121,6 @@ jobs:
             **/node_modules
             ~/.npm
           key: ${{ hashFiles('**/package-lock.json') }}
-
-      - name: CSS Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/styled-system
-          key: ${{ hashFiles('**/src/**/*.tsx') }}
-
       - name: Build project
         run: npm run build
 

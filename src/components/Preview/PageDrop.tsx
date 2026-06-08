@@ -1,8 +1,7 @@
+import { Box } from "@chakra-ui/react";
 import { pointerIntersection } from "@dnd-kit/collision";
 import { useDroppable, useDragDropMonitor } from "@dnd-kit/react";
 import { useRef, useState, useEffect, useCallback } from "react";
-
-import { css } from "styled-system/css";
 
 export const PageDrop = ({
   id,
@@ -93,25 +92,23 @@ export const PageDrop = ({
   }, []);
 
   return (
-    <div
+    <Box
       ref={ref}
-      className={css({
-        visibility: !disabled && isDragging ? "visible" : "hidden",
-        bg: isDropTarget
-          ? "accent.5"
-          : isDragging
-            ? "bg.default"
-            : "transparent",
-        borderColor: "border.default",
-        borderStyle: "solid",
-        borderWidth: "1px",
-        borderRadius: "l2",
-        width: "24",
-        height: "var(--page-height, 11 var(--page-unit, in))",
-        paddingY: "4",
-      })}
+      visibility={!disabled && isDragging ? "visible" : "hidden"}
+      bg={
+        isDropTarget ? "accent.900" : isDragging ? "bg.default" : "transparent"
+      }
+      borderColor="border.default"
+      borderStyle="solid"
+      borderWidth="1px"
+      borderRadius="md"
+      width="24"
+      height="var(--page-height, 11 var(--page-unit, in))"
+      paddingY="4"
+      transitionProperty="common"
+      transitionDuration="fast"
     >
       {children}
-    </div>
+    </Box>
   );
 };

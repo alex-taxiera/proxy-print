@@ -1,31 +1,23 @@
-import { faChevronUp, faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { forwardRef } from "react";
+import { NumberInput as ChakraNumberInput } from "@chakra-ui/react";
+import * as React from "react";
 
-import * as StyledNumberInput from "./styled/number-input";
+export type NumberInputProps = ChakraNumberInput.RootProps;
 
-export type NumberInputProps = StyledNumberInput.RootProps;
+export const NumberInputRoot = React.forwardRef<
+  HTMLDivElement,
+  NumberInputProps
+>(function NumberInput(props, ref) {
+  const { children, ...rest } = props;
+  return (
+    <ChakraNumberInput.Root ref={ref} variant="outline" {...rest}>
+      {children}
+      <ChakraNumberInput.Control>
+        <ChakraNumberInput.IncrementTrigger />
+        <ChakraNumberInput.DecrementTrigger />
+      </ChakraNumberInput.Control>
+    </ChakraNumberInput.Root>
+  );
+});
 
-export const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(
-  (props, ref) => {
-    const { children, ...rootProps } = props;
-    return (
-      <StyledNumberInput.Root ref={ref} {...rootProps}>
-        {children && (
-          <StyledNumberInput.Label>{children}</StyledNumberInput.Label>
-        )}
-        <StyledNumberInput.Control>
-          <StyledNumberInput.Input />
-          <StyledNumberInput.IncrementTrigger>
-            <FontAwesomeIcon icon={faChevronUp} />
-          </StyledNumberInput.IncrementTrigger>
-          <StyledNumberInput.DecrementTrigger>
-            <FontAwesomeIcon icon={faChevronDown} />
-          </StyledNumberInput.DecrementTrigger>
-        </StyledNumberInput.Control>
-      </StyledNumberInput.Root>
-    );
-  },
-);
-
-NumberInput.displayName = "NumberInput";
+export const NumberInputField = ChakraNumberInput.Input;
+export const NumberInputScrubber = ChakraNumberInput.Scrubber;

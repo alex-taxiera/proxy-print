@@ -1,20 +1,23 @@
+import {
+  Box,
+  Center,
+  CenterProps,
+  Grid,
+  HStack,
+  VStack,
+} from "@chakra-ui/react";
 import { DragDropProvider, DragDropEventHandlers } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
-import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useRef, useState, useEffect, useCallback } from "react";
+import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
-import { css, cx } from "styled-system/css";
-import { center, grid, hstack, vstack } from "styled-system/patterns";
+import { ProgressOverlay } from "@/components/ProgressOverlay";
 
-
-import { ProgressOverlay } from "~/components/ProgressOverlay";
-
-import { ImageSelectionContext } from "~/context/ImageSelectionContext";
-import { ImagesContext } from "~/context/ImagesContext";
-import { usePreviewData } from "~/hooks/usePreviewData";
-import { getIsSortableCardData } from "~/hooks/useSortableCard";
-import { useSettingsStore, computeCssVars } from "~/store/settingsStore";
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
+import { ImagesContext } from "@/context/ImagesContext";
+import { usePreviewData } from "@/hooks/usePreviewData";
+import { getIsSortableCardData } from "@/hooks/useSortableCard";
+import { useSettingsStore, computeCssVars } from "@/store/settingsStore";
 
 import { Actions } from "./Actions";
 import { Card } from "./Card";
@@ -82,56 +85,43 @@ const usePagination = () => {
 // Used by useGeneratePdf for getBoundingClientRect() measurements free of any transform.
 // No <img> needed — image dimensions are computed from settings in useGeneratePdf.
 const MeasurementCard = () => (
-  <div className={cx("card", css({ position: "relative" }))}>
-    <div
-      className={cx(
-        "image-container",
-        center({
-          overflow: "hidden",
-          width: "var(--item-width, 63mm)",
-          height: "var(--item-height, 88mm)",
-        }),
-      )}
+  <Box position="relative" className="card">
+    <Center
+      overflow="hidden"
+      width="var(--item-width, 63mm)"
+      height="var(--item-height, 88mm)"
+      className="image-container"
     />
-  </div>
+  </Box>
 );
 
-type PageGridProps = {
-  style?: React.CSSProperties;
-  children: React.ReactNode;
-};
-
-const PageGrid = ({ style, children }: PageGridProps) => (
-  <div
-    className={cx(
-      "page",
-      center({
-        flexDirection: "column",
-        height: "var(--page-height, 11 var(--page-unit, in))",
-        width: "var(--page-width, 8.5 var(--page-unit, in))",
-        "--item-width":
-          "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
-        "--item-height":
-          "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
-      }),
-    )}
-    style={style}
+const PageGrid = ({ children, ...props }: CenterProps) => (
+  <Center
+    className="page"
+    flexDirection="column"
+    height="var(--page-height, 11in)"
+    width="var(--page-width, 8.5in)"
+    css={{
+      "--item-width":
+        "calc(var(--card-width, 63mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+      "--item-height":
+        "calc(var(--card-height, 88mm) + calc(var(--bleed-edge-width) * 2) + var(--image-container-buffer-width))",
+    }}
+    {...props}
   >
-    <div
-      className={grid({
-        gap: "0",
-        gridTemplateColumns: "repeat(var(--grid-columns, 3), min-content)",
-        pageBreakAfter: "always",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
-        rowGap: "var(--row-gap)",
-        columnGap: "var(--column-gap)",
-      })}
+    <Grid
+      gap="0"
+      gridTemplateColumns="repeat(var(--grid-columns, 3), min-content)"
+      pageBreakAfter="always"
+      justifyContent="center"
+      alignItems="center"
+      textAlign="center"
+      rowGap="var(--row-gap)"
+      columnGap="var(--column-gap)"
     >
       {children}
-    </div>
-  </div>
+    </Grid>
+  </Center>
 );
 
 export const Preview = () => {
@@ -176,9 +166,7 @@ export const Preview = () => {
       isBack ? settings.backPageRotation : settings.pageRotation,
     );
     if (offsetX === 0 && offsetY === 0 && rotation === 0) return undefined;
-    return {
-      transform: `rotate(${rotation}deg) translate(${offsetX}mm, ${offsetY}mm)`,
-    };
+    return `rotate(${rotation}deg) translate(${offsetX}mm, ${offsetY}mm)`;
   })();
 
   // In duplex mode pages alternate front/back, so drag-to-page navigation skips
@@ -315,73 +303,56 @@ export const Preview = () => {
           event.preventDefault();
         }}
       >
-        <div
-          className={hstack({
-            minWidth: "max",
-            width: "full",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            gap: "6",
-            paddingY: "6",
-            paddingX: "2",
-          })}
+        <HStack
+          maxWidth="100%"
+          width="full"
+          alignItems="flex-end"
+          justifyContent="center"
+          gap="6"
+          paddingY="6"
+          paddingX="2"
         >
           <PageDrop
             id="prev-page"
             disabled={isDragPrevDisabled}
             onHoverTimeout={dragPreviousPage}
           >
-            <div
-              className={vstack({
-                height: "full",
-                fontWeight: "semibold",
-                justifyContent: "space-between",
-                alignItems: "center",
-              })}
+            <VStack
+              height="full"
+              fontWeight="semibold"
+              justifyContent="space-between"
+              alignItems="center"
             >
-              <div className={vstack({ gap: "2", alignItems: "center" })}>
-                <div
-                  className={vstack({ gap: "0", textTransform: "uppercase" })}
-                >
+              <VStack gap="2" alignItems="center">
+                <VStack gap="0" textTransform="uppercase">
                   <span>Prev</span>
                   <span>Page</span>
-                </div>
-                <FontAwesomeIcon icon={faArrowLeft} />
-              </div>
-              <div className={vstack({ gap: "2", alignItems: "center" })}>
-                <FontAwesomeIcon icon={faArrowLeft} />
-                <div
-                  className={vstack({ gap: "0", textTransform: "uppercase" })}
-                >
+                </VStack>
+                <LuArrowLeft />
+              </VStack>
+              <VStack gap="2" alignItems="center">
+                <LuArrowLeft />
+                <VStack gap="0" textTransform="uppercase">
                   <span>Prev</span>
                   <span>Page</span>
-                </div>
-              </div>
-            </div>
+                </VStack>
+              </VStack>
+            </VStack>
           </PageDrop>
-          <div
-            className={vstack({
-              alignItems: "center",
-              gap: "0",
-            })}
-          >
+          <VStack gap="0" alignItems="center">
             <Actions
               contentRef={contentRef}
               isReferenceCardLoaded={isReferenceCardLoaded}
               currentPage={currentPage}
               changePage={changePage}
             />
-            <div
-              style={
-                {
-                  "--rows-per-page": rowsPerPage.toString(),
-                  "--columns-per-page": currentPageData.gridColumns.toString(),
-                  "--grid-columns": currentPageData.gridColumns.toString(),
-                } as Record<string, string>
-              }
-              className={vstack({
-                maxWidth: "100%",
-                position: "relative",
+            <VStack
+              maxWidth="full"
+              position="relative"
+              css={{
+                "--rows-per-page": rowsPerPage.toString(),
+                "--columns-per-page": currentPageData.gridColumns.toString(),
+                "--grid-columns": currentPageData.gridColumns.toString(),
                 "--bleed-edge-width": "var(--bleed-edge, 0mm)",
                 "--image-zoom-width": "var(--image-zoom, 6.2mm)",
                 "--guide-display":
@@ -397,23 +368,17 @@ export const Preview = () => {
                   "var(--image-container-buffer, var(--guide-border-width))",
                 "--guide-corner-offset":
                   "calc(calc(-0.5 * var(--guide-border-width)) + calc(var(--bleed-edge-width) * var(--guides-at-bleed-edge, 1)))",
-              })}
+              }}
             >
-              <div
-                className={cx(
-                  "page-container",
-                  css(
-                    {
-                      position: "relative",
-                      width: "100%",
-                      background: "white",
-                      boxShadow: "md",
-                    },
-                    isRendering ? { pointerEvents: "none" } : {},
-                  ),
-                )}
+              <Box
+                className="page-container"
+                position="relative"
+                width="100%"
+                background="white"
+                boxShadow="md"
+                pointerEvents={isRendering ? "none" : undefined}
               >
-                <PageGrid style={pageTransformStyle}>
+                <PageGrid transform={pageTransformStyle}>
                   {currentCards.map((item, index) => (
                     <Card
                       key={item.image.uuid || `empty-${index}`}
@@ -426,60 +391,52 @@ export const Preview = () => {
                     />
                   ))}
                 </PageGrid>
-              </div>
+              </Box>
               {/* Hidden measurement reference — never transformed, used by useGeneratePdf for layout measurements */}
-              <div
+              <Box
                 ref={contentRef}
                 aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  top: "0",
-                  visibility: "hidden",
-                  pointerEvents: "none",
-                }}
+                position="absolute"
+                top="0"
+                visibility="hidden"
+                pointerEvents="none"
               >
                 <PageGrid>
                   {Array.from({ length: currentCards.length }, (_, i) => (
                     <MeasurementCard key={i} />
                   ))}
                 </PageGrid>
-              </div>
-            </div>
-          </div>
+              </Box>
+            </VStack>
+          </VStack>
           <PageDrop
             id="next-page"
             disabled={isDragNextDisabled}
             onHoverTimeout={dragNextPage}
           >
-            <div
-              className={vstack({
-                height: "full",
-                fontWeight: "semibold",
-                justifyContent: "space-between",
-                alignItems: "center",
-              })}
+            <VStack
+              height="full"
+              fontWeight="semibold"
+              justifyContent="space-between"
+              alignItems="center"
             >
-              <div className={vstack({ gap: "2", alignItems: "center" })}>
-                <div
-                  className={vstack({ gap: "0", textTransform: "uppercase" })}
-                >
+              <VStack gap="2" alignItems="center">
+                <VStack gap="0" textTransform="uppercase">
                   <span>Next</span>
                   <span>Page</span>
-                </div>
-                <FontAwesomeIcon icon={faArrowRight} />
-              </div>
-              <div className={vstack({ gap: "2", alignItems: "center" })}>
-                <FontAwesomeIcon icon={faArrowRight} />
-                <div
-                  className={vstack({ gap: "0", textTransform: "uppercase" })}
-                >
+                </VStack>
+                <LuArrowRight />
+              </VStack>
+              <VStack gap="2" alignItems="center">
+                <LuArrowRight />
+                <VStack gap="0" textTransform="uppercase">
                   <span>Next</span>
                   <span>Page</span>
-                </div>
-              </div>
-            </div>
+                </VStack>
+              </VStack>
+            </VStack>
           </PageDrop>
-        </div>
+        </HStack>
         <CardDragOverlay dragOverlayOffset={dragOverlayOffset} />
       </DragDropProvider>
     </div>

@@ -1,11 +1,20 @@
+import { Center, VisuallyHidden } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 
-import { center, visuallyHidden } from "styled-system/patterns";
+import {
+  DialogRoot,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogBody,
+} from "@/components/ui/dialog";
+import {
+  ProgressLabel,
+  ProgressRoot,
+  ProgressBar,
+} from "@/components/ui/progress";
 
-import { Dialog } from "~/components/ui/dialog";
-import { Progress } from "~/components/ui/progress";
-
-import { ProgressData, progressEvents } from "~/utils/progress-events";
+import { ProgressData, progressEvents } from "@/utils/progress-events";
 
 export const ProgressOverlay = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -45,37 +54,28 @@ export const ProgressOverlay = () => {
     };
   }, []);
 
-  if (!isVisible) return null;
-
   return (
-    <Dialog.Root open={isVisible} size="sm">
-      <Dialog.Backdrop />
-      <Dialog.Positioner>
-        <Dialog.Content>
-          <Dialog.Title className={center({ mb: "4" })}>
-            Generating PDF
-          </Dialog.Title>
-          <Dialog.Description>
-            <Progress
-              showValue={false}
-              value={progress}
-              max={totalProgressAmount}
-            >
-              <span className={visuallyHidden()}>Generating PDF</span>
-            </Progress>
-            <span
-              className={center({
-                color: "fg.muted",
-                fontSize: "xs",
-                fontWeight: "semibold",
-                mt: "1",
-              })}
-            >
-              {phase}
-            </span>
-          </Dialog.Description>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Dialog.Root>
+    <DialogRoot open={isVisible} size="sm">
+      <DialogContent>
+        <DialogHeader justifyContent="center">
+          <DialogTitle marginBottom="4">Generating PDF</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <ProgressRoot
+            colorPalette="accent"
+            value={progress}
+            max={totalProgressAmount}
+          >
+            <ProgressBar />
+            <ProgressLabel marginTop="4" width="full">
+              <VisuallyHidden>Generating PDF</VisuallyHidden>
+              <Center margin="auto" fontWeight="semibold" color="fg.muted">
+                {phase}
+              </Center>
+            </ProgressLabel>
+          </ProgressRoot>
+        </DialogBody>
+      </DialogContent>
+    </DialogRoot>
   );
 };
