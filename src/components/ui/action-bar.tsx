@@ -16,7 +16,7 @@ export const ActionBarContent = React.forwardRef<
 
   return (
     <Portal disabled={!portalled} container={portalRef}>
-      <ActionBar.Positioner>
+      <ActionBar.Positioner zIndex="popover">
         <ActionBar.Content ref={ref} {...rest} asChild={false}>
           {children}
         </ActionBar.Content>
@@ -31,7 +31,7 @@ export const ActionBarCloseTrigger = React.forwardRef<
 >(function ActionBarCloseTrigger(props, ref) {
   return (
     <ActionBar.CloseTrigger {...props} asChild ref={ref}>
-      <CloseButton size="sm" />
+      <CloseButton size={{base: "2xs", md: "xs"}} />
     </ActionBar.CloseTrigger>
   );
 });

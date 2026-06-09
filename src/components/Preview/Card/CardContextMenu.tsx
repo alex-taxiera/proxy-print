@@ -255,9 +255,6 @@ export const CardContextMenu = ({
         onDragStart={(e) => e.preventDefault()}
         onClick={(e) => e.stopPropagation()}
       >
-        {isSelected && selectedImageUuids.length > 1 ? (
-          <SelectionMenuContent currentPage={currentPage} />
-        ) : null}
         <MenuItemGroup
           title={name && name.length > 30 ? name.slice(0, 30) + "…" : name}
         >

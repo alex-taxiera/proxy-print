@@ -329,7 +329,7 @@ export const Card = ({
                 }}
               />
             </CardContextMenu>
-          ) : (
+          ) : !isPending ? (
             <Box
               as="span"
               position="absolute"
@@ -342,8 +342,7 @@ export const Card = ({
             >
               Error!
             </Box>
-          )}
-          {isPending && !isEmpty && (
+          ) : (
             <Center
               as="span"
               position="absolute"
@@ -353,7 +352,7 @@ export const Card = ({
               height="full"
               bg="white/50"
             >
-              <Spinner size="xl" />
+              <Spinner color="accent.solid" size="xl" />
             </Center>
           )}
         </>

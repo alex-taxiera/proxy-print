@@ -1,5 +1,9 @@
-import type { BoxProps, InputElementProps } from "@chakra-ui/react";
-import { Group, InputElement } from "@chakra-ui/react";
+import type {
+  BoxProps,
+  InputElementProps,
+  InputAddonProps,
+} from "@chakra-ui/react";
+import { Group, InputElement, InputAddon } from "@chakra-ui/react";
 import * as React from "react";
 
 export interface InputGroupProps extends BoxProps {
@@ -7,6 +11,10 @@ export interface InputGroupProps extends BoxProps {
   endElementProps?: InputElementProps;
   startElement?: React.ReactNode;
   endElement?: React.ReactNode;
+  startAddonProps?: InputAddonProps;
+  endAddonProps?: InputAddonProps;
+  startAddon?: React.ReactNode;
+  endAddon?: React.ReactNode;
   children: React.ReactElement<InputElementProps>;
   startOffset?: `var(--${string})` | (string & {});
   endOffset?: `var(--${string})` | (string & {});
@@ -19,6 +27,10 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
       startElementProps,
       endElement,
       endElementProps,
+      startAddon,
+      startAddonProps,
+      endAddon,
+      endAddonProps,
       children,
       startOffset = "6px",
       endOffset = "6px",
@@ -29,7 +41,10 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
       React.Children.only<React.ReactElement<InputElementProps>>(children);
 
     return (
-      <Group ref={ref} {...rest}>
+      <Group ref={ref} attached {...rest}>
+        {startAddon && (
+          <InputAddon {...startAddonProps}>{startAddon}</InputAddon>
+        )}
         {startElement && (
           <InputElement pointerEvents="none" {...startElementProps}>
             {startElement}
@@ -47,6 +62,7 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
             {endElement}
           </InputElement>
         )}
+        {endAddon && <InputAddon {...endAddonProps}>{endAddon}</InputAddon>}
       </Group>
     );
   },

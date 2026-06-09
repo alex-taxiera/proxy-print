@@ -39,12 +39,19 @@ function createIdbStorage<T>(): PersistStorage<T> {
 // Persisted slice — what actually gets written to IDB (subset of full store)
 // ---------------------------------------------------------------------------
 
-type PersistedSettings = {
+type PresetData = {
   settings: Settings;
   basePdfBytes: Uint8Array | null;
   basePdfName: string | null;
   basePdfPageCount: number | null;
   defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
+};
+
+export type PresetsMap = Record<string, PresetData>;
+
+type PersistedSettings = PresetData & {
+  presets: PresetsMap;
+  activePresetName: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -95,6 +102,8 @@ export interface SettingsStoreState {
   basePdfName: string | null;
   basePdfPageCount: number | null;
   defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
+  presets: PresetsMap;
+  activePresetName: string | null;
   _hasHydrated: boolean;
 }
 
@@ -107,6 +116,9 @@ export interface SettingsStoreActions {
   setDefaultCardBack: (
     data: GoogleImageData | LocalImageData | ScryfallImageData | null,
   ) => void;
+  savePreset: (name: string) => void;
+  loadPreset: (name: string) => void;
+  deletePreset: (name: string) => void;
   setHasHydrated: (value: boolean) => void;
 }
 
@@ -169,6 +181,13 @@ const applyValidKeysToSettings = (
   };
 };
 
+export const selectIsPresetDirty = (s: SettingsStore): boolean => {
+  if (!s.activePresetName) return false;
+  const preset = s.presets[s.activePresetName];
+  if (!preset) return false;
+  return JSON.stringify(s.formState) !== JSON.stringify(preset.settings);
+};
+
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => {
@@ -180,6 +199,8 @@ export const useSettingsStore = create<SettingsStore>()(
         basePdfName: null,
         basePdfPageCount: null,
         defaultCardBack: null,
+        presets: {},
+        activePresetName: null,
         _hasHydrated: false,
 
         setSettings: (updater) =>
@@ -214,12 +235,55 @@ export const useSettingsStore = create<SettingsStore>()(
           set({ defaultCardBack: data });
         },
 
+        savePreset: (name) =>
+          set((state) => ({
+            presets: {
+              ...state.presets,
+              [name]: {
+                settings: state.formState,
+                basePdfBytes: state.basePdfBytes,
+                basePdfName: state.basePdfName,
+                basePdfPageCount: state.basePdfPageCount,
+                defaultCardBack: state.defaultCardBack,
+              },
+            },
+            settings: applyValidKeysToSettings(state.settings, state.formState),
+            activePresetName: name,
+          })),
+
+        loadPreset: (name) =>
+          set((state) => {
+            const preset = state.presets[name];
+            if (!preset) return {};
+            return {
+              settings: preset.settings,
+              formState: preset.settings,
+              basePdfBytes: preset.basePdfBytes,
+              basePdfName: preset.basePdfName,
+              basePdfPageCount: preset.basePdfPageCount,
+              defaultCardBack: preset.defaultCardBack,
+              activePresetName: name,
+            };
+          }),
+
+        deletePreset: (name) =>
+          set((state) => {
+            const remaining = Object.fromEntries(
+              Object.entries(state.presets).filter(([k]) => k !== name),
+            );
+            return {
+              presets: remaining,
+              activePresetName:
+                state.activePresetName === name ? null : state.activePresetName,
+            };
+          }),
+
         setHasHydrated: (value) => set({ _hasHydrated: value }),
       };
     },
     {
       name: "proxy-print-settings",
-      version: 5,
+      version: 6,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
@@ -235,18 +299,29 @@ export const useSettingsStore = create<SettingsStore>()(
               ...DEFAULT_SETTINGS,
               ...state.settings,
             },
+            presets: {},
+            activePresetName: null,
+          } as SettingsStore;
+        }
+
+        if (version < 6) {
+          return {
+            ...state,
+            presets: {},
+            activePresetName: null,
           } as SettingsStore;
         }
 
         return persistedState as SettingsStore;
       },
-      // Only persist settings + base PDF data. _hasHydrated is always runtime-only.
       partialize: (state) => ({
         settings: state.settings,
         basePdfBytes: state.basePdfBytes,
         basePdfName: state.basePdfName,
         basePdfPageCount: state.basePdfPageCount,
         defaultCardBack: state.defaultCardBack,
+        presets: state.presets,
+        activePresetName: state.activePresetName,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

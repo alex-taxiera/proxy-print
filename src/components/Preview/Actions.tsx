@@ -2,13 +2,13 @@ import {
   Button,
   Spinner,
   IconButton,
-  Link,
   MenuSelectionDetails,
   VisuallyHidden,
   createListCollection,
   HStack,
   VStack,
   Box,
+  ButtonGroup,
 } from "@chakra-ui/react";
 import { useContext } from "react";
 import {
@@ -28,10 +28,8 @@ import {
 import {
   MenuItem,
   MenuContent,
-  MenuItemGroup,
   MenuItemText,
   MenuRoot,
-  MenuTriggerItem,
   MenuTrigger,
 } from "@/components/ui/menu";
 import {
@@ -62,9 +60,15 @@ import { useGeneratePdf } from "@/hooks/useGeneratePdf";
 import { usePreviewData } from "@/hooks/usePreviewData";
 import { useDownloadProgressStore } from "@/store/downloadProgressStore";
 import { useSettingsStore } from "@/store/settingsStore";
-import { formatCount, formatSelectionCount } from "@/utils/pluralize";
 import { progressEvents } from "@/utils/progress-events";
 
+import {
+  ActionBarCloseTrigger,
+  ActionBarContent,
+  ActionBarRoot,
+  ActionBarSelectionTrigger,
+  ActionBarSeparator,
+} from "../ui/action-bar";
 import { useCardActions } from "./Card/useCardActions";
 
 const PRINT_MODE_OPTIONS: { value: PrintMode; label: string }[] = [
@@ -214,14 +218,16 @@ const NoSelectionActions = ({
   );
 };
 
-export const SelectionMenuContent = ({
-  currentPage,
-}: {
+interface SelectionActionBarProps {
   currentPage: number;
-}) => {
+}
+
+const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
   const { images, isRendering } = useContext(ImagesContext);
+  const { selectedImageUuids, onSelectAllImages } = useContext(
+    ImageSelectionContext,
+  );
   const { pages } = usePreviewData();
-  const { selectedImageUuids } = useContext(ImageSelectionContext);
   const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
   const selectedImages = images.filter((image) =>
     selectedImageUuids.includes(image.uuid),
@@ -255,126 +261,133 @@ export const SelectionMenuContent = ({
     moveToPage(parseInt(details.value));
 
   return (
-    <>
-      <MenuItemGroup
-        title={formatSelectionCount(selectedImageUuids.length, "card")}
-      >
-        <MenuItem
-          value="clear-all"
-          onSelect={() => remove()}
-          disabled={isRendering}
-          color="fg.error"
-        >
-          <LuTrash />
-          <MenuItemText>Remove all</MenuItemText>
-        </MenuItem>
-        <MenuItem
-          value="download-all"
-          onSelect={() => downloadImages()}
-          disabled={isLoadingImages || isDownloading}
-        >
-          {isDownloading ? <Spinner size="sm" mr="1px" /> : <LuDownload />}
-          <MenuItemText>Download all (ZIP)</MenuItemText>
-        </MenuItem>
-        {canUpscale ? (
-          <MenuItem value="upscale-all" onSelect={() => upscale()}>
-            <LuImageUpscale />
-            <MenuItemText>Upscale all</MenuItemText>
-          </MenuItem>
-        ) : null}
-        {canRemoveUpscale ? (
-          <MenuItem value="remove-upscale-all" onSelect={() => removeUpscale()}>
-            <LuImageDown />
-            <MenuItemText>Remove upscale from all</MenuItemText>
-          </MenuItem>
-        ) : null}
-        {canAddBleed ? (
-          <MenuItem value="add-bleed-all" onSelect={() => addBleed()}>
-            <LuExpand />
-            <MenuItemText>Add bleed to all</MenuItemText>
-          </MenuItem>
-        ) : null}
-        {canRemoveBleed ? (
-          <MenuItem value="remove-bleed-all" onSelect={() => removeBleed()}>
-            <LuShrink />
-            <MenuItemText>Remove bleed from all</MenuItemText>
-          </MenuItem>
-        ) : null}
-        {canRevertToOriginal ? (
-          <MenuItem value="revert-to-original-all" onSelect={revertToOriginal}>
-            <LuUndo />
-            <MenuItemText>Revert all to original</MenuItemText>
-          </MenuItem>
-        ) : null}
-      </MenuItemGroup>
-      <>
-        {!canMoveToNextPage ? (
-          <MenuItem onSelect={moveToNextPage} value="move-to-next-page-all">
-            <LuArrowRight />
-            <MenuItemText>Move all to next page</MenuItemText>
-          </MenuItem>
-        ) : null}
-        {!canMoveToPreviousPage ? (
-          <MenuItem
-            onSelect={moveToPreviousPage}
-            value="move-to-previous-page-all"
-          >
-            <LuArrowLeft />
-            <MenuItemText>Move all to previous page</MenuItemText>
-          </MenuItem>
-        ) : null}
-        {pages.length > 1 ? (
-          <MenuRoot
-            onSelect={onMoveToPage}
-            positioning={{ gutter: 10, placement: "right-start" }}
-          >
-            <MenuTriggerItem
-              value="move-to-page-all"
-              startIcon={<LuEllipsis />}
+    <ActionBarRoot open={selectedImageUuids.length > 0}>
+      <ActionBarContent>
+        <ActionBarSelectionTrigger display={{ base: "none", sm: "inline-flex" }}>
+          {selectedImageUuids.length} selected
+        </ActionBarSelectionTrigger>
+        <ActionBarSeparator display={{ base: "none", sm: "inline-flex" }} />
+        <ButtonGroup variant="outline" size={{ base: "xs", md: "md" }}>
+          <Tooltip content={isRendering ? "Generating PDF..." : "Remove"}>
+            <IconButton
+              aria-label="Remove"
+              color="fg.error"
+              onClick={() => remove()}
+              disabled={isRendering}
             >
-              <MenuItemText>Move all to ...</MenuItemText>
-            </MenuTriggerItem>
-            <MenuContent>
-              {pages.map((_, index) => (
-                <MenuItem
-                  key={index}
-                  disabled={index + 1 === currentPage}
-                  value={`${(index + 1).toString()}-all`}
-                >
-                  Page {index + 1}
-                </MenuItem>
-              ))}
-            </MenuContent>
-          </MenuRoot>
-        ) : null}
-      </>
-    </>
-  );
-};
-
-const SelectionActions = ({ currentPage }: { currentPage: number }) => {
-  const { onSelectAllImages, selectedImageUuids } = useContext(
-    ImageSelectionContext,
-  );
-  const selectedImageCount = selectedImageUuids.length;
-
-  return (
-    <HStack gap="2">
-      <MenuRoot onSelect={() => onSelectAllImages(false)}>
-        <MenuTrigger asChild>
-          <Button variant="outline" type="button">
-            Actions
-          </Button>
-        </MenuTrigger>
-        <MenuContent>
-          <SelectionMenuContent currentPage={currentPage} />
-        </MenuContent>
-      </MenuRoot>
-      <span>{formatCount(selectedImageCount, "card")} selected</span>
-      <Link colorPalette="accent" onClick={() => onSelectAllImages(false)}>
-        Deselect all
-      </Link>
-    </HStack>
+              <LuTrash />
+            </IconButton>
+          </Tooltip>
+          <Tooltip
+            content={
+              isLoadingImages
+                ? "Loading images..."
+                : isDownloading
+                  ? "Downloading images..."
+                  : "Download"
+            }
+          >
+            <IconButton
+              aria-label="Download"
+              onClick={() => downloadImages()}
+              disabled={isLoadingImages}
+              loading={isDownloading}
+            >
+              <LuDownload />
+            </IconButton>
+          </Tooltip>
+          {canUpscale ? (
+            <Tooltip content="Upscale">
+              <IconButton aria-label="Upscale" onClick={() => upscale()}>
+                <LuImageUpscale />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {canRemoveUpscale ? (
+            <Tooltip content="Remove upscale">
+              <IconButton
+                aria-label="Remove upscale"
+                onClick={() => removeUpscale()}
+              >
+                <LuImageDown />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {canAddBleed ? (
+            <Tooltip content="Add bleed">
+              <IconButton aria-label="Add bleed" onClick={() => addBleed()}>
+                <LuExpand />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {canRemoveBleed ? (
+            <Tooltip content="Remove bleed">
+              <IconButton
+                aria-label="Remove bleed"
+                onClick={() => removeBleed()}
+              >
+                <LuShrink />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {canRevertToOriginal ? (
+            <Tooltip content="Revert to original">
+              <IconButton
+                aria-label="Revert to original"
+                onClick={revertToOriginal}
+              >
+                <LuUndo />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {!canMoveToPreviousPage ? (
+            <Tooltip content="Move to previous page">
+              <IconButton
+                aria-label="Move to previous page"
+                onClick={moveToPreviousPage}
+              >
+                <LuArrowLeft />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {!canMoveToNextPage ? (
+            <Tooltip content="Move to next page">
+              <IconButton
+                aria-label="Move to next page"
+                onClick={moveToNextPage}
+              >
+                <LuArrowRight />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {pages.length > 1 ? (
+            <MenuRoot onSelect={onMoveToPage}>
+              <Tooltip content="Move to page ...">
+                <div>
+                  <MenuTrigger asChild>
+                    <IconButton aria-label="Move to page ...">
+                      <LuEllipsis />
+                    </IconButton>
+                  </MenuTrigger>
+                </div>
+              </Tooltip>
+              <MenuContent>
+                {pages.map((_, index) => (
+                  <MenuItem
+                    key={index}
+                    disabled={index + 1 === currentPage}
+                    value={`${(index + 1).toString()}`}
+                  >
+                    Page {index + 1}
+                  </MenuItem>
+                ))}
+              </MenuContent>
+            </MenuRoot>
+          ) : null}
+          <ActionBarCloseTrigger onClick={() => onSelectAllImages(false)} />
+        </ButtonGroup>
+      </ActionBarContent>
+    </ActionBarRoot>
   );
 };
 
@@ -392,7 +405,6 @@ export const Actions = ({
   contentRef,
 }: ActionsProps) => {
   const { onClearErrors, imagesWithError } = useContext(ImagesContext);
-  const { selectedImageUuids } = useContext(ImageSelectionContext);
 
   const { pages, cardsPerPage } = usePreviewData();
 
@@ -413,16 +425,11 @@ export const Actions = ({
         alignItems="flex-end"
         paddingBottom="3"
         borderTopRadius="md"
-        backgroundColor={selectedImageUuids.length > 0 ? "bg.info" : "unset"}
       >
-        {selectedImageUuids.length === 0 ? (
-          <NoSelectionActions
-            isReferenceCardLoaded={isReferenceCardLoaded}
-            contentRef={contentRef}
-          />
-        ) : (
-          <SelectionActions currentPage={currentPage} />
-        )}
+        <NoSelectionActions
+          isReferenceCardLoaded={isReferenceCardLoaded}
+          contentRef={contentRef}
+        />
         <VStack
           alignItems="center"
           gap="2"
@@ -448,6 +455,7 @@ export const Actions = ({
         onDismiss={onClearErrors}
         imagesWithError={imagesWithError}
       />
+      <SelectionActionBar currentPage={currentPage} />
     </VStack>
   );
 };

@@ -40,6 +40,7 @@ export const Toaster = () => {
                 value={toast.meta.progress}
                 max={toast.meta.totalProgressAmount ?? 100}
                 size="sm"
+                colorPalette="accent"
               >
                 <ProgressCircleRing />
               </ProgressCircleRoot>

@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   IconButton,
   Tabs,
@@ -10,14 +11,19 @@ import {
   Link,
   HStack,
   VStack,
+  Text,
   createListCollection,
+  useFilter,
   StackProps,
   Collapsible,
+  Listbox,
 } from "@chakra-ui/react";
+import { useState } from "react";
 import {
-  LuFlaskConical,
   LuGraduationCap,
   LuRefreshCcw,
+  LuSave,
+  LuTrash2,
   LuUser,
 } from "react-icons/lu";
 
@@ -40,13 +46,14 @@ import {
   ColorPickerSliders,
   ColorPickerSwatchGroup,
 } from "@/components/ui/color-picker";
-import { Field } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Fieldset } from "@/components/ui/fieldset";
 import {
   FileUploadRoot,
   FileUploadTrigger,
   FileUploadList,
 } from "@/components/ui/file-upload";
+import { InputGroup } from "@/components/ui/input-group";
 import {
   NumberInputRoot,
   NumberInputField,
@@ -73,7 +80,7 @@ import {
   PAGE_DIMENSIONS,
 } from "@/context/SettingsContext";
 import { useSettingsFormState } from "@/hooks/useSettingsFormState";
-import { useSettingsStore } from "@/store/settingsStore";
+import { selectIsPresetDirty, useSettingsStore } from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
 
 import { UpscaleSetting } from "../UpscaleSetting";
@@ -117,6 +124,130 @@ const DefaultCardBackSection = () => {
         )}
       </FileUploadRoot>
     </Field>
+  );
+};
+
+const PresetsPanel = () => {
+  const presets = useSettingsStore((s) => s.presets);
+  const activePresetName = useSettingsStore((s) => s.activePresetName);
+  const savePreset = useSettingsStore((s) => s.savePreset);
+  const loadPreset = useSettingsStore((s) => s.loadPreset);
+  const deletePreset = useSettingsStore((s) => s.deletePreset);
+  const isPresetDirty = useSettingsStore(selectIsPresetDirty);
+
+  const [presetName, setPresetName] = useState("");
+  const [presetFilter, setPresetFilter] = useState("");
+
+  const presetEntries = Object.keys(presets);
+
+  const isNewPresetNameValid =
+    presetName.trim().length > 0 && !presets[presetName.trim()];
+
+  const listFilter = useFilter({ sensitivity: "base" });
+
+  const presetCollection = createListCollection({
+    items: presetEntries.map((name) => ({
+      value: name,
+      label: name,
+    })),
+  });
+
+  const filter = (inputValue: string) => {
+    setPresetFilter(inputValue);
+  };
+
+  const displayedPresets = presetCollection.items.filter((item) =>
+    listFilter.contains(item.label, presetFilter),
+  );
+
+  return (
+    <Container>
+      {activePresetName && (
+        <HStack>
+          <Text fontSize="sm" color="fg.muted" truncate flex="1">
+            Active: <strong>{activePresetName}</strong>
+          </Text>
+          {isPresetDirty && (
+            <Badge colorPalette="orange" size="sm" flexShrink={0}>
+              Modified
+            </Badge>
+          )}
+        </HStack>
+      )}
+      <Field
+        flex="1"
+        invalid={!isNewPresetNameValid && presetName.trim().length > 0}
+        helperText="Save current settings as a preset for future use"
+        errorText={
+          !isNewPresetNameValid && presetName.trim().length > 0
+            ? "Preset name already exists"
+            : undefined
+        }
+      >
+        <FieldLabel>New preset name</FieldLabel>
+        <HStack alignItems="flex-end">
+          <Input
+            size="sm"
+            value={presetName}
+            onChange={(e) => setPresetName(e.target.value)}
+            placeholder="My Settings..."
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              if (isNewPresetNameValid) {
+                savePreset(presetName.trim());
+                setPresetName("");
+              }
+            }}
+            disabled={!presetName.trim() || !isNewPresetNameValid}
+          >
+            Save
+          </Button>
+        </HStack>
+      </Field>
+      <Listbox.Root
+        collection={presetCollection}
+        value={activePresetName ? [activePresetName] : undefined}
+        onValueChange={({ value }) => loadPreset(value[0])}
+        visibility={presetEntries.length > 0 ? "visible" : "hidden"}
+      >
+        <Listbox.Label>Presets</Listbox.Label>
+        <Listbox.Input
+          as={Input}
+          placeholder="Type to filter presets..."
+          onChange={(e) => filter(e.target.value)}
+        />
+        {displayedPresets.length === 0 ? (
+          <Text fontSize="sm" color="fg.muted">
+            No presets found, adjust the filter
+          </Text>
+        ) : (
+          <Listbox.Content>
+            {displayedPresets.map((item) => (
+              <Listbox.Item key={item.value} item={item}>
+                <Listbox.ItemText lineClamp="1">{item.label}</Listbox.ItemText>
+                <Listbox.ItemIndicator />
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  colorPalette="red"
+                  type="button"
+                  aria-label={`Delete preset "${item.label}"`}
+                  onClick={(e) => {
+                    console.log("item.value :", item.value);
+                    e.stopPropagation();
+                    deletePreset(item.value);
+                  }}
+                >
+                  <LuTrash2 />
+                </IconButton>
+              </Listbox.Item>
+            ))}
+          </Listbox.Content>
+        )}
+      </Listbox.Root>
+    </Container>
   );
 };
 
@@ -205,6 +336,9 @@ export const SettingsForm = () => {
   const basePdfName = useSettingsStore((s) => s.basePdfName);
   const isPageSizeLocked = basePdfName !== null;
 
+  const activePresetName = useSettingsStore((s) => s.activePresetName);
+  const isPresetDirty = useSettingsStore(selectIsPresetDirty);
+
   const maxGuidesThickness = Math.min(
     MAX_GUIDES_THICKNESS,
     Math.round((MAX_BLEED - Number(formState.bleedEdge)) * 10000) / 10000,
@@ -246,21 +380,31 @@ export const SettingsForm = () => {
                 </Icon>
               </Tooltip>
             </Tabs.Trigger>
-            <Tabs.Trigger
-              value="experimental"
-              aria-label="Experimental Settings"
-            >
+            <Tabs.Trigger value="save" aria-label="Save/Load Settings">
               <Tooltip
                 openDelay={100}
                 closeDelay={200}
                 positioning={{
                   placement: "top",
                 }}
-                content="Experimental Settings"
+                content="Save/Load Settings"
               >
-                <Icon fontSize="2xl">
-                  <LuFlaskConical />
-                </Icon>
+                <Box position="relative" display="inline-flex">
+                  <Icon fontSize="2xl">
+                    <LuSave />
+                  </Icon>
+                  {activePresetName && isPresetDirty && (
+                    <Box
+                      position="absolute"
+                      top="-1"
+                      right="-1"
+                      w="2"
+                      h="2"
+                      borderRadius="full"
+                      bg="orange.500"
+                    />
+                  )}
+                </Box>
               </Tooltip>
             </Tabs.Trigger>
           </Tabs.List>
@@ -333,7 +477,7 @@ export const SettingsForm = () => {
                   paddingLeft="4"
                 >
                   <Field
-                    label="Card Width (mm)"
+                    label="Card Width"
                     invalid={formErrors.cardWidth.length > 0}
                     errorText={formErrors.cardWidth[0]?.message}
                   >
@@ -342,11 +486,13 @@ export const SettingsForm = () => {
                       value={formState.cardWidth}
                       onValueChange={buildNumberInputChangeHandler("cardWidth")}
                     >
-                      <NumberInputField />
+                      <InputGroup endAddon="mm">
+                        <NumberInputField />
+                      </InputGroup>
                     </NumberInputRoot>
                   </Field>
                   <Field
-                    label="Card Height (mm)"
+                    label="Card Height"
                     invalid={formErrors.cardHeight.length > 0}
                     errorText={formErrors.cardHeight[0]?.message}
                   >
@@ -357,7 +503,9 @@ export const SettingsForm = () => {
                         "cardHeight",
                       )}
                     >
-                      <NumberInputField />
+                      <InputGroup endAddon="mm">
+                        <NumberInputField />
+                      </InputGroup>
                     </NumberInputRoot>
                   </Field>
                 </VStack>
@@ -513,7 +661,7 @@ export const SettingsForm = () => {
             </Collapsible.Root>
 
             <Field
-              label="Bleed Edge (mm)"
+              label="Bleed Edge"
               disabled={!formState.enableBleedEdge}
               invalid={formErrors.bleedEdge.length > 0}
               errorText={formErrors.bleedEdge[0]?.message}
@@ -525,11 +673,13 @@ export const SettingsForm = () => {
                 value={formState.bleedEdge}
                 onValueChange={buildNumberInputChangeHandler("bleedEdge")}
               >
-                <NumberInputField />
+                <InputGroup endAddon="mm">
+                  <NumberInputField />
+                </InputGroup>
               </NumberInputRoot>
             </Field>
             <Field
-              label="Guides Width (mm)"
+              label="Guides Width"
               invalid={formErrors.guidesThickness.length > 0}
               errorText={formErrors.guidesThickness[0]?.message}
             >
@@ -540,7 +690,9 @@ export const SettingsForm = () => {
                 value={formState.guidesThickness}
                 onValueChange={buildNumberInputChangeHandler("guidesThickness")}
               >
-                <NumberInputField />
+                <InputGroup endAddon="mm">
+                  <NumberInputField />
+                </InputGroup>
               </NumberInputRoot>
             </Field>
             <Field
@@ -633,228 +785,278 @@ export const SettingsForm = () => {
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
-                    <Fieldset legend="Card Spacing">
-                      <HStack width="full" gap="2">
-                        <Field
-                          label="Vertical (mm)"
-                          invalid={formErrors.rowGap.length > 0}
-                          errorText={formErrors.rowGap[0]?.message}
-                        >
-                          <NumberInputRoot
-                            min={0}
-                            max={100}
-                            value={formState.rowGap}
-                            onValueChange={buildNumberInputChangeHandler(
-                              "rowGap",
-                            )}
-                          >
-                            <NumberInputField />
-                          </NumberInputRoot>
-                        </Field>
-                        <Field
-                          label="Horizontal (mm)"
-                          invalid={formErrors.columnGap.length > 0}
-                          errorText={formErrors.columnGap[0]?.message}
-                        >
-                          <NumberInputRoot
-                            min={0}
-                            max={100}
-                            value={formState.columnGap}
-                            onValueChange={buildNumberInputChangeHandler(
-                              "columnGap",
-                            )}
-                          >
-                            <NumberInputField />
-                          </NumberInputRoot>
-                        </Field>
-                      </HStack>
-                      <Bleed inline={{ base: "2", lg: "4" }}>
-                        <Box bg="bg" padding={{ base: "2", lg: "4" }}>
-                          <Checkbox
-                            size="md"
-                            checked={formState.useBackCardSpacing}
-                            onCheckedChange={buildCheckboxChangeHandler(
-                              "useBackCardSpacing",
-                            )}
-                          >
-                            Different spacing for backs
-                          </Checkbox>
-                          <HStack width="full" gap="2">
-                            <Field
-                              label="Vertical (mm)"
-                              invalid={formErrors.backRowGap.length > 0}
-                              errorText={formErrors.backRowGap[0]?.message}
-                              disabled={!formState.useBackCardSpacing}
-                            >
-                              <NumberInputRoot
-                                min={0}
-                                max={100}
-                                value={formState.backRowGap}
-                                onValueChange={buildNumberInputChangeHandler(
-                                  "backRowGap",
-                                )}
-                              >
-                                <NumberInputField />
-                              </NumberInputRoot>
-                            </Field>
-                            <Field
-                              label="Horizontal (mm)"
-                              invalid={formErrors.backColumnGap.length > 0}
-                              errorText={formErrors.backColumnGap[0]?.message}
-                              disabled={!formState.useBackCardSpacing}
-                            >
-                              <NumberInputRoot
-                                min={0}
-                                max={100}
-                                value={formState.backColumnGap}
-                                onValueChange={buildNumberInputChangeHandler(
-                                  "backColumnGap",
-                                )}
-                              >
-                                <NumberInputField />
-                              </NumberInputRoot>
-                            </Field>
-                          </HStack>
-                        </Box>
-                      </Bleed>
-                      <Bleed inline={{ base: "2", lg: "4" }}>
-                        <Box bg="bg" padding={{ base: "2", lg: "4" }}>
-                          <Checkbox
-                            size="md"
-                            checked={formState.useBackBleedEdge}
-                            onCheckedChange={buildCheckboxChangeHandler(
-                              "useBackBleedEdge",
-                            )}
-                          >
-                            Different bleed for backs
-                          </Checkbox>
+                    <Bleed inline={{ base: "2", lg: "4" }}>
+                      <Fieldset
+                        legend="Card Spacing"
+                        bg="bg"
+                        padding={{ base: "2", lg: "4" }}
+                      >
+                        <HStack width="full" gap="2">
                           <Field
-                            label="Back Bleed Edge (mm)"
-                            invalid={formErrors.backBleedEdge.length > 0}
-                            errorText={formErrors.backBleedEdge[0]?.message}
-                            disabled={!formState.useBackBleedEdge}
+                            label="Vertical"
+                            invalid={formErrors.rowGap.length > 0}
+                            errorText={formErrors.rowGap[0]?.message}
                           >
                             <NumberInputRoot
                               min={0}
-                              max={MAX_BLEED}
-                              step={0.1}
-                              value={formState.backBleedEdge}
+                              max={100}
+                              value={formState.rowGap}
                               onValueChange={buildNumberInputChangeHandler(
-                                "backBleedEdge",
+                                "rowGap",
                               )}
                             >
-                              <NumberInputField />
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
                             </NumberInputRoot>
                           </Field>
-                        </Box>
-                      </Bleed>
-                    </Fieldset>
-                    <Fieldset legend="Front Page Offset">
-                      <HStack width="full" gap="2">
-                        <Field
-                          label="X Offset (mm)"
-                          invalid={formErrors.offsetX.length > 0}
-                          errorText={formErrors.offsetX[0]?.message}
-                          flex="1"
-                        >
-                          <NumberInputRoot
-                            step={0.1}
-                            value={formState.offsetX}
-                            onValueChange={buildNumberInputChangeHandler(
-                              "offsetX",
-                            )}
+                          <Field
+                            label="Horizontal"
+                            invalid={formErrors.columnGap.length > 0}
+                            errorText={formErrors.columnGap[0]?.message}
                           >
-                            <NumberInputField />
-                          </NumberInputRoot>
-                        </Field>
-                        <Field
-                          label="Y Offset (mm)"
-                          invalid={formErrors.offsetY.length > 0}
-                          errorText={formErrors.offsetY[0]?.message}
-                          flex="1"
-                        >
-                          <NumberInputRoot
-                            step={0.1}
-                            value={formState.offsetY}
-                            onValueChange={buildNumberInputChangeHandler(
-                              "offsetY",
-                            )}
-                          >
-                            <NumberInputField />
-                          </NumberInputRoot>
-                        </Field>
-                      </HStack>
-                      <Field
-                        label="Rotation (°)"
-                        invalid={formErrors.pageRotation.length > 0}
-                        errorText={formErrors.pageRotation[0]?.message}
+                            <NumberInputRoot
+                              min={0}
+                              max={100}
+                              value={formState.columnGap}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "columnGap",
+                              )}
+                            >
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
+                            </NumberInputRoot>
+                          </Field>
+                        </HStack>
+                      </Fieldset>
+                    </Bleed>
+                    <Bleed inline={{ base: "2", lg: "4" }}>
+                      <Fieldset
+                        legend="Front Page Offset"
+                        bg="bg"
+                        padding={{ base: "2", lg: "4" }}
                       >
-                        <NumberInputRoot
-                          step={0.1}
-                          min={-180}
-                          max={180}
-                          value={formState.pageRotation}
-                          onValueChange={buildNumberInputChangeHandler(
-                            "pageRotation",
+                        <HStack width="full" gap="2">
+                          <Field
+                            label="Horizontal"
+                            invalid={formErrors.offsetX.length > 0}
+                            errorText={formErrors.offsetX[0]?.message}
+                            flex="1"
+                          >
+                            <NumberInputRoot
+                              step={1}
+                              value={formState.offsetX}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "offsetX",
+                              )}
+                            >
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
+                            </NumberInputRoot>
+                          </Field>
+                          <Field
+                            label="Vertical"
+                            invalid={formErrors.offsetY.length > 0}
+                            errorText={formErrors.offsetY[0]?.message}
+                            flex="1"
+                          >
+                            <NumberInputRoot
+                              step={1}
+                              value={formState.offsetY}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "offsetY",
+                              )}
+                            >
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
+                            </NumberInputRoot>
+                          </Field>
+                        </HStack>
+                        <Field
+                          label="Rotational"
+                          invalid={formErrors.pageRotation.length > 0}
+                          errorText={formErrors.pageRotation[0]?.message}
+                        >
+                          <NumberInputRoot
+                            step={1}
+                            min={-180}
+                            max={180}
+                            value={formState.pageRotation}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "pageRotation",
+                            )}
+                          >
+                            <InputGroup endAddon="°">
+                              <NumberInputField />
+                            </InputGroup>
+                          </NumberInputRoot>
+                        </Field>
+                      </Fieldset>
+                    </Bleed>
+                    <Bleed inline={{ base: "2", lg: "4" }}>
+                      <Fieldset
+                        legend="Back Page Offset"
+                        bg="bg"
+                        padding={{ base: "2", lg: "4" }}
+                      >
+                        <HStack width="full" gap="2">
+                          <Field
+                            label="Horizontal"
+                            invalid={formErrors.backOffsetX.length > 0}
+                            errorText={formErrors.backOffsetX[0]?.message}
+                            flex="1"
+                          >
+                            <NumberInputRoot
+                              step={1}
+                              value={formState.backOffsetX}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "backOffsetX",
+                              )}
+                            >
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
+                            </NumberInputRoot>
+                          </Field>
+                          <Field
+                            label="Vertical"
+                            invalid={formErrors.backOffsetY.length > 0}
+                            errorText={formErrors.backOffsetY[0]?.message}
+                            flex="1"
+                          >
+                            <NumberInputRoot
+                              step={1}
+                              value={formState.backOffsetY}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "backOffsetY",
+                              )}
+                            >
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
+                            </NumberInputRoot>
+                          </Field>
+                        </HStack>
+                        <Field
+                          label="Rotational"
+                          invalid={formErrors.backPageRotation.length > 0}
+                          errorText={formErrors.backPageRotation[0]?.message}
+                        >
+                          <NumberInputRoot
+                            step={1}
+                            min={-180}
+                            max={180}
+                            value={formState.backPageRotation}
+                            onValueChange={buildNumberInputChangeHandler(
+                              "backPageRotation",
+                            )}
+                          >
+                            <InputGroup endAddon="°">
+                              <NumberInputField />
+                            </InputGroup>
+                          </NumberInputRoot>
+                        </Field>
+                      </Fieldset>
+                    </Bleed>
+                    <Bleed inline={{ base: "2", lg: "4" }}>
+                      <Box bg="bg" padding={{ base: "2", lg: "4" }}>
+                        <Checkbox
+                          size="md"
+                          checked={formState.useBackBleedEdge}
+                          onCheckedChange={buildCheckboxChangeHandler(
+                            "useBackBleedEdge",
                           )}
                         >
-                          <NumberInputField />
-                        </NumberInputRoot>
-                      </Field>
-                    </Fieldset>
-                    <Fieldset legend="Back Page Offset">
-                      <HStack width="full" gap="2">
+                          Different bleed for backs
+                        </Checkbox>
                         <Field
-                          label="X Offset (mm)"
-                          invalid={formErrors.backOffsetX.length > 0}
-                          errorText={formErrors.backOffsetX[0]?.message}
-                          flex="1"
+                          label="Bleed Edge"
+                          invalid={formErrors.backBleedEdge.length > 0}
+                          errorText={formErrors.backBleedEdge[0]?.message}
+                          disabled={!formState.useBackBleedEdge}
                         >
                           <NumberInputRoot
+                            min={0}
+                            max={MAX_BLEED}
                             step={0.1}
-                            value={formState.backOffsetX}
+                            value={formState.backBleedEdge}
                             onValueChange={buildNumberInputChangeHandler(
-                              "backOffsetX",
+                              "backBleedEdge",
                             )}
                           >
-                            <NumberInputField />
+                            <InputGroup endAddon="mm">
+                              <NumberInputField />
+                            </InputGroup>
                           </NumberInputRoot>
                         </Field>
-                        <Field
-                          label="Y Offset (mm)"
-                          invalid={formErrors.backOffsetY.length > 0}
-                          errorText={formErrors.backOffsetY[0]?.message}
-                          flex="1"
-                        >
-                          <NumberInputRoot
-                            step={0.1}
-                            value={formState.backOffsetY}
-                            onValueChange={buildNumberInputChangeHandler(
-                              "backOffsetY",
-                            )}
-                          >
-                            <NumberInputField />
-                          </NumberInputRoot>
-                        </Field>
-                      </HStack>
-                      <Field
-                        label="Rotation (°)"
-                        invalid={formErrors.backPageRotation.length > 0}
-                        errorText={formErrors.backPageRotation[0]?.message}
-                      >
-                        <NumberInputRoot
-                          step={0.1}
-                          min={-180}
-                          max={180}
-                          value={formState.backPageRotation}
-                          onValueChange={buildNumberInputChangeHandler(
-                            "backPageRotation",
+                      </Box>
+                    </Bleed>
+                    <Bleed inline={{ base: "2", lg: "4" }}>
+                      <Box bg="bg" padding={{ base: "2", lg: "4" }}>
+                        <Checkbox
+                          size="md"
+                          checked={formState.useBackCardSpacing}
+                          onCheckedChange={buildCheckboxChangeHandler(
+                            "useBackCardSpacing",
                           )}
                         >
-                          <NumberInputField />
-                        </NumberInputRoot>
-                      </Field>
-                    </Fieldset>
+                          Different spacing for backs
+                        </Checkbox>
+                        <HStack width="full" gap="2">
+                          <Field
+                            label="Vertical"
+                            invalid={formErrors.backRowGap.length > 0}
+                            errorText={formErrors.backRowGap[0]?.message}
+                            disabled={!formState.useBackCardSpacing}
+                          >
+                            <NumberInputRoot
+                              min={0}
+                              max={100}
+                              value={formState.backRowGap}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "backRowGap",
+                              )}
+                            >
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
+                            </NumberInputRoot>
+                          </Field>
+                          <Field
+                            label="Horizontal"
+                            invalid={formErrors.backColumnGap.length > 0}
+                            errorText={formErrors.backColumnGap[0]?.message}
+                            disabled={!formState.useBackCardSpacing}
+                          >
+                            <NumberInputRoot
+                              min={0}
+                              max={100}
+                              value={formState.backColumnGap}
+                              onValueChange={buildNumberInputChangeHandler(
+                                "backColumnGap",
+                              )}
+                            >
+                              <InputGroup endAddon="mm">
+                                <NumberInputField />
+                              </InputGroup>
+                            </NumberInputRoot>
+                          </Field>
+                        </HStack>
+                      </Box>
+                    </Bleed>
+                  </Container>
+                </AccordionItemContent>
+              </AccordionItem>
+              <AccordionItem value="cutting-marks">
+                <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
+                  Cutting Marks
+                </AccordionItemTrigger>
+                <AccordionItemContent asChild>
+                  <Container paddingX={{ base: "2", lg: "4" }}>
+                    <BasePDFInput />
                   </Container>
                 </AccordionItemContent>
               </AccordionItem>
@@ -865,7 +1067,7 @@ export const SettingsForm = () => {
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
                     <Field
-                      label="Guide Length (mm)"
+                      label="Guide Length"
                       helperText="Set to 0 for auto length"
                       invalid={formErrors.guideLength.length > 0}
                       errorText={formErrors.guideLength[0]?.message}
@@ -879,7 +1081,9 @@ export const SettingsForm = () => {
                           "guideLength",
                         )}
                       >
-                        <NumberInputField />
+                        <InputGroup endAddon="mm">
+                          <NumberInputField />
+                        </InputGroup>
                       </NumberInputRoot>
                     </Field>
                     <Checkbox
@@ -915,10 +1119,8 @@ export const SettingsForm = () => {
             </AccordionRoot>
           </Bleed>
         </Tabs.Content>
-        <Tabs.Content value="experimental" asChild>
-          <Container>
-            <BasePDFInput />
-          </Container>
+        <Tabs.Content value="save">
+          <PresetsPanel />
         </Tabs.Content>
       </form>
     </Tabs.Root>

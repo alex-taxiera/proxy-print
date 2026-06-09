@@ -302,8 +302,7 @@ export const Preview = () => {
         }}
       >
         <HStack
-          maxWidth="100%"
-          width="full"
+          minWidth="max"
           alignItems="flex-end"
           justifyContent="center"
           gap="6"

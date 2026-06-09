@@ -68,7 +68,7 @@ const customConfig = defineConfig({
           muted: {
             value: {
               _light: "{colors.accent.200}",
-              _dark: "{colors.accent.800}",
+              _dark: "{colors.accent.900}",
             },
           },
           emphasized: {
