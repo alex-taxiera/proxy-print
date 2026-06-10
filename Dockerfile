@@ -1,5 +1,5 @@
-# Use an official Node 22 image as the dependency installer
-FROM node:22-alpine AS deps
+# Use an official Node 24 image as the dependency installer
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN mkdir -p public
 RUN npm ci --ignore-scripts
 
 # Builder image
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 ARG SENTRY_ENV="production"
 ARG SENTRY_AUTH_TOKEN=""
