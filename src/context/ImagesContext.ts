@@ -26,6 +26,12 @@ export type SlotInputData = {
   back: ImageData | null;
 };
 
+export type ProjectData = {
+  slots: SlotInputData[];
+};
+
+export type ProjectsMap = Record<string, ProjectData>;
+
 export type BaseImage = {
   uuid: string;
 };
@@ -121,6 +127,12 @@ export type ImagesContextValue = {
   onRemove: (uuid: string) => void;
   onClear: (uuids?: string[]) => void;
   onClearErrors: () => void;
+  projects: ProjectsMap;
+  activeProjectName: string | null;
+  isProjectDirty: boolean;
+  saveProject: (name: string) => void;
+  loadProject: (name: string) => void;
+  deleteProject: (name: string) => void;
 };
 
 export const ImagesContext = createContext<ImagesContextValue>({
@@ -142,4 +154,10 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onRemove: () => {},
   onClear: () => {},
   onClearErrors: () => {},
+  projects: {},
+  activeProjectName: null,
+  isProjectDirty: false,
+  saveProject: () => {},
+  loadProject: () => {},
+  deleteProject: () => {},
 });

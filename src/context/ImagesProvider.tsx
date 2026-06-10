@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { ComponentProps, useEffect, useState } from "react";
+import { ComponentProps, useEffect, useMemo, useState } from "react";
 
 import { getQueryDataForImage } from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
@@ -13,6 +13,7 @@ import {
   getIsGoogleImage,
   GoogleImageData,
   Image,
+  ImageData,
   ImagesContext,
   LocalImage,
   LocalImageData,
@@ -47,6 +48,14 @@ export const ImagesProvider = (
   });
 
   const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
+  const storeProjects = useSettingsStore((s) => s.projects);
+  const activeProjectName = useSettingsStore((s) => s.activeProjectName);
+  const storeSaveProject = useSettingsStore((s) => s.saveProject);
+  const storeDeleteProject = useSettingsStore((s) => s.deleteProject);
+  const storeSetActiveProjectName = useSettingsStore(
+    (s) => s.setActiveProjectName,
+  );
+  const hasHydrated = useSettingsStore((s) => s._hasHydrated);
 
   const [slots, setSlots] = useState<Map<string, CardSlot>>(new Map());
   const [imagesWithError, setImagesWithError] = useState<DownloadableImage[]>(
@@ -331,6 +340,71 @@ export const ImagesProvider = (
     });
   };
 
+  const imageKey = (img: ImageData | null): string => {
+    if (!img) return "";
+    if ("id" in img) return `g:${img.id}`;
+    if ("uri" in img) return `s:${img.uri}`;
+    return `l:${img.hash}`;
+  };
+
+  const isProjectDirty = useMemo(() => {
+    const current = getSortedSlots(slots);
+    if (current.length === 0 && !activeProjectName) return false;
+    if (!activeProjectName) return current.length > 0;
+    const saved = storeProjects[activeProjectName];
+    if (!saved) return false;
+    if (current.length !== saved.slots.length) return true;
+    return current.some((slot, i) => {
+      const s = saved.slots[i];
+      return (
+        imageKey(slot.front) !== imageKey(s.front) ||
+        imageKey(slot.back) !== imageKey(s.back)
+      );
+    });
+    // imageKey is a stable inline function — safe to omit from deps
+  }, [slots, activeProjectName, storeProjects]);
+
+  useEffect(() => {
+    if (!isProjectDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isProjectDirty]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    const { activeProjectName: name, projects } = useSettingsStore.getState();
+    if (!name || !projects[name]) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    onClear();
+    onAddSlots(projects[name].slots);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasHydrated]); // intentionally run only once on hydration
+
+  const saveProject = (name: string) => {
+    const currentSlots = getSortedSlots(slots);
+    const projectSlots: SlotInputData[] = currentSlots.map((slot) => ({
+      front: slot.front,
+      back: slot.back,
+    }));
+    storeSaveProject(name, projectSlots);
+  };
+
+  const loadProject = (name: string) => {
+    const project = storeProjects[name];
+    if (!project) return;
+    onClear();
+    onAddSlots(project.slots);
+    storeSetActiveProjectName(name);
+  };
+
+  const deleteProject = (name: string) => {
+    storeDeleteProject(name);
+  };
+
   const contextValue = {
     slots,
     sortedSlots,
@@ -350,6 +424,12 @@ export const ImagesProvider = (
     onReorderSlots,
     onReorder,
     onMoveSlotToAbsoluteIndex,
+    projects: storeProjects,
+    activeProjectName,
+    isProjectDirty,
+    saveProject,
+    loadProject,
+    deleteProject,
   };
 
   return <ImagesContext.Provider {...props} value={contextValue} />;

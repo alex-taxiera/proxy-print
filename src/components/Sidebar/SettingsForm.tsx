@@ -18,7 +18,7 @@ import {
   Collapsible,
   Listbox,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   LuGraduationCap,
   LuRefreshCcw,
@@ -73,6 +73,7 @@ import {
 } from "@/components/ui/select";
 import { Tooltip } from "@/components/ui/tooltip";
 
+import { ImagesContext } from "@/context/ImagesContext";
 import {
   CARD_DIMENSIONS,
   MAX_BLEED,
@@ -161,7 +162,7 @@ const PresetsPanel = () => {
   );
 
   return (
-    <Container>
+    <>
       {activePresetName && (
         <HStack>
           <Text fontSize="sm" color="fg.muted" truncate flex="1">
@@ -247,7 +248,122 @@ const PresetsPanel = () => {
           </Listbox.Content>
         )}
       </Listbox.Root>
-    </Container>
+    </>
+  );
+};
+
+const ProjectsPanel = () => {
+  const {
+    projects,
+    activeProjectName,
+    saveProject,
+    loadProject,
+    deleteProject,
+  } = useContext(ImagesContext);
+
+  const [projectName, setProjectName] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
+
+  const projectEntries = Object.keys(projects);
+
+  const isNewProjectNameValid =
+    projectName.trim().length > 0 && !projects[projectName.trim()];
+
+  const listFilter = useFilter({ sensitivity: "base" });
+
+  const projectCollection = createListCollection({
+    items: projectEntries.map((name) => ({
+      value: name,
+      label: name,
+    })),
+  });
+
+  const displayedProjects = projectCollection.items.filter((item) =>
+    listFilter.contains(item.label, projectFilter),
+  );
+
+  return (
+    <>
+      {activeProjectName && (
+        <HStack>
+          <Text fontSize="sm" color="fg.muted" truncate flex="1">
+            Active: <strong>{activeProjectName}</strong>
+          </Text>
+        </HStack>
+      )}
+      <Field
+        flex="1"
+        invalid={!isNewProjectNameValid && projectName.trim().length > 0}
+        helperText="Save the current card layout as a project"
+        errorText={
+          !isNewProjectNameValid && projectName.trim().length > 0
+            ? "Project name already exists"
+            : undefined
+        }
+      >
+        <FieldLabel>New project name</FieldLabel>
+        <HStack alignItems="flex-end">
+          <Input
+            size="sm"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            placeholder="My Project..."
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              if (isNewProjectNameValid) {
+                saveProject(projectName.trim());
+                setProjectName("");
+              }
+            }}
+            disabled={!projectName.trim() || !isNewProjectNameValid}
+          >
+            Save
+          </Button>
+        </HStack>
+      </Field>
+      <Listbox.Root
+        collection={projectCollection}
+        value={activeProjectName ? [activeProjectName] : undefined}
+        onValueChange={({ value }) => loadProject(value[0])}
+        visibility={projectEntries.length > 0 ? "visible" : "hidden"}
+      >
+        <Listbox.Label>Projects</Listbox.Label>
+        <Listbox.Input
+          as={Input}
+          placeholder="Type to filter projects..."
+          onChange={(e) => setProjectFilter(e.target.value)}
+        />
+        {displayedProjects.length === 0 ? (
+          <Text fontSize="sm" color="fg.muted">
+            No projects found, adjust the filter
+          </Text>
+        ) : (
+          <Listbox.Content>
+            {displayedProjects.map((item) => (
+              <Listbox.Item key={item.value} item={item}>
+                <Listbox.ItemText lineClamp="1">{item.label}</Listbox.ItemText>
+                <Listbox.ItemIndicator />
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  colorPalette="red"
+                  type="button"
+                  aria-label={`Delete project "${item.label}"`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteProject(item.value);
+                  }}
+                >
+                  <LuTrash2 />
+                </IconButton>
+              </Listbox.Item>
+            ))}
+          </Listbox.Content>
+        )}
+      </Listbox.Root>
+    </>
   );
 };
 
@@ -281,6 +397,7 @@ const Container = (props: StackProps) => (
 );
 
 export const SettingsForm = () => {
+  const { isProjectDirty } = useContext(ImagesContext);
   const {
     formState,
     formErrors,
@@ -393,7 +510,7 @@ export const SettingsForm = () => {
                   <Icon fontSize="2xl">
                     <LuSave />
                   </Icon>
-                  {activePresetName && isPresetDirty && (
+                  {((activePresetName && isPresetDirty) || isProjectDirty) && (
                     <Box
                       position="absolute"
                       top="-1"
@@ -1120,7 +1237,30 @@ export const SettingsForm = () => {
           </Bleed>
         </Tabs.Content>
         <Tabs.Content value="save">
-          <PresetsPanel />
+          <Bleed inline={{ base: "2", lg: "4" }}>
+            <AccordionRoot collapsible defaultValue={["presets"]}>
+              <AccordionItem value="presets">
+                <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
+                  Presets
+                </AccordionItemTrigger>
+                <AccordionItemContent asChild>
+                  <Container paddingX={{ base: "2", lg: "4" }}>
+                    <PresetsPanel />
+                  </Container>
+                </AccordionItemContent>
+              </AccordionItem>
+              <AccordionItem value="projects">
+                <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
+                  Projects
+                </AccordionItemTrigger>
+                <AccordionItemContent asChild>
+                  <Container paddingX={{ base: "2", lg: "4" }}>
+                    <ProjectsPanel />
+                  </Container>
+                </AccordionItemContent>
+              </AccordionItem>
+            </AccordionRoot>
+          </Bleed>
         </Tabs.Content>
       </form>
     </Tabs.Root>

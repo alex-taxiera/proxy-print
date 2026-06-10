@@ -91,7 +91,7 @@ export const Empty = () => {
             />
           </Field>
           <HStack justifyContent="space-between" width="80">
-            <UpscaleSetting />
+            <UpscaleSetting>Upscale Images</UpscaleSetting>
             <Button
               type="submit"
               loading={isSubmittingDecklist}

@@ -5,7 +5,9 @@ import { persist, PersistStorage, StorageValue } from "zustand/middleware";
 import {
   GoogleImageData,
   LocalImageData,
+  ProjectsMap,
   ScryfallImageData,
+  SlotInputData,
 } from "@/context/ImagesContext";
 import {
   DEFAULT_SETTINGS,
@@ -52,6 +54,8 @@ export type PresetsMap = Record<string, PresetData>;
 type PersistedSettings = PresetData & {
   presets: PresetsMap;
   activePresetName: string | null;
+  projects: ProjectsMap;
+  activeProjectName: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -104,6 +108,8 @@ export interface SettingsStoreState {
   defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
   presets: PresetsMap;
   activePresetName: string | null;
+  projects: ProjectsMap;
+  activeProjectName: string | null;
   _hasHydrated: boolean;
 }
 
@@ -119,6 +125,9 @@ export interface SettingsStoreActions {
   savePreset: (name: string) => void;
   loadPreset: (name: string) => void;
   deletePreset: (name: string) => void;
+  saveProject: (name: string, slots: SlotInputData[]) => void;
+  deleteProject: (name: string) => void;
+  setActiveProjectName: (name: string | null) => void;
   setHasHydrated: (value: boolean) => void;
 }
 
@@ -201,6 +210,8 @@ export const useSettingsStore = create<SettingsStore>()(
         defaultCardBack: null,
         presets: {},
         activePresetName: null,
+        projects: {},
+        activeProjectName: null,
         _hasHydrated: false,
 
         setSettings: (updater) =>
@@ -278,12 +289,32 @@ export const useSettingsStore = create<SettingsStore>()(
             };
           }),
 
+        saveProject: (name, slots) =>
+          set((state) => ({
+            projects: {
+              ...state.projects,
+              [name]: { slots },
+            },
+            activeProjectName: name,
+          })),
+
+        deleteProject: (name) =>
+          set((state) => ({
+            projects: Object.fromEntries(
+              Object.entries(state.projects).filter(([k]) => k !== name),
+            ),
+            activeProjectName:
+              state.activeProjectName === name ? null : state.activeProjectName,
+          })),
+
+        setActiveProjectName: (name) => set({ activeProjectName: name }),
+
         setHasHydrated: (value) => set({ _hasHydrated: value }),
       };
     },
     {
       name: "proxy-print-settings",
-      version: 6,
+      version: 8,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
@@ -301,6 +332,7 @@ export const useSettingsStore = create<SettingsStore>()(
             },
             presets: {},
             activePresetName: null,
+            projects: {},
           } as SettingsStore;
         }
 
@@ -309,6 +341,21 @@ export const useSettingsStore = create<SettingsStore>()(
             ...state,
             presets: {},
             activePresetName: null,
+            projects: {},
+          } as SettingsStore;
+        }
+
+        if (version < 7) {
+          return {
+            ...state,
+            projects: {},
+          } as SettingsStore;
+        }
+
+        if (version < 8) {
+          return {
+            ...state,
+            activeProjectName: null,
           } as SettingsStore;
         }
 
@@ -322,6 +369,8 @@ export const useSettingsStore = create<SettingsStore>()(
         defaultCardBack: state.defaultCardBack,
         presets: state.presets,
         activePresetName: state.activePresetName,
+        projects: state.projects,
+        activeProjectName: state.activeProjectName,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
