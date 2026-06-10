@@ -158,7 +158,12 @@ export const useCardActions = ({
   images,
   currentPage,
 }: UseCardActionsProps) => {
-  const { onReorder, onClear } = useContext(ImagesContext);
+  const {
+    onReorder,
+    onClear,
+    onAdd,
+    images: allImages,
+  } = useContext(ImagesContext);
   const { cardsPerPage, imageMatrix } = usePreviewData();
   const { onSelectAllImages } = useContext(ImageSelectionContext);
   const settings = useSettingsStore((s) => s.settings);
@@ -182,6 +187,20 @@ export const useCardActions = ({
 
   const remove = () => {
     onClear(images.map((image) => image.uuid));
+  };
+
+  const addMore = (count: number) => {
+    // Process from last to first so each insertion doesn't shift the
+    // indices of cards earlier in the list that haven't been processed yet.
+    const sorted = [...images].sort(
+      (a, b) => allImages.indexOf(b) - allImages.indexOf(a),
+    );
+    for (const image of sorted) {
+      onAdd(
+        Array.from({ length: count }, () => image),
+        allImages.indexOf(image) + 1,
+      );
+    }
   };
 
   const addBleed = () => {
@@ -332,6 +351,7 @@ export const useCardActions = ({
 
   return {
     remove,
+    addMore,
     canAddBleed: states.canAddBleed,
     addBleed,
     canRemoveBleed: states.canRemoveBleed,

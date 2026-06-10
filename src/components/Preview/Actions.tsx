@@ -10,10 +10,8 @@ import {
   Box,
   ButtonGroup,
 } from "@chakra-ui/react";
-import { useContext } from "react";
+import { useContext, useId } from "react";
 import {
-  LuArrowLeft,
-  LuArrowRight,
   LuDownload,
   LuExpand,
   LuImageDown,
@@ -23,6 +21,8 @@ import {
   LuUndo,
   LuEllipsis,
   LuCheck,
+  LuMove,
+  LuPlus,
 } from "react-icons/lu";
 
 import {
@@ -69,6 +69,8 @@ import {
   ActionBarSelectionTrigger,
   ActionBarSeparator,
 } from "../ui/action-bar";
+import { DialogTrigger } from "../ui/dialog";
+import { AddMoreDialog } from "./Card/AddMoreDialog";
 import { useCardActions } from "./Card/useCardActions";
 
 const PRINT_MODE_OPTIONS: { value: PrintMode; label: string }[] = [
@@ -229,27 +231,29 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
   );
   const { pages } = usePreviewData();
   const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
+
+  const addMoreTriggerId = useId();
+  const moveTriggerId = useId();
+  const moreActionsTriggerId = useId();
+
   const selectedImages = images.filter((image) =>
     selectedImageUuids.includes(image.uuid),
   );
 
   const {
     remove,
+    addMore,
     canAddBleed,
-    addBleed,
     canRemoveBleed,
-    removeBleed,
-    canUpscale,
-    upscale,
     canRemoveUpscale,
-    removeUpscale,
+    canUpscale,
     canRevertToOriginal,
+    addBleed,
+    removeBleed,
+    upscale,
+    removeUpscale,
     revertToOriginal,
     moveToPage,
-    canMoveToNextPage,
-    canMoveToPreviousPage,
-    moveToNextPage,
-    moveToPreviousPage,
     isDownloading,
     downloadImages,
   } = useCardActions({
@@ -263,7 +267,9 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
   return (
     <ActionBarRoot open={selectedImageUuids.length > 0}>
       <ActionBarContent>
-        <ActionBarSelectionTrigger display={{ base: "none", sm: "inline-flex" }}>
+        <ActionBarSelectionTrigger
+          display={{ base: "none", sm: "inline-flex" }}
+        >
           {selectedImageUuids.length} selected
         </ActionBarSelectionTrigger>
         <ActionBarSeparator display={{ base: "none", sm: "inline-flex" }} />
@@ -296,80 +302,26 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
               <LuDownload />
             </IconButton>
           </Tooltip>
-          {canUpscale ? (
-            <Tooltip content="Upscale">
-              <IconButton aria-label="Upscale" onClick={() => upscale()}>
-                <LuImageUpscale />
-              </IconButton>
+          <AddMoreDialog add={addMore} ids={{ trigger: addMoreTriggerId }}>
+            <Tooltip content="Add more" ids={{ trigger: addMoreTriggerId }}>
+              <DialogTrigger asChild>
+                <IconButton aria-label="Add more">
+                  <LuPlus />
+                </IconButton>
+              </DialogTrigger>
             </Tooltip>
-          ) : null}
-          {canRemoveUpscale ? (
-            <Tooltip content="Remove upscale">
-              <IconButton
-                aria-label="Remove upscale"
-                onClick={() => removeUpscale()}
-              >
-                <LuImageDown />
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          {canAddBleed ? (
-            <Tooltip content="Add bleed">
-              <IconButton aria-label="Add bleed" onClick={() => addBleed()}>
-                <LuExpand />
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          {canRemoveBleed ? (
-            <Tooltip content="Remove bleed">
-              <IconButton
-                aria-label="Remove bleed"
-                onClick={() => removeBleed()}
-              >
-                <LuShrink />
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          {canRevertToOriginal ? (
-            <Tooltip content="Revert to original">
-              <IconButton
-                aria-label="Revert to original"
-                onClick={revertToOriginal}
-              >
-                <LuUndo />
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          {!canMoveToPreviousPage ? (
-            <Tooltip content="Move to previous page">
-              <IconButton
-                aria-label="Move to previous page"
-                onClick={moveToPreviousPage}
-              >
-                <LuArrowLeft />
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          {!canMoveToNextPage ? (
-            <Tooltip content="Move to next page">
-              <IconButton
-                aria-label="Move to next page"
-                onClick={moveToNextPage}
-              >
-                <LuArrowRight />
-              </IconButton>
-            </Tooltip>
-          ) : null}
+          </AddMoreDialog>
           {pages.length > 1 ? (
-            <MenuRoot onSelect={onMoveToPage}>
-              <Tooltip content="Move to page ...">
-                <div>
-                  <MenuTrigger asChild>
-                    <IconButton aria-label="Move to page ...">
-                      <LuEllipsis />
-                    </IconButton>
-                  </MenuTrigger>
-                </div>
+            <MenuRoot onSelect={onMoveToPage} ids={{ trigger: moveTriggerId }}>
+              <Tooltip
+                content="Move to page ..."
+                ids={{ trigger: moveTriggerId }}
+              >
+                <MenuTrigger asChild>
+                  <IconButton aria-label="Move to page ...">
+                    <LuMove />
+                  </IconButton>
+                </MenuTrigger>
               </Tooltip>
               <MenuContent>
                 {pages.map((_, index) => (
@@ -384,6 +336,56 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
               </MenuContent>
             </MenuRoot>
           ) : null}
+          <MenuRoot ids={{ trigger: moreActionsTriggerId }}>
+            <Tooltip
+              content="More actions"
+              ids={{ trigger: moreActionsTriggerId }}
+            >
+              <MenuTrigger asChild>
+                <IconButton aria-label="More actions">
+                  <LuEllipsis />
+                </IconButton>
+              </MenuTrigger>
+            </Tooltip>
+            <MenuContent>
+              {canUpscale ? (
+                <MenuItem value="upscale" onSelect={() => upscale()}>
+                  <LuImageUpscale />
+                  <MenuItemText>Upscale</MenuItemText>
+                </MenuItem>
+              ) : null}
+              {canRemoveUpscale ? (
+                <MenuItem
+                  value="remove-upscale"
+                  onSelect={() => removeUpscale()}
+                >
+                  <LuImageDown />
+                  <MenuItemText>Remove Upscale</MenuItemText>
+                </MenuItem>
+              ) : null}
+              {canAddBleed ? (
+                <MenuItem value="add-bleed" onSelect={() => addBleed()}>
+                  <LuExpand />
+                  <MenuItemText>Add bleed</MenuItemText>
+                </MenuItem>
+              ) : null}
+              {canRemoveBleed ? (
+                <MenuItem value="remove-bleed" onSelect={() => removeBleed()}>
+                  <LuShrink />
+                  <MenuItemText>Remove bleed</MenuItemText>
+                </MenuItem>
+              ) : null}
+              {canRevertToOriginal ? (
+                <MenuItem
+                  value="revert-to-original"
+                  onSelect={() => revertToOriginal()}
+                >
+                  <LuUndo />
+                  <MenuItemText>Revert to original</MenuItemText>
+                </MenuItem>
+              ) : null}
+            </MenuContent>
+          </MenuRoot>
           <ActionBarCloseTrigger onClick={() => onSelectAllImages(false)} />
         </ButtonGroup>
       </ActionBarContent>

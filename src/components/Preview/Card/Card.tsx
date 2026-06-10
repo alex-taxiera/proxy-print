@@ -6,6 +6,7 @@ import {
   Center,
   VisuallyHidden,
   SystemStyleObject,
+  Badge,
 } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
@@ -371,7 +372,9 @@ export const Card = ({
               positioning={{ placement: "top" }}
               openDelay={200}
             >
-              <LuWandSparkles />
+              <Badge boxSize="6" colorPalette="accent">
+                <LuWandSparkles />
+              </Badge>
             </Tooltip>
           )}
           {queryData.hasBleed && (
@@ -380,7 +383,9 @@ export const Card = ({
               positioning={{ placement: "top" }}
               openDelay={200}
             >
-              <LuExpand />
+              <Badge boxSize="6" colorPalette="accent">
+                <LuExpand />
+              </Badge>
             </Tooltip>
           )}
         </Flex>

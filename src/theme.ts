@@ -56,7 +56,7 @@ const customConfig = defineConfig({
           fg: {
             value: {
               _light: "{colors.accent.800}",
-              _dark: "{colors.accent.400}",
+              _dark: "{colors.accent.200}",
             },
           },
           subtle: {

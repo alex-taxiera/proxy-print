@@ -54,6 +54,7 @@ export const DialogCloseTrigger = React.forwardRef<
 
 export const DialogContext = ChakraDialog.Context;
 
+export type DialogRootProps = ChakraDialog.RootProps;
 export const DialogRoot = ChakraDialog.Root;
 export const DialogFooter = ChakraDialog.Footer;
 export const DialogHeader = ChakraDialog.Header;

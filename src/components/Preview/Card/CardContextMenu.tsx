@@ -1,6 +1,6 @@
 import { MenuSelectionDetails } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useContext, useRef } from "react";
+import { useContext, useRef, useState } from "react";
 import {
   LuArrowLeft,
   LuArrowRight,
@@ -37,7 +37,7 @@ import { addBleedEdge } from "@/utils/add-bleed";
 import { createFileHash } from "@/utils/create-file-hash";
 import { getKeybindLabels } from "@/utils/keybind-labels";
 
-import { SelectionMenuContent } from "../Actions";
+import { AddMoreDialog } from "./AddMoreDialog";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
   image: Image;
@@ -61,7 +61,7 @@ export const CardContextMenu = ({
   face = "front",
 }: CardContextMenuProps) => {
   const queryClient = useQueryClient();
-  const { onSelectImageUuid, getIsSelected, selectedImageUuids } = useContext(
+  const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
   const isSelected = getIsSelected(image.uuid);
@@ -79,6 +79,8 @@ export const CardContextMenu = ({
   const absoluteIndex = images.findIndex((img) => img.uuid === image.uuid);
 
   const name = getIsLocalImage(image) ? image.file?.name : image.name;
+
+  const [isAddMoreOpen, setIsAddMoreOpen] = useState(false);
 
   const buildOnAddClick = (count: number) => () => {
     add(count);
@@ -336,14 +338,19 @@ export const CardContextMenu = ({
               <MenuItemText>Add 1</MenuItemText>
               <MenuItemCommand>{keybindLabels.ctrl} + Click</MenuItemCommand>
             </MenuItem>
-            <MenuItem onSelect={buildOnAddClick(5)} value="add-5">
+            <MenuItem onSelect={buildOnAddClick(3)} value="add-3">
               <LuPlus />
-              <MenuItemText>Add 5</MenuItemText>
+              <MenuItemText>Add 3</MenuItemText>
             </MenuItem>
-          </>
-        ) : null}
-        {!isBackFace ? (
-          <>
+            <MenuItem
+              onSelect={() => {
+                setIsAddMoreOpen(true);
+              }}
+              value="add-more"
+            >
+              <LuPlus />
+              <MenuItemText>Add more...</MenuItemText>
+            </MenuItem>
             {!isOnLastPage ? (
               <MenuItem onSelect={onMoveToNextPage} value="move-to-next-page">
                 <LuArrowRight />
@@ -386,6 +393,11 @@ export const CardContextMenu = ({
           </>
         ) : null}
       </MenuContent>
+      <AddMoreDialog
+        add={add}
+        open={isAddMoreOpen}
+        onOpenChange={({ open }) => setIsAddMoreOpen(open)}
+      />
     </MenuRoot>
   );
 };

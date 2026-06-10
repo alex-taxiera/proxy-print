@@ -4,7 +4,7 @@ import {
   Heading,
   Textarea,
   Button,
-  ButtonGroup,
+  HStack,
 } from "@chakra-ui/react";
 import { useIsMutating } from "@tanstack/react-query";
 import { useContext } from "react";
@@ -16,6 +16,7 @@ import { useGetCardsForDecklist } from "@/hooks/useGetCardsForDecklist";
 import { getScryfallCardsCollectionQueryKey } from "@/queries/useScryfallCardsCollection";
 
 import { ImageUploader } from "./Sidebar/ImageUploader";
+import { UpscaleSetting } from "./UpscaleSetting";
 
 export const Empty = () => {
   const { onAdd, onAddSlots, onError } = useContext(ImagesContext);
@@ -89,7 +90,8 @@ export const Empty = () => {
               placeholder={`1 Black Lotus\n1 Llanowar Elves (FDN) 429\n1 Lava Spike (UMA)\n1 Lightning Bolt (SLP)`}
             />
           </Field>
-          <ButtonGroup justifyContent="flex-end" width="80">
+          <HStack justifyContent="space-between" width="80">
+            <UpscaleSetting />
             <Button
               type="submit"
               loading={isSubmittingDecklist}
@@ -97,7 +99,7 @@ export const Empty = () => {
             >
               Submit
             </Button>
-          </ButtonGroup>
+          </HStack>
         </form>
       </VStack>
     </VStack>
