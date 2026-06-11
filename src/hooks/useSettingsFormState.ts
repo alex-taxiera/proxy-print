@@ -78,8 +78,6 @@ const useHandleBleedEdgeForCardSizeChange = () => {
           cardWidth,
           cardHeight,
         );
-        console.log("needsBleedEdge", needsBleedEdge);
-        console.log("old!.original.name", old!.original.name);
         if (needsBleedEdge) {
           const data = await addBleedEdge(
             old!.original,

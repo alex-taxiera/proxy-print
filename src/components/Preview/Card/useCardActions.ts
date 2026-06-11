@@ -81,7 +81,6 @@ const useDownloadImages = (images: Image[]) => {
     worker.postMessage({ type: "zip", data: { imageData } });
 
     worker.onmessage = (e) => {
-      console.log("e", e);
       const { type, data } = e.data as {
         type: string;
         data: { blob: Blob };
@@ -92,7 +91,6 @@ const useDownloadImages = (images: Image[]) => {
         worker.terminate();
         setIsDownloading(false);
         const { blob } = data;
-        console.log("blob", blob);
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

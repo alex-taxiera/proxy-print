@@ -33,12 +33,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: (moduleId) => {
-          // console.log("Module ID:", moduleId);
-          return ["chakra-ui", "pdf-lib", "sentry"].find((lib) =>
+        manualChunks: (moduleId) =>
+          ["chakra-ui", "pdf-lib", "sentry"].find((lib) =>
             moduleId.includes(lib),
-          );
-        },
+          ),
       },
     },
 

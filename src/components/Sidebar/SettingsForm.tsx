@@ -236,7 +236,6 @@ const PresetsPanel = () => {
                   type="button"
                   aria-label={`Delete preset "${item.label}"`}
                   onClick={(e) => {
-                    console.log("item.value :", item.value);
                     e.stopPropagation();
                     deletePreset(item.value);
                   }}

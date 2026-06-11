@@ -158,7 +158,7 @@ export function useUpscaleImage() {
               canvas.toBlob(
                 (blob) => {
                   if (blob) {
-                    console.log(
+                    console.debug(
                       `Upscaling completed in ${(Date.now() - start) / 1000}s`,
                     );
                     resolve(blob);

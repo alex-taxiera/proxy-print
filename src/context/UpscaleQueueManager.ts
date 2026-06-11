@@ -57,7 +57,7 @@ export function useUpscaleQueueManager() {
         const item = queueRef.current[0]; // Process first item (FIFO)
 
         try {
-          console.log(`Starting upscale for item: ${item.id}`);
+          console.debug(`Starting upscale for item: ${item.id}`);
           const result = await upscaleWorkerRef.current(item.src);
 
           // Remove the processed item from queue
@@ -66,7 +66,7 @@ export function useUpscaleQueueManager() {
 
           // Resolve the promise
           item.resolve(result);
-          console.log(`Completed upscale for item: ${item.id}`);
+          console.debug(`Completed upscale for item: ${item.id}`);
         } catch (error) {
           // Remove the failed item from queue
           queueRef.current.shift();

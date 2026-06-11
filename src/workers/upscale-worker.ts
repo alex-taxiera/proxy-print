@@ -298,7 +298,7 @@ self.addEventListener(
       let model: tf.GraphModel | undefined;
       try {
         model = await tf.loadGraphModel(`indexeddb://${esrganModel.name}`);
-        console.log("Model loaded successfully");
+        console.debug("Model loaded successfully");
         self.postMessage({
           progress: 0,
           info: "Loaded from cache",
@@ -341,7 +341,7 @@ self.addEventListener(
         );
       }
       const end = Date.now();
-      console.log("Time:", end - start);
+      console.debug("Time:", end - start);
       await new Promise<void>((resolve) => setTimeout(resolve, 10));
       self.postMessage(
         {
