@@ -1,4 +1,4 @@
-import { Accordion, HStack } from "@chakra-ui/react";
+import { Accordion, Box, BoxProps } from "@chakra-ui/react";
 import * as React from "react";
 import { LuChevronDown } from "react-icons/lu";
 
@@ -18,9 +18,7 @@ export const AccordionItemTrigger = React.forwardRef<
           <LuChevronDown />
         </Accordion.ItemIndicator>
       )}
-      <HStack gap="4" flex="1" textAlign="start" width="full">
-        {children}
-      </HStack>
+      {children}
       {indicatorPlacement === "end" && (
         <Accordion.ItemIndicator>
           <LuChevronDown />
@@ -29,6 +27,12 @@ export const AccordionItemTrigger = React.forwardRef<
     </Accordion.ItemTrigger>
   );
 });
+
+export const AccordionItemTitle = React.forwardRef<HTMLDivElement, BoxProps>(
+  function AccordionItemTitle(props, ref) {
+    return <Box ref={ref} flex="1" textAlign="start" width="full" {...props} />;
+  },
+);
 
 export const AccordionItemContent = React.forwardRef<
   HTMLDivElement,

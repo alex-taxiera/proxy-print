@@ -19,7 +19,7 @@ import { ImageUploader } from "./Sidebar/ImageUploader";
 import { UpscaleSetting } from "./UpscaleSetting";
 
 export const Empty = () => {
-  const { onAdd, onAddSlots, onError } = useContext(ImagesContext);
+  const { onAdd, onAddSlots, onError, isLoadingProject } = useContext(ImagesContext);
   const isMutating = useIsMutating({
     mutationKey: getScryfallCardsCollectionQueryKey(),
   });
@@ -73,7 +73,7 @@ export const Empty = () => {
             void handleDecklistSubmit(event);
           }}
         >
-          <Field alignItems="center" disabled={isSubmittingDecklist} required>
+          <Field alignItems="center" disabled={isSubmittingDecklist || isLoadingProject} required>
             <FieldLabel>
               Or import a decklist from your favorite deck builder!
             </FieldLabel>
@@ -94,8 +94,9 @@ export const Empty = () => {
             <UpscaleSetting>Upscale Images</UpscaleSetting>
             <Button
               type="submit"
-              loading={isSubmittingDecklist}
-              loadingText="Submitting..."
+              disabled={isLoadingProject}
+              loading={isSubmittingDecklist || isLoadingProject}
+              loadingText={isLoadingProject ? "Loading project..." : "Submitting..."}
             >
               Submit
             </Button>

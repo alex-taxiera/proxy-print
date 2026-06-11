@@ -131,7 +131,7 @@ const NoSelectionActions = ({
   isReferenceCardLoaded: boolean;
   contentRef: React.RefObject<HTMLDivElement | null>;
 }) => {
-  const { isRendering, setIsRendering, images } = useContext(ImagesContext);
+  const { isRendering, isLoadingProject, setIsRendering, images } = useContext(ImagesContext);
   const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
   const generatePdf = useGeneratePdf(contentRef);
   const { onSelectAllImages } = useContext(ImageSelectionContext);
@@ -155,22 +155,24 @@ const NoSelectionActions = ({
     <HStack gap="2" flexWrap="wrap">
       <PrintModeToggle />
       <Tooltip
-        disabled={!isRendering && !isLoadingImages && isReferenceCardLoaded}
+        disabled={!isRendering && !isLoadingProject && !isLoadingImages && isReferenceCardLoaded}
         positioning={{
           placement: "top",
         }}
         content={
           isRendering
             ? "Generating PDF..."
-            : isLoadingImages
-              ? "Downloading images..."
-              : !isReferenceCardLoaded
-                ? "Loading images..."
-                : ""
+            : isLoadingProject
+              ? "Loading project..."
+              : isLoadingImages
+                ? "Downloading images..."
+                : !isReferenceCardLoaded
+                  ? "Loading images..."
+                  : ""
         }
       >
         <Button
-          disabled={isRendering || isLoadingImages || !isReferenceCardLoaded}
+          disabled={isRendering || isLoadingProject || isLoadingImages || !isReferenceCardLoaded}
           onClick={() => handleSave()}
         >
           Generate PDF
@@ -199,7 +201,7 @@ const NoSelectionActions = ({
             <MenuItem
               value="remove-all"
               onSelect={() => remove()}
-              disabled={isRendering}
+              disabled={isRendering || isLoadingProject}
               color="fg.error"
             >
               <LuTrash />
@@ -208,7 +210,7 @@ const NoSelectionActions = ({
             <MenuItem
               value="downloadZip"
               onSelect={() => downloadImages()}
-              disabled={isLoadingImages || isDownloading}
+              disabled={isLoadingImages || isLoadingProject || isDownloading}
             >
               {isDownloading ? <Spinner size="sm" mr="1px" /> : <LuDownload />}
               <MenuItemText>Download all (ZIP)</MenuItemText>
@@ -225,7 +227,7 @@ interface SelectionActionBarProps {
 }
 
 const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
-  const { images, isRendering } = useContext(ImagesContext);
+  const { images, isRendering, isLoadingProject } = useContext(ImagesContext);
   const { selectedImageUuids, onSelectAllImages } = useContext(
     ImageSelectionContext,
   );
@@ -274,29 +276,39 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
         </ActionBarSelectionTrigger>
         <ActionBarSeparator display={{ base: "none", sm: "inline-flex" }} />
         <ButtonGroup variant="outline" size={{ base: "xs", md: "md" }}>
-          <Tooltip content={isRendering ? "Generating PDF..." : "Remove"}>
+          <Tooltip
+            content={
+              isRendering
+                ? "Generating PDF..."
+                : isLoadingProject
+                  ? "Loading project..."
+                  : "Remove"
+            }
+          >
             <IconButton
               aria-label="Remove"
               color="fg.error"
               onClick={() => remove()}
-              disabled={isRendering}
+              disabled={isRendering || isLoadingProject}
             >
               <LuTrash />
             </IconButton>
           </Tooltip>
           <Tooltip
             content={
-              isLoadingImages
-                ? "Loading images..."
-                : isDownloading
-                  ? "Downloading images..."
-                  : "Download"
+              isLoadingProject
+                ? "Loading project..."
+                : isLoadingImages
+                  ? "Loading images..."
+                  : isDownloading
+                    ? "Downloading images..."
+                    : "Download"
             }
           >
             <IconButton
               aria-label="Download"
               onClick={() => downloadImages()}
-              disabled={isLoadingImages}
+              disabled={isLoadingImages || isLoadingProject}
               loading={isDownloading}
             >
               <LuDownload />
@@ -305,7 +317,7 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
           <AddMoreDialog add={addMore} ids={{ trigger: addMoreTriggerId }}>
             <Tooltip content="Add more" ids={{ trigger: addMoreTriggerId }}>
               <DialogTrigger asChild>
-                <IconButton aria-label="Add more">
+                <IconButton aria-label="Add more" disabled={isLoadingProject}>
                   <LuPlus />
                 </IconButton>
               </DialogTrigger>
@@ -318,7 +330,10 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
                 ids={{ trigger: moveTriggerId }}
               >
                 <MenuTrigger asChild>
-                  <IconButton aria-label="Move to page ...">
+                  <IconButton
+                    aria-label="Move to page ..."
+                    disabled={isLoadingProject}
+                  >
                     <LuMove />
                   </IconButton>
                 </MenuTrigger>
@@ -327,7 +342,7 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
                 {pages.map((_, index) => (
                   <MenuItem
                     key={index}
-                    disabled={index + 1 === currentPage}
+                    disabled={index + 1 === currentPage || isLoadingProject}
                     value={`${(index + 1).toString()}`}
                   >
                     Page {index + 1}
@@ -342,14 +357,21 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
               ids={{ trigger: moreActionsTriggerId }}
             >
               <MenuTrigger asChild>
-                <IconButton aria-label="More actions">
+                <IconButton
+                  aria-label="More actions"
+                  disabled={isLoadingProject}
+                >
                   <LuEllipsis />
                 </IconButton>
               </MenuTrigger>
             </Tooltip>
             <MenuContent>
               {canUpscale ? (
-                <MenuItem value="upscale" onSelect={() => upscale()}>
+                <MenuItem
+                  value="upscale"
+                  onSelect={() => upscale()}
+                  disabled={isLoadingProject}
+                >
                   <LuImageUpscale />
                   <MenuItemText>Upscale</MenuItemText>
                 </MenuItem>
@@ -358,19 +380,28 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
                 <MenuItem
                   value="remove-upscale"
                   onSelect={() => removeUpscale()}
+                  disabled={isLoadingProject}
                 >
                   <LuImageDown />
                   <MenuItemText>Remove Upscale</MenuItemText>
                 </MenuItem>
               ) : null}
               {canAddBleed ? (
-                <MenuItem value="add-bleed" onSelect={() => addBleed()}>
+                <MenuItem
+                  value="add-bleed"
+                  onSelect={() => addBleed()}
+                  disabled={isLoadingProject}
+                >
                   <LuExpand />
                   <MenuItemText>Add bleed</MenuItemText>
                 </MenuItem>
               ) : null}
               {canRemoveBleed ? (
-                <MenuItem value="remove-bleed" onSelect={() => removeBleed()}>
+                <MenuItem
+                  value="remove-bleed"
+                  onSelect={() => removeBleed()}
+                  disabled={isLoadingProject}
+                >
                   <LuShrink />
                   <MenuItemText>Remove bleed</MenuItemText>
                 </MenuItem>
@@ -379,6 +410,7 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
                 <MenuItem
                   value="revert-to-original"
                   onSelect={() => revertToOriginal()}
+                  disabled={isLoadingProject}
                 >
                   <LuUndo />
                   <MenuItemText>Revert to original</MenuItemText>

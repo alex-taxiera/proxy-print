@@ -55,7 +55,6 @@ type PersistedSettings = PresetData & {
   presets: PresetsMap;
   activePresetName: string | null;
   projects: ProjectsMap;
-  activeProjectName: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -314,7 +313,7 @@ export const useSettingsStore = create<SettingsStore>()(
     },
     {
       name: "proxy-print-settings",
-      version: 8,
+      version: 9,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
@@ -359,6 +358,13 @@ export const useSettingsStore = create<SettingsStore>()(
           } as SettingsStore;
         }
 
+        if (version < 9) {
+          return {
+            ...state,
+            activeProjectName: null,
+          } as SettingsStore;
+        }
+
         return persistedState as SettingsStore;
       },
       partialize: (state) => ({
@@ -370,7 +376,6 @@ export const useSettingsStore = create<SettingsStore>()(
         presets: state.presets,
         activePresetName: state.activePresetName,
         projects: state.projects,
-        activeProjectName: state.activeProjectName,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

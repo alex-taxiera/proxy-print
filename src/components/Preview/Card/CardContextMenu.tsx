@@ -65,7 +65,7 @@ export const CardContextMenu = ({
     ImageSelectionContext,
   );
   const isSelected = getIsSelected(image.uuid);
-  const { images, onRemove, onReorder, onAddBack, onRemoveBack } =
+  const { images, onRemove, onReorder, onAddBack, onRemoveBack, isLoadingProject } =
     useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
   const { imageMatrix, cardsPerPage } = usePreviewData();
@@ -269,14 +269,23 @@ export const CardContextMenu = ({
             <MenuItemCommand>Click</MenuItemCommand>
           </MenuItem>
           {!isBackFace && (
-            <MenuItem value="remove" color="fg.error" onSelect={onRemoveClick}>
+            <MenuItem
+              value="remove"
+              color="fg.error"
+              onSelect={onRemoveClick}
+              disabled={isLoadingProject}
+            >
               <LuTrash />
               <MenuItemText>Remove</MenuItemText>
               <MenuItemCommand>{keybindLabels.alt} + Click</MenuItemCommand>
             </MenuItem>
           )}
           {canUpscale && !isBackFace ? (
-            <MenuItem value="upscale" onSelect={() => void onUpscaleClick()}>
+            <MenuItem
+              value="upscale"
+              onSelect={() => void onUpscaleClick()}
+              disabled={isLoadingProject}
+            >
               <LuImageUpscale />
               <MenuItemText>Upscale</MenuItemText>
             </MenuItem>
@@ -285,19 +294,28 @@ export const CardContextMenu = ({
             <MenuItem
               value="remove-upscale"
               onSelect={() => void onRemoveUpscaleClick()}
+              disabled={isLoadingProject}
             >
               <LuImageDown />
               <MenuItemText>Remove upscale</MenuItemText>
             </MenuItem>
           ) : null}
           {canAddBleed && !isBackFace ? (
-            <MenuItem value="add-bleed" onSelect={() => void onAddBleedClick()}>
+            <MenuItem
+              value="add-bleed"
+              onSelect={() => void onAddBleedClick()}
+              disabled={isLoadingProject}
+            >
               <LuExpand />
               <MenuItemText>Add bleed</MenuItemText>
             </MenuItem>
           ) : null}
           {canRemoveBleed && !isBackFace ? (
-            <MenuItem value="remove-bleed" onSelect={onRemoveBleedClick}>
+            <MenuItem
+              value="remove-bleed"
+              onSelect={onRemoveBleedClick}
+              disabled={isLoadingProject}
+            >
               <LuShrink />
               <MenuItemText>Remove bleed</MenuItemText>
             </MenuItem>
@@ -306,6 +324,7 @@ export const CardContextMenu = ({
             <MenuItem
               value="revert-to-original"
               onSelect={onRevertToOriginalClick}
+              disabled={isLoadingProject}
             >
               <LuUndo />
               <MenuItemText>Revert to original</MenuItemText>
@@ -315,7 +334,11 @@ export const CardContextMenu = ({
         {/* Back management — available for all faces when slotId is known */}
         {slotId ? (
           <>
-            <MenuItem value="set-back" onSelect={onSetBackClick}>
+            <MenuItem
+              value="set-back"
+              onSelect={onSetBackClick}
+              disabled={isLoadingProject}
+            >
               <LuImage />
               <MenuItemText>Set back…</MenuItemText>
             </MenuItem>
@@ -324,6 +347,7 @@ export const CardContextMenu = ({
                 value="remove-back"
                 color="fg.error"
                 onSelect={onRemoveBackClick}
+                disabled={isLoadingProject}
               >
                 <LuTrash />
                 <MenuItemText>Remove back</MenuItemText>
@@ -333,12 +357,20 @@ export const CardContextMenu = ({
         ) : null}
         {!isBackFace ? (
           <>
-            <MenuItem onSelect={buildOnAddClick(1)} value="add-1">
+            <MenuItem
+              onSelect={buildOnAddClick(1)}
+              value="add-1"
+              disabled={isLoadingProject}
+            >
               <LuPlus />
               <MenuItemText>Add 1</MenuItemText>
               <MenuItemCommand>{keybindLabels.ctrl} + Click</MenuItemCommand>
             </MenuItem>
-            <MenuItem onSelect={buildOnAddClick(3)} value="add-3">
+            <MenuItem
+              onSelect={buildOnAddClick(3)}
+              value="add-3"
+              disabled={isLoadingProject}
+            >
               <LuPlus />
               <MenuItemText>Add 3</MenuItemText>
             </MenuItem>
@@ -347,12 +379,17 @@ export const CardContextMenu = ({
                 setIsAddMoreOpen(true);
               }}
               value="add-more"
+              disabled={isLoadingProject}
             >
               <LuPlus />
               <MenuItemText>Add more...</MenuItemText>
             </MenuItem>
             {!isOnLastPage ? (
-              <MenuItem onSelect={onMoveToNextPage} value="move-to-next-page">
+              <MenuItem
+                onSelect={onMoveToNextPage}
+                value="move-to-next-page"
+                disabled={isLoadingProject}
+              >
                 <LuArrowRight />
                 <MenuItemText>Move to next page</MenuItemText>
               </MenuItem>
@@ -361,6 +398,7 @@ export const CardContextMenu = ({
               <MenuItem
                 onSelect={onMoveToPreviousPage}
                 value="move-to-previous-page"
+                disabled={isLoadingProject}
               >
                 <LuArrowLeft />
                 <MenuItemText>Move to previous page</MenuItemText>
@@ -374,6 +412,7 @@ export const CardContextMenu = ({
                 <MenuTriggerItem
                   value="move-to-page"
                   startIcon={<LuEllipsis />}
+                  disabled={isLoadingProject}
                 >
                   <MenuItemText>Move to Page …</MenuItemText>
                 </MenuTriggerItem>
@@ -381,7 +420,7 @@ export const CardContextMenu = ({
                   {imageMatrix.map((_, idx) => (
                     <MenuItem
                       key={idx}
-                      disabled={idx + 1 === currentPage}
+                      disabled={idx + 1 === currentPage || isLoadingProject}
                       value={(idx + 1).toString()}
                     >
                       Page {idx + 1}

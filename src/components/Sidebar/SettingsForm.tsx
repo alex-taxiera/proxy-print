@@ -32,6 +32,7 @@ import {
   AccordionItemContent,
   AccordionItemTrigger,
   AccordionRoot,
+  AccordionItemTitle,
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -85,6 +86,7 @@ import { selectIsPresetDirty, useSettingsStore } from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
 
 import { UpscaleSetting } from "../UpscaleSetting";
+import { Status } from "../ui/status";
 import { BasePDFInput } from "./BasePDFInput";
 
 const DefaultCardBackSection = () => {
@@ -164,16 +166,30 @@ const PresetsPanel = () => {
   return (
     <>
       {activePresetName && (
-        <HStack>
+        <VStack align="start">
           <Text fontSize="sm" color="fg.muted" truncate flex="1">
             Active: <strong>{activePresetName}</strong>
+            {isPresetDirty && (
+              <>
+                &nbsp;
+                <Badge colorPalette="orange" size="sm" flexShrink={0}>
+                  Modified
+                </Badge>
+              </>
+            )}
           </Text>
           {isPresetDirty && (
-            <Badge colorPalette="orange" size="sm" flexShrink={0}>
-              Modified
-            </Badge>
+            <Button
+              size="xs"
+              colorPalette="orange"
+              variant="subtle"
+              flexShrink={0}
+              onClick={() => savePreset(activePresetName)}
+            >
+              Save changes
+            </Button>
           )}
-        </HStack>
+        </VStack>
       )}
       <Field
         flex="1"
@@ -255,6 +271,8 @@ const ProjectsPanel = () => {
   const {
     projects,
     activeProjectName,
+    isProjectDirty,
+    isLoadingProject,
     saveProject,
     loadProject,
     deleteProject,
@@ -284,11 +302,31 @@ const ProjectsPanel = () => {
   return (
     <>
       {activeProjectName && (
-        <HStack>
+        <VStack align="start">
           <Text fontSize="sm" color="fg.muted" truncate flex="1">
             Active: <strong>{activeProjectName}</strong>
+            {isProjectDirty && (
+              <>
+                &nbsp;
+                <Badge colorPalette="orange" size="sm" flexShrink={0}>
+                  Modified
+                </Badge>
+              </>
+            )}
           </Text>
-        </HStack>
+          {isProjectDirty && (
+            <Button
+              size="xs"
+              colorPalette="orange"
+              variant="subtle"
+              flexShrink={0}
+              disabled={isLoadingProject}
+              onClick={() => void saveProject(activeProjectName)}
+            >
+              Save changes
+            </Button>
+          )}
+        </VStack>
       )}
       <Field
         flex="1"
@@ -312,11 +350,13 @@ const ProjectsPanel = () => {
             size="sm"
             onClick={() => {
               if (isNewProjectNameValid) {
-                saveProject(projectName.trim());
+                void saveProject(projectName.trim());
                 setProjectName("");
               }
             }}
-            disabled={!projectName.trim() || !isNewProjectNameValid}
+            disabled={
+              !projectName.trim() || !isNewProjectNameValid || isLoadingProject
+            }
           >
             Save
           </Button>
@@ -325,7 +365,10 @@ const ProjectsPanel = () => {
       <Listbox.Root
         collection={projectCollection}
         value={activeProjectName ? [activeProjectName] : undefined}
-        onValueChange={({ value }) => loadProject(value[0])}
+        onValueChange={({ value }) => {
+          const name = value[0];
+          if (!isLoadingProject && name) void loadProject(name);
+        }}
         visibility={projectEntries.length > 0 ? "visible" : "hidden"}
       >
         <Listbox.Label>Projects</Listbox.Label>
@@ -349,6 +392,7 @@ const ProjectsPanel = () => {
                   variant="ghost"
                   colorPalette="red"
                   type="button"
+                  disabled={isLoadingProject}
                   aria-label={`Delete project "${item.label}"`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -510,14 +554,11 @@ export const SettingsForm = () => {
                     <LuSave />
                   </Icon>
                   {((activePresetName && isPresetDirty) || isProjectDirty) && (
-                    <Box
+                    <Status
                       position="absolute"
                       top="-1"
                       right="-1"
-                      w="2"
-                      h="2"
-                      borderRadius="full"
-                      bg="orange.500"
+                      value="warning"
                     />
                   )}
                 </Box>
@@ -840,7 +881,9 @@ export const SettingsForm = () => {
             <AccordionRoot collapsible defaultValue={["image-quality"]}>
               <AccordionItem value="image-quality">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  Image Quality
+                  <AccordionItemTitle>
+                    Image Quality
+                  </AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -897,7 +940,9 @@ export const SettingsForm = () => {
               </AccordionItem>
               <AccordionItem value="alignment">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  Alignment
+                  <AccordionItemTitle>
+                    Alignment
+                  </AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -1168,7 +1213,9 @@ export const SettingsForm = () => {
               </AccordionItem>
               <AccordionItem value="cutting-marks">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  Cutting Marks
+                  <AccordionItemTitle>
+                    Cutting Marks
+                  </AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -1178,7 +1225,9 @@ export const SettingsForm = () => {
               </AccordionItem>
               <AccordionItem value="guides">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  Guides
+                  <AccordionItemTitle>
+                    Guides
+                  </AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -1239,8 +1288,13 @@ export const SettingsForm = () => {
           <Bleed inline={{ base: "2", lg: "4" }}>
             <AccordionRoot collapsible defaultValue={["presets"]}>
               <AccordionItem value="presets">
-                <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  Presets
+                <AccordionItemTrigger gap="1" paddingX={{ base: "2", lg: "4" }}>
+                  <AccordionItemTitle asChild>
+                    <HStack gap="2">
+                      Presets
+                      {isPresetDirty && <Status value="warning" />}
+                    </HStack>
+                  </AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -1250,7 +1304,12 @@ export const SettingsForm = () => {
               </AccordionItem>
               <AccordionItem value="projects">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  Projects
+                  <AccordionItemTitle asChild>
+                    <HStack gap="2">
+                      Projects
+                      {isProjectDirty && <Status value="warning" />}
+                    </HStack>
+                  </AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>

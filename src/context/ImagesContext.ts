@@ -130,6 +130,7 @@ export type ImagesContextValue = {
   projects: ProjectsMap;
   activeProjectName: string | null;
   isProjectDirty: boolean;
+  isLoadingProject: boolean;
   saveProject: (name: string) => void;
   loadProject: (name: string) => void;
   deleteProject: (name: string) => void;
@@ -157,6 +158,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   projects: {},
   activeProjectName: null,
   isProjectDirty: false,
+  isLoadingProject: false,
   saveProject: () => {},
   loadProject: () => {},
   deleteProject: () => {},

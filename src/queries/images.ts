@@ -9,6 +9,7 @@ import {
   getIsLocalImage,
   getIsScryfallImage,
   Image,
+  ImageData,
 } from "@/context/ImagesContext";
 import { Settings } from "@/context/SettingsContext";
 import { addBleedEdge, needsBleedFromFile } from "@/utils/add-bleed";
@@ -169,6 +170,12 @@ const baseQueryOptions: Pick<
   staleTime: "static",
   gcTime: Infinity,
   retry: 3,
+};
+
+export const getQueryKeyForImageData = (image: ImageData) => {
+  if ("hash" in image) return getLocalImageQueryKey(image.hash);
+  if ("id" in image) return getGoogleImageQueryKey(image.id);
+  return getScryfallImageQueryKey(image.uri);
 };
 
 export const getQueryKeyForImage = (image: Image) => {

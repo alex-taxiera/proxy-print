@@ -135,7 +135,7 @@ const processFiles = async (files: File[]): Promise<ProcessFilesResult> => {
 };
 
 export function ImageUploader(props: BoxProps) {
-  const { onAdd, onAddSlots } = useContext(ImagesContext);
+  const { onAdd, onAddSlots, isLoadingProject } = useContext(ImagesContext);
   const setDefaultCardBack = useSettingsStore((s) => s.setDefaultCardBack);
   const existingCardBack = useSettingsStore((s) => s.defaultCardBack);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -181,7 +181,7 @@ export function ImageUploader(props: BoxProps) {
 
   const fileUpload = useFileUpload({
     maxFiles: Infinity,
-    disabled: isProcessing,
+    disabled: isProcessing || isLoadingProject,
     onFileAccept,
     accept: [".jpg", ".jpeg", ".png", ".bmp", ".webp", ".xml"],
   });

@@ -102,7 +102,7 @@ export const Card = ({
   slotId = null,
   face = "front",
 }: CardProps) => {
-  const { images, onAdd, onRemove, isRendering } = useContext(ImagesContext);
+  const { images, onAdd, onRemove, isRendering, isLoadingProject } = useContext(ImagesContext);
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );
@@ -155,7 +155,7 @@ export const Card = ({
   };
 
   const handleClick = (event: React.MouseEvent) => {
-    if (isEmpty || isPending || isRendering) {
+    if (isEmpty || isPending || isRendering || isLoadingProject) {
       return;
     }
 

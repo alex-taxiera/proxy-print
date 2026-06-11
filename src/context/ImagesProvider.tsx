@@ -1,8 +1,19 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { ComponentProps, useEffect, useMemo, useState } from "react";
 
-import { getQueryDataForImage } from "@/queries/images";
+import {
+  ImageQueryData,
+  getIsDownloadableImageCacheEvent,
+  getQueryDataForImage,
+  getQueryKeyForImageData,
+} from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
+import {
+  hydrateImageQueryData,
+  persistImageQueryData,
+  removeImageQueryData,
+} from "@/utils/imageQueryCache";
 
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import {
@@ -33,6 +44,7 @@ const toSlotMap = (slots: CardSlot[]) => {
 export const ImagesProvider = (
   props: Omit<ComponentProps<typeof ImagesContext.Provider>, "value">,
 ) => {
+  const queryClient = useQueryClient();
   const settings = useSettingsStore((s) => s.settings);
 
   const googleDownloadManager = useImageDownloadManager();
@@ -55,13 +67,16 @@ export const ImagesProvider = (
   const storeSetActiveProjectName = useSettingsStore(
     (s) => s.setActiveProjectName,
   );
-  const hasHydrated = useSettingsStore((s) => s._hasHydrated);
-
   const [slots, setSlots] = useState<Map<string, CardSlot>>(new Map());
   const [imagesWithError, setImagesWithError] = useState<DownloadableImage[]>(
     [],
   );
   const [isRendering, setIsRendering] = useState(false);
+  const [cacheVersion, setCacheVersion] = useState(0);
+  const [savedCacheSizes, setSavedCacheSizes] = useState<Map<string, number>>(
+    new Map(),
+  );
+  const [isLoadingProject, setIsLoadingProject] = useState(false);
 
   const sortedSlots = getSortedSlots(slots);
   const images = getFronts(slots);
@@ -340,6 +355,14 @@ export const ImagesProvider = (
     });
   };
 
+  useEffect(() => {
+    return queryClient.getQueryCache().subscribe((event) => {
+      if (getIsDownloadableImageCacheEvent(event)) {
+        setCacheVersion((v) => v + 1);
+      }
+    });
+  }, [queryClient]);
+
   const imageKey = (img: ImageData | null): string => {
     if (!img) return "";
     if ("id" in img) return `g:${img.id}`;
@@ -356,13 +379,35 @@ export const ImagesProvider = (
     if (current.length !== saved.slots.length) return true;
     return current.some((slot, i) => {
       const s = saved.slots[i];
-      return (
+      if (
         imageKey(slot.front) !== imageKey(s.front) ||
         imageKey(slot.back) !== imageKey(s.back)
-      );
+      )
+        return true;
+      for (const img of [slot.front, slot.back]) {
+        if (!img) continue;
+        const qk = JSON.stringify(getQueryKeyForImageData(img));
+        const savedSize = savedCacheSizes.get(qk);
+        if (savedSize === undefined) continue;
+        const currentSize = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImageData(img),
+        )?.data.size;
+        if (currentSize !== savedSize) return true;
+      }
+      return false;
     });
     // imageKey is a stable inline function — safe to omit from deps
-  }, [slots, activeProjectName, storeProjects]);
+    // cacheVersion is an intentional trigger: queryClient.getQueryData() reads
+    // live cache data that changes without touching React state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    slots,
+    activeProjectName,
+    storeProjects,
+    cacheVersion,
+    savedCacheSizes,
+    queryClient,
+  ]);
 
   useEffect(() => {
     if (!isProjectDirty) return;
@@ -374,34 +419,82 @@ export const ImagesProvider = (
     return () => window.removeEventListener("beforeunload", handler);
   }, [isProjectDirty]);
 
-  useEffect(() => {
-    if (!hasHydrated) return;
-    const { activeProjectName: name, projects } = useSettingsStore.getState();
-    if (!name || !projects[name]) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    onClear();
-    onAddSlots(projects[name].slots);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasHydrated]); // intentionally run only once on hydration
-
-  const saveProject = (name: string) => {
+  const saveProject = async (name: string) => {
     const currentSlots = getSortedSlots(slots);
     const projectSlots: SlotInputData[] = currentSlots.map((slot) => ({
       front: slot.front,
       back: slot.back,
     }));
+    const sizes = new Map<string, number>();
+    for (const slot of currentSlots) {
+      for (const image of [slot.front, slot.back]) {
+        if (!image) continue;
+        const queryKey = getQueryKeyForImageData(image);
+        const cached = queryClient.getQueryData<ImageQueryData>(queryKey);
+        if (cached) {
+          await persistImageQueryData(queryKey, cached);
+          sizes.set(JSON.stringify(queryKey), cached.data.size);
+        }
+      }
+    }
+    setSavedCacheSizes(sizes);
     storeSaveProject(name, projectSlots);
   };
 
-  const loadProject = (name: string) => {
+  const loadProject = async (name: string) => {
     const project = storeProjects[name];
     if (!project) return;
-    onClear();
-    onAddSlots(project.slots);
-    storeSetActiveProjectName(name);
+    setIsLoadingProject(true);
+    try {
+      const images = project.slots
+        .flatMap((slot) => [slot.front, slot.back])
+        .filter((image): image is NonNullable<typeof image> => image !== null);
+      const results = await Promise.all(
+        images.map(async (image) => {
+          const queryKey = getQueryKeyForImageData(image);
+          const cached = await hydrateImageQueryData(queryKey);
+          return cached ? { queryKey, cached } : null;
+        }),
+      );
+      const sizes = new Map<string, number>();
+      for (const result of results) {
+        if (!result) continue;
+        queryClient.setQueryData(result.queryKey, result.cached);
+        sizes.set(JSON.stringify(result.queryKey), result.cached.data.size);
+      }
+      setSavedCacheSizes(sizes);
+      onClear();
+      onAddSlots(project.slots);
+      storeSetActiveProjectName(name);
+    } finally {
+      setIsLoadingProject(false);
+    }
   };
 
   const deleteProject = (name: string) => {
+    const project = storeProjects[name];
+    if (project) {
+      const remainingKeys = new Set(
+        Object.entries(storeProjects)
+          .filter(([k]) => k !== name)
+          .flatMap(([, p]) =>
+            p.slots.flatMap((s) =>
+              [s.front, s.back]
+                .filter(Boolean)
+                .map((img) => JSON.stringify(getQueryKeyForImageData(img!))),
+            ),
+          ),
+      );
+      for (const slot of project.slots) {
+        for (const image of [slot.front, slot.back]) {
+          if (!image) continue;
+          const qk = getQueryKeyForImageData(image);
+          if (!remainingKeys.has(JSON.stringify(qk))) {
+            void removeImageQueryData(qk);
+          }
+        }
+      }
+    }
     storeDeleteProject(name);
   };
 
@@ -427,6 +520,7 @@ export const ImagesProvider = (
     projects: storeProjects,
     activeProjectName,
     isProjectDirty,
+    isLoadingProject,
     saveProject,
     loadProject,
     deleteProject,
