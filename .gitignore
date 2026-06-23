@@ -36,3 +36,9 @@ storybook-static
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
