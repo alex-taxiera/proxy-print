@@ -131,7 +131,8 @@ const NoSelectionActions = ({
   isReferenceCardLoaded: boolean;
   contentRef: React.RefObject<HTMLDivElement | null>;
 }) => {
-  const { isRendering, isLoadingProject, setIsRendering, images } = useContext(ImagesContext);
+  const { isRendering, isLoadingProject, setIsRendering, images } =
+    useContext(ImagesContext);
   const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
   const generatePdf = useGeneratePdf(contentRef);
   const { onSelectAllImages } = useContext(ImageSelectionContext);
@@ -155,7 +156,12 @@ const NoSelectionActions = ({
     <HStack gap="2" flexWrap="wrap">
       <PrintModeToggle />
       <Tooltip
-        disabled={!isRendering && !isLoadingProject && !isLoadingImages && isReferenceCardLoaded}
+        disabled={
+          !isRendering &&
+          !isLoadingProject &&
+          !isLoadingImages &&
+          isReferenceCardLoaded
+        }
         positioning={{
           placement: "top",
         }}
@@ -172,7 +178,12 @@ const NoSelectionActions = ({
         }
       >
         <Button
-          disabled={isRendering || isLoadingProject || isLoadingImages || !isReferenceCardLoaded}
+          disabled={
+            isRendering ||
+            isLoadingProject ||
+            isLoadingImages ||
+            !isReferenceCardLoaded
+          }
           onClick={() => handleSave()}
         >
           Generate PDF

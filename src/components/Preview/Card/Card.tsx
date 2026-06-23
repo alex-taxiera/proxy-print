@@ -102,7 +102,8 @@ export const Card = ({
   slotId = null,
   face = "front",
 }: CardProps) => {
-  const { images, onAdd, onRemove, isRendering, isLoadingProject } = useContext(ImagesContext);
+  const { images, onAdd, onRemove, isRendering, isLoadingProject } =
+    useContext(ImagesContext);
   const { onSelectImageUuid, getIsSelected } = useContext(
     ImageSelectionContext,
   );

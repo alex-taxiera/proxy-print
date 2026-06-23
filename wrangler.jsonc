@@ -3,12 +3,10 @@
   "name": "proxy-print",
   "compatibility_date": "2026-06-23",
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   "assets": {
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
   },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
+  "compatibility_flags": ["nodejs_compat"],
 }

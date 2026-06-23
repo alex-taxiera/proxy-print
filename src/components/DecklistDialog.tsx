@@ -31,7 +31,8 @@ import { UpscaleSetting } from "./UpscaleSetting";
 export type DecklistDialogProps = React.ComponentProps<typeof DialogRoot>;
 
 export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
-  const { onAdd, onAddSlots, onError, isLoadingProject } = useContext(ImagesContext);
+  const { onAdd, onAddSlots, onError, isLoadingProject } =
+    useContext(ImagesContext);
   const isMutating = useIsMutating({
     mutationKey: getScryfallCardsCollectionQueryKey(),
   });
@@ -105,7 +106,9 @@ export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
                     type="submit"
                     disabled={isLoadingProject}
                     loading={isSubmitting || isLoadingProject}
-                    loadingText={isLoadingProject ? "Loading project..." : "Submitting..."}
+                    loadingText={
+                      isLoadingProject ? "Loading project..." : "Submitting..."
+                    }
                   >
                     Submit
                   </Button>

@@ -881,9 +881,7 @@ export const SettingsForm = () => {
             <AccordionRoot collapsible defaultValue={["image-quality"]}>
               <AccordionItem value="image-quality">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  <AccordionItemTitle>
-                    Image Quality
-                  </AccordionItemTitle>
+                  <AccordionItemTitle>Image Quality</AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -940,9 +938,7 @@ export const SettingsForm = () => {
               </AccordionItem>
               <AccordionItem value="alignment">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  <AccordionItemTitle>
-                    Alignment
-                  </AccordionItemTitle>
+                  <AccordionItemTitle>Alignment</AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -1213,9 +1209,7 @@ export const SettingsForm = () => {
               </AccordionItem>
               <AccordionItem value="cutting-marks">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  <AccordionItemTitle>
-                    Cutting Marks
-                  </AccordionItemTitle>
+                  <AccordionItemTitle>Cutting Marks</AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
@@ -1225,9 +1219,7 @@ export const SettingsForm = () => {
               </AccordionItem>
               <AccordionItem value="guides">
                 <AccordionItemTrigger paddingX={{ base: "2", lg: "4" }}>
-                  <AccordionItemTitle>
-                    Guides
-                  </AccordionItemTitle>
+                  <AccordionItemTitle>Guides</AccordionItemTitle>
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>

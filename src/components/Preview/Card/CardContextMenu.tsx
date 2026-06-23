@@ -65,8 +65,14 @@ export const CardContextMenu = ({
     ImageSelectionContext,
   );
   const isSelected = getIsSelected(image.uuid);
-  const { images, onRemove, onReorder, onAddBack, onRemoveBack, isLoadingProject } =
-    useContext(ImagesContext);
+  const {
+    images,
+    onRemove,
+    onReorder,
+    onAddBack,
+    onRemoveBack,
+    isLoadingProject,
+  } = useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
   const { imageMatrix, cardsPerPage } = usePreviewData();
   const settings = useSettingsStore((s) => s.settings);
