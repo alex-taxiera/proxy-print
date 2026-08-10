@@ -1,10 +1,10 @@
+/// <reference types="vitest/config" />
+// https://vite.dev/config/
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
-/// <reference types="vitest/config" />
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
-// https://vite.dev/config/
 import { fileURLToPath } from "node:url";
 import path from "path";
 import { defineConfig } from "vite";
@@ -30,6 +30,16 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    proxy: {
+      "/cdn-images": {
+        target: "https://cdn.mpcautofill.com/images/google_drive/full",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/cdn-images/, ""),
+      },
     },
   },
   build: {

@@ -95,5 +95,13 @@
     "vite": "^8.0.16",
     "vitest": "^4.1.8",
     "wrangler": "^4.103.0"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.1": true,
+    "@sentry/cli@2.58.6": true,
+    "core-js@3.29.1": true,
+    "sharp@0.34.5": true,
+    "workerd@1.20260617.1": true
   }
 }

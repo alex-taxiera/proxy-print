@@ -14,32 +14,13 @@ import {
 import { Settings } from "@/context/SettingsContext";
 import { addBleedEdge, needsBleedFromFile } from "@/utils/add-bleed";
 
+const MPC_BASE_URL = import.meta.env.DEV
+  ? "/cdn-images"
+  : "https://cdn.mpcautofill.com/images/google_drive/full";
+
 const getMpcImageUri = (id: string) => {
-  return `https://script.google.com/macros/s/AKfycbw8laScKBfxda2Wb0g63gkYDBdy8NWNxINoC4xDOwnCQ3JMFdruam1MdmNmN4wI5k4/exec?id=${id}`;
+  return `${MPC_BASE_URL}/${id}.jpg?dpi=1500&jpgQuality=100`;
 };
-
-/**
- * Converts a Base64 string to a Blob.
- * @param base64String - The Base64 string of the image.
- * @param contentType - The MIME type of the image (e.g., "image/jpeg", "image/png").
- * @returns The resulting Blob object.
- */
-function base64ToBlob(base64String: string, contentType: string): Blob {
-  // Decode the Base64 string
-  const byteCharacters = atob(base64String);
-
-  // Convert the decoded string into an array of bytes
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-
-  // Create a Uint8Array from the byte numbers
-  const byteArray = new Uint8Array(byteNumbers);
-
-  // Create and return the Blob
-  return new Blob([byteArray], { type: contentType });
-}
 
 export const imagesQueryKey = () => ["images"] as const;
 
@@ -97,19 +78,9 @@ const buildGoogleImageQueryFn =
   (uri: string): QueryFunction<GoogleImageQueryData> =>
   async ({ signal }) => {
     const response = await fetch(uri, { signal });
-    const text = await response.text();
+    const data = await response.blob();
 
-    let mimeType = "image/png";
-
-    // Check for JPEG signature (base64 starts with /9j/ for JFIF)
-    if (text.startsWith("/9j/")) {
-      mimeType = "image/jpeg";
-    }
-    // Check for WebP signature (UklGRiI)
-    else if (text.startsWith("UklGRiI")) {
-      mimeType = "image/webp";
-    }
-    const data = base64ToBlob(text, mimeType);
+    const mimeType = response.headers.get("content-type") || "image/jpeg";
 
     return { data, mimeType };
   };
