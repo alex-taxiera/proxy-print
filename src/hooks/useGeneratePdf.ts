@@ -12,6 +12,7 @@ import {
 } from "@/context/ImagesContext";
 import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
+import { downloadBlob } from "@/utils/download-blob";
 import { invertHexColor } from "@/utils/invert-hex-color";
 import { progressEvents } from "@/utils/progress-events";
 import PdfWorker from "@/workers/pdf-worker?worker";
@@ -407,12 +408,7 @@ export const useGeneratePdf = (
         try {
           for await (const blob of pdfGenerator) {
             console.debug("saving pdf", blob);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = pdfName;
-            a.click();
-            URL.revokeObjectURL(url);
+            downloadBlob(blob, pdfName);
           }
           console.debug("done!");
           Sentry.addBreadcrumb({

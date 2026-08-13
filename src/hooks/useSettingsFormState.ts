@@ -39,16 +39,21 @@ const useHandleBleedEdgeForCardSizeChange = () => {
     const cardWidth = Number(settings.cardWidth);
     const cardHeight = Number(settings.cardHeight);
 
+    // Imported cards (see src/utils/transfer) are stored without an
+    // `original`, since only the final rendered image is bundled — skip
+    // those rather than crashing on a missing original.
     const nextScryfallData = await Promise.all(
-      scryfallQueries.map(async ([key, old]) => {
-        const data = await addBleedEdge(
-          old!.original,
-          old!.mimeType,
-          cardWidth,
-          cardHeight,
-        );
-        return [key, data] as [ScryfallImageQueryKey, Blob];
-      }),
+      scryfallQueries
+        .filter(([, old]) => old && "original" in old)
+        .map(async ([key, old]) => {
+          const data = await addBleedEdge(
+            old!.original,
+            old!.mimeType,
+            cardWidth,
+            cardHeight,
+          );
+          return [key, data] as [ScryfallImageQueryKey, Blob];
+        }),
     );
 
     for (const [key, next] of nextScryfallData) {
@@ -72,24 +77,26 @@ const useHandleBleedEdgeForCardSizeChange = () => {
     });
 
     const nextLocalData = await Promise.all(
-      localQueries.map(async ([key, old]) => {
-        const needsBleedEdge = await needsBleedFromFile(
-          old!.original,
-          cardWidth,
-          cardHeight,
-        );
-        if (needsBleedEdge) {
-          const data = await addBleedEdge(
+      localQueries
+        .filter(([, old]) => old && "original" in old)
+        .map(async ([key, old]) => {
+          const needsBleedEdge = await needsBleedFromFile(
             old!.original,
-            old!.mimeType,
             cardWidth,
             cardHeight,
           );
-          return [key, data] as [LocalImageQueryKey, Blob];
-        } else {
-          return [key, old!.original] as [LocalImageQueryKey, File];
-        }
-      }),
+          if (needsBleedEdge) {
+            const data = await addBleedEdge(
+              old!.original,
+              old!.mimeType,
+              cardWidth,
+              cardHeight,
+            );
+            return [key, data] as [LocalImageQueryKey, Blob];
+          } else {
+            return [key, old!.original] as [LocalImageQueryKey, File];
+          }
+        }),
     );
 
     for (const [key, next] of nextLocalData) {

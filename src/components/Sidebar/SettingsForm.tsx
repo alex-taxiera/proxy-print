@@ -18,12 +18,14 @@ import {
   Collapsible,
   Listbox,
 } from "@chakra-ui/react";
-import { useContext, useState } from "react";
+import { ChangeEvent, useContext, useRef, useState } from "react";
 import {
+  LuDownload,
   LuGraduationCap,
   LuRefreshCcw,
   LuSave,
   LuTrash2,
+  LuUpload,
   LuUser,
 } from "react-icons/lu";
 
@@ -72,6 +74,7 @@ import {
   SelectIndicatorGroup,
   SelectIndicator,
 } from "@/components/ui/select";
+import { toaster } from "@/components/ui/toaster";
 import { Tooltip } from "@/components/ui/tooltip";
 
 import { ImagesContext } from "@/context/ImagesContext";
@@ -82,12 +85,15 @@ import {
   PAGE_DIMENSIONS,
 } from "@/context/SettingsContext";
 import { useSettingsFormState } from "@/hooks/useSettingsFormState";
+import { ImportPreview, useTransfer } from "@/hooks/useTransfer";
 import { selectIsPresetDirty, useSettingsStore } from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
 
 import { UpscaleSetting } from "../UpscaleSetting";
 import { Status } from "../ui/status";
 import { BasePDFInput } from "./BasePDFInput";
+import { ExportProjectDialog } from "./ExportProjectDialog";
+import { ImportBundleDialog } from "./ImportBundleDialog";
 
 const DefaultCardBackSection = () => {
   const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
@@ -137,9 +143,16 @@ const PresetsPanel = () => {
   const loadPreset = useSettingsStore((s) => s.loadPreset);
   const deletePreset = useSettingsStore((s) => s.deletePreset);
   const isPresetDirty = useSettingsStore(selectIsPresetDirty);
+  const { exportPresets } = useTransfer();
 
   const [presetName, setPresetName] = useState("");
   const [presetFilter, setPresetFilter] = useState("");
+
+  const handleExportPreset = (name: string) => {
+    void exportPresets([name]).catch(() =>
+      toaster.create({ type: "error", title: "Failed to export preset" }),
+    );
+  };
 
   const presetEntries = Object.keys(presets);
 
@@ -223,6 +236,23 @@ const PresetsPanel = () => {
           </Button>
         </HStack>
       </Field>
+      {presetEntries.length > 0 && (
+        <Button
+          size="xs"
+          variant="outline"
+          alignSelf="flex-start"
+          onClick={() => {
+            void exportPresets(presetEntries).catch(() =>
+              toaster.create({
+                type: "error",
+                title: "Failed to export presets",
+              }),
+            );
+          }}
+        >
+          <LuDownload /> Export all presets
+        </Button>
+      )}
       <Listbox.Root
         collection={presetCollection}
         value={activePresetName ? [activePresetName] : undefined}
@@ -245,6 +275,18 @@ const PresetsPanel = () => {
               <Listbox.Item key={item.value} item={item}>
                 <Listbox.ItemText lineClamp="1">{item.label}</Listbox.ItemText>
                 <Listbox.ItemIndicator />
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  type="button"
+                  aria-label={`Export preset "${item.label}"`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExportPreset(item.value);
+                  }}
+                >
+                  <LuDownload />
+                </IconButton>
                 <IconButton
                   size="xs"
                   variant="ghost"
@@ -277,9 +319,20 @@ const ProjectsPanel = () => {
     loadProject,
     deleteProject,
   } = useContext(ImagesContext);
+  const { exportProjects } = useTransfer();
 
   const [projectName, setProjectName] = useState("");
   const [projectFilter, setProjectFilter] = useState("");
+  const [exportPending, setExportPending] = useState<string[] | null>(null);
+
+  const handleExportConfirm = (includeSettings: boolean) => {
+    const names = exportPending;
+    setExportPending(null);
+    if (!names) return;
+    void exportProjects(names, includeSettings).catch(() =>
+      toaster.create({ type: "error", title: "Failed to export project(s)" }),
+    );
+  };
 
   const projectEntries = Object.keys(projects);
 
@@ -301,6 +354,11 @@ const ProjectsPanel = () => {
 
   return (
     <>
+      <ExportProjectDialog
+        pending={exportPending}
+        onConfirm={handleExportConfirm}
+        onCancel={() => setExportPending(null)}
+      />
       {activeProjectName && (
         <VStack align="start">
           <Text fontSize="sm" color="fg.muted" truncate flex="1">
@@ -362,6 +420,17 @@ const ProjectsPanel = () => {
           </Button>
         </HStack>
       </Field>
+      {projectEntries.length > 0 && (
+        <Button
+          size="xs"
+          variant="outline"
+          alignSelf="flex-start"
+          disabled={isLoadingProject}
+          onClick={() => setExportPending(projectEntries)}
+        >
+          <LuDownload /> Export all projects
+        </Button>
+      )}
       <Listbox.Root
         collection={projectCollection}
         value={activeProjectName ? [activeProjectName] : undefined}
@@ -387,6 +456,19 @@ const ProjectsPanel = () => {
               <Listbox.Item key={item.value} item={item}>
                 <Listbox.ItemText lineClamp="1">{item.label}</Listbox.ItemText>
                 <Listbox.ItemIndicator />
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  type="button"
+                  disabled={isLoadingProject}
+                  aria-label={`Export project "${item.label}"`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExportPending([item.value]);
+                  }}
+                >
+                  <LuDownload />
+                </IconButton>
                 <IconButton
                   size="xs"
                   variant="ghost"
@@ -455,6 +537,40 @@ export const SettingsForm = () => {
     cardSizeValue,
     pageSizeValue,
   } = useSettingsFormState();
+  const { prepareImport, applyImport } = useTransfer();
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [importPending, setImportPending] = useState<ImportPreview | null>(
+    null,
+  );
+
+  const handleImportFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    void prepareImport(file)
+      .then(setImportPending)
+      .catch((error: unknown) =>
+        toaster.create({
+          type: "error",
+          title: "Failed to read bundle",
+          description: error instanceof Error ? error.message : undefined,
+        }),
+      );
+  };
+
+  const handleImportConfirm = (options: {
+    overwrite: boolean;
+    applySettings: boolean;
+  }) => {
+    const preview = importPending;
+    setImportPending(null);
+    if (!preview) return;
+    void applyImport(preview, options)
+      .then(() => toaster.create({ type: "success", title: "Bundle imported" }))
+      .catch(() =>
+        toaster.create({ type: "error", title: "Failed to import bundle" }),
+      );
+  };
 
   const cardSizeCollection = createListCollection({
     items: Object.entries(CARD_DIMENSIONS)
@@ -1277,6 +1393,26 @@ export const SettingsForm = () => {
           </Bleed>
         </Tabs.Content>
         <Tabs.Content value="save">
+          <ImportBundleDialog
+            pending={importPending}
+            onConfirm={handleImportConfirm}
+            onCancel={() => setImportPending(null)}
+          />
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".zip"
+            hidden
+            onChange={handleImportFileChange}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            marginBottom="2"
+            onClick={() => importInputRef.current?.click()}
+          >
+            <LuUpload /> Import bundle...
+          </Button>
           <Bleed inline={{ base: "2", lg: "4" }}>
             <AccordionRoot collapsible defaultValue={["presets"]}>
               <AccordionItem value="presets">

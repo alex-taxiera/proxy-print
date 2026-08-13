@@ -41,7 +41,7 @@ function createIdbStorage<T>(): PersistStorage<T> {
 // Persisted slice — what actually gets written to IDB (subset of full store)
 // ---------------------------------------------------------------------------
 
-type PresetData = {
+export type PresetData = {
   settings: Settings;
   basePdfBytes: Uint8Array | null;
   basePdfName: string | null;
@@ -124,13 +124,38 @@ export interface SettingsStoreActions {
   savePreset: (name: string) => void;
   loadPreset: (name: string) => void;
   deletePreset: (name: string) => void;
+  /** Merge imported presets into the map, keyed by name, without touching activePresetName. */
+  importPresets: (entries: Record<string, PresetData>) => void;
   saveProject: (name: string, slots: SlotInputData[]) => void;
   deleteProject: (name: string) => void;
+  /** Merge imported projects into the map, keyed by name, without touching activeProjectName. */
+  importProjects: (entries: ProjectsMap) => void;
   setActiveProjectName: (name: string | null) => void;
   setHasHydrated: (value: boolean) => void;
 }
 
 export type SettingsStore = SettingsStoreState & SettingsStoreActions;
+
+// ---------------------------------------------------------------------------
+// coerceSettings — lenient validation used both for the legacy localStorage
+// migration and for settings arriving from an imported bundle, so a bundle
+// exported by a slightly different app version can still be applied.
+// ---------------------------------------------------------------------------
+
+export function coerceSettings(raw: unknown): Settings | null {
+  const { data, success } = SettingsSchema.safeParse(raw);
+  if (success) {
+    return data;
+  }
+  try {
+    return SettingsSchema.parse({
+      ...DEFAULT_SETTINGS,
+      ...(raw as Settings),
+    });
+  } catch {
+    return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Load initial settings — one-time migration from localStorage if present
@@ -141,22 +166,10 @@ function loadInitialSettings(): Settings {
     const raw = localStorage.getItem("settings");
     if (raw) {
       const parsed = JSON.parse(raw) as unknown;
-      const { data, success } = SettingsSchema.safeParse(parsed);
-      if (success) {
-        // Migrate: remove legacy localStorage entry once we've read it
-        localStorage.removeItem("settings");
-        return data;
-      }
-      // Try a lenient merge
-      try {
-        const merged = SettingsSchema.parse({
-          ...DEFAULT_SETTINGS,
-          ...(parsed as Settings),
-        });
-        localStorage.removeItem("settings");
-        return merged;
-      } catch {
-        localStorage.removeItem("settings");
+      const coerced = coerceSettings(parsed);
+      localStorage.removeItem("settings");
+      if (coerced) {
+        return coerced;
       }
     }
   } catch {
@@ -288,6 +301,11 @@ export const useSettingsStore = create<SettingsStore>()(
             };
           }),
 
+        importPresets: (entries) =>
+          set((state) => ({
+            presets: { ...state.presets, ...entries },
+          })),
+
         saveProject: (name, slots) =>
           set((state) => ({
             projects: {
@@ -304,6 +322,11 @@ export const useSettingsStore = create<SettingsStore>()(
             ),
             activeProjectName:
               state.activeProjectName === name ? null : state.activeProjectName,
+          })),
+
+        importProjects: (entries) =>
+          set((state) => ({
+            projects: { ...state.projects, ...entries },
           })),
 
         setActiveProjectName: (name) => set({ activeProjectName: name }),

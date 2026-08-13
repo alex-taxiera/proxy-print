@@ -14,6 +14,7 @@ import {
 } from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
 import { addBleedEdge } from "@/utils/add-bleed";
+import { downloadBlob } from "@/utils/download-blob";
 import ZipWorker from "@/workers/zip-worker?worker";
 
 const getExtensionFromMimeType = (mimeType: string) => {
@@ -90,13 +91,7 @@ const useDownloadImages = (images: Image[]) => {
         toaster.remove(toastId);
         worker.terminate();
         setIsDownloading(false);
-        const { blob } = data;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `proxyprint_download_${Date.now()}.zip`;
-        a.click();
-        URL.revokeObjectURL(url);
+        downloadBlob(data.blob, `proxyprint_download_${Date.now()}.zip`);
       }
     };
 
