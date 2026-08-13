@@ -36,12 +36,12 @@ const generateDownloadName = (name: string, uuid: string, mimeType: string) => {
   }
 };
 
-const useDownloadImages = (images: Image[]) => {
+const useDownloadImages = () => {
   const queryClient = useQueryClient();
 
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const downloadImages = () => {
+  const downloadImages = (images: Image[]) => {
     setIsDownloading(true);
     const toastId = toaster.create({
       type: "info",
@@ -50,10 +50,13 @@ const useDownloadImages = (images: Image[]) => {
       title: "Downloading images",
     });
 
-    const formattedData = images.map((image) => {
+    const formattedData = images.flatMap((image) => {
       const queryData = queryClient.getQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
-      )!;
+      );
+
+      // An image can be missing from the cache if it never finished loading.
+      if (!queryData) return [];
 
       if (getIsLocalImage(image)) {
         return {
@@ -156,6 +159,7 @@ export const useCardActions = ({
     onClear,
     onAdd,
     images: allImages,
+    slots,
   } = useContext(ImagesContext);
   const { cardsPerPage, imageMatrix } = usePreviewData();
   const { onSelectAllImages } = useContext(ImageSelectionContext);
@@ -176,7 +180,23 @@ export const useCardActions = ({
     return unsubscribe;
   }, [queryClient, getStates]);
 
-  const { isDownloading, downloadImages } = useDownloadImages(images);
+  const { isDownloading, downloadImages: runDownload } = useDownloadImages();
+
+  // A slot's id is its front image's uuid, so the selection (which only ever
+  // contains fronts) maps straight onto the slots holding the paired backs.
+  const pairedBackCount = images.filter(
+    (image) => slots.get(image.uuid)?.back,
+  ).length;
+
+  const downloadImages = (options?: { includeBacks?: boolean }) => {
+    const toDownload = options?.includeBacks
+      ? images.flatMap((image) => {
+          const back = slots.get(image.uuid)?.back;
+          return back ? [image, back] : [image];
+        })
+      : images;
+    runDownload(toDownload);
+  };
 
   const remove = () => {
     onClear(images.map((image) => image.uuid));
@@ -362,5 +382,6 @@ export const useCardActions = ({
     moveToPreviousPage,
     isDownloading,
     downloadImages,
+    pairedBackCount,
   };
 };

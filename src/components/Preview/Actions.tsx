@@ -10,7 +10,7 @@ import {
   Box,
   ButtonGroup,
 } from "@chakra-ui/react";
-import { useContext, useId } from "react";
+import { useContext, useId, useState } from "react";
 import {
   LuDownload,
   LuExpand,
@@ -71,6 +71,7 @@ import {
 } from "../ui/action-bar";
 import { DialogTrigger } from "../ui/dialog";
 import { AddMoreDialog } from "./Card/AddMoreDialog";
+import { DownloadDialog } from "./Card/DownloadDialog";
 import { useCardActions } from "./Card/useCardActions";
 
 const PRINT_MODE_OPTIONS: { value: PrintMode; label: string }[] = [
@@ -124,6 +125,25 @@ const PrintModeToggle = () => {
   );
 };
 
+/** Asks about front/back pairings before downloading, but only when the cards
+ * being downloaded actually have backs to include. */
+const useDownloadPrompt = (
+  pairedBackCount: number,
+  downloadImages: (options?: { includeBacks?: boolean }) => void,
+) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const requestDownload = () => {
+    if (pairedBackCount > 0) {
+      setIsDialogOpen(true);
+    } else {
+      downloadImages();
+    }
+  };
+
+  return { isDialogOpen, setIsDialogOpen, requestDownload };
+};
+
 const NoSelectionActions = ({
   isReferenceCardLoaded,
   contentRef,
@@ -147,10 +167,16 @@ const NoSelectionActions = ({
     generatePdf();
   };
 
-  const { remove, isDownloading, downloadImages } = useCardActions({
-    images,
-    currentPage: 0,
-  });
+  const { remove, isDownloading, downloadImages, pairedBackCount } =
+    useCardActions({
+      images,
+      currentPage: 0,
+    });
+
+  const { isDialogOpen, setIsDialogOpen, requestDownload } = useDownloadPrompt(
+    pairedBackCount,
+    downloadImages,
+  );
 
   return (
     <HStack gap="2" flexWrap="wrap">
@@ -220,7 +246,7 @@ const NoSelectionActions = ({
             </MenuItem>
             <MenuItem
               value="downloadZip"
-              onSelect={() => downloadImages()}
+              onSelect={() => requestDownload()}
               disabled={isLoadingImages || isLoadingProject || isDownloading}
             >
               {isDownloading ? <Spinner size="sm" mr="1px" /> : <LuDownload />}
@@ -229,6 +255,12 @@ const NoSelectionActions = ({
           </>
         </MenuContent>
       </MenuRoot>
+      <DownloadDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        pairedBackCount={pairedBackCount}
+        onConfirm={(includeBacks) => downloadImages({ includeBacks })}
+      />
     </HStack>
   );
 };
@@ -269,10 +301,16 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
     moveToPage,
     isDownloading,
     downloadImages,
+    pairedBackCount,
   } = useCardActions({
     images: selectedImages,
     currentPage,
   });
+
+  const { isDialogOpen, setIsDialogOpen, requestDownload } = useDownloadPrompt(
+    pairedBackCount,
+    downloadImages,
+  );
 
   const onMoveToPage = (details: MenuSelectionDetails) =>
     moveToPage(parseInt(details.value));
@@ -318,7 +356,7 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
           >
             <IconButton
               aria-label="Download"
-              onClick={() => downloadImages()}
+              onClick={() => requestDownload()}
               disabled={isLoadingImages || isLoadingProject}
               loading={isDownloading}
             >
@@ -431,6 +469,12 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
           </MenuRoot>
           <ActionBarCloseTrigger onClick={() => onSelectAllImages(false)} />
         </ButtonGroup>
+        <DownloadDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          pairedBackCount={pairedBackCount}
+          onConfirm={(includeBacks) => downloadImages({ includeBacks })}
+        />
       </ActionBarContent>
     </ActionBarRoot>
   );
