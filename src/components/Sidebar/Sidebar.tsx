@@ -10,7 +10,7 @@ import { ImageUploader } from "./ImageUploader";
 import { SettingsForm } from "./SettingsForm";
 
 export const Sidebar = () => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   return (
     <Box
       as="aside"
