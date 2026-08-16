@@ -14,7 +14,14 @@ export const Layout = () => {
   return (
     <>
       <Header />
-      <HStack as="main" alignItems="stretch" flex={1} gap={0} overflow="hidden">
+      <HStack
+        as="main"
+        alignItems="stretch"
+        flex={1}
+        gap={0}
+        overflow="hidden"
+        position="relative"
+      >
         <Box flex={1} minWidth={0} overflow="auto">
           {images.length === 0 && imagesWithError.length === 0 ? (
             <Empty />

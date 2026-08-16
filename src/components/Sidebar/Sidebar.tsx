@@ -1,19 +1,91 @@
-import { Icon, Box, Collapsible, Button, VStack, Link } from "@chakra-ui/react";
+import {
+  Icon,
+  Box,
+  Collapsible,
+  Button,
+  IconButton,
+  VStack,
+  Link,
+} from "@chakra-ui/react";
 import { useState } from "react";
-import { LuPanelRightClose, LuPanelRightOpen } from "react-icons/lu";
+import {
+  LuPanelRightClose,
+  LuPanelRightOpen,
+  LuSettings,
+} from "react-icons/lu";
 
 import { DialogTrigger } from "@/components/ui/dialog";
+import {
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerRoot,
+  DrawerTrigger,
+  DrawerCloseTrigger,
+} from "@/components/ui/drawer";
 
 import { DecklistDialog } from "../DecklistDialog";
 import { Tooltip } from "../ui/tooltip";
 import { ImageUploader } from "./ImageUploader";
 import { SettingsForm } from "./SettingsForm";
 
-export const Sidebar = () => {
+const SidebarContent = (props) => (
+  <VStack
+    height="full"
+    gap="4"
+    paddingY={{ base: "2", lg: "4" }}
+    paddingX={{ base: "2", lg: "4" }}
+    overflowY="auto"
+    overflowX="hidden"
+    tabIndex={-1}
+    {...props}
+  >
+    <VStack gap="2" alignItems="flex-start" width="full">
+      <ImageUploader />
+      <DecklistDialog>
+        <DialogTrigger asChild>
+          <Link fontSize="sm" as="button" colorPalette="accent">
+            Import from Decklist
+          </Link>
+        </DialogTrigger>
+      </DecklistDialog>
+    </VStack>
+    <SettingsForm />
+  </VStack>
+);
+
+const MobileSidebar = () => (
+  <Box
+    display={{ base: "block", md: "none" }}
+    position="absolute"
+    right="4"
+    bottom="4"
+    zIndex="3"
+  >
+    <DrawerRoot placement="end" size="xs">
+      <DrawerTrigger asChild>
+        <IconButton aria-label="Open settings" colorPalette="accent" size="lg">
+          <LuSettings />
+        </IconButton>
+      </DrawerTrigger>
+      <DrawerContent maxWidth="64">
+        <DrawerHeader>Settings</DrawerHeader>
+        <DrawerBody asChild>
+          <SidebarContent />
+        </DrawerBody>
+        <DrawerCloseTrigger />
+      </DrawerContent>
+    </DrawerRoot>
+  </Box>
+);
+
+const DesktopSidebar = () => {
   const [open, setOpen] = useState(true);
+
   return (
     <Box
       as="aside"
+      display={{ base: "none", md: "block" }}
       overflowY="auto"
       overflowX="hidden"
       tabIndex={-1}
@@ -49,30 +121,18 @@ export const Sidebar = () => {
           </Button>
         </Collapsible.Trigger>
         <Collapsible.Content>
-          <VStack
-            height="full"
-            width="64"
-            gap="4"
-            paddingY={{ base: "2", lg: "4" }}
-            paddingX={{ base: "2", lg: "4" }}
-            overflowY="auto"
-            overflowX="hidden"
-            tabIndex={-1}
-          >
-            <VStack gap="2" alignItems="flex-start" width="full">
-              <ImageUploader />
-              <DecklistDialog>
-                <DialogTrigger asChild>
-                  <Link fontSize="sm" as="button" colorPalette="accent">
-                    Import from Decklist
-                  </Link>
-                </DialogTrigger>
-              </DecklistDialog>
-            </VStack>
-            <SettingsForm />
-          </VStack>
+          <Box width="64" height="full">
+            <SidebarContent />
+          </Box>
         </Collapsible.Content>
       </Collapsible.Root>
     </Box>
   );
 };
+
+export const Sidebar = () => (
+  <>
+    <MobileSidebar />
+    <DesktopSidebar />
+  </>
+);
