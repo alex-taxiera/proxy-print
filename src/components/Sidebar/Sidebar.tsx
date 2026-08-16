@@ -6,6 +6,7 @@ import {
   IconButton,
   VStack,
   Link,
+  StackProps,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import {
@@ -29,7 +30,7 @@ import { Tooltip } from "../ui/tooltip";
 import { ImageUploader } from "./ImageUploader";
 import { SettingsForm } from "./SettingsForm";
 
-const SidebarContent = (props) => (
+const SidebarContent = (props: StackProps) => (
   <VStack
     height="full"
     gap="4"
