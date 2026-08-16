@@ -22,6 +22,15 @@ const getMpcImageUri = (id: string) => {
   return `${MPC_BASE_URL}/${id}.jpg?dpi=1500&jpgQuality=100`;
 };
 
+const getScryfallUri = (uri: string) => {
+  const cloudflareOrigins = ["long-wind-b6b3.alex-taxiera.workers.dev"];
+
+  return [
+    ...cloudflareOrigins.map((base) => uri.replace("cards.scryfall.io", base)),
+    uri,
+  ];
+};
+
 export const imagesQueryKey = () => ["images"] as const;
 
 export const googleImagesQueryKey = () =>
@@ -85,10 +94,20 @@ const buildGoogleImageQueryFn =
     return { data, mimeType };
   };
 
+const fetchScryfallImage = async (uris: string[], signal?: AbortSignal) => {
+  for (const uri of uris) {
+    const response = await fetch(uri, { signal });
+    if (response.ok) {
+      return response;
+    }
+  }
+  throw new Error("Failed to fetch Scryfall image from all provided URIs");
+};
+
 const buildScryfallImageQueryFn =
   (uri: string, settings: Settings): QueryFunction<ScryfallImageQueryData> =>
   async ({ signal }) => {
-    const response = await fetch(uri, { signal });
+    const response = await fetchScryfallImage(getScryfallUri(uri), signal);
 
     const blob = await response.blob();
     const mimeType = response.headers.get("content-type") || "image/png";
