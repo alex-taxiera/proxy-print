@@ -3,30 +3,10 @@ import { useEffect } from "react";
 import Module from "@/asm/imghelper.js";
 import { useUpscaleQueueManager } from "@/context/UpscaleQueueManager";
 import { CustomImage } from "@/image";
+import { detectBestUpscaleBackend } from "@/utils/upscale-support";
 import UpscaleWorker from "@/workers/upscale-worker?worker";
 
 const wasmModule = Module();
-
-/**
- * Detects the best available TensorFlow.js backend
- * Prefers WebGPU for better performance, falls back to WebGL
- */
-async function detectBestBackend(): Promise<"webgl" | "webgpu"> {
-  // Check if WebGPU is available
-  if (typeof navigator !== "undefined" && "gpu" in navigator) {
-    try {
-      const adapter = await navigator.gpu.requestAdapter();
-      if (adapter) {
-        return "webgpu";
-      }
-    } catch (error) {
-      console.warn("WebGPU not available, falling back to WebGL:", error);
-    }
-  }
-
-  // Default to WebGL as it's more widely supported
-  return "webgl";
-}
 
 export function useUpscaleImage() {
   const queueManager = useUpscaleQueueManager();
@@ -76,7 +56,12 @@ export function useUpscaleImage() {
       }
 
       // Detect the best available backend (webgpu preferred, fallback to webgl)
-      const backend = await detectBestBackend();
+      const backend = await detectBestUpscaleBackend();
+      if (!backend) {
+        throw new Error(
+          "Neither WebGL nor WebGPU is supported in your browser.",
+        );
+      }
 
       // Process image with worker
       return new Promise<Blob>((resolve, reject) => {
