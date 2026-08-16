@@ -10,7 +10,7 @@ const SENTRY_ENV =
     : import.meta.env.MODE;
 
 Sentry.init({
-  dsn: "https://d3279bfef49ddae1a49ef210fe2ea822@o4509812461207552.ingest.us.sentry.io/4509812463566848",
+  dsn: "https://2368027c73afccc2d259b70f8546c815@o4511922559647744.ingest.us.sentry.io/4511922562203648",
   // Setting this option to true will send default PII data to Sentry.
   // For example, automatic IP address collection on events
   sendDefaultPii: true,
@@ -21,12 +21,14 @@ Sentry.init({
     Sentry.replayIntegration({
       maskAllText: false,
       maskAllInputs: false,
+      blockAllMedia: false,
+      unmask: ["input", "textarea"],
     }),
     // send console.log, console.error, and console.warn calls as logs to Sentry
     Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
   ],
 
-  replaysSessionSampleRate: 0.01,
+  replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1,
 
   tracesSampleRate: SENTRY_ENV === "production" ? 0.1 : 1,
