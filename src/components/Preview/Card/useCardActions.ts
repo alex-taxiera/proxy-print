@@ -1,5 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useContext, useState, useEffect } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { toaster } from "@/components/ui/toaster";
 
@@ -121,28 +128,43 @@ const hasOriginal = (
   upscaledOriginal?: Blob;
 } => "original" in queryData;
 
-const useImageStates = (images: Image[]) => {
-  const queryClient = useQueryClient();
+type CardActionStates = {
+  canAddBleed: boolean;
+  canRemoveBleed: boolean;
+  canUpscale: boolean;
+  canRemoveUpscale: boolean;
+  canRevertToOriginal: boolean;
+};
 
-  const getStates = () => {
-    const allData = images.map((image) =>
-      queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image)),
-    );
+const defaultCardActionStates: CardActionStates = {
+  canAddBleed: false,
+  canRemoveBleed: false,
+  canUpscale: false,
+  canRemoveUpscale: false,
+  canRevertToOriginal: false,
+};
 
-    return {
-      canAddBleed: allData.some((d) => d && hasOriginal(d) && !d.hasBleed),
-      canRemoveBleed: allData.some((d) => d && hasOriginal(d) && d.hasBleed),
-      canUpscale: allData.some((d) => d && hasOriginal(d) && !d.isUpscaled),
-      canRemoveUpscale: allData.some(
-        (d) => d && hasOriginal(d) && d.isUpscaled,
-      ),
-      canRevertToOriginal: allData.some(
-        (d) => d && hasOriginal(d) && (d.isUpscaled || d.hasBleed),
-      ),
-    };
+const getCardActionStates = (
+  images: Image[],
+  queryClient: ReturnType<typeof useQueryClient>,
+): CardActionStates => {
+  if (images.length === 0) {
+    return defaultCardActionStates;
+  }
+
+  const allData = images.map((image) =>
+    queryClient.getQueryData<ImageQueryData>(getQueryKeyForImage(image)),
+  );
+
+  return {
+    canAddBleed: allData.some((d) => d && hasOriginal(d) && !d.hasBleed),
+    canRemoveBleed: allData.some((d) => d && hasOriginal(d) && d.hasBleed),
+    canUpscale: allData.some((d) => d && hasOriginal(d) && !d.isUpscaled),
+    canRemoveUpscale: allData.some((d) => d && hasOriginal(d) && d.isUpscaled),
+    canRevertToOriginal: allData.some(
+      (d) => d && hasOriginal(d) && (d.isUpscaled || d.hasBleed),
+    ),
   };
-
-  return getStates;
 };
 
 export type UseCardActionsProps = {
@@ -167,18 +189,39 @@ export const useCardActions = ({
   const queryClient = useQueryClient();
   const { upscaleImage } = useUpscaleImage();
 
-  const getStates = useImageStates(images);
-
-  const [states, setStates] = useState(getStates);
+  const trackedImageKeys = useMemo(
+    () =>
+      new Set(images.map((image) => JSON.stringify(getQueryKeyForImage(image)))),
+    [images],
+  );
+  const trackedImageKeysRef = useRef(trackedImageKeys);
 
   useEffect(() => {
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (getIsDownloadableImageCacheEvent(event)) {
-        setStates(getStates());
-      }
-    });
-    return unsubscribe;
-  }, [queryClient, getStates]);
+    trackedImageKeysRef.current = trackedImageKeys;
+  }, [trackedImageKeys]);
+
+  const subscribeToImageCache = useCallback(
+    (onStoreChange: () => void) =>
+      queryClient.getQueryCache().subscribe((event) => {
+        if (!getIsDownloadableImageCacheEvent(event) || !event.query) {
+          return;
+        }
+
+        const queryKey = JSON.stringify(event.query.queryKey);
+        if (trackedImageKeysRef.current.has(queryKey)) {
+          onStoreChange();
+        }
+      }),
+    [queryClient],
+  );
+
+  const [, setCacheVersion] = useState(0);
+
+  useEffect(() => subscribeToImageCache(() => setCacheVersion((version) => version + 1)), [
+    subscribeToImageCache,
+  ]);
+
+  const states = getCardActionStates(images, queryClient);
 
   const { isDownloading, downloadImages: runDownload } = useDownloadImages();
 
