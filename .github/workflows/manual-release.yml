@@ -1,0 +1,97 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.3)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get last tag (if any)
+        id: last_tag
+        run: |
+          git fetch --tags --quiet || true
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Configure git
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Bump package.json version
+        id: bump
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          if [ -z "$VERSION" ]; then
+            echo "No version provided" >&2
+            exit 1
+          fi
+
+          # Use npm to set the version without creating a git tag so we can control tagging
+          npm version "$VERSION" --no-git-tag-version
+
+          git add package.json package-lock.json 2>/dev/null || true
+          git commit -m "chore(release): v$VERSION" || echo "no changes to commit"
+
+          # Create annotated tag
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+
+      - name: Push commit and tag
+        run: |
+          # Push the commit
+          git push origin HEAD
+          # Push only the created tag
+          git push origin "refs/tags/v${{ github.event.inputs.version }}"
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          LAST_TAG="${{ steps.last_tag.outputs.last_tag }}"
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag found, including all commits" >&2
+            NOTES=$(git log --pretty=format:"- %s (%h)")
+          else
+            NOTES=$(git log "$LAST_TAG"..HEAD --pretty=format:"- %s (%h)")
+          fi
+
+          # If no notes, put a fallback message
+          if [ -z "$NOTES" ]; then
+            NOTES="Release v$VERSION"
+          fi
+
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create draft release
+        uses: actions/create-release@v1
+        with:
+          tag_name: "v${{ github.event.inputs.version }}"
+          release_name: "v${{ github.event.inputs.version }}"
+          body: "${{ steps.notes.outputs.notes }}"
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
