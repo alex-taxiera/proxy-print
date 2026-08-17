@@ -391,30 +391,46 @@ export const Card = ({
           )}
         </Flex>
       ) : null}
-      {!isEmpty && !isPending ? (
-        <Checkbox
-          visibility={isSelected ? "visible" : "hidden"}
-          position="absolute"
-          top="2"
-          left="2"
-          zIndex="1"
-          gap="0"
-          _groupHover={{
-            visibility: "visible",
-          }}
-          css={{
-            "& [data-part='control'][data-state='unchecked']": {
-              backgroundColor: "bg.emphasized",
-            },
-          }}
-          checked={isSelected}
-          onCheckedChange={(details) =>
-            onSelectImageUuid(image.uuid, details.checked === true)
-          }
-          size="md"
-        >
-          <VisuallyHidden>Select {name}</VisuallyHidden>
-        </Checkbox>
+      {!isEmpty ? (
+        <>
+          <Checkbox
+            visibility={isSelected ? "visible" : "hidden"}
+            position="absolute"
+            top="2"
+            left="2"
+            zIndex="1"
+            gap="0"
+            _groupHover={{
+              visibility: "visible",
+            }}
+            css={{
+              "& [data-part='control'][data-state='unchecked']": {
+                backgroundColor: "bg.emphasized",
+              },
+            }}
+            checked={isSelected}
+            onCheckedChange={(details) =>
+              onSelectImageUuid(image.uuid, details.checked === true)
+            }
+            size="md"
+            disabled={isPending}
+          >
+            <VisuallyHidden>Select {name}</VisuallyHidden>
+          </Checkbox>
+
+          {queryData && (queryData as any).isProcessing ? (
+            <Center
+              position="absolute"
+              top="2"
+              left="10"
+              zIndex="2"
+              width="6"
+              height="6"
+            >
+              <Spinner size="sm" color="accent.solid" />
+            </Center>
+          ) : null}
+        </>
       ) : null}
     </Box>
   );

@@ -303,6 +303,24 @@ export const useCardActions = ({
   };
 
   const upscale = () => {
+    const total = images.length;
+    let completed = 0;
+
+    const toastId = toaster.create({
+      type: "loading",
+      closable: false,
+      duration: Infinity,
+      title: "Upscaling images",
+      description: "Processing selected images...",
+      meta: { progress: completed, totalProgressAmount: total },
+    });
+
+    const updateProgress = () => {
+      toaster.update(toastId, {
+        meta: { progress: completed, totalProgressAmount: total },
+      });
+    };
+
     void Promise.all(
       images.map(async (image) => {
         const queryData = queryClient.getQueryData<ImageQueryData>(
@@ -313,25 +331,47 @@ export const useCardActions = ({
             getQueryKeyForImage(image),
             () => ({ ...queryData, isProcessing: true }),
           );
-          const upscaledOriginal = await upscaleImage(queryData.original);
-          let data: Blob;
-          if (queryData.hasBleed) {
-            data = await addBleedEdge(
-              upscaledOriginal,
-              queryData.mimeType,
-              Number(settings.cardWidth),
-              Number(settings.cardHeight),
+          try {
+            const upscaledOriginal = await upscaleImage(queryData.original);
+            let data: Blob;
+            if (queryData.hasBleed) {
+              data = await addBleedEdge(
+                upscaledOriginal,
+                queryData.mimeType,
+                Number(settings.cardWidth),
+                Number(settings.cardHeight),
+              );
+            } else {
+              data = upscaledOriginal;
+            }
+            queryClient.setQueryData<ImageQueryData>(
+              getQueryKeyForImage(image),
+              () => ({ ...queryData, data, upscaledOriginal, isUpscaled: true }),
             );
-          } else {
-            data = upscaledOriginal;
+          } catch (error) {
+            // On error, clear isProcessing so UI doesn't stay stuck; keep original data
+            queryClient.setQueryData<ImageQueryData>(
+              getQueryKeyForImage(image),
+              () => ({ ...queryData }),
+            );
+            console.error("Upscale failed for image", image.uuid, error);
+          } finally {
+            completed += 1;
+            updateProgress();
           }
-          queryClient.setQueryData<ImageQueryData>(
-            getQueryKeyForImage(image),
-            () => ({ ...queryData, data, upscaledOriginal, isUpscaled: true }),
-          );
+        } else {
+          // Nothing to do for this image; count it as completed
+          completed += 1;
+          updateProgress();
         }
       }),
-    );
+    ).then(() => {
+      // Show 100% and remove toast after short delay
+      toaster.update(toastId, {
+        meta: { progress: total, totalProgressAmount: total },
+      });
+      setTimeout(() => toaster.remove(toastId), 1000);
+    });
   };
 
   const removeUpscale = () => {
