@@ -242,7 +242,77 @@ export const useCardActions = ({
           return back ? [image, back] : [image];
         })
       : images;
-    runDownload(toDownload);
+
+    // If backs are not requested, use the existing downloader which creates a flat zip
+    if (!options?.includeBacks) {
+      runDownload(toDownload);
+      return;
+    }
+
+    // When including backs, structure files into fronts/ and backs/ folders.
+    const formattedData = images.flatMap((frontImage) => {
+      const frontQuery = queryClient.getQueryData<ImageQueryData>(
+        getQueryKeyForImage(frontImage),
+      );
+
+      if (!frontQuery) return [];
+
+      const frontEntry = {
+        name: `fronts/${generateDownloadName(
+          getIsLocalImage(frontImage) ? frontImage.file.name : frontImage.name,
+          frontImage.uuid,
+          frontQuery.mimeType,
+        )}`,
+        image: frontQuery.data,
+      } as const;
+
+      const slot = slots.get(frontImage.uuid);
+      if (!slot || !slot.back) return [frontEntry];
+
+      const backImage = slot.back;
+      const backQuery = queryClient.getQueryData<ImageQueryData>(
+        getQueryKeyForImage(backImage),
+      );
+
+      if (!backQuery) return [frontEntry];
+
+      // Name the back file to refer to the front slot id (front UUID) to keep pairs obvious
+      const backExt = getExtensionFromMimeType(backQuery.mimeType) || "";
+      const backEntry = {
+        name: `backs/${frontImage.uuid}${backExt}`,
+        image: backQuery.data,
+      } as const;
+
+      return [frontEntry, backEntry];
+    });
+
+    // remove duplicate data based on blob equality (same heuristic as previous implementation)
+    const imageData = formattedData.filter(
+      (data, index) =>
+        index === formattedData.findIndex((t) => t.image === data.image),
+    );
+
+    const worker = new ZipWorker();
+    worker.postMessage({ type: "zip", data: { imageData } });
+
+    worker.onmessage = (e) => {
+      const { type, data } = e.data as {
+        type: string;
+        data: { blob: Blob };
+      };
+
+      if (type === "zip") {
+        setIsDownloading(false);
+        worker.terminate();
+        downloadBlob(data.blob, `proxyprint_download_${Date.now()}.zip`);
+      }
+    };
+
+    worker.onerror = (e) => {
+      console.error("Worker error:", e.error);
+      setIsDownloading(false);
+      worker.terminate();
+    };
   };
 
   const remove = () => {
