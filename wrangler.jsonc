@@ -9,4 +9,9 @@
     "not_found_handling": "single-page-application",
   },
   "compatibility_flags": ["nodejs_compat"],
+  "env": {
+    "production": {
+      "workers_dev": true,
+    }
+  }
 }
