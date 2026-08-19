@@ -48,7 +48,7 @@ const useQueryData = (image: PossiblyEmptyImage) => {
   const queryKey = !getIsEmptyImage(image) ? getQueryKeyForImage(image) : null;
 
   // Manually subscribe to cache updates without triggering fetches
-  const [queryData, setQueryData] = useState(() => {
+  const [queryData, setQueryData] = useState<ImageQueryData | undefined>(() => {
     if (!queryKey) return undefined;
     return queryClient.getQueryData<ImageQueryData>(queryKey);
   });
@@ -418,7 +418,9 @@ export const Card = ({
             <VisuallyHidden>Select {name}</VisuallyHidden>
           </Checkbox>
 
-          {queryData && (queryData as any).isProcessing ? (
+          {queryData &&
+          "isProcessing" in queryData &&
+          queryData.isProcessing ? (
             <Center
               position="absolute"
               top="2"
