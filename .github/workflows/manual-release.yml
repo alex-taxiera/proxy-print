@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. 1.2.3 or v1.2.3)'
+        description: "Version to release (e.g. 1.2.3 or v1.2.3)"
         required: true
         type: string
 
@@ -41,7 +41,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
 
       - name: Configure git
         run: |
