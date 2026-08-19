@@ -12,6 +12,6 @@
   "env": {
     "production": {
       "workers_dev": true,
-    }
-  }
+    },
+  },
 }
