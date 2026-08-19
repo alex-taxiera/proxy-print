@@ -1,0 +1,38 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - trunk
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    uses: ./.github/workflows/test-and-build.yml
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test-and-build
+    env:
+      VITE_SENTRY_ENV: staging
+      VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+      CLOUDFLARE_ENV: staging
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and deploy to Cloudflare staging
+        run: npm run deploy

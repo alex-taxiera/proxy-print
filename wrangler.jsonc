@@ -10,8 +10,11 @@
   },
   "compatibility_flags": ["nodejs_compat"],
   "env": {
+    "staging": {
+      "route": "devprint.taxiera.net/*",
+    },
     "production": {
-      "workers_dev": true,
+      "route": "proxyprint.taxiera.net/*",
     },
   },
 }
