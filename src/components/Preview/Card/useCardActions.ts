@@ -191,7 +191,9 @@ export const useCardActions = ({
 
   const trackedImageKeys = useMemo(
     () =>
-      new Set(images.map((image) => JSON.stringify(getQueryKeyForImage(image)))),
+      new Set(
+        images.map((image) => JSON.stringify(getQueryKeyForImage(image))),
+      ),
     [images],
   );
   const trackedImageKeysRef = useRef(trackedImageKeys);
@@ -217,9 +219,11 @@ export const useCardActions = ({
 
   const [, setCacheVersion] = useState(0);
 
-  useEffect(() => subscribeToImageCache(() => setCacheVersion((version) => version + 1)), [
-    subscribeToImageCache,
-  ]);
+  useEffect(
+    () =>
+      subscribeToImageCache(() => setCacheVersion((version) => version + 1)),
+    [subscribeToImageCache],
+  );
 
   const states = getCardActionStates(images, queryClient);
 
@@ -346,7 +350,12 @@ export const useCardActions = ({
             }
             queryClient.setQueryData<ImageQueryData>(
               getQueryKeyForImage(image),
-              () => ({ ...queryData, data, upscaledOriginal, isUpscaled: true }),
+              () => ({
+                ...queryData,
+                data,
+                upscaledOriginal,
+                isUpscaled: true,
+              }),
             );
           } catch (error) {
             // On error, clear isProcessing so UI doesn't stay stuck; keep original data
