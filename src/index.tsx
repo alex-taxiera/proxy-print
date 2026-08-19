@@ -8,7 +8,7 @@ const SENTRY_ENV =
   typeof import.meta.env.VITE_SENTRY_ENV === "string"
     ? import.meta.env.VITE_SENTRY_ENV
     : import.meta.env.MODE;
-
+console.debug("sentry dsn", import.meta.env.VITE_SENTRY_DSN)
 Sentry.init({
   dsn: "https://2368027c73afccc2d259b70f8546c815@o4511922559647744.ingest.us.sentry.io/4511922562203648",
   // Setting this option to true will send default PII data to Sentry.
