@@ -1,5 +1,7 @@
 import * as zod from "zod";
 
+import { SCRYFALL_LANGUAGE_CODES } from "@/utils/scryfall-languages";
+
 export const CARD_DIMENSIONS = {
   standard: {
     width: 63,
@@ -190,6 +192,7 @@ export const SettingsSchema = zod
         return num >= 0.1 && num <= 1;
       }, "Must be between 0.1 and 1"),
     upscaleScryfallImages: zod.boolean(),
+    defaultImportLanguage: zod.enum(SCRYFALL_LANGUAGE_CODES).default("en"),
     printMode: zod.enum([
       "duplex",
       "side-by-side",
@@ -323,6 +326,7 @@ export const DEFAULT_SETTINGS = {
   convertToJpg: false,
   jpgQuality: "0.95",
   upscaleScryfallImages: false,
+  defaultImportLanguage: "en",
   printMode: "inline-faces",
   offsetX: "0",
   offsetY: "0",

@@ -336,7 +336,7 @@ export const useSettingsStore = create<SettingsStore>()(
     },
     {
       name: "proxy-print-settings",
-      version: 9,
+      version: 10,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
@@ -385,6 +385,28 @@ export const useSettingsStore = create<SettingsStore>()(
           return {
             ...state,
             activeProjectName: null,
+          } as SettingsStore;
+        }
+
+        if (version < 10) {
+          return {
+            ...state,
+            settings: {
+              ...DEFAULT_SETTINGS,
+              ...state.settings,
+            },
+            presets: Object.fromEntries(
+              Object.entries(state.presets ?? {}).map(([name, preset]) => [
+                name,
+                {
+                  ...preset,
+                  settings: {
+                    ...DEFAULT_SETTINGS,
+                    ...preset.settings,
+                  },
+                },
+              ]),
+            ),
           } as SettingsStore;
         }
 

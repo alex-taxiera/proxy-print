@@ -89,6 +89,7 @@ import { ImportPreview, useTransfer } from "@/hooks/useTransfer";
 import { selectIsPresetDirty, useSettingsStore } from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
 
+import { DefaultImportLanguageSetting } from "../DefaultImportLanguageSetting";
 import { UpscaleSetting } from "../UpscaleSetting";
 import { Status } from "../ui/status";
 import { BasePDFInput } from "./BasePDFInput";
@@ -1002,6 +1003,7 @@ export const SettingsForm = () => {
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
                     <UpscaleSetting />
+                    <DefaultImportLanguageSetting />
                     <Field
                       label="Max DPI"
                       invalid={formErrors.maxDpi.length > 0}
