@@ -12,9 +12,10 @@
   "env": {
     "staging": {
       "workers_dev": true,
-      "route": "devprint.taxiera.net/*",
+      "routes": ["dev-proxyprint.taxiera.net/*", "devprint.taxiera.net/*"],
     },
     "production": {
+      "workers_dev": true,
       "route": "proxyprint.taxiera.net/*",
     },
   },
