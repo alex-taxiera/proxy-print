@@ -2,17 +2,44 @@ import { ScryfallCard } from "@scryfall/api-types";
 import { nanoid } from "nanoid";
 
 import { DownloadableImage, ScryfallImageData } from "@/context/ImagesContext";
+import { scryfallClient } from "@/queries/scryfallClient";
 import {
   ScryfallCardsCollectionIdentifier,
   useScryfallCardsCollection,
 } from "@/queries/useScryfallCardsCollection";
+import { useSettingsStore } from "@/store/settingsStore";
 import { parseDecklist } from "@/utils/parse-decklist";
+import { ScryfallLanguage } from "@/utils/scryfall-languages";
+
+const SCRYFALL_API_URL = "https://api.scryfall.com";
+
+const getLanguagePrinting = async (
+  card: ScryfallCard.Any,
+  language: ScryfallLanguage,
+): Promise<ScryfallCard.Any> => {
+  if (language === "en") {
+    return card;
+  }
+
+  const response = await scryfallClient.get(
+    `${SCRYFALL_API_URL}/cards/${card.set}/${card.collector_number}/${language}`,
+  );
+
+  if (!response.ok) {
+    return card;
+  }
+
+  return (await response.json()) as ScryfallCard.Any;
+};
 
 /**
  * Converts a decklist string to Scryfall card image data
  */
 export const useGetCardsForDecklist = () => {
   const { mutateAsync: getCards } = useScryfallCardsCollection();
+  const defaultImportLanguage = useSettingsStore(
+    (state) => state.settings.defaultImportLanguage,
+  );
 
   return async (decklist: string) => {
     const parsed = parseDecklist(decklist);
@@ -157,7 +184,24 @@ export const useGetCardsForDecklist = () => {
       }
     }
 
-    const slotItems = fullList
+    const cardsInRequestedLanguage = new Map<string, ScryfallCard.Any>();
+    for (const card of fullList) {
+      const key = `${card.set}/${card.collector_number}`;
+      if (!cardsInRequestedLanguage.has(key)) {
+        cardsInRequestedLanguage.set(
+          key,
+          await getLanguagePrinting(card, defaultImportLanguage),
+        );
+      }
+    }
+
+    const localizedFullList = fullList.map(
+      (card) =>
+        cardsInRequestedLanguage.get(`${card.set}/${card.collector_number}`) ??
+        card,
+    );
+
+    const slotItems = localizedFullList
       .map((card) => {
         if ("image_uris" in card) {
           return {
@@ -203,7 +247,7 @@ export const useGetCardsForDecklist = () => {
         } => slot !== null && slot.front !== null,
       );
 
-    const items = fullList
+    const items = localizedFullList
       .flatMap((card) => {
         if ("image_uris" in card) {
           return {

@@ -26,6 +26,7 @@ import { ImagesContext } from "@/context/ImagesContext";
 import { useGetCardsForDecklist } from "@/hooks/useGetCardsForDecklist";
 import { getScryfallCardsCollectionQueryKey } from "@/queries/useScryfallCardsCollection";
 
+import { DefaultImportLanguageSetting } from "./DefaultImportLanguageSetting";
 import { UpscaleSetting } from "./UpscaleSetting";
 
 export type DecklistDialogProps = React.ComponentProps<typeof DialogRoot>;
@@ -97,7 +98,10 @@ export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
                 </VStack>
               </DialogBody>
               <DialogFooter justifyContent="space-between">
-                <UpscaleSetting>Upscale Images</UpscaleSetting>
+                <VStack alignItems="stretch">
+                  <DefaultImportLanguageSetting size="sm" />
+                  <UpscaleSetting>Upscale Images</UpscaleSetting>
+                </VStack>
                 <ButtonGroup>
                   <DialogActionTrigger asChild>
                     <Button variant="outline">Cancel</Button>

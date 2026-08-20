@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   test-and-build:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     uses: ./.github/workflows/test-and-build.yml
 
   deploy:

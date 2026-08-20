@@ -15,6 +15,7 @@ import { ImagesContext } from "@/context/ImagesContext";
 import { useGetCardsForDecklist } from "@/hooks/useGetCardsForDecklist";
 import { getScryfallCardsCollectionQueryKey } from "@/queries/useScryfallCardsCollection";
 
+import { DefaultImportLanguageSetting } from "./DefaultImportLanguageSetting";
 import { ImageUploader } from "./Sidebar/ImageUploader";
 import { UpscaleSetting } from "./UpscaleSetting";
 
@@ -95,8 +96,11 @@ export const Empty = () => {
               placeholder={`1 Black Lotus\n1 Llanowar Elves (FDN) 429\n1 Lava Spike (UMA)\n1 Lightning Bolt (SLP)`}
             />
           </Field>
-          <HStack justifyContent="space-between" width="80">
-            <UpscaleSetting>Upscale Images</UpscaleSetting>
+          <HStack justifyContent="space-between" width="80" alignItems="end">
+            <VStack alignItems="stretch">
+              <DefaultImportLanguageSetting size="sm" />
+              <UpscaleSetting>Upscale Images</UpscaleSetting>
+            </VStack>
             <Button
               type="submit"
               disabled={isLoadingProject}
