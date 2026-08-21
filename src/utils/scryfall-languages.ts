@@ -19,6 +19,7 @@ export const SCRYFALL_LANGUAGE_CODES = [
 ] as const;
 
 export type ScryfallLanguage = (typeof SCRYFALL_LANGUAGE_CODES)[number];
+export type ScryfallLanguageFilter = ScryfallLanguage | "all";
 
 export const SCRYFALL_LANGUAGES: ReadonlyArray<{
   value: ScryfallLanguage;
@@ -42,3 +43,9 @@ export const SCRYFALL_LANGUAGES: ReadonlyArray<{
   { value: "sa", label: "Sanskrit" },
   { value: "ph", label: "Phyrexian" },
 ];
+
+export const filterScryfallItemsByLanguage = <T extends { lang: string }>(
+  items: T[],
+  language: ScryfallLanguageFilter,
+) =>
+  language === "all" ? items : items.filter((item) => item.lang === language);

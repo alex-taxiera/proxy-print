@@ -22,7 +22,7 @@ const getMpcImageUri = (id: string) => {
   return `${MPC_BASE_URL}/${id}.jpg?dpi=1500&jpgQuality=100`;
 };
 
-const getScryfallUri = (uri: string) => {
+export const getScryfallUris = (uri: string) => {
   const cloudflareOrigins = ["long-wind-b6b3.alex-taxiera.workers.dev"];
 
   return [
@@ -107,7 +107,7 @@ const fetchScryfallImage = async (uris: string[], signal?: AbortSignal) => {
 const buildScryfallImageQueryFn =
   (uri: string, settings: Settings): QueryFunction<ScryfallImageQueryData> =>
   async ({ signal }) => {
-    const response = await fetchScryfallImage(getScryfallUri(uri), signal);
+    const response = await fetchScryfallImage(getScryfallUris(uri), signal);
 
     const blob = await response.blob();
     const mimeType = response.headers.get("content-type") || "image/png";

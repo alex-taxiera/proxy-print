@@ -260,6 +260,50 @@ export const ImagesProvider = (
     });
   };
 
+  const onReplaceScryfallPrinting = async (
+    slotId: string,
+    data: { front: ScryfallImageData; back: ScryfallImageData | null },
+  ) => {
+    const currentSlot = slots.get(slotId);
+    if (!currentSlot?.front || !("uri" in currentSlot.front)) {
+      throw new Error("Only Scryfall card printings can be replaced.");
+    }
+
+    const front: Image = { ...data.front, uuid: currentSlot.front.uuid };
+    const back =
+      data.back === null
+        ? currentSlot.back
+        : ({ ...data.back, uuid: `${slotId}:back` } satisfies Image);
+
+    const downloads = [
+      scryfallDownloadManager.add({
+        uuid: front.uuid,
+        queryData: getQueryDataForImage(front, settings),
+      }),
+    ];
+    if (data.back) {
+      downloads.push(
+        scryfallDownloadManager.add({
+          uuid: back!.uuid,
+          queryData: getQueryDataForImage(back!, settings),
+        }),
+      );
+    }
+
+    await Promise.all(downloads);
+
+    setSlots((old) => {
+      const slot = old.get(slotId);
+      if (!slot) {
+        return old;
+      }
+
+      const next = new Map(old);
+      next.set(slotId, { ...slot, front, back });
+      return next;
+    });
+  };
+
   const onRemoveBack = (slotId: string) => {
     setSlots((old) => {
       const currentSlot = old.get(slotId);
@@ -508,6 +552,7 @@ export const ImagesProvider = (
     onAdd,
     onAddSlots,
     onAddBack,
+    onReplaceScryfallPrinting,
     onRemoveBack,
     onInsertEmptySlot,
     onError,

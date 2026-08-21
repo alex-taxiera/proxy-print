@@ -9,7 +9,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { LuExpand, LuWandSparkles } from "react-icons/lu";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,7 +45,11 @@ const hasTransformFlags = (
 const useQueryData = (image: PossiblyEmptyImage) => {
   const queryClient = useQueryClient();
 
-  const queryKey = !getIsEmptyImage(image) ? getQueryKeyForImage(image) : null;
+  const queryKey = useMemo(
+    () => (!getIsEmptyImage(image) ? getQueryKeyForImage(image) : null),
+    [image],
+  );
+  const queryKeyHash = JSON.stringify(queryKey);
 
   // Manually subscribe to cache updates without triggering fetches
   const [queryData, setQueryData] = useState<ImageQueryData | undefined>(() => {
@@ -54,11 +58,16 @@ const useQueryData = (image: PossiblyEmptyImage) => {
   });
 
   useEffect(() => {
-    if (!queryKey) return;
+    const timeout = setTimeout(() => {
+      setQueryData(
+        queryKey
+          ? queryClient.getQueryData<ImageQueryData>(queryKey)
+          : undefined,
+      );
+    });
 
-    const currentQueryData = queryClient.getQueryData<ImageQueryData>(queryKey);
-    if (currentQueryData && !queryData) {
-      setTimeout(() => setQueryData(currentQueryData));
+    if (!queryKey) {
+      return () => clearTimeout(timeout);
     }
 
     // Subscribe to cache updates for this specific query
@@ -77,8 +86,11 @@ const useQueryData = (image: PossiblyEmptyImage) => {
       }
     });
 
-    return unsubscribe;
-  }, [queryClient, queryData, queryKey]);
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
+  }, [queryClient, queryKey, queryKeyHash]);
 
   return queryData;
 };
