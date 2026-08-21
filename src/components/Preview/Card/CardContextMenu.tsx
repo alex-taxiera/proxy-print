@@ -7,6 +7,7 @@ import {
   LuCheck,
   LuEllipsis,
   LuExpand,
+  LuGalleryVerticalEnd,
   LuImage,
   LuImageDown,
   LuImageUpscale,
@@ -28,7 +29,12 @@ import {
 } from "@/components/ui/menu";
 
 import { ImageSelectionContext } from "@/context/ImageSelectionContext";
-import { getIsLocalImage, Image, ImagesContext } from "@/context/ImagesContext";
+import {
+  getIsLocalImage,
+  getIsScryfallImage,
+  Image,
+  ImagesContext,
+} from "@/context/ImagesContext";
 import { usePreviewData } from "@/hooks/usePreviewData";
 import { useUpscaleImage } from "@/hooks/useUpscaleImage";
 import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
@@ -38,6 +44,7 @@ import { createFileHash } from "@/utils/create-file-hash";
 import { getKeybindLabels } from "@/utils/keybind-labels";
 
 import { AddMoreDialog } from "./AddMoreDialog";
+import { ChangePrintDialog } from "./ChangePrintDialog";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
   image: Image;
@@ -70,6 +77,7 @@ export const CardContextMenu = ({
     onRemove,
     onReorder,
     onAddBack,
+    onReplaceScryfallPrinting,
     onRemoveBack,
     isLoadingProject,
   } = useContext(ImagesContext);
@@ -87,6 +95,7 @@ export const CardContextMenu = ({
   const name = getIsLocalImage(image) ? image.file?.name : image.name;
 
   const [isAddMoreOpen, setIsAddMoreOpen] = useState(false);
+  const [isChangePrintOpen, setIsChangePrintOpen] = useState(false);
 
   const buildOnAddClick = (count: number) => () => {
     add(count);
@@ -336,6 +345,16 @@ export const CardContextMenu = ({
               <MenuItemText>Revert to original</MenuItemText>
             </MenuItem>
           ) : null}
+          {getIsScryfallImage(image) && !isBackFace && slotId ? (
+            <MenuItem
+              value="change-print"
+              onSelect={() => setIsChangePrintOpen(true)}
+              disabled={isLoadingProject}
+            >
+              <LuGalleryVerticalEnd />
+              <MenuItemText>Change print...</MenuItemText>
+            </MenuItem>
+          ) : null}
         </MenuItemGroup>
         {/* Back management — available for all faces when slotId is known */}
         {slotId ? (
@@ -443,6 +462,15 @@ export const CardContextMenu = ({
         open={isAddMoreOpen}
         onOpenChange={({ open }) => setIsAddMoreOpen(open)}
       />
+      {getIsScryfallImage(image) && slotId ? (
+        <ChangePrintDialog
+          cardName={image.name}
+          currentUri={image.uri}
+          open={isChangePrintOpen}
+          onOpenChange={({ open }) => setIsChangePrintOpen(open)}
+          onSelect={(printing) => onReplaceScryfallPrinting(slotId, printing)}
+        />
+      ) : null}
     </MenuRoot>
   );
 };
