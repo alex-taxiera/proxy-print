@@ -236,7 +236,7 @@ export const ChangePrintDialog = ({
     <DialogRoot
       open={open}
       onOpenChange={handleOpenChange}
-      size={{ base: "full", md: "xl" }}
+      size="xl"
       scrollBehavior="inside"
     >
       <DialogContent>
@@ -325,8 +325,8 @@ export const ChangePrintDialog = ({
             </Stack>
           )}
         </DialogBody>
-        <DialogFooter>
-          {hasNextPage ? (
+        {hasNextPage ? (
+          <DialogFooter>
             <Button
               variant="outline"
               loading={isFetchingNextPage}
@@ -334,8 +334,8 @@ export const ChangePrintDialog = ({
             >
               Load more
             </Button>
-          ) : null}
-        </DialogFooter>
+          </DialogFooter>
+        ) : null}
         <DialogCloseTrigger aria-label="Close" />
       </DialogContent>
     </DialogRoot>
