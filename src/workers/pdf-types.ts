@@ -81,7 +81,17 @@ export type PdfLineOp = {
   dashArray?: [number, number];
 };
 
-export type PdfRenderOp = PdfImageOp | PdfLineOp;
+export type PdfRectOp = {
+  op: "rect";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** RGB components in [0, 255] range */
+  color: [number, number, number];
+};
+
+export type PdfRenderOp = PdfImageOp | PdfLineOp | PdfRectOp;
 
 export type PdfPageSpec = {
   widthPts: number;

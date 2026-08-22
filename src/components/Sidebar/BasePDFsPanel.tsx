@@ -14,29 +14,15 @@ import { useState } from "react";
 import { LuPencil, LuSquareCheck, LuTrash2 } from "react-icons/lu";
 
 import { Field } from "@/components/ui/field";
+import { Tooltip } from "@/components/ui/tooltip";
 
-import { Unit } from "@/context/SettingsContext";
 import { useSettingsFormState } from "@/hooks/useSettingsFormState";
 import { useSettingsStore } from "@/store/settingsStore";
+import { applyBasePdfPageSize } from "@/utils/basePdf";
 
 import { FileUploadRoot, FileUploadTrigger } from "../ui/file-upload";
-
-const applyBasePdfPageSize = async (
-  bytes: Uint8Array,
-  unit: Unit,
-  handle: ReturnType<typeof useSettingsFormState>["handle"],
-) => {
-  const doc = await PDFDocument.load(bytes);
-  const page = doc.getPage(0);
-  const { width: widthPts, height: heightPts } = page.getSize();
-
-  // Convert pts to the current unit.
-  const ptsPerUnit = unit === "mm" ? 72 / 25.4 : 72;
-  const pageWidth = (widthPts / ptsPerUnit).toFixed(3);
-  const pageHeight = (heightPts / ptsPerUnit).toFixed(3);
-
-  await handle({ pageWidth, pageHeight });
-};
+import { CreateBasePdfDialog } from "./CreateBasePdfDialog";
+import { ExportCutlineDxfDialog } from "./ExportCutlineDxfDialog";
 
 export const BasePDFsPanel = () => {
   const { formState, handle } = useSettingsFormState();
@@ -50,6 +36,8 @@ export const BasePDFsPanel = () => {
   const [basePdfFilter, setBasePdfFilter] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDxfDialogOpen, setIsDxfDialogOpen] = useState(false);
 
   const handleUpload = async (file: File) => {
     const bytes = await file.arrayBuffer();
@@ -97,132 +85,164 @@ export const BasePDFsPanel = () => {
   };
 
   return (
-    <Field
-      label="Base PDFs"
-      helperText="Cards will be printed on top of the active base PDF. Page size is locked to its dimensions"
-    >
-      <VStack align="start" width="full">
-        <FileUploadRoot
-          maxFiles={1}
-          accept={{ "application/pdf": [".pdf"] }}
-          onFileChange={(details) => {
-            const file = details.acceptedFiles[0];
-            if (file) {
-              void handleUpload(file);
-            }
-          }}
+    <>
+      <Tooltip content="Generates a DXF based on your current layout for use with your cutting software">
+        <Button
+          variant="outline"
+          size="sm"
+          colorPalette="gray"
+          type="button"
+          onClick={() => setIsDxfDialogOpen(true)}
         >
-          <FileUploadTrigger asChild>
+          Export DXF...
+        </Button>
+      </Tooltip>
+      <Field
+        label="Base PDFs"
+        helperText="Cards will be printed on top of the active base PDF. Page size is locked to its dimensions"
+      >
+        <VStack align="start" width="full">
+          <CreateBasePdfDialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          />
+          <ExportCutlineDxfDialog
+            open={isDxfDialogOpen}
+            onOpenChange={setIsDxfDialogOpen}
+          />
+          <HStack>
+            <FileUploadRoot
+              maxFiles={1}
+              accept={{ "application/pdf": [".pdf"] }}
+              onFileChange={(details) => {
+                const file = details.acceptedFiles[0];
+                if (file) {
+                  void handleUpload(file);
+                }
+              }}
+            >
+              <FileUploadTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  colorPalette="gray"
+                  type="button"
+                >
+                  Upload PDF...
+                </Button>
+              </FileUploadTrigger>
+            </FileUploadRoot>
             <Button
               variant="outline"
               size="sm"
               colorPalette="gray"
               type="button"
+              onClick={() => setIsCreateDialogOpen(true)}
             >
-              Upload PDF...
+              Create...
             </Button>
-          </FileUploadTrigger>
-        </FileUploadRoot>
+          </HStack>
 
-        {activeBasePdfId && (
-          <Button
-            size="xs"
-            variant="ghost"
-            colorPalette="gray"
-            alignSelf="flex-start"
-            type="button"
-            onClick={() => setActiveBasePdfId(null)}
+          {activeBasePdfId && (
+            <Button
+              size="xs"
+              variant="ghost"
+              colorPalette="gray"
+              alignSelf="flex-start"
+              type="button"
+              onClick={() => setActiveBasePdfId(null)}
+            >
+              Clear active base PDF
+            </Button>
+          )}
+
+          <Listbox.Root
+            collection={basePdfCollection}
+            value={activeBasePdfId ? [activeBasePdfId] : undefined}
+            onValueChange={({ value }) => void handleSelect(value[0])}
+            visibility={basePdfEntries.length > 0 ? "visible" : "hidden"}
+            width="full"
           >
-            Clear active base PDF
-          </Button>
-        )}
-
-        <Listbox.Root
-          collection={basePdfCollection}
-          value={activeBasePdfId ? [activeBasePdfId] : undefined}
-          onValueChange={({ value }) => void handleSelect(value[0])}
-          visibility={basePdfEntries.length > 0 ? "visible" : "hidden"}
-          width="full"
-        >
-          <Listbox.Label>Saved base PDFs</Listbox.Label>
-          <Listbox.Input
-            as={Input}
-            placeholder="Type to filter base PDFs..."
-            onChange={(e) => setBasePdfFilter(e.target.value)}
-          />
-          {displayedBasePdfs.length === 0 ? (
-            <Text fontSize="sm" color="fg.muted">
-              No base PDFs found, adjust the filter
-            </Text>
-          ) : (
-            <Listbox.Content>
-              {displayedBasePdfs.map((item) =>
-                renamingId === item.value ? (
-                  <Listbox.Item
-                    key={item.value}
-                    item={item}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <HStack flex="1">
-                      <Input
-                        size="xs"
-                        value={renameValue}
-                        autoFocus
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") commitRename();
-                          if (e.key === "Escape") setRenamingId(null);
-                        }}
-                      />
+            <Listbox.Label>Saved base PDFs</Listbox.Label>
+            <Listbox.Input
+              as={Input}
+              placeholder="Type to filter base PDFs..."
+              onChange={(e) => setBasePdfFilter(e.target.value)}
+            />
+            {displayedBasePdfs.length === 0 ? (
+              <Text fontSize="sm" color="fg.muted">
+                No base PDFs found, adjust the filter
+              </Text>
+            ) : (
+              <Listbox.Content>
+                {displayedBasePdfs.map((item) =>
+                  renamingId === item.value ? (
+                    <Listbox.Item
+                      key={item.value}
+                      item={item}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <HStack flex="1">
+                        <Input
+                          size="xs"
+                          value={renameValue}
+                          autoFocus
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitRename();
+                            if (e.key === "Escape") setRenamingId(null);
+                          }}
+                        />
+                        <IconButton
+                          size="xs"
+                          variant="ghost"
+                          type="button"
+                          aria-label="Confirm rename"
+                          onClick={commitRename}
+                        >
+                          <LuSquareCheck />
+                        </IconButton>
+                      </HStack>
+                    </Listbox.Item>
+                  ) : (
+                    <Listbox.Item key={item.value} item={item}>
+                      <Listbox.ItemText lineClamp="1">
+                        {item.label}
+                      </Listbox.ItemText>
+                      <Listbox.ItemIndicator />
                       <IconButton
                         size="xs"
                         variant="ghost"
                         type="button"
-                        aria-label="Confirm rename"
-                        onClick={commitRename}
+                        aria-label={`Rename "${item.label}"`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startRename(item.value, item.label);
+                        }}
                       >
-                        <LuSquareCheck />
+                        <LuPencil />
                       </IconButton>
-                    </HStack>
-                  </Listbox.Item>
-                ) : (
-                  <Listbox.Item key={item.value} item={item}>
-                    <Listbox.ItemText lineClamp="1">
-                      {item.label}
-                    </Listbox.ItemText>
-                    <Listbox.ItemIndicator />
-                    <IconButton
-                      size="xs"
-                      variant="ghost"
-                      type="button"
-                      aria-label={`Rename "${item.label}"`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startRename(item.value, item.label);
-                      }}
-                    >
-                      <LuPencil />
-                    </IconButton>
-                    <IconButton
-                      size="xs"
-                      variant="ghost"
-                      colorPalette="red"
-                      type="button"
-                      aria-label={`Delete "${item.label}"`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteBasePdf(item.value);
-                      }}
-                    >
-                      <LuTrash2 />
-                    </IconButton>
-                  </Listbox.Item>
-                ),
-              )}
-            </Listbox.Content>
-          )}
-        </Listbox.Root>
-      </VStack>
-    </Field>
+                      <IconButton
+                        size="xs"
+                        variant="ghost"
+                        colorPalette="red"
+                        type="button"
+                        aria-label={`Delete "${item.label}"`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteBasePdf(item.value);
+                        }}
+                      >
+                        <LuTrash2 />
+                      </IconButton>
+                    </Listbox.Item>
+                  ),
+                )}
+              </Listbox.Content>
+            )}
+          </Listbox.Root>
+        </VStack>
+      </Field>
+    </>
   );
 };

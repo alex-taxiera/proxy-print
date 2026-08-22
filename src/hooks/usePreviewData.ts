@@ -8,45 +8,12 @@ import {
   PossiblyEmptyImage,
 } from "@/context/ImagesContext";
 import { useSettingsStore } from "@/store/settingsStore";
+import { computeGridLimits } from "@/utils/gridLayout";
 
 export const usePageLimits = () => {
   const settings = useSettingsStore((s) => s.settings);
-
-  const guidesThickness = parseFloat(settings.guidesThickness); // mm
-  const bleedEdge = settings.enableBleedEdge ? Number(settings.bleedEdge) : 0; // mm
-
-  // Adjust card height based on card size
-  const cardHeight =
-    Number(settings.cardHeight) + 2 * bleedEdge + guidesThickness;
-  const cardWidth =
-    Number(settings.cardWidth) + 2 * bleedEdge + guidesThickness;
-
-  const rowsPerPage = (() => {
-    // convert in to mm when settings.unit is set to "in"
-    const pageHeight =
-      parseFloat(settings.pageHeight) * (settings.unit === "in" ? 25.4 : 1);
-
-    const rowsBeforeGap = Math.floor(pageHeight / cardHeight);
-    const amountOfGaps = rowsBeforeGap - 1;
-    const gapHeight = amountOfGaps * Number(settings.rowGap);
-    const availableHeight = pageHeight - gapHeight;
-    const rowsAfterGap = Math.floor(availableHeight / cardHeight);
-    return rowsAfterGap;
-  })();
-
-  const columnsPerPage = (() => {
-    const pageWidth =
-      parseFloat(settings.pageWidth) * (settings.unit === "in" ? 25.4 : 1);
-
-    const columnsBeforeGap = Math.floor(pageWidth / cardWidth);
-    const amountOfGaps = columnsBeforeGap - 1;
-    const gapWidth = amountOfGaps * Number(settings.columnGap);
-    const availableWidth = pageWidth - gapWidth;
-    const columnsAfterGap = Math.floor(availableWidth / cardWidth);
-    return columnsAfterGap;
-  })();
-
-  const cardsPerPage = rowsPerPage * columnsPerPage;
+  const { rowsPerPage, columnsPerPage, cardsPerPage } =
+    computeGridLimits(settings);
 
   return {
     rowsPerPage,

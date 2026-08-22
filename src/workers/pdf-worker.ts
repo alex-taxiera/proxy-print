@@ -1,13 +1,12 @@
 import {
   PDFDocument,
-  rgb,
   pushGraphicsState,
   concatTransformationMatrix,
 } from "pdf-lib";
 
+import { renderPdfOp } from "./pdf-render";
 import { buildCardRenderOps } from "./pdf-spec";
 import type { CardData, InitData } from "./pdf-types";
-import type { PdfImageOp, PdfLineOp } from "./pdf-types";
 
 declare const self: DedicatedWorkerGlobalScope;
 
@@ -24,20 +23,6 @@ type MessageEventData =
 
 let pdfDoc: PDFDocument | undefined;
 let currentInit: InitData | undefined;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function dataUrlToUint8Array(dataUrl: string): Uint8Array {
-  const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
 
 // ---------------------------------------------------------------------------
 // PDF init
@@ -144,43 +129,7 @@ async function renderCard(cardData: CardData): Promise<void> {
   const ops = buildCardRenderOps(cardData, currentInit);
 
   for (const op of ops) {
-    if (op.op === "image") {
-      await renderImage(op);
-    } else {
-      renderLine(op);
-    }
-  }
-
-  function renderLine(op: PdfLineOp): void {
-    const [r, g, b] = op.color;
-    page.drawLine({
-      start: { x: op.x1, y: op.y1 },
-      end: { x: op.x2, y: op.y2 },
-      thickness: op.thickness,
-      color: rgb(r / 255, g / 255, b / 255),
-      ...(op.dashArray ? { dashArray: op.dashArray, dashPhase: 0 } : undefined),
-    });
-  }
-
-  async function renderImage(op: PdfImageOp): Promise<void> {
-    if (!pdfDoc) return;
-    const bytes = dataUrlToUint8Array(op.src);
-
-    console.debug(
-      `Adding image: format=${op.mimeType}, pos=(${op.x.toFixed(1)}, ${op.y.toFixed(1)}), size=${op.width.toFixed(1)}x${op.height.toFixed(1)} pts`,
-    );
-
-    const embedded =
-      op.mimeType === "image/jpeg"
-        ? await pdfDoc.embedJpg(bytes)
-        : await pdfDoc.embedPng(bytes);
-
-    page.drawImage(embedded, {
-      x: op.x,
-      y: op.y,
-      width: op.width,
-      height: op.height,
-    });
+    await renderPdfOp(pdfDoc, page, op);
   }
 
   // Report progress (same protocol as before)

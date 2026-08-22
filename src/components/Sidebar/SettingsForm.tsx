@@ -22,7 +22,6 @@ import { ChangeEvent, useContext, useRef, useState } from "react";
 import {
   LuDownload,
   LuGraduationCap,
-  LuRefreshCcw,
   LuSave,
   LuTrash2,
   LuUpload,
@@ -67,12 +66,10 @@ import {
   SelectTrigger,
   SelectValueText,
   SelectContent,
-  SelectItemGroup,
   SelectItem,
   SelectItemText,
   SelectControl,
   SelectIndicatorGroup,
-  SelectIndicator,
 } from "@/components/ui/select";
 import { toaster } from "@/components/ui/toaster";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -82,7 +79,6 @@ import {
   CARD_DIMENSIONS,
   MAX_BLEED,
   MAX_GUIDES_THICKNESS,
-  PAGE_DIMENSIONS,
 } from "@/context/SettingsContext";
 import { useSettingsFormState } from "@/hooks/useSettingsFormState";
 import { ImportPreview, useTransfer } from "@/hooks/useTransfer";
@@ -99,6 +95,7 @@ import { Status } from "../ui/status";
 import { BasePDFsPanel } from "./BasePDFsPanel";
 import { ExportProjectDialog } from "./ExportProjectDialog";
 import { ImportBundleDialog } from "./ImportBundleDialog";
+import { PageSizeFields } from "./PageSizeFields";
 
 const DefaultCardBackSection = () => {
   const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
@@ -497,24 +494,6 @@ const ProjectsPanel = () => {
   );
 };
 
-const unitsCollection = createListCollection({
-  items: Array.from(
-    new Set(Object.values(PAGE_DIMENSIONS).map(({ unit }) => unit)),
-  ).map((unit) => ({
-    value: unit,
-    label: unit,
-  })),
-});
-
-const PAGE_SIZE_OPTIONS = Object.entries(PAGE_DIMENSIONS).map(
-  ([label, dimensions]) => ({
-    label,
-    unit: dimensions.unit,
-    value: `${dimensions.width}${dimensions.unit}-${dimensions.height}${dimensions.unit}`,
-    hidden: false,
-  }),
-);
-
 const Container = (props: StackProps) => (
   <VStack
     width="full"
@@ -535,12 +514,9 @@ export const SettingsForm = () => {
     buildTextInputChangeHandler,
     buildNumberInputChangeHandler,
     buildCheckboxChangeHandler,
-    buildSelectChangeHandler,
     cardSizeChangeHandler,
-    pageSizeChangeHandler,
     buildColorPickerChangeHandler,
     cardSizeValue,
-    pageSizeValue,
   } = useSettingsFormState();
   const { prepareImport, applyImport } = useTransfer();
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -590,29 +566,6 @@ export const SettingsForm = () => {
         hidden: true,
       }),
   });
-
-  const pageSizeCollection = createListCollection({
-    groupBy: (item) => item.unit,
-    items: PAGE_SIZE_OPTIONS.concat({
-      label: "Custom",
-      unit: formState.unit,
-      value: "custom",
-      hidden: true,
-    }),
-  });
-
-  const displayPageSizeValue = PAGE_SIZE_OPTIONS.some(
-    (option) => option.value === pageSizeValue,
-  )
-    ? pageSizeValue
-    : "custom";
-
-  const rotatePage = () => {
-    void handle({
-      pageWidth: formState.pageHeight,
-      pageHeight: formState.pageWidth,
-    });
-  };
 
   const activeBasePdf = useSettingsStore(selectActiveBasePdf);
   const isPageSizeLocked = activeBasePdf !== null;
@@ -790,153 +743,20 @@ export const SettingsForm = () => {
               </Collapsible.Content>
             </Collapsible.Root>
 
-            <Collapsible.Root gap="3">
-              <Field>
-                <SelectRoot
-                  collection={pageSizeCollection}
-                  value={[displayPageSizeValue]}
-                  onValueChange={pageSizeChangeHandler}
-                  disabled={isPageSizeLocked}
-                >
-                  <HStack
-                    width="full"
-                    alignItems="flex-end"
-                    justifyContent="space-between"
-                  >
-                    <SelectLabel>Page Size</SelectLabel>
-                    <Collapsible.Trigger asChild>
-                      <Link
-                        as="button"
-                        fontWeight="semibold"
-                        fontSize="xs"
-                        colorPalette="accent"
-                      >
-                        Customize
-                      </Link>
-                    </Collapsible.Trigger>
-                  </HStack>
-                  <Tooltip
-                    disabled={!isPageSizeLocked}
-                    openDelay={100}
-                    closeDelay={200}
-                    content="Locked to Base PDF dimensions"
-                  >
-                    <SelectControl>
-                      <SelectTrigger>
-                        <SelectValueText textTransform="capitalize" />
-                      </SelectTrigger>
-                      <SelectIndicatorGroup>
-                        <Tooltip
-                          openDelay={100}
-                          closeDelay={200}
-                          content="Rotate Page"
-                        >
-                          <IconButton
-                            type="button"
-                            variant="ghost"
-                            pointerEvents="auto"
-                            size="xs"
-                            aria-label="Rotate Page"
-                            disabled={isPageSizeLocked}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              rotatePage();
-                            }}
-                          >
-                            <LuRefreshCcw />
-                          </IconButton>
-                        </Tooltip>
-                        <SelectIndicator />
-                      </SelectIndicatorGroup>
-                    </SelectControl>
-                  </Tooltip>
-                  <SelectContent>
-                    {pageSizeCollection.group().map(([type, group]) => (
-                      <SelectItemGroup
-                        key={type}
-                        label={type === "mm" ? "ISO" : "US"}
-                      >
-                        {group
-                          .filter((item) => !item.hidden)
-                          .map((item) => (
-                            <SelectItem key={item.value} item={item}>
-                              <SelectItemText textTransform="capitalize">
-                                {item.label}
-                              </SelectItemText>
-                            </SelectItem>
-                          ))}
-                      </SelectItemGroup>
-                    ))}
-                  </SelectContent>
-                </SelectRoot>
-              </Field>
-              <Collapsible.Content>
-                <VStack
-                  width="full"
-                  gap="4"
-                  alignItems="stretch"
-                  alignSelf="stretch"
-                  justifyContent="center"
-                  paddingLeft="4"
-                >
-                  <Field disabled={isPageSizeLocked}>
-                    <SelectRoot
-                      collection={unitsCollection}
-                      value={[formState.unit]}
-                      onValueChange={buildSelectChangeHandler("unit")}
-                      disabled={isPageSizeLocked}
-                    >
-                      <SelectLabel>Page Unit</SelectLabel>
-                      <SelectControl>
-                        <SelectTrigger>
-                          <SelectValueText />
-                        </SelectTrigger>
-                        <SelectIndicatorGroup />
-                      </SelectControl>
-                      <SelectContent>
-                        {unitsCollection.items.map((item) => (
-                          <SelectItem key={item.value} item={item}>
-                            <SelectItemText>{item.label}</SelectItemText>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </SelectRoot>
-                  </Field>
-                  <Field
-                    label={`Page Width (${formState.unit})`}
-                    invalid={formErrors.pageWidth.length > 0}
-                    disabled={isPageSizeLocked}
-                    errorText={formErrors.pageWidth[0]?.message}
-                  >
-                    <NumberInputRoot
-                      min={1}
-                      value={formState.pageWidth}
-                      onValueChange={buildNumberInputChangeHandler("pageWidth")}
-                      disabled={isPageSizeLocked}
-                    >
-                      <NumberInputField />
-                    </NumberInputRoot>
-                  </Field>
-                  <Field
-                    label={`Page Height (${formState.unit})`}
-                    invalid={formErrors.pageHeight.length > 0}
-                    disabled={isPageSizeLocked}
-                    errorText={formErrors.pageHeight[0]?.message}
-                  >
-                    <NumberInputRoot
-                      min={1}
-                      value={formState.pageHeight}
-                      onValueChange={buildNumberInputChangeHandler(
-                        "pageHeight",
-                      )}
-                      disabled={isPageSizeLocked}
-                    >
-                      <NumberInputField />
-                    </NumberInputRoot>
-                  </Field>
-                </VStack>
-              </Collapsible.Content>
-            </Collapsible.Root>
+            <PageSizeFields
+              value={{
+                pageWidth: formState.pageWidth,
+                pageHeight: formState.pageHeight,
+                unit: formState.unit,
+              }}
+              onChange={(next) => void handle(next)}
+              disabled={isPageSizeLocked}
+              disabledTooltip="Locked to Base PDF dimensions"
+              errors={{
+                pageWidth: formErrors.pageWidth[0]?.message,
+                pageHeight: formErrors.pageHeight[0]?.message,
+              }}
+            />
 
             <Field
               label="Bleed Edge"
