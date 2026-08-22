@@ -8,9 +8,14 @@ const SENTRY_ENV =
   typeof import.meta.env.VITE_SENTRY_ENV === "string"
     ? import.meta.env.VITE_SENTRY_ENV
     : import.meta.env.MODE;
-console.debug("sentry dsn", import.meta.env.VITE_SENTRY_DSN);
+
+const SENTRY_DSN =
+  typeof import.meta.env.VITE_SENTRY_DSN === "string"
+    ? import.meta.env.VITE_SENTRY_DSN
+    : undefined;
+
 Sentry.init({
-  dsn: "https://2368027c73afccc2d259b70f8546c815@o4511922559647744.ingest.us.sentry.io/4511922562203648",
+  dsn: SENTRY_DSN,
   // Setting this option to true will send default PII data to Sentry.
   // For example, automatic IP address collection on events
   sendDefaultPii: true,

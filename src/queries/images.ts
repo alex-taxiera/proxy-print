@@ -22,11 +22,14 @@ const getMpcImageUri = (id: string) => {
   return `${MPC_BASE_URL}/${id}.jpg?dpi=1500&jpgQuality=100`;
 };
 
-export const getScryfallUris = (uri: string) => {
-  const cloudflareOrigins = ["long-wind-b6b3.alex-taxiera.workers.dev"];
+const CLOUDFLARE_ORIGINS =
+  typeof import.meta.env.VITE_CLOUDFLARE_ORIGINS === "string"
+    ? import.meta.env.VITE_CLOUDFLARE_ORIGINS.split(",")
+    : [];
 
+export const getScryfallUris = (uri: string) => {
   return [
-    ...cloudflareOrigins.map((base) => uri.replace("cards.scryfall.io", base)),
+    ...CLOUDFLARE_ORIGINS.map((base) => uri.replace("cards.scryfall.io", base)),
     uri,
   ];
 };

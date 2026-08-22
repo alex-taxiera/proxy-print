@@ -18,6 +18,7 @@ jobs:
     env:
       VITE_SENTRY_ENV: production
       VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+      VITE_CLOUDFLARE_ORIGINS: ${{ secrets.VITE_CLOUDFLARE_ORIGINS }}
       CLOUDFLARE_ENV: production
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 

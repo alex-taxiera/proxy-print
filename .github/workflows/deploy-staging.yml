@@ -19,6 +19,7 @@ jobs:
     env:
       VITE_SENTRY_ENV: staging
       VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+      VITE_CLOUDFLARE_ORIGINS: ${{ secrets.VITE_CLOUDFLARE_ORIGINS }}
       CLOUDFLARE_ENV: staging
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
