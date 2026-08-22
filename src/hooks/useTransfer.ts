@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { nanoid } from "nanoid";
 
 import {
   GoogleImageData,
@@ -10,6 +11,7 @@ import {
 } from "@/context/ImagesContext";
 import { getQueryKeyForImageData, ImageQueryData } from "@/queries/images";
 import {
+  BasePdfsMap,
   coerceSettings,
   PresetData,
   useSettingsStore,
@@ -38,9 +40,11 @@ export type ImportPreview = ParsedBundle & {
 export function useTransfer() {
   const queryClient = useQueryClient();
   const presets = useSettingsStore((s) => s.presets);
+  const basePdfs = useSettingsStore((s) => s.basePdfs);
   const projects = useSettingsStore((s) => s.projects);
   const importPresets = useSettingsStore((s) => s.importPresets);
   const importProjects = useSettingsStore((s) => s.importProjects);
+  const importBasePdfs = useSettingsStore((s) => s.importBasePdfs);
 
   const getImageQueryData = async (
     image: ImageData,
@@ -85,17 +89,18 @@ export function useTransfer() {
         }
       }
 
+      const basePdf = preset.basePdfId ? basePdfs[preset.basePdfId] : null;
+
       presetInputs.push({
         name,
         settings: preset.settings,
-        basePdf:
-          preset.basePdfBytes && preset.basePdfName
-            ? {
-                name: preset.basePdfName,
-                pageCount: preset.basePdfPageCount ?? 0,
-                bytes: preset.basePdfBytes,
-              }
-            : null,
+        basePdf: basePdf
+          ? {
+              name: basePdf.name,
+              pageCount: basePdf.pageCount,
+              bytes: basePdf.bytes,
+            }
+          : null,
         defaultCardBack,
       });
     }
@@ -203,6 +208,7 @@ export function useTransfer() {
       : preview.projectNameMap;
 
     const presetEntries: Record<string, PresetData> = {};
+    const basePdfEntries: BasePdfsMap = {};
     for (const preset of preview.presets) {
       const resolvedName = presetNameMap.get(preset.name) ?? preset.name;
 
@@ -232,13 +238,24 @@ export function useTransfer() {
         }
       }
 
+      let basePdfId: string | null = null;
+      if (preset.basePdfBytes && preset.basePdf) {
+        basePdfId = nanoid();
+        basePdfEntries[basePdfId] = {
+          name: preset.basePdf.name,
+          bytes: preset.basePdfBytes,
+          pageCount: preset.basePdf.pageCount,
+        };
+      }
+
       presetEntries[resolvedName] = {
         settings: coerceSettings(preset.settings) ?? preset.settings,
-        basePdfBytes: preset.basePdfBytes,
-        basePdfName: preset.basePdf?.name ?? null,
-        basePdfPageCount: preset.basePdf?.pageCount ?? null,
+        basePdfId,
         defaultCardBack,
       };
+    }
+    if (Object.keys(basePdfEntries).length > 0) {
+      importBasePdfs(basePdfEntries);
     }
     if (Object.keys(presetEntries).length > 0) importPresets(presetEntries);
 

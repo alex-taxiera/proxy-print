@@ -86,13 +86,17 @@ import {
 } from "@/context/SettingsContext";
 import { useSettingsFormState } from "@/hooks/useSettingsFormState";
 import { ImportPreview, useTransfer } from "@/hooks/useTransfer";
-import { selectIsPresetDirty, useSettingsStore } from "@/store/settingsStore";
+import {
+  selectActiveBasePdf,
+  selectIsPresetDirty,
+  useSettingsStore,
+} from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
 
 import { DefaultImportLanguageSetting } from "../DefaultImportLanguageSetting";
 import { UpscaleSetting } from "../UpscaleSetting";
 import { Status } from "../ui/status";
-import { BasePDFInput } from "./BasePDFInput";
+import { BasePDFsPanel } from "./BasePDFsPanel";
 import { ExportProjectDialog } from "./ExportProjectDialog";
 import { ImportBundleDialog } from "./ImportBundleDialog";
 
@@ -610,8 +614,8 @@ export const SettingsForm = () => {
     });
   };
 
-  const basePdfName = useSettingsStore((s) => s.basePdfName);
-  const isPageSizeLocked = basePdfName !== null;
+  const activeBasePdf = useSettingsStore(selectActiveBasePdf);
+  const isPageSizeLocked = activeBasePdf !== null;
 
   const activePresetName = useSettingsStore((s) => s.activePresetName);
   const isPresetDirty = useSettingsStore(selectIsPresetDirty);
@@ -1331,7 +1335,7 @@ export const SettingsForm = () => {
                 </AccordionItemTrigger>
                 <AccordionItemContent asChild>
                   <Container paddingX={{ base: "2", lg: "4" }}>
-                    <BasePDFInput />
+                    <BasePDFsPanel />
                   </Container>
                 </AccordionItemContent>
               </AccordionItem>
