@@ -11,7 +11,7 @@ import {
   getIsEmptyImage,
 } from "@/context/ImagesContext";
 import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
-import { useSettingsStore } from "@/store/settingsStore";
+import { selectActiveBasePdf, useSettingsStore } from "@/store/settingsStore";
 import { downloadBlob } from "@/utils/download-blob";
 import { invertHexColor } from "@/utils/invert-hex-color";
 import { progressEvents } from "@/utils/progress-events";
@@ -61,8 +61,9 @@ export const useGeneratePdf = (
 ) => {
   const queryClient = useQueryClient();
   const settings = useSettingsStore((s) => s.settings);
-  const basePdfBytes = useSettingsStore((s) => s.basePdfBytes);
-  const basePdfPageCount = useSettingsStore((s) => s.basePdfPageCount) ?? 1;
+  const activeBasePdf = useSettingsStore(selectActiveBasePdf);
+  const basePdfBytes = activeBasePdf?.bytes ?? null;
+  const basePdfPageCount = activeBasePdf?.pageCount ?? 1;
   const { images, setIsRendering } = useContext(ImagesContext);
   const { pages, cardsPerPage } = usePreviewData();
   const cardPositionMeta = useCardPositionMeta();

@@ -1,4 +1,5 @@
 import { get, set, del } from "idb-keyval";
+import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist, PersistStorage, StorageValue } from "zustand/middleware";
 
@@ -19,7 +20,7 @@ import { invertHexColor } from "@/utils/invert-hex-color";
 // ---------------------------------------------------------------------------
 // IDB adapter — uses PersistStorage<T> (not StateStorage) so that Zustand
 // never calls JSON.stringify/parse on the stored value. This allows native
-// IDB structured-clone serialisation of Uint8Array (basePdfBytes).
+// IDB structured-clone serialisation of Uint8Array (base PDF bytes).
 // ---------------------------------------------------------------------------
 
 function createIdbStorage<T>(): PersistStorage<T> {
@@ -41,17 +42,27 @@ function createIdbStorage<T>(): PersistStorage<T> {
 // Persisted slice — what actually gets written to IDB (subset of full store)
 // ---------------------------------------------------------------------------
 
+export type BasePdfData = {
+  name: string;
+  bytes: Uint8Array;
+  pageCount: number;
+};
+
+export type BasePdfsMap = Record<string, BasePdfData>;
+
 export type PresetData = {
   settings: Settings;
-  basePdfBytes: Uint8Array | null;
-  basePdfName: string | null;
-  basePdfPageCount: number | null;
+  basePdfId: string | null;
   defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
 };
 
 export type PresetsMap = Record<string, PresetData>;
 
-type PersistedSettings = PresetData & {
+type PersistedSettings = {
+  settings: Settings;
+  basePdfs: BasePdfsMap;
+  activeBasePdfId: string | null;
+  defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
   presets: PresetsMap;
   activePresetName: string | null;
   projects: ProjectsMap;
@@ -101,9 +112,8 @@ export function computeCssVars(value: Settings): Record<string, string> {
 export interface SettingsStoreState {
   settings: Settings;
   formState: Settings;
-  basePdfBytes: Uint8Array | null;
-  basePdfName: string | null;
-  basePdfPageCount: number | null;
+  basePdfs: BasePdfsMap;
+  activeBasePdfId: string | null;
   defaultCardBack: GoogleImageData | LocalImageData | ScryfallImageData | null;
   presets: PresetsMap;
   activePresetName: string | null;
@@ -115,9 +125,17 @@ export interface SettingsStoreState {
 export interface SettingsStoreActions {
   setSettings: (updater: (old: Settings) => Settings) => void;
   setFormState: (next: Settings) => void;
-  setBasePdf: (
-    data: { bytes: Uint8Array; name: string; pageCount: number } | null,
-  ) => void;
+  /** Adds a new base PDF to the library, sets it active, and returns its id. */
+  addBasePdf: (data: {
+    name: string;
+    bytes: Uint8Array;
+    pageCount: number;
+  }) => string;
+  renameBasePdf: (id: string, name: string) => void;
+  deleteBasePdf: (id: string) => void;
+  setActiveBasePdfId: (id: string | null) => void;
+  /** Merge imported base PDFs into the map, without touching activeBasePdfId. */
+  importBasePdfs: (entries: BasePdfsMap) => void;
   setDefaultCardBack: (
     data: GoogleImageData | LocalImageData | ScryfallImageData | null,
   ) => void;
@@ -202,6 +220,9 @@ const applyValidKeysToSettings = (
   };
 };
 
+export const selectActiveBasePdf = (s: SettingsStore): BasePdfData | null =>
+  s.activeBasePdfId ? (s.basePdfs[s.activeBasePdfId] ?? null) : null;
+
 export const selectIsPresetDirty = (s: SettingsStore): boolean => {
   if (!s.activePresetName) return false;
   const preset = s.presets[s.activePresetName];
@@ -216,9 +237,8 @@ export const useSettingsStore = create<SettingsStore>()(
       return {
         settings: initialSettings,
         formState: initialSettings,
-        basePdfBytes: null,
-        basePdfName: null,
-        basePdfPageCount: null,
+        basePdfs: {},
+        activeBasePdfId: null,
         defaultCardBack: null,
         presets: {},
         activePresetName: null,
@@ -238,21 +258,42 @@ export const useSettingsStore = create<SettingsStore>()(
             settings: applyValidKeysToSettings(state.settings, next),
           })),
 
-        setBasePdf: (data) => {
-          if (data === null) {
-            set({
-              basePdfBytes: null,
-              basePdfName: null,
-              basePdfPageCount: null,
-            });
-          } else {
-            set({
-              basePdfBytes: data.bytes,
-              basePdfName: data.name,
-              basePdfPageCount: data.pageCount,
-            });
-          }
+        addBasePdf: (data) => {
+          const id = nanoid();
+          set((state) => ({
+            basePdfs: { ...state.basePdfs, [id]: data },
+            activeBasePdfId: id,
+          }));
+          return id;
         },
+
+        renameBasePdf: (id, name) =>
+          set((state) => {
+            const existing = state.basePdfs[id];
+            if (!existing) return {};
+            return {
+              basePdfs: { ...state.basePdfs, [id]: { ...existing, name } },
+            };
+          }),
+
+        deleteBasePdf: (id) =>
+          set((state) => {
+            const remaining = Object.fromEntries(
+              Object.entries(state.basePdfs).filter(([k]) => k !== id),
+            );
+            return {
+              basePdfs: remaining,
+              activeBasePdfId:
+                state.activeBasePdfId === id ? null : state.activeBasePdfId,
+            };
+          }),
+
+        setActiveBasePdfId: (id) => set({ activeBasePdfId: id }),
+
+        importBasePdfs: (entries) =>
+          set((state) => ({
+            basePdfs: { ...state.basePdfs, ...entries },
+          })),
 
         setDefaultCardBack: (data) => {
           set({ defaultCardBack: data });
@@ -264,9 +305,7 @@ export const useSettingsStore = create<SettingsStore>()(
               ...state.presets,
               [name]: {
                 settings: state.formState,
-                basePdfBytes: state.basePdfBytes,
-                basePdfName: state.basePdfName,
-                basePdfPageCount: state.basePdfPageCount,
+                basePdfId: state.activeBasePdfId,
                 defaultCardBack: state.defaultCardBack,
               },
             },
@@ -281,9 +320,7 @@ export const useSettingsStore = create<SettingsStore>()(
             return {
               settings: preset.settings,
               formState: preset.settings,
-              basePdfBytes: preset.basePdfBytes,
-              basePdfName: preset.basePdfName,
-              basePdfPageCount: preset.basePdfPageCount,
+              activeBasePdfId: preset.basePdfId,
               defaultCardBack: preset.defaultCardBack,
               activePresetName: name,
             };
@@ -336,7 +373,7 @@ export const useSettingsStore = create<SettingsStore>()(
     },
     {
       name: "proxy-print-settings",
-      version: 10,
+      version: 11,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
         if (!persistedState) {
@@ -410,13 +447,76 @@ export const useSettingsStore = create<SettingsStore>()(
           } as SettingsStore;
         }
 
+        if (version < 11) {
+          const legacy = persistedState as {
+            basePdfBytes?: Uint8Array | null;
+            basePdfName?: string | null;
+            basePdfPageCount?: number | null;
+            presets?: Record<
+              string,
+              {
+                settings?: Settings;
+                basePdfBytes?: Uint8Array | null;
+                basePdfName?: string | null;
+                basePdfPageCount?: number | null;
+                defaultCardBack?: PresetData["defaultCardBack"];
+              }
+            >;
+          };
+
+          const basePdfs: BasePdfsMap = {};
+          const idForBasePdf = new Map<string, string>();
+
+          const registerBasePdf = (
+            bytes: Uint8Array | null | undefined,
+            name: string | null | undefined,
+            pageCount: number | null | undefined,
+          ): string | null => {
+            if (!bytes || !name) return null;
+            const key = `${name}:${bytes.length}`;
+            const existing = idForBasePdf.get(key);
+            if (existing) return existing;
+            const id = nanoid();
+            idForBasePdf.set(key, id);
+            basePdfs[id] = { name, bytes, pageCount: pageCount ?? 0 };
+            return id;
+          };
+
+          const activeBasePdfId = registerBasePdf(
+            legacy.basePdfBytes,
+            legacy.basePdfName,
+            legacy.basePdfPageCount,
+          );
+
+          const presets = Object.fromEntries(
+            Object.entries(legacy.presets ?? {}).map(([name, preset]) => [
+              name,
+              {
+                settings: preset.settings,
+                defaultCardBack: preset.defaultCardBack ?? null,
+                basePdfId: registerBasePdf(
+                  preset.basePdfBytes,
+                  preset.basePdfName,
+                  preset.basePdfPageCount,
+                ),
+              },
+            ]),
+          );
+
+          return {
+            ...state,
+            basePdfs,
+            activeBasePdfId,
+            presets,
+          } as SettingsStore;
+        }
+
         return persistedState as SettingsStore;
       },
       partialize: (state) => ({
         settings: state.settings,
-        basePdfBytes: state.basePdfBytes,
-        basePdfName: state.basePdfName,
-        basePdfPageCount: state.basePdfPageCount,
+        basePdfs: state.basePdfs,
+        activeBasePdfId: state.activeBasePdfId,
         defaultCardBack: state.defaultCardBack,
         presets: state.presets,
         activePresetName: state.activePresetName,
