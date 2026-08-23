@@ -6,10 +6,12 @@ import { button } from "@/components/ui/button.recipe";
 import { checkbox } from "@/components/ui/checkbox.recipe";
 import { collapsible } from "@/components/ui/collapsible.recipe";
 import { colorPicker } from "@/components/ui/color-picker.recipe";
+import { dialog } from "@/components/ui/dialog.recipe";
 import { fileUpload } from "@/components/ui/file-upload.recipe";
 import { input } from "@/components/ui/input.recipe";
 import { menu } from "@/components/ui/menu.recipe";
 import { numberInput } from "@/components/ui/number-input.recipe";
+import { scrollArea } from "@/components/ui/scroll-area.recipe";
 import { select } from "@/components/ui/select.recipe";
 import { textarea } from "@/components/ui/textarea.recipe";
 
@@ -114,6 +116,8 @@ const customConfig = defineConfig({
       numberInput,
       select,
       guide,
+      scrollArea,
+      dialog,
     },
   },
   globalCss: {

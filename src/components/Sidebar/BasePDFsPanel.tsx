@@ -4,6 +4,7 @@ import {
   HStack,
   IconButton,
   Input,
+  Link,
   Listbox,
   Text,
   useFilter,
@@ -20,9 +21,11 @@ import { useSettingsFormState } from "@/hooks/useSettingsFormState";
 import { useSettingsStore } from "@/store/settingsStore";
 import { applyBasePdfPageSize } from "@/utils/basePdf";
 
+import { DialogTrigger } from "../ui/dialog";
 import { FileUploadRoot, FileUploadTrigger } from "../ui/file-upload";
 import { CreateBasePdfDialog } from "./CreateBasePdfDialog";
 import { ExportCutlineDxfDialog } from "./ExportCutlineDxfDialog";
+import { HowToUseAutoCutterDialog } from "./HowToUseAutoCutterDialog";
 
 export const BasePDFsPanel = () => {
   const { formState, handle } = useSettingsFormState();
@@ -86,6 +89,13 @@ export const BasePDFsPanel = () => {
 
   return (
     <>
+      <HowToUseAutoCutterDialog>
+        <DialogTrigger asChild>
+          <Link fontSize="sm" as="button" colorPalette="accent">
+            How do I use this?
+          </Link>
+        </DialogTrigger>
+      </HowToUseAutoCutterDialog>
       <Tooltip content="Generates a DXF based on your current layout for use with your cutting software">
         <Button
           variant="outline"

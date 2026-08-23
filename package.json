@@ -37,7 +37,7 @@
     "importOrderSeparation": true
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.35.0",
+    "@chakra-ui/react": "^3.36.0",
     "@dnd-kit/helpers": "^0.1.21",
     "@dnd-kit/react": "^0.1.21",
     "@emotion/react": "^11.14.0",
@@ -60,7 +60,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@chakra-ui/cli": "^3.35.0",
+    "@chakra-ui/cli": "^3.36.0",
     "@cloudflare/vite-plugin": "^1.42.1",
     "@eslint/js": "^9.39.4",
     "@storybook/addon-a11y": "10.4.2",
