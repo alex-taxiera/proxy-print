@@ -243,7 +243,7 @@ export const ChangePrintDialog = ({
         <DialogHeader>
           <DialogTitle>Change print: {cardName}</DialogTitle>
         </DialogHeader>
-        <DialogBody>
+        <DialogBody asChild>
           {isLoading ? (
             <HStack justifyContent="center" paddingY="8">
               <Spinner size="lg" />

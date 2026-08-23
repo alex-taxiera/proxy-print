@@ -2,6 +2,7 @@ import { Dialog as ChakraDialog, Portal } from "@chakra-ui/react";
 import * as React from "react";
 
 import { CloseButton } from "./close-button";
+import { ScrollArea, ScrollAreaContent } from "./scroll-area";
 
 interface DialogContentProps extends ChakraDialog.ContentProps {
   portalled?: boolean;
@@ -52,13 +53,31 @@ export const DialogCloseTrigger = React.forwardRef<
   );
 });
 
+export type DialogBodyProps = ChakraDialog.BodyProps;
+export function DialogBody({
+  children,
+  asChild,
+  as,
+  ...props
+}: DialogBodyProps) {
+  return (
+    <ChakraDialog.Body {...props} asChild>
+      <ScrollArea orientation="vertical" variant="hover">
+        <ScrollAreaContent as={as} asChild={asChild}>
+          {children}
+        </ScrollAreaContent>
+      </ScrollArea>
+    </ChakraDialog.Body>
+  );
+}
+
 export const DialogContext = ChakraDialog.Context;
 
 export type DialogRootProps = ChakraDialog.RootProps;
 export const DialogRoot = ChakraDialog.Root;
 export const DialogFooter = ChakraDialog.Footer;
 export const DialogHeader = ChakraDialog.Header;
-export const DialogBody = ChakraDialog.Body;
+// export const DialogBody = ChakraDialog.Body;
 export const DialogBackdrop = ChakraDialog.Backdrop;
 export const DialogTitle = ChakraDialog.Title;
 export const DialogDescription = ChakraDialog.Description;
