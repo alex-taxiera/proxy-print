@@ -14,8 +14,10 @@ export async function generateSilhouetteBasePdf(config: {
   unit: Unit;
   length: number;
   thickness: number;
+  borderless?: boolean;
 }): Promise<Uint8Array> {
-  const { pageWidth, pageHeight, unit, length, thickness } = config;
+  const { pageWidth, pageHeight, unit, length, thickness, borderless } =
+    config;
 
   const ptsPerUnit = unit === "mm" ? 72 / 25.4 : 72;
   const pageWidthPts = pageWidth * ptsPerUnit;
@@ -30,6 +32,7 @@ export async function generateSilhouetteBasePdf(config: {
     unit,
     length,
     thickness,
+    borderless,
   });
 
   for (const op of ops) {
