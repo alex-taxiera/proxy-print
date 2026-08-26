@@ -67,10 +67,9 @@ export function HowToUseAutoCutterDialog({
                 title="Want to get 3x3 layouts? Try Borderless mode"
               >
                 Borderless mode moves the registration marks to 3.5mm from the
-                edge instead of 10mm, letting you cut closer to the edge of
-                the page. It requires extra setup in your cutter software —
-                the base PDF creation dialog explains the steps when you
-                enable it.
+                edge instead of 10mm, letting you cut closer to the edge of the
+                page. It requires extra setup in your cutter software — the base
+                PDF creation dialog explains the steps when you enable it.
               </Alert>
             </VStack>
             <VStack align="stretch">

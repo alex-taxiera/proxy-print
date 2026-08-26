@@ -229,8 +229,8 @@ export const CreateBasePdfDialog = ({ open, onOpenChange }: Props) => {
               >
                 <VStack align="stretch" gap="2">
                   <Text fontSize="sm">
-                    Marks are drawn {SILHOUETTE_BORDERLESS_INSET_MM}mm from
-                    the page edge instead of the usual {SILHOUETTE_INSET_MM}
+                    Marks are drawn {SILHOUETTE_BORDERLESS_INSET_MM}mm from the
+                    page edge instead of the usual {SILHOUETTE_INSET_MM}
                     mm. To use this template you must:
                   </Text>
                   <Text fontSize="sm">
@@ -241,19 +241,19 @@ export const CreateBasePdfDialog = ({ open, onOpenChange }: Props) => {
                   </Text>
                   <Text fontSize="sm">
                     2. Offset the paper on the cutting mat by{" "}
-                    {BORDERLESS_PAPER_OFFSET_MM}mm from the mat&apos;s corner
-                    in both directions. Covering the mat&apos;s
-                    &quot;blank&quot; grid areas along the edges with extra
-                    paper or tape helps the cutter&apos;s registration sensor
-                    see a continuous surface, as if the paper extended past
-                    where it actually ends.
+                    {BORDERLESS_PAPER_OFFSET_MM}mm from the mat&apos;s corner in
+                    both directions. Covering the mat&apos;s &quot;blank&quot;
+                    grid areas along the edges with extra paper or tape helps
+                    the cutter&apos;s registration sensor see a continuous
+                    surface, as if the paper extended past where it actually
+                    ends.
                   </Text>
                 </VStack>
               </Alert>
             ) : (
               <Text fontSize="sm" color="fg.muted">
-                Marks are drawn {SILHOUETTE_INSET_MM}mm from the page edge —
-                set your cutter&apos;s inset to {SILHOUETTE_INSET_MM}mm (the
+                Marks are drawn {SILHOUETTE_INSET_MM}mm from the page edge — set
+                your cutter&apos;s inset to {SILHOUETTE_INSET_MM}mm (the
                 minimum) to match.
               </Text>
             )}
