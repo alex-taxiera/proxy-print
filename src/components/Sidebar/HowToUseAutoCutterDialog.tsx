@@ -62,6 +62,16 @@ export function HowToUseAutoCutterDialog({
                 Proxyprint, use the Create button to configure the registration
                 marks. Use the same settings as you did in your cutter software.
               </Text>
+              <Alert
+                variant="surface"
+                title="Want to get 3x3 layouts? Try Borderless mode"
+              >
+                Borderless mode moves the registration marks to 3.5mm from the
+                edge instead of 10mm, letting you cut closer to the edge of
+                the page. It requires extra setup in your cutter software —
+                the base PDF creation dialog explains the steps when you
+                enable it.
+              </Alert>
             </VStack>
             <VStack align="stretch">
               <Heading>Step 5: Add your cards and generate PDFs</Heading>

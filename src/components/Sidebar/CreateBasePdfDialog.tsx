@@ -7,6 +7,8 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 
+import { Alert } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DialogRoot,
   DialogContent,
@@ -42,8 +44,10 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { applyBasePdfPageSize } from "@/utils/basePdf";
 import { generateSilhouetteBasePdf } from "@/utils/generateBasePdf";
 import {
+  SILHOUETTE_BORDERLESS_INSET_MM,
   SILHOUETTE_DEFAULT_LENGTH_MM,
   SILHOUETTE_DEFAULT_THICKNESS_MM,
+  SILHOUETTE_INSET_MM,
   SILHOUETTE_MAX_LENGTH_MM,
   SILHOUETTE_MAX_THICKNESS_MM,
   SILHOUETTE_MIN_LENGTH_MM,
@@ -55,6 +59,11 @@ import { PageSizeFields } from "./PageSizeFields";
 const cutterTypeCollection = createListCollection({
   items: CUTTER_TYPE_OPTIONS,
 });
+
+// The paper must be offset on the mat and reported as larger to the cutter
+// software so its registration sensor can find marks placed inside the
+// (undersized, borderless) sheet. This is independent of the mark inset.
+const BORDERLESS_PAPER_OFFSET_MM = 6.5;
 
 type Props = {
   open: boolean;
@@ -80,6 +89,7 @@ export const CreateBasePdfDialog = ({ open, onOpenChange }: Props) => {
   const [thickness, setThickness] = useState(
     SILHOUETTE_DEFAULT_THICKNESS_MM.toString(),
   );
+  const [borderless, setBorderless] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -102,6 +112,7 @@ export const CreateBasePdfDialog = ({ open, onOpenChange }: Props) => {
         unit: pageSize.unit,
         length: Number(length),
         thickness: Number(thickness),
+        borderless,
       });
 
       addBasePdf({
@@ -128,13 +139,14 @@ export const CreateBasePdfDialog = ({ open, onOpenChange }: Props) => {
     <DialogRoot
       open={open}
       onOpenChange={(details) => handleOpenChange(details.open)}
+      scrollBehavior="inside"
     >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Base PDF</DialogTitle>
         </DialogHeader>
         <DialogBody asChild>
-          <VStack gap="4" alignItems="stretch" marginTop="2">
+          <VStack gap="4" alignItems="stretch" padding="2">
             <Field label="Name">
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
@@ -196,10 +208,55 @@ export const CreateBasePdfDialog = ({ open, onOpenChange }: Props) => {
               </>
             )}
 
-            <Text fontSize="sm" color="fg.muted">
-              Marks are drawn 10mm from the page edge — set your cutter&apos;s
-              inset to 10mm (the minimum) to match.
-            </Text>
+            {cutterType === "silhouette" && (
+              <Field>
+                <Checkbox
+                  checked={borderless}
+                  onCheckedChange={(details) =>
+                    setBorderless(details.checked === true)
+                  }
+                >
+                  Borderless mode
+                </Checkbox>
+              </Field>
+            )}
+
+            {cutterType === "silhouette" && borderless ? (
+              <Alert
+                status="warning"
+                variant="surface"
+                title="Borderless mode requires extra setup"
+              >
+                <VStack align="stretch" gap="2">
+                  <Text fontSize="sm">
+                    Marks are drawn {SILHOUETTE_BORDERLESS_INSET_MM}mm from
+                    the page edge instead of the usual {SILHOUETTE_INSET_MM}
+                    mm. To use this template you must:
+                  </Text>
+                  <Text fontSize="sm">
+                    1. Tell your cutter software the paper is{" "}
+                    {BORDERLESS_PAPER_OFFSET_MM * 2}mm wider and{" "}
+                    {BORDERLESS_PAPER_OFFSET_MM * 2}mm taller than it actually
+                    is.
+                  </Text>
+                  <Text fontSize="sm">
+                    2. Offset the paper on the cutting mat by{" "}
+                    {BORDERLESS_PAPER_OFFSET_MM}mm from the mat&apos;s corner
+                    in both directions. Covering the mat&apos;s
+                    &quot;blank&quot; grid areas along the edges with extra
+                    paper or tape helps the cutter&apos;s registration sensor
+                    see a continuous surface, as if the paper extended past
+                    where it actually ends.
+                  </Text>
+                </VStack>
+              </Alert>
+            ) : (
+              <Text fontSize="sm" color="fg.muted">
+                Marks are drawn {SILHOUETTE_INSET_MM}mm from the page edge —
+                set your cutter&apos;s inset to {SILHOUETTE_INSET_MM}mm (the
+                minimum) to match.
+              </Text>
+            )}
           </VStack>
         </DialogBody>
         <DialogFooter>

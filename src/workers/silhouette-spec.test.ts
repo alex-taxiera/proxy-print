@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { PdfLineOp, PdfRectOp, PdfRenderOp } from "./pdf-types";
 import {
   buildSilhouetteMarkOps,
+  SILHOUETTE_BORDERLESS_INSET_MM,
   SILHOUETTE_INSET_MM,
   SILHOUETTE_SQUARE_SIZE_MM,
 } from "./silhouette-spec";
@@ -101,6 +102,31 @@ describe("buildSilhouetteMarkOps — A4 (mm)", () => {
     for (const line of lineOps(ops)) {
       expect(line.thickness).toBeCloseTo(thickness * MM_PTS, 3);
     }
+  });
+});
+
+describe("buildSilhouetteMarkOps — borderless mode", () => {
+  it("insets marks by 3.5mm instead of 10mm", () => {
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const ops = buildSilhouetteMarkOps({
+      pageWidth,
+      pageHeight,
+      unit: "mm",
+      length: 20,
+      thickness: 1,
+      borderless: true,
+    });
+
+    const pageWidthPts = pageWidth * MM_PTS;
+    const insetPts = SILHOUETTE_BORDERLESS_INSET_MM * MM_PTS;
+    const rect = rectOps(ops)[0];
+
+    expect(rect.x).toBeCloseTo(insetPts, 3);
+    expect(insetPts).not.toBeCloseTo(SILHOUETTE_INSET_MM * MM_PTS, 3);
+
+    const [horiz] = lineOps(ops);
+    expect(horiz.x1).toBeCloseTo(pageWidthPts - insetPts, 3);
   });
 });
 

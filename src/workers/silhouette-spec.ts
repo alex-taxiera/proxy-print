@@ -4,9 +4,10 @@
 import type { PdfRenderOp } from "./pdf-types";
 
 export const SILHOUETTE_INSET_MM = 10;
+export const SILHOUETTE_BORDERLESS_INSET_MM = 3.5;
 export const SILHOUETTE_SQUARE_SIZE_MM = 6;
 export const SILHOUETTE_MAX_LENGTH_MM = 20;
-export const SILHOUETTE_DEFAULT_LENGTH_MM = 20;
+export const SILHOUETTE_DEFAULT_LENGTH_MM = 7.5;
 export const SILHOUETTE_MIN_LENGTH_MM = 1;
 export const SILHOUETTE_MAX_THICKNESS_MM = 1;
 export const SILHOUETTE_DEFAULT_THICKNESS_MM = 1;
@@ -20,12 +21,14 @@ export function buildSilhouetteMarkOps({
   unit,
   length,
   thickness,
+  borderless = false,
 }: {
   pageWidth: number;
   pageHeight: number;
   unit: "mm" | "in";
   length: number;
   thickness: number;
+  borderless?: boolean;
 }): PdfRenderOp[] {
   const ptsPerUnit = unit === "mm" ? 72 / 25.4 : 72;
   const mmToPts = 72 / 25.4;
@@ -33,7 +36,10 @@ export function buildSilhouetteMarkOps({
   const pageWidthPts = pageWidth * ptsPerUnit;
   const pageHeightPts = pageHeight * ptsPerUnit;
 
-  const insetPts = SILHOUETTE_INSET_MM * mmToPts;
+  const insetMm = borderless
+    ? SILHOUETTE_BORDERLESS_INSET_MM
+    : SILHOUETTE_INSET_MM;
+  const insetPts = insetMm * mmToPts;
   const lengthPts = length * mmToPts;
   const thicknessPts = thickness * mmToPts;
   const squarePts = SILHOUETTE_SQUARE_SIZE_MM * mmToPts;
