@@ -121,11 +121,16 @@ export type ImagesContextValue = {
     slotId: string,
     data: LocalImageData | GoogleImageData | ScryfallImageData,
   ) => void;
+  onAddBackToSlots: (
+    slotIds: string[],
+    data: LocalImageData | GoogleImageData | ScryfallImageData,
+  ) => void;
   onReplaceScryfallPrinting: (
     slotId: string,
     data: { front: ScryfallImageData; back: ScryfallImageData | null },
   ) => Promise<void>;
   onRemoveBack: (slotId: string) => void;
+  onRemoveBackFromSlots: (slotIds: string[]) => void;
   onInsertEmptySlot: (position: number) => void;
   onError: (image: DownloadableImage) => void;
   onRemove: (uuid: string) => void;
@@ -152,8 +157,10 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onAdd: () => {},
   onAddSlots: () => {},
   onAddBack: () => {},
+  onAddBackToSlots: () => {},
   onReplaceScryfallPrinting: async () => {},
   onRemoveBack: () => {},
+  onRemoveBackFromSlots: () => {},
   onInsertEmptySlot: () => {},
   onMoveSlotToAbsoluteIndex: () => {},
   onError: () => {},
