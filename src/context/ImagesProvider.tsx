@@ -260,6 +260,34 @@ export const ImagesProvider = (
     });
   };
 
+  const onAddBackToSlots = (
+    slotIds: string[],
+    data: LocalImageData | GoogleImageData | ScryfallImageData,
+  ) => {
+    // Trigger downloads outside the state updater to avoid side effects
+    // inside a potentially re-invoked updater function.
+    const backsBySlotId = new Map<string, Image>();
+    for (const slotId of slotIds) {
+      const back: Image = { ...data, uuid: `${slotId}:back` };
+      backsBySlotId.set(slotId, back);
+      if ("file" in back) {
+        void loadLocalImage(back);
+      } else {
+        void downloadImage(back);
+      }
+    }
+
+    setSlots((old) => {
+      const next = new Map(old);
+      for (const [slotId, back] of backsBySlotId) {
+        const currentSlot = next.get(slotId);
+        if (!currentSlot) continue;
+        next.set(slotId, { ...currentSlot, back });
+      }
+      return next;
+    });
+  };
+
   const onReplaceScryfallPrinting = async (
     slotId: string,
     data: { front: ScryfallImageData; back: ScryfallImageData | null },
@@ -320,6 +348,23 @@ export const ImagesProvider = (
         ...currentSlot,
         back: null,
       });
+      return next;
+    });
+  };
+
+  const onRemoveBackFromSlots = (slotIds: string[]) => {
+    setSlots((old) => {
+      const next = new Map(old);
+      for (const slotId of slotIds) {
+        const currentSlot = next.get(slotId);
+        if (!currentSlot?.back) continue;
+
+        googleDownloadManager.remove(currentSlot.back.uuid);
+        scryfallDownloadManager.remove(currentSlot.back.uuid);
+        localDownloadManager.remove(currentSlot.back.uuid);
+
+        next.set(slotId, { ...currentSlot, back: null });
+      }
       return next;
     });
   };
@@ -552,8 +597,10 @@ export const ImagesProvider = (
     onAdd,
     onAddSlots,
     onAddBack,
+    onAddBackToSlots,
     onReplaceScryfallPrinting,
     onRemoveBack,
+    onRemoveBackFromSlots,
     onInsertEmptySlot,
     onError,
     onClearErrors,

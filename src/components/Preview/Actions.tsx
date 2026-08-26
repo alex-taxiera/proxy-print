@@ -10,10 +10,11 @@ import {
   Box,
   ButtonGroup,
 } from "@chakra-ui/react";
-import { useContext, useId, useState } from "react";
+import { useContext, useId, useRef, useState } from "react";
 import {
   LuDownload,
   LuExpand,
+  LuImage,
   LuImageDown,
   LuImageUpscale,
   LuShrink,
@@ -60,6 +61,7 @@ import { useGeneratePdf } from "@/hooks/useGeneratePdf";
 import { usePreviewData } from "@/hooks/usePreviewData";
 import { useDownloadProgressStore } from "@/store/downloadProgressStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { createFileHash } from "@/utils/create-file-hash";
 import { progressEvents } from "@/utils/progress-events";
 
 import {
@@ -280,6 +282,7 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
   const addMoreTriggerId = useId();
   const moveTriggerId = useId();
   const moreActionsTriggerId = useId();
+  const backInputRef = useRef<HTMLInputElement>(null);
 
   const selectedImages = images.filter((image) =>
     selectedImageUuids.includes(image.uuid),
@@ -287,6 +290,8 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
 
   const {
     remove,
+    setBack,
+    removeBacks,
     addMore,
     canAddBleed,
     canRemoveBleed,
@@ -307,6 +312,18 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
     currentPage,
   });
 
+  const onSetBackClick = () => {
+    backInputRef.current?.click();
+  };
+
+  const onBackFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const hash = await createFileHash(file);
+    setBack({ file, hash });
+    e.target.value = "";
+  };
+
   const { isDialogOpen, setIsDialogOpen, requestDownload } = useDownloadPrompt(
     pairedBackCount,
     downloadImages,
@@ -324,6 +341,13 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
           {selectedImageUuids.length} selected
         </ActionBarSelectionTrigger>
         <ActionBarSeparator display={{ base: "none", sm: "inline-flex" }} />
+        <input
+          ref={backInputRef}
+          type="file"
+          accept=".jpg,.jpeg,.png,.bmp,.webp"
+          style={{ display: "none" }}
+          onChange={(e) => void onBackFileChange(e)}
+        />
         <ButtonGroup variant="outline" size={{ base: "xs", md: "md" }}>
           <Tooltip
             content={
@@ -415,6 +439,25 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
               </MenuTrigger>
             </Tooltip>
             <MenuContent>
+              <MenuItem
+                value="set-back"
+                onSelect={() => onSetBackClick()}
+                disabled={isLoadingProject}
+              >
+                <LuImage />
+                <MenuItemText>Set back…</MenuItemText>
+              </MenuItem>
+              {pairedBackCount > 0 ? (
+                <MenuItem
+                  value="remove-back"
+                  onSelect={() => removeBacks()}
+                  disabled={isLoadingProject}
+                  color="fg.error"
+                >
+                  <LuTrash />
+                  <MenuItemText>Remove back</MenuItemText>
+                </MenuItem>
+              ) : null}
               {canUpscale ? (
                 <MenuItem
                   value="upscale"

@@ -11,7 +11,14 @@ import {
 import { toaster } from "@/components/ui/toaster";
 
 import { ImageSelectionContext } from "@/context/ImageSelectionContext";
-import { Image, ImagesContext, getIsLocalImage } from "@/context/ImagesContext";
+import {
+  GoogleImageData,
+  Image,
+  ImagesContext,
+  LocalImageData,
+  ScryfallImageData,
+  getIsLocalImage,
+} from "@/context/ImagesContext";
 import { usePreviewData } from "@/hooks/usePreviewData";
 import { useUpscaleImage } from "@/hooks/useUpscaleImage";
 import {
@@ -155,6 +162,8 @@ export const useCardActions = ({
     onReorder,
     onClear,
     onAdd,
+    onAddBackToSlots,
+    onRemoveBackFromSlots,
     images: allImages,
     slots,
   } = useContext(ImagesContext);
@@ -269,6 +278,19 @@ export const useCardActions = ({
 
   const remove = () => {
     onClear(images.map((image) => image.uuid));
+  };
+
+  const setBack = (
+    data: LocalImageData | GoogleImageData | ScryfallImageData,
+  ) => {
+    onAddBackToSlots(
+      images.map((image) => image.uuid),
+      data,
+    );
+  };
+
+  const removeBacks = () => {
+    onRemoveBackFromSlots(images.map((image) => image.uuid));
   };
 
   const addMore = (count: number) => {
@@ -478,6 +500,8 @@ export const useCardActions = ({
 
   return {
     remove,
+    setBack,
+    removeBacks,
     addMore,
     canAddBleed: states.canAddBleed,
     addBleed,
