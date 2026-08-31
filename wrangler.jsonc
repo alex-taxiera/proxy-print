@@ -12,6 +12,7 @@
   "env": {
     "staging": {
       "workers_dev": true,
+      "preview_urls": true,
       "routes": [
         {
           "pattern": "dev.printmyproxy.com",
