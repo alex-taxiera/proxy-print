@@ -13,14 +13,32 @@
     "staging": {
       "workers_dev": true,
       "routes": [
-        "dev.printmyproxy.com",
-        "dev-proxyprint.taxiera.net/*",
-        "devprint.taxiera.net/*",
+        {
+          "pattern": "dev.printmyproxy.com/*",
+          "custom_domain": true,
+        },
+        {
+          "pattern": "dev-proxyprint.taxiera.net/*",
+          "custom_domain": true,
+        },
+        {
+          "pattern": "devprint.taxiera.net/*",
+          "custom_domain": true,
+        },
       ],
     },
     "production": {
       "workers_dev": true,
-      "routes": ["printmyproxy.com/*", "proxyprint.taxiera.net/*"],
+      "routes": [
+        {
+          "pattern": "printmyproxy.com/*",
+          "custom_domain": true,
+        },
+        {
+          "pattern": "proxyprint.taxiera.net/*",
+          "custom_domain": true,
+        },
+      ],
     },
   },
 }
