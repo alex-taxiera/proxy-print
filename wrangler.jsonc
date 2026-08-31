@@ -12,11 +12,15 @@
   "env": {
     "staging": {
       "workers_dev": true,
-      "routes": ["dev-proxyprint.taxiera.net/*", "devprint.taxiera.net/*"],
+      "routes": [
+        "dev.printmyproxy.com",
+        "dev-proxyprint.taxiera.net/*",
+        "devprint.taxiera.net/*",
+      ],
     },
     "production": {
       "workers_dev": true,
-      "route": "proxyprint.taxiera.net/*",
+      "routes": ["printmyproxy.com/*", "proxyprint.taxiera.net/*"],
     },
   },
 }
