@@ -3,7 +3,7 @@ import { FaGithub, FaDiscord, FaPaypal } from "react-icons/fa";
 
 export const SocialLinks = () => {
   return (
-    <ButtonGroup gap="4" color="fg" variant="ghost">
+    <ButtonGroup gap="0" color="fg" variant="ghost">
       <IconButton
         asChild
         aria-label="View the Proxy Print Setup GitHub repository"

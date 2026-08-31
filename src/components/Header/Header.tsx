@@ -24,7 +24,7 @@ export const Header = () => {
         <HStack
           as="span"
           gap="2"
-          fontSize="2xl"
+          fontSize={{base: "lg", md: "2xl"}}
           fontWeight="bold"
           alignItems="flex-end"
           display="inline-flex"

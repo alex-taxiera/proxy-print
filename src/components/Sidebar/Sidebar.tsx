@@ -58,7 +58,7 @@ const SidebarContent = (props: StackProps) => (
 const MobileSidebar = () => (
   <Box
     display={{ base: "block", md: "none" }}
-    position="absolute"
+    position="fixed"
     right="4"
     bottom="4"
     zIndex="3"
