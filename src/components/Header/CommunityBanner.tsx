@@ -2,7 +2,13 @@ import { Box, Link } from "@chakra-ui/react";
 
 export const CommunityBanner = () => {
   return (
-    <Box bg="accent.solid" paddingY="1" textAlign="center" alignSelf="stretch">
+    <Box
+      display={{ base: "none", sm: "block" }}
+      bg="accent.solid"
+      paddingY="1"
+      textAlign="center"
+      alignSelf="stretch"
+    >
       <Link
         fontSize="sm"
         color="white"
@@ -10,7 +16,7 @@ export const CommunityBanner = () => {
         target="_blank"
         rel="noopener noreferrer"
       >
-        Join the Proxy Community Discord!
+        Join the Magic Proxy Community Discord!
       </Link>
     </Box>
   );
