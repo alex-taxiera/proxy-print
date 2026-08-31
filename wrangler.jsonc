@@ -14,15 +14,15 @@
       "workers_dev": true,
       "routes": [
         {
-          "pattern": "dev.printmyproxy.com/*",
+          "pattern": "dev.printmyproxy.com",
           "custom_domain": true,
         },
         {
-          "pattern": "dev-proxyprint.taxiera.net/*",
+          "pattern": "dev-proxyprint.taxiera.net",
           "custom_domain": true,
         },
         {
-          "pattern": "devprint.taxiera.net/*",
+          "pattern": "devprint.taxiera.net",
           "custom_domain": true,
         },
       ],
@@ -31,11 +31,11 @@
       "workers_dev": true,
       "routes": [
         {
-          "pattern": "printmyproxy.com/*",
+          "pattern": "printmyproxy.com",
           "custom_domain": true,
         },
         {
-          "pattern": "proxyprint.taxiera.net/*",
+          "pattern": "proxyprint.taxiera.net",
           "custom_domain": true,
         },
       ],
