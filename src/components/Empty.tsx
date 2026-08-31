@@ -68,8 +68,8 @@ export const Empty = () => {
         </Link>{" "}
         &quot;Download XML&quot; option.
       </p>
-      <ImageUploader width="80" />
-      <VStack asChild gap="2" alignItems="center">
+      <ImageUploader width="80" maxWidth="full" />
+      <VStack asChild gap="2" alignItems="center" width="full">
         <form
           onSubmit={(event) => {
             void handleDecklistSubmit(event);
@@ -86,6 +86,7 @@ export const Empty = () => {
             <Textarea
               name="decklist"
               width="80"
+              maxWidth="full"
               rows={4}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey) {
@@ -96,22 +97,27 @@ export const Empty = () => {
               placeholder={`1 Black Lotus\n1 Llanowar Elves (FDN) 429\n1 Lava Spike (UMA)\n1 Lightning Bolt (SLP)`}
             />
           </Field>
-          <HStack justifyContent="space-between" width="80" alignItems="end">
-            <VStack alignItems="stretch">
-              <DefaultImportLanguageSetting size="sm" />
-              <UpscaleSetting>Upscale Images</UpscaleSetting>
-            </VStack>
-            <Button
-              type="submit"
-              disabled={isLoadingProject}
-              loading={isSubmittingDecklist || isLoadingProject}
-              loadingText={
-                isLoadingProject ? "Loading project..." : "Submitting..."
-              }
+          <VStack alignItems="stretch">
+            <HStack
+              justifyContent="space-between"
+              width="80"
+              maxWidth="full"
+              alignItems="end"
             >
-              Submit
-            </Button>
-          </HStack>
+              <DefaultImportLanguageSetting maxWidth="60%" size="sm" />
+              <Button
+                type="submit"
+                disabled={isLoadingProject}
+                loading={isSubmittingDecklist || isLoadingProject}
+                loadingText={
+                  isLoadingProject ? "Loading project..." : "Submitting..."
+                }
+              >
+                Submit
+              </Button>
+            </HStack>
+            <UpscaleSetting>Upscale Images</UpscaleSetting>
+          </VStack>
         </form>
       </VStack>
     </VStack>
