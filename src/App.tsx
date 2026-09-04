@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 import { ImageSelectionProvider } from "@/context/ImageSelectionProvider";
 import { ImagesProvider } from "@/context/ImagesProvider";
+import { PreviewProvider } from "@/context/PreviewProvider";
 import { useImageLoadingProgress } from "@/hooks/useImageLoadingProgress";
 import { useSettingsStore } from "@/store/settingsStore";
 
@@ -28,7 +29,9 @@ function AppContent() {
   return (
     <ImagesProvider>
       <ImageSelectionProvider>
-        <Layout />
+        <PreviewProvider>
+          <Layout />
+        </PreviewProvider>
       </ImageSelectionProvider>
     </ImagesProvider>
   );

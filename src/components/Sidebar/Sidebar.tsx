@@ -55,32 +55,31 @@ const SidebarContent = (props: StackProps) => (
   </VStack>
 );
 
-const MobileSidebar = () => (
-  <Box
-    display={{ base: "block", md: "none" }}
-    position="fixed"
-    right="4"
-    bottom="4"
-    zIndex="3"
-  >
-    <DrawerRoot placement="end" size="xs">
-      <DrawerTrigger asChild>
-        <IconButton aria-label="Open settings" colorPalette="accent" size="lg">
-          <LuSettings />
-        </IconButton>
-      </DrawerTrigger>
-      <DrawerContent maxWidth="64">
-        <DrawerHeader>Settings</DrawerHeader>
-        <DrawerBody asChild>
-          <SidebarContent />
-        </DrawerBody>
-        <DrawerCloseTrigger />
-      </DrawerContent>
-    </DrawerRoot>
-  </Box>
+/** Rendered by the docked BottomBar, which is the only place settings are
+ * reachable from below the `md` breakpoint. */
+export const MobileSettingsDrawer = () => (
+  <DrawerRoot placement="end" size="xs">
+    <DrawerTrigger asChild>
+      <IconButton
+        aria-label="Open settings"
+        colorPalette="accent"
+        size={{ base: "xs", md: "sm" }}
+        display={{ base: "inline-flex", md: "none" }}
+      >
+        <LuSettings />
+      </IconButton>
+    </DrawerTrigger>
+    <DrawerContent maxWidth="64">
+      <DrawerHeader>Settings</DrawerHeader>
+      <DrawerBody asChild>
+        <SidebarContent />
+      </DrawerBody>
+      <DrawerCloseTrigger />
+    </DrawerContent>
+  </DrawerRoot>
 );
 
-const DesktopSidebar = () => {
+export const Sidebar = () => {
   const [open, setOpen] = useState(true);
 
   return (
@@ -130,10 +129,3 @@ const DesktopSidebar = () => {
     </Box>
   );
 };
-
-export const Sidebar = () => (
-  <>
-    <MobileSidebar />
-    <DesktopSidebar />
-  </>
-);

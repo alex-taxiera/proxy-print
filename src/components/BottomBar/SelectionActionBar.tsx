@@ -1,68 +1,22 @@
 import {
-  Button,
-  Spinner,
+  ButtonGroup,
   IconButton,
   MenuSelectionDetails,
-  VisuallyHidden,
-  createListCollection,
-  HStack,
-  VStack,
-  Box,
-  ButtonGroup,
 } from "@chakra-ui/react";
-import { useContext, useId, useRef, useState } from "react";
+import { useContext, useId, useRef } from "react";
 import {
   LuDownload,
+  LuEllipsis,
   LuExpand,
   LuImage,
   LuImageDown,
   LuImageUpscale,
+  LuMove,
+  LuPlus,
   LuShrink,
   LuTrash,
   LuUndo,
-  LuEllipsis,
-  LuCheck,
-  LuMove,
-  LuPlus,
 } from "react-icons/lu";
-
-import {
-  MenuItem,
-  MenuContent,
-  MenuItemText,
-  MenuRoot,
-  MenuTrigger,
-} from "@/components/ui/menu";
-import {
-  PaginationItems,
-  PaginationNextTrigger,
-  PaginationPrevTrigger,
-  PaginationRoot,
-} from "@/components/ui/pagination";
-import {
-  SelectRoot,
-  SelectLabel,
-  SelectTrigger,
-  SelectControl,
-  SelectValueText,
-  SelectContent,
-  SelectItem,
-  SelectItemText,
-  SelectIndicatorGroup,
-} from "@/components/ui/select";
-import { Tooltip } from "@/components/ui/tooltip";
-
-import { ImageErrors } from "@/components/ImageErrors";
-
-import { ImageSelectionContext } from "@/context/ImageSelectionContext";
-import { ImagesContext } from "@/context/ImagesContext";
-import { PrintMode } from "@/context/SettingsContext";
-import { useGeneratePdf } from "@/hooks/useGeneratePdf";
-import { usePreviewData } from "@/hooks/usePreviewData";
-import { useDownloadProgressStore } from "@/store/downloadProgressStore";
-import { useSettingsStore } from "@/store/settingsStore";
-import { createFileHash } from "@/utils/create-file-hash";
-import { progressEvents } from "@/utils/progress-events";
 
 import {
   ActionBarCloseTrigger,
@@ -70,212 +24,35 @@ import {
   ActionBarRoot,
   ActionBarSelectionTrigger,
   ActionBarSeparator,
-} from "../ui/action-bar";
-import { DialogTrigger } from "../ui/dialog";
-import { AddMoreDialog } from "./Card/AddMoreDialog";
-import { DownloadDialog } from "./Card/DownloadDialog";
-import { useCardActions } from "./Card/useCardActions";
+} from "@/components/ui/action-bar";
+import { DialogTrigger } from "@/components/ui/dialog";
+import {
+  MenuContent,
+  MenuItem,
+  MenuItemText,
+  MenuRoot,
+  MenuTrigger,
+} from "@/components/ui/menu";
+import { Tooltip } from "@/components/ui/tooltip";
 
-const PRINT_MODE_OPTIONS: { value: PrintMode; label: string }[] = [
-  { value: "duplex", label: "Duplex" },
-  { value: "inline-faces", label: "Inline faces" },
-  { value: "fronts-only", label: "Fronts only" },
-  { value: "backs-only", label: "Backs only" },
-  { value: "side-by-side", label: "Side by side" },
-];
+import { AddMoreDialog } from "@/components/Preview/Card/AddMoreDialog";
+import { DownloadDialog } from "@/components/Preview/Card/DownloadDialog";
+import { useCardActions } from "@/components/Preview/Card/useCardActions";
+import { useDownloadPrompt } from "@/components/Preview/Card/useDownloadPrompt";
 
-const printModeCollection = createListCollection({
-  items: PRINT_MODE_OPTIONS,
-  itemToValue: (item) => item.value,
-  itemToString: (item) => item.label,
-});
+import { ImageSelectionContext } from "@/context/ImageSelectionContext";
+import { ImagesContext } from "@/context/ImagesContext";
+import { PreviewContext } from "@/context/PreviewContext";
+import { usePreviewData } from "@/hooks/usePreviewData";
+import { useDownloadProgressStore } from "@/store/downloadProgressStore";
+import { createFileHash } from "@/utils/create-file-hash";
 
-const PrintModeToggle = () => {
-  const printMode = useSettingsStore((s) => s.settings.printMode);
-  const setSettings = useSettingsStore((s) => s.setSettings);
-
-  const handleChange = (details: { value: string[] }) => {
-    const mode = details.value[0] as PrintMode;
-    if (mode) setSettings((s) => ({ ...s, printMode: mode }));
-  };
-
-  return (
-    <SelectRoot
-      collection={printModeCollection}
-      value={[printMode]}
-      onValueChange={handleChange}
-      size="md"
-      width="44"
-    >
-      <SelectLabel asChild>
-        <VisuallyHidden>Card Size</VisuallyHidden>
-      </SelectLabel>
-      <SelectControl>
-        <SelectTrigger>
-          <SelectValueText />
-        </SelectTrigger>
-        <SelectIndicatorGroup />
-      </SelectControl>
-      <SelectContent>
-        {printModeCollection.items.map((opt) => (
-          <SelectItem key={opt.value} item={opt}>
-            <SelectItemText>{opt.label}</SelectItemText>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </SelectRoot>
-  );
-};
-
-/** Asks about front/back pairings before downloading, but only when the cards
- * being downloaded actually have backs to include. */
-const useDownloadPrompt = (
-  pairedBackCount: number,
-  downloadImages: (options?: { includeBacks?: boolean }) => void,
-) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const requestDownload = () => {
-    if (pairedBackCount > 0) {
-      setIsDialogOpen(true);
-    } else {
-      downloadImages();
-    }
-  };
-
-  return { isDialogOpen, setIsDialogOpen, requestDownload };
-};
-
-const NoSelectionActions = ({
-  isReferenceCardLoaded,
-  contentRef,
-}: {
-  isReferenceCardLoaded: boolean;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-}) => {
-  const { isRendering, isLoadingProject, setIsRendering, images } =
-    useContext(ImagesContext);
-  const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
-  const generatePdf = useGeneratePdf(contentRef);
-  const { onSelectAllImages } = useContext(ImageSelectionContext);
-
-  const handleSave = () => {
-    setIsRendering(true);
-    console.time("save");
-    progressEvents.emit("progress", {
-      progress: 0,
-      phase: "Initializing",
-    });
-    generatePdf();
-  };
-
-  const { remove, isDownloading, downloadImages, pairedBackCount } =
-    useCardActions({
-      images,
-      currentPage: 0,
-    });
-
-  const { isDialogOpen, setIsDialogOpen, requestDownload } = useDownloadPrompt(
-    pairedBackCount,
-    downloadImages,
-  );
-
-  return (
-    <HStack gap="2" flexWrap="wrap">
-      <PrintModeToggle />
-      <Tooltip
-        disabled={
-          !isRendering &&
-          !isLoadingProject &&
-          !isLoadingImages &&
-          isReferenceCardLoaded
-        }
-        positioning={{
-          placement: "top",
-        }}
-        content={
-          isRendering
-            ? "Generating PDF..."
-            : isLoadingProject
-              ? "Loading project..."
-              : isLoadingImages
-                ? "Downloading images..."
-                : !isReferenceCardLoaded
-                  ? "Loading images..."
-                  : ""
-        }
-      >
-        <Button
-          disabled={
-            isRendering ||
-            isLoadingProject ||
-            isLoadingImages ||
-            !isReferenceCardLoaded
-          }
-          onClick={() => handleSave()}
-        >
-          Generate PDF
-        </Button>
-      </Tooltip>
-      <MenuRoot>
-        <MenuTrigger asChild>
-          <IconButton
-            variant="outline"
-            colorPalette="gray"
-            aria-label="Actions"
-            type="button"
-          >
-            <LuEllipsis />
-          </IconButton>
-        </MenuTrigger>
-        <MenuContent>
-          <>
-            <MenuItem
-              value="select-all"
-              onSelect={() => onSelectAllImages(true)}
-            >
-              <LuCheck />
-              <MenuItemText>Select all</MenuItemText>
-            </MenuItem>
-            <MenuItem
-              value="remove-all"
-              onSelect={() => remove()}
-              disabled={isRendering || isLoadingProject}
-              color="fg.error"
-            >
-              <LuTrash />
-              <MenuItemText>Remove all</MenuItemText>
-            </MenuItem>
-            <MenuItem
-              value="downloadZip"
-              onSelect={() => requestDownload()}
-              disabled={isLoadingImages || isLoadingProject || isDownloading}
-            >
-              {isDownloading ? <Spinner size="sm" mr="1px" /> : <LuDownload />}
-              <MenuItemText>Download all (ZIP)</MenuItemText>
-            </MenuItem>
-          </>
-        </MenuContent>
-      </MenuRoot>
-      <DownloadDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        pairedBackCount={pairedBackCount}
-        onConfirm={(includeBacks) => downloadImages({ includeBacks })}
-      />
-    </HStack>
-  );
-};
-
-interface SelectionActionBarProps {
-  currentPage: number;
-}
-
-const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
+export const SelectionActionBar = () => {
   const { images, isRendering, isLoadingProject } = useContext(ImagesContext);
   const { selectedImageUuids, onSelectAllImages } = useContext(
     ImageSelectionContext,
   );
+  const { currentPage } = useContext(PreviewContext);
   const { pages } = usePreviewData();
   const isLoadingImages = useDownloadProgressStore((s) => s.pending > 0);
 
@@ -334,7 +111,16 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
 
   return (
     <ActionBarRoot open={selectedImageUuids.length > 0}>
-      <ActionBarContent>
+      {/* Anchored to the docked bar rather than the viewport so the two never
+          stack on top of each other. */}
+      <ActionBarContent
+        portalled={false}
+        positionerProps={{
+          position: "absolute",
+          bottom: "100%",
+          paddingBottom: "3",
+        }}
+      >
         <ActionBarSelectionTrigger
           display={{ base: "none", sm: "inline-flex" }}
         >
@@ -520,74 +306,5 @@ const SelectionActionBar = ({ currentPage }: SelectionActionBarProps) => {
         />
       </ActionBarContent>
     </ActionBarRoot>
-  );
-};
-
-export type ActionsProps = {
-  isReferenceCardLoaded: boolean;
-  currentPage: number;
-  changePage: (page: number) => void;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-};
-
-export const Actions = ({
-  isReferenceCardLoaded,
-  currentPage,
-  changePage,
-  contentRef,
-}: ActionsProps) => {
-  const { onClearErrors, imagesWithError } = useContext(ImagesContext);
-
-  const { pages, cardsPerPage } = usePreviewData();
-
-  return (
-    <VStack
-      gap="2"
-      width="var(--page-width)"
-      minWidth="max"
-      maxWidth="full"
-      alignItems="stretch"
-      position="sticky"
-      left="0"
-    >
-      <HStack
-        gap="2"
-        paddingLeft="2"
-        justifyContent="space-between"
-        alignItems="flex-end"
-        paddingBottom="3"
-        borderTopRadius="md"
-      >
-        <NoSelectionActions
-          isReferenceCardLoaded={isReferenceCardLoaded}
-          contentRef={contentRef}
-        />
-        <VStack
-          alignItems="center"
-          gap="2"
-          visibility={pages.length > 1 ? "visible" : "hidden"}
-        >
-          <Box as="span" fontSize="xs" color="fg.muted">
-            Page {currentPage} of {pages.length}
-          </Box>
-          <PaginationRoot
-            siblingCount={0}
-            count={pages.length * cardsPerPage}
-            page={currentPage}
-            pageSize={cardsPerPage}
-            onPageChange={({ page }) => changePage(page)}
-          >
-            <PaginationPrevTrigger />
-            <PaginationItems />
-            <PaginationNextTrigger />
-          </PaginationRoot>
-        </VStack>
-      </HStack>
-      <ImageErrors
-        onDismiss={onClearErrors}
-        imagesWithError={imagesWithError}
-      />
-      <SelectionActionBar currentPage={currentPage} />
-    </VStack>
   );
 };
