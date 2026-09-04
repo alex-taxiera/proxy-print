@@ -276,6 +276,11 @@ export const Card = ({
           "calc(calc(var(--page-width) - calc(var(--item-width) * var(--columns-per-page))) / 2)",
         "--vertical-guide-length":
           "calc(calc(var(--page-height) - calc(var(--item-height) * var(--rows-per-page))) / 2)",
+        // iOS Safari's own long-press handling (image callout, selection) fires
+        // mid-gesture and cancels the pointer dnd-kit is dragging with. Both
+        // properties inherit, so the image below is covered too.
+        WebkitTouchCallout: "none",
+        userSelect: "none",
       }}
       _before={cardBefore}
       _after={cardAfter}
@@ -336,6 +341,8 @@ export const Card = ({
                 maxWidth="unset"
                 objectFit="cover"
                 position="relative"
+                draggable={false}
+                css={{ WebkitUserDrag: "none" }}
                 onClick={handleClick}
                 onLoad={() => {
                   setIsLoading(false);
