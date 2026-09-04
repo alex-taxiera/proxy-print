@@ -31,9 +31,9 @@ export function HowToUseAutoCutterDialog({
             <VStack align="stretch">
               <Heading>Step 1: Set up your layout</Heading>
               <Text>
-                Within Proxyprint set up your bleed and alignment settings. For
-                example, if you are using an A4 sized paper with a Silhouette
-                Cameo you could use 1.5mm bleed and no spacing.
+                Within Print My Proxy set up your bleed and alignment settings.
+                For example, if you are using an A4 sized paper with a
+                Silhouette Cameo you could use 1.5mm bleed and no spacing.
               </Text>
             </VStack>
             <VStack align="stretch">
@@ -50,16 +50,16 @@ export function HowToUseAutoCutterDialog({
                 In the software for your cutter (eg. Silhouette Studio), use the
                 DXF file and configure your settings for the registration marks.
               </Text>
-              <Alert variant="surface" title="Use the minumum value for inset">
-                Proxyprint requires using 10mm (the minimum value) for inset in
-                Silhouette Studio
+              <Alert variant="surface" title="Use the minimum value for inset">
+                Print My Proxy requires using 10mm (the minimum value) for inset
+                in Silhouette Studio
               </Alert>
             </VStack>
             <VStack align="stretch">
               <Heading>Step 4: Create the base PDF</Heading>
               <Text>
-                In the Cutting Marks section of the advanced settings in
-                Proxyprint, use the Create button to configure the registration
+                In the Cutting Marks section of the advanced settings in Print
+                My Proxy, use the Create button to configure the registration
                 marks. Use the same settings as you did in your cutter software.
               </Text>
               <Alert

@@ -1,4 +1,4 @@
-name: Build and Deploy Static Site
+name: Deploy Production
 
 on:
   push:

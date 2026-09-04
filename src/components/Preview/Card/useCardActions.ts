@@ -83,7 +83,7 @@ const useDownloadZip = () => {
         toaster.remove(toastId);
         worker.terminate();
         setIsDownloading(false);
-        downloadBlob(data.blob, `proxyprint_download_${Date.now()}.zip`);
+        downloadBlob(data.blob, `print-my-proxy-download-${Date.now()}.zip`);
       }
     };
 

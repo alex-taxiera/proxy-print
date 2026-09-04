@@ -1,5 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  // Renaming this creates a new Worker and drops the custom domain bindings
+  // below, so it stays on the pre-rebrand slug. The product is "Print My Proxy".
   "name": "proxy-print",
   "compatibility_date": "2026-06-23",
   "observability": {
@@ -18,6 +20,7 @@
           "pattern": "dev.printmyproxy.com",
           "custom_domain": true,
         },
+        // Legacy pre-rebrand domains, kept bound so old links keep working.
         {
           "pattern": "dev-proxyprint.taxiera.net",
           "custom_domain": true,
@@ -35,6 +38,7 @@
           "pattern": "printmyproxy.com",
           "custom_domain": true,
         },
+        // Legacy pre-rebrand domain, kept bound so old links keep working.
         {
           "pattern": "proxyprint.taxiera.net",
           "custom_domain": true,

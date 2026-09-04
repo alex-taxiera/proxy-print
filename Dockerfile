@@ -3,9 +3,7 @@ FROM node:24-alpine AS deps
 
 WORKDIR /app
 
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
-# Create public directory for postinstall script
-RUN mkdir -p public
+COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 # Builder image

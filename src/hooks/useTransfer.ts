@@ -108,8 +108,8 @@ export function useTransfer() {
     const blob = await buildBundle({ presets: presetInputs, images: [] });
     const fileName =
       presetInputs.length === 1
-        ? `proxy-print-preset-${presetInputs[0].name}.zip`
-        : `proxy-print-presets.zip`;
+        ? `print-my-proxy-preset-${presetInputs[0].name}.zip`
+        : `print-my-proxy-presets.zip`;
     downloadBlob(blob, fileName);
   };
 
@@ -158,8 +158,8 @@ export function useTransfer() {
     });
     const fileName =
       projectInputs.length === 1
-        ? `proxy-print-project-${projectInputs[0].name}.zip`
-        : `proxy-print-projects.zip`;
+        ? `print-my-proxy-project-${projectInputs[0].name}.zip`
+        : `print-my-proxy-projects.zip`;
     downloadBlob(blob, fileName);
   };
 
