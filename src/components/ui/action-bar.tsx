@@ -6,17 +6,24 @@ import { CloseButton } from "./close-button";
 interface ActionBarContentProps extends ActionBar.ContentProps {
   portalled?: boolean;
   portalRef?: React.RefObject<HTMLElement | null>;
+  positionerProps?: ActionBar.PositionerProps;
 }
 
 export const ActionBarContent = React.forwardRef<
   HTMLDivElement,
   ActionBarContentProps
 >(function ActionBarContent(props, ref) {
-  const { children, portalled = true, portalRef, ...rest } = props;
+  const {
+    children,
+    portalled = true,
+    portalRef,
+    positionerProps,
+    ...rest
+  } = props;
 
   return (
     <Portal disabled={!portalled} container={portalRef}>
-      <ActionBar.Positioner zIndex="popover">
+      <ActionBar.Positioner zIndex="popover" {...positionerProps}>
         <ActionBar.Content ref={ref} {...rest} asChild={false}>
           {children}
         </ActionBar.Content>

@@ -122,7 +122,8 @@ const customConfig = defineConfig({
   },
   globalCss: {
     "#root": {
-      height: "100vh",
+      // dvh so the docked bottom bar stays clear of mobile browser chrome
+      height: "100dvh",
       display: "flex",
       flexDirection: "column",
     },

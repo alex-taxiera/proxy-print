@@ -8,76 +8,22 @@ import {
 } from "@chakra-ui/react";
 import { DragDropProvider, DragDropEventHandlers } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
-import { useContext, useRef, useState, useCallback } from "react";
+import { useContext, useState } from "react";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
+import { ImageErrors } from "@/components/ImageErrors";
 import { ProgressOverlay } from "@/components/ProgressOverlay";
 
 import { ImageSelectionContext } from "@/context/ImageSelectionContext";
 import { ImagesContext } from "@/context/ImagesContext";
+import { PreviewContext } from "@/context/PreviewContext";
 import { usePreviewData } from "@/hooks/usePreviewData";
 import { getIsSortableCardData } from "@/hooks/useSortableCard";
 import { useSettingsStore, computeCssVars } from "@/store/settingsStore";
 
-import { Actions } from "./Actions";
 import { Card } from "./Card";
 import { CardDragOverlay } from "./CardDragOverlay";
 import { PageDrop } from "./PageDrop";
-
-const usePagination = () => {
-  const { pages, cardsPerPage, rowsPerPage } = usePreviewData();
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isReferenceCardLoaded, setIsReferenceCardLoaded] = useState(false);
-
-  // Clamp to valid range without a synchronous setState-in-effect
-  const clampedCurrentPage =
-    pages.length > 0 ? Math.min(currentPage, pages.length) : 1;
-
-  const currentPageData = pages[clampedCurrentPage - 1] ?? {
-    items: [],
-    pageType: "front" as const,
-    gridColumns: 3,
-  };
-
-  const currentCards = currentPageData.items;
-
-  const changePage = useCallback(
-    (page: number) => {
-      setCurrentPage(Math.max(1, Math.min(page, pages.length)));
-      setIsReferenceCardLoaded(false);
-    },
-    [pages.length],
-  );
-
-  const nextPage = () => {
-    setCurrentPage(Math.min(clampedCurrentPage + 1, pages.length));
-    setIsReferenceCardLoaded(false);
-  };
-
-  const previousPage = () => {
-    setCurrentPage(Math.max(clampedCurrentPage - 1, 1));
-    setIsReferenceCardLoaded(false);
-  };
-
-  const onImageLoad = () => {
-    setIsReferenceCardLoaded(true);
-  };
-
-  return {
-    pages,
-    cardsPerPage,
-    rowsPerPage,
-    currentPage: clampedCurrentPage,
-    currentPageData,
-    currentCards,
-    isReferenceCardLoaded,
-    changePage,
-    nextPage,
-    previousPage,
-    onImageLoad,
-  };
-};
 
 // Lightweight skeleton: same CSS class structure as the real card, no interactivity.
 // Used by useGeneratePdf for getBoundingClientRect() measurements free of any transform.
@@ -132,25 +78,26 @@ export const Preview = () => {
     onReorderSlots,
     onMoveSlotToAbsoluteIndex,
     sortedSlots,
+    onClearErrors,
+    imagesWithError,
   } = useContext(ImagesContext);
 
   const { onSelectAllImages, getIsSelected } = useContext(
     ImageSelectionContext,
   );
 
-  const contentRef = useRef<HTMLDivElement>(null);
+  const { currentPage, contentRef, changePage, onImageLoad, zoom, stripRef } =
+    useContext(PreviewContext);
 
-  const {
-    pages,
-    cardsPerPage,
-    rowsPerPage,
-    currentPage,
-    currentPageData,
-    currentCards,
-    isReferenceCardLoaded,
-    changePage,
-    onImageLoad,
-  } = usePagination();
+  const { pages, cardsPerPage, rowsPerPage } = usePreviewData();
+
+  const currentPageData = pages[currentPage - 1] ?? {
+    items: [],
+    pageType: "front" as const,
+    gridColumns: 3,
+  };
+
+  const currentCards = currentPageData.items;
 
   const isFirstPage = currentPage === 1;
   const isLastPage = currentPage === pages.length;
@@ -291,7 +238,15 @@ export const Preview = () => {
   };
 
   return (
-    <div style={cssVars}>
+    // Column flex so a zoomed-out page can centre itself in the leftover space
+    <div
+      style={{
+        ...cssVars,
+        minHeight: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <ProgressOverlay />
       {/* TODO: use grid so that actions and pagination don't need to be inside dragdrop provider */}
       <DragDropProvider
@@ -301,10 +256,18 @@ export const Preview = () => {
           event.preventDefault();
         }}
       >
+        {/* `zoom` rather than a transform: it participates in layout, and unlike
+            a transform it does not become the containing block for dnd-kit's
+            fixed drag feedback. max-content keeps the box exactly the size of
+            the preview, which is what usePreviewZoom measures against, and auto
+            margins only absorb positive free space, so they centre a fitted
+            page without making an overscaled one unreachable. */}
         <HStack
-          minWidth="max"
+          ref={stripRef}
+          css={{ zoom }}
+          width="max-content"
+          margin="auto"
           alignItems="flex-end"
-          justifyContent="center"
           gap="6"
           paddingY="6"
           paddingX="2"
@@ -337,12 +300,20 @@ export const Preview = () => {
             </VStack>
           </PageDrop>
           <VStack gap="0" alignItems="center">
-            <Actions
-              contentRef={contentRef}
-              isReferenceCardLoaded={isReferenceCardLoaded}
-              currentPage={currentPage}
-              changePage={changePage}
-            />
+            {imagesWithError.length > 0 ? (
+              <Box
+                width="var(--page-width)"
+                maxWidth="full"
+                paddingBottom="3"
+                position="sticky"
+                left="0"
+              >
+                <ImageErrors
+                  onDismiss={onClearErrors}
+                  imagesWithError={imagesWithError}
+                />
+              </Box>
+            ) : null}
             <VStack
               maxWidth="full"
               position="relative"
@@ -400,20 +371,30 @@ export const Preview = () => {
                   ))}
                 </PageGrid>
               </Box>
-              {/* Hidden measurement reference — never transformed, used by useGeneratePdf for layout measurements */}
+              {/* Hidden measurement reference — never transformed, used by useGeneratePdf for layout
+                  measurements. It stays at actual size while the preview is zoomed out, so the
+                  clipping wrapper is what keeps it from inflating the scroll area. */}
               <Box
-                ref={contentRef}
                 aria-hidden="true"
                 position="absolute"
                 top="0"
-                visibility="hidden"
-                pointerEvents="none"
+                left="0"
+                boxSize="0"
+                overflow="hidden"
               >
-                <PageGrid>
-                  {Array.from({ length: currentCards.length }, (_, i) => (
-                    <MeasurementCard key={i} />
-                  ))}
-                </PageGrid>
+                {/* Zoom compounds, so the reciprocal cancels the preview zoom and keeps this box at 1:1 */}
+                <Box
+                  ref={contentRef}
+                  css={{ zoom: 1 / zoom }}
+                  visibility="hidden"
+                  pointerEvents="none"
+                >
+                  <PageGrid>
+                    {Array.from({ length: currentCards.length }, (_, i) => (
+                      <MeasurementCard key={i} />
+                    ))}
+                  </PageGrid>
+                </Box>
               </Box>
             </VStack>
           </VStack>
