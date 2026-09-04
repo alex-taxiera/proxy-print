@@ -1,4 +1,4 @@
-import { MenuSelectionDetails } from "@chakra-ui/react";
+import { IconButton, MenuSelectionDetails } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useRef, useState } from "react";
 import {
@@ -25,6 +25,7 @@ import {
   MenuItemGroup,
   MenuItemText,
   MenuRoot,
+  MenuTrigger,
   MenuTriggerItem,
 } from "@/components/ui/menu";
 
@@ -35,6 +36,7 @@ import {
   Image,
   ImagesContext,
 } from "@/context/ImagesContext";
+import { useHasCoarsePointer } from "@/hooks/useHasCoarsePointer";
 import { usePreviewData } from "@/hooks/usePreviewData";
 import { useUpscaleImage } from "@/hooks/useUpscaleImage";
 import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
@@ -83,6 +85,7 @@ export const CardContextMenu = ({
   } = useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
   const { imageMatrix, cardsPerPage } = usePreviewData();
+  const hasCoarsePointer = useHasCoarsePointer();
   const settings = useSettingsStore((s) => s.settings);
   const backInputRef = useRef<HTMLInputElement>(null);
 
@@ -265,9 +268,36 @@ export const CardContextMenu = ({
         style={{ display: "none" }}
         onChange={(e) => void onBackFileChange(e)}
       />
-      <MenuContextTrigger cursor="grab" tabIndex={-1}>
-        {children}
-      </MenuContextTrigger>
+      {/* Exactly one trigger, never both. A touch long-press is already
+          dnd-kit's drag gesture, so touch opens the menu from a button
+          instead — and zag skips its trackPositioning effect whenever a
+          context trigger exists, so a button in the same menu would open
+          unplaced, off screen. */}
+      {hasCoarsePointer ? (
+        <>
+          {children}
+          <MenuTrigger asChild>
+            <IconButton
+              aria-label={`Actions for ${name ?? "card"}`}
+              variant="solid"
+              colorPalette="gray"
+              size="xs"
+              position="absolute"
+              bottom="2"
+              right="2"
+              zIndex="1"
+              // Otherwise holding the button starts a card drag underneath it
+              onPointerDown={(event) => event.preventDefault()}
+            >
+              <LuEllipsis />
+            </IconButton>
+          </MenuTrigger>
+        </>
+      ) : (
+        <MenuContextTrigger cursor="grab" tabIndex={-1}>
+          {children}
+        </MenuContextTrigger>
+      )}
       <MenuContent
         onDragStart={(e) => e.preventDefault()}
         onClick={(e) => e.stopPropagation()}
