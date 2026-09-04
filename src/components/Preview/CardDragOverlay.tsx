@@ -39,6 +39,15 @@ export const CardDragOverlay = ({
               position="absolute"
               zIndex="1"
               pointerEvents="none"
+              transitionProperty="opacity"
+              transitionDuration="fastest"
+              css={{
+                // The chip is pinned to the grab offset inside the overlay, so
+                // dnd-kit's drop animation would drag it along to the target's
+                // top-left — visibly away from where the pointer let go. It has
+                // served its purpose by then, so drop it instead of animating.
+                "[data-dnd-dropping] &": { opacity: 0 },
+              }}
             >
               {getIsSortableCardData(source.data)
                 ? source.data.images.length === 1
