@@ -41,7 +41,7 @@ export const parseBundle = async (file: Blob | File): Promise<ParsedBundle> => {
   try {
     zip = await JSZip.loadAsync(await file.arrayBuffer());
   } catch {
-    throw new BundleParseError("Not a valid proxy-print bundle file");
+    throw new BundleParseError("Not a valid Print My Proxy bundle file");
   }
 
   const manifestEntry = zip.file("manifest.json");
@@ -67,7 +67,7 @@ export const parseBundle = async (file: Blob | File): Promise<ParsedBundle> => {
     );
     if (versionIssue) {
       throw new BundleParseError(
-        "This bundle was exported from a newer or incompatible version of Proxy Print",
+        "This bundle was exported from a newer or incompatible version of Print My Proxy",
       );
     }
     throw new BundleParseError("Bundle manifest is malformed");

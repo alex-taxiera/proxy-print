@@ -1,5 +1,5 @@
 export function isProd() {
-  const PROD_DOMAINS = ["proxyprint.taxiera.net"];
+  const PROD_DOMAINS = ["printmyproxy.com", "proxyprint.taxiera.net"];
 
   function isHostProd(hostname: string): boolean {
     return PROD_DOMAINS.some(

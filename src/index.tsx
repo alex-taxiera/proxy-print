@@ -39,7 +39,10 @@ Sentry.init({
   tracesSampleRate: SENTRY_ENV === "production" ? 0.1 : 1,
   tracePropagationTargets: [
     "localhost",
+    /^https:\/\/printmyproxy\.com/,
+    /^https:\/\/dev\.printmyproxy\.com/,
     /^https:\/\/proxyprint\.taxiera\.net/,
+    /^https:\/\/dev-proxyprint\.taxiera\.net/,
     /^https:\/\/devprint\.taxiera\.net/,
   ],
 

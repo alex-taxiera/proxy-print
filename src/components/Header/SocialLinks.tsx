@@ -21,7 +21,7 @@ export const SocialLinks = () => {
       </Button>
       <IconButton
         asChild
-        aria-label="View the Proxy Print Setup GitHub repository"
+        aria-label="View the Print My Proxy GitHub repository"
       >
         <a
           href="https://github.com/alex-taxiera/proxy-print"
