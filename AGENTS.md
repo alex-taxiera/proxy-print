@@ -79,11 +79,6 @@ importer reads the manifest, not the filename — so those did get renamed.
   persisted shape needs a version bump _and_ a migration step. The store uses a
   custom `PersistStorage` over `idb-keyval` rather than JSON so that
   `Uint8Array` base-PDF bytes survive via structured clone.
-- **`enableBleedEdge` is bypassed in preview.** `computeCssVars` in
-  `settingsStore.ts` hardcodes `const enableBleedEdge = true` with the real
-  setting commented out, while `useGeneratePdf.ts` still honours the setting.
-  Preview and PDF output can therefore disagree. Known inconsistency — don't
-  "fix" it incidentally without checking why it was disabled.
 - **PDF generation measures the live DOM.** `useGeneratePdf.ts` reads the
   rendered preview to derive crop geometry, so preview markup changes can alter
   PDF output. `src/workers/pdf-spec.ts` has snapshot tests; if a snapshot

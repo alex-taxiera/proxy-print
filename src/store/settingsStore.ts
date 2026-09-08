@@ -74,30 +74,26 @@ type PersistedSettings = {
 // ---------------------------------------------------------------------------
 
 export function computeCssVars(value: Settings): Record<string, string> {
-  const enableBleedEdge = true; // value.enableBleedEdge
-  const guideThickness = enableBleedEdge ? Number(value.guidesThickness) : 1;
-  const imageContainerBuffer = enableBleedEdge ? guideThickness : 0;
+  const guideThickness = Number(value.guidesThickness);
   const guideLengthMm =
     Number(value.guideLength) > 0
       ? Number(value.guideLength)
-      : enableBleedEdge
-        ? Number(value.bleedEdge)
-        : 0;
+      : Number(value.bleedEdge);
 
   return {
     "--page-unit": value.unit,
     "--page-width": `${value.pageWidth}${value.unit}`,
     "--page-height": `${value.pageHeight}${value.unit}`,
     "--grid-columns": value.numberOfColumns,
-    "--bleed-edge": `${enableBleedEdge ? value.bleedEdge : 0}mm`,
+    "--bleed-edge": `${value.bleedEdge}mm`,
     "--guides-color": value.guidesColor,
     "--guides-color-inverted": invertHexColor(value.guidesColor),
     "--guides-thickness": `${guideThickness}mm`,
     "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
     "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
     "--guide-length": guideLengthMm > 0 ? `${guideLengthMm}mm` : "initial",
-    "--image-container-buffer": `${imageContainerBuffer}mm`,
-    "--image-zoom": enableBleedEdge ? "6.2mm" : "0mm",
+    "--image-container-buffer": `${guideThickness}mm`,
+    "--image-zoom": "6.2mm",
     "--card-width": `${value.cardWidth}mm`,
     "--card-height": `${value.cardHeight}mm`,
     "--row-gap": `${value.rowGap}mm`,

@@ -760,7 +760,6 @@ export const SettingsForm = () => {
 
             <Field
               label="Bleed Edge"
-              disabled={!formState.enableBleedEdge}
               invalid={formErrors.bleedEdge.length > 0}
               errorText={formErrors.bleedEdge[0]?.message}
             >
