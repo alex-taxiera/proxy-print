@@ -15,7 +15,6 @@ describe("generateCutlineDxf", () => {
       cardHeight: "88",
       rowGap: "0",
       columnGap: "0",
-      enableBleedEdge: false,
       bleedEdge: "0",
       guidesThickness: "0",
     };
@@ -39,7 +38,6 @@ describe("generateCutlineDxf", () => {
       cardHeight: "88",
       rowGap: "0",
       columnGap: "0",
-      enableBleedEdge: false,
       bleedEdge: "0",
       guidesThickness: "0",
     };

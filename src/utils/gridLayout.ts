@@ -17,7 +17,6 @@ export type GridLimits = {
 type GridLimitSettings = Pick<
   Settings,
   | "guidesThickness"
-  | "enableBleedEdge"
   | "bleedEdge"
   | "cardHeight"
   | "cardWidth"
@@ -34,7 +33,7 @@ type GridLimitSettings = Pick<
  */
 export function computeGridLimits(settings: GridLimitSettings): GridLimits {
   const guidesThickness = parseFloat(settings.guidesThickness); // mm
-  const bleedEdge = settings.enableBleedEdge ? Number(settings.bleedEdge) : 0; // mm
+  const bleedEdge = Number(settings.bleedEdge); // mm
 
   const itemHeightMm =
     Number(settings.cardHeight) + 2 * bleedEdge + guidesThickness;

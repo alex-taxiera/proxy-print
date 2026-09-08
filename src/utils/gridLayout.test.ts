@@ -4,7 +4,6 @@ import { computeCardSlotCenters, computeGridLimits } from "./gridLayout";
 
 const baseSettings = {
   guidesThickness: "0",
-  enableBleedEdge: false,
   bleedEdge: "0",
   cardHeight: "88",
   cardWidth: "63",
@@ -39,25 +38,14 @@ describe("computeGridLimits", () => {
     expect(limits.pageHeightMm).toBeCloseTo(11 * 25.4, 5);
   });
 
-  it("adds bleed edge (when enabled) and guides thickness to the item pitch", () => {
+  it("adds bleed edge and guides thickness to the item pitch", () => {
     const limits = computeGridLimits({
       ...baseSettings,
-      enableBleedEdge: true,
       bleedEdge: "2",
       guidesThickness: "0.5",
     });
     expect(limits.itemWidthMm).toBeCloseTo(63 + 2 * 2 + 0.5, 5);
     expect(limits.itemHeightMm).toBeCloseTo(88 + 2 * 2 + 0.5, 5);
-  });
-
-  it("ignores bleed edge when disabled", () => {
-    const limits = computeGridLimits({
-      ...baseSettings,
-      enableBleedEdge: false,
-      bleedEdge: "5",
-      guidesThickness: "0.5",
-    });
-    expect(limits.itemWidthMm).toBeCloseTo(63 + 0.5, 5);
   });
 
   it("accounts for gaps reducing the number of columns/rows that fit", () => {

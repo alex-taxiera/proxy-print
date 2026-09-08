@@ -88,7 +88,7 @@ export const getMinSize = (
   key: "pageWidth" | "pageHeight",
 ) => {
   const cardSize = settings[key === "pageWidth" ? "cardWidth" : "cardHeight"]; // mm
-  const bleedEdge = settings.enableBleedEdge ? Number(settings.bleedEdge) : 0; // mm
+  const bleedEdge = Number(settings.bleedEdge); // mm
   const guidesThickness = Number(settings.guidesThickness);
   const minSize = Number(cardSize) + 2 * bleedEdge + guidesThickness;
 
@@ -120,7 +120,6 @@ export const getMaxSize = (
 export const SettingsSchema = zod
   .object({
     filename: zod.string().min(1).max(50),
-    enableBleedEdge: zod.boolean(),
     bleedEdge: zod
       .string()
       .regex(/^\d+(\.\d+)?$/, "Must be a valid number")
@@ -313,7 +312,6 @@ export const DEFAULT_SETTINGS = {
   pageWidth: PAGE_DIMENSIONS.letter.width.toString(),
   pageHeight: PAGE_DIMENSIONS.letter.height.toString(),
   numberOfColumns: "3",
-  enableBleedEdge: true,
   bleedEdge: "0",
   guidesColor: "#adff2f",
   guidesThickness: "0.265",

@@ -89,9 +89,7 @@ export const useGeneratePdf = (
       const pageHeight = Number(settings.pageHeight);
       const pageWidth = Number(settings.pageWidth);
       const guideBorderWidth = Number(settings.guidesThickness);
-      const bleedEdgeWidth = settings.enableBleedEdge
-        ? Number(settings.bleedEdge)
-        : 0;
+      const bleedEdgeWidth = Number(settings.bleedEdge);
       const guideColor = settings.guidesColor;
       const invertedGuideColor = invertHexColor(settings.guidesColor);
       const unit = settings.unit;
@@ -115,9 +113,8 @@ export const useGeneratePdf = (
       //                         = containerHeightMm / (imgWidthMm × naturalH/naturalW) × naturalH_px
       //                         = containerHeightMm / imgWidthMm × naturalW_px   ← naturalH cancels!
       // Both sourceWidth and sourceHeight divide by imgWidthMm and multiply by naturalWidth.
-      const enableBleedEdge = settings.enableBleedEdge;
-      const imageZoomMm = enableBleedEdge ? 6.2 : 0;
-      const imageContainerBufferMm = enableBleedEdge ? guideBorderWidth : 0;
+      const imageZoomMm = 6.2;
+      const imageContainerBufferMm = guideBorderWidth;
       const imgWidthMm = cardWidth + imageZoomMm;
 
       let progress = 0;
