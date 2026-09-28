@@ -1,5 +1,7 @@
 import { ComponentProps, useContext, useState } from "react";
 
+import { getIsAllSelected, reconcileSelection } from "@/utils/imageSelection";
+
 import { ImageSelectionContext } from "./ImageSelectionContext";
 import { ImagesContext } from "./ImagesContext";
 
@@ -7,22 +9,29 @@ export const ImageSelectionProvider = (
   props: Omit<ComponentProps<typeof ImageSelectionContext.Provider>, "value">,
 ) => {
   const { images } = useContext(ImagesContext);
-  const [selectedImageUuids, setSelectedImageUuids] = useState<string[]>([]);
+  const [storedImageUuids, setStoredImageUuids] = useState<string[]>([]);
 
-  const isAllSelected = selectedImageUuids.length === images.length;
+  const imageUuids = new Set(images.map((image) => image.uuid));
+  const selectedImageUuids = reconcileSelection(storedImageUuids, imageUuids);
+
+  const isAllSelected = getIsAllSelected(
+    selectedImageUuids.length,
+    images.length,
+  );
 
   const onSelectImageUuid = (uuid: string, selected: boolean) => {
-    if (selected) {
-      setSelectedImageUuids((old) => [...old, uuid]);
-    } else {
-      setSelectedImageUuids((old) => old.filter((id) => id !== uuid));
-    }
+    setStoredImageUuids((old) => {
+      const rest = reconcileSelection(old, imageUuids).filter(
+        (id) => id !== uuid,
+      );
+      return selected ? [...rest, uuid] : rest;
+    });
   };
   const onSelectAllImages = (selected: boolean) => {
     if (selected) {
-      setSelectedImageUuids(images.map((image) => image.uuid));
+      setStoredImageUuids(images.map((image) => image.uuid));
     } else {
-      setSelectedImageUuids([]);
+      setStoredImageUuids([]);
     }
   };
 
