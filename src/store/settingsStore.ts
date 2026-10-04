@@ -75,10 +75,15 @@ type PersistedSettings = {
 
 export function computeCssVars(value: Settings): Record<string, string> {
   const guideThickness = Number(value.guidesThickness);
+  // Mirrors the crosshair arm length in pdf-spec: custom length, else the
+  // bleed inset, else 1mm.
+  const autoGuideLengthMm = value.guidesAtBleedEdge
+    ? 0
+    : Number(value.bleedEdge);
   const guideLengthMm =
     Number(value.guideLength) > 0
       ? Number(value.guideLength)
-      : Number(value.bleedEdge);
+      : autoGuideLengthMm || 1;
 
   return {
     "--page-unit": value.unit,
@@ -91,7 +96,7 @@ export function computeCssVars(value: Settings): Record<string, string> {
     "--guides-thickness": `${guideThickness}mm`,
     "--guides-at-bleed-edge": value.guidesAtBleedEdge ? "0" : "1",
     "--guides-display": value.guidesThickness !== "0" ? "block" : "none",
-    "--guide-length": guideLengthMm > 0 ? `${guideLengthMm}mm` : "initial",
+    "--guide-length": `${guideLengthMm}mm`,
     "--image-container-buffer": `${guideThickness}mm`,
     "--image-zoom": "6.2mm",
     "--card-width": `${value.cardWidth}mm`,
