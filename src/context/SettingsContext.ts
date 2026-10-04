@@ -23,6 +23,15 @@ export const MAX_BLEED = 3;
 
 export const MAX_GUIDES_THICKNESS = 0.9;
 
+const round4 = (n: number) => Math.round(n * 10000) / 10000;
+
+/** Guides straddle the cut line, so only half their thickness eats into bleed. */
+export const getMaxBleedEdge = (guidesThickness: number | string) =>
+  round4(Math.min(MAX_BLEED, MAX_BLEED - Number(guidesThickness) / 2));
+
+export const getMaxGuidesThickness = (bleedEdge: number | string) =>
+  round4(Math.min(MAX_GUIDES_THICKNESS, (MAX_BLEED - Number(bleedEdge)) * 2));
+
 export const cardSizeToNameMap = Object.fromEntries(
   Object.entries(CARD_DIMENSIONS).map(([key, dimensions]) => [
     `${dimensions.width}-${dimensions.height}`,
@@ -258,29 +267,26 @@ export const SettingsSchema = zod
       });
     }
 
-    if (Number(guidesThickness) + Number(bleedEdge) > 3) {
+    if (Number(bleedEdge) > getMaxBleedEdge(guidesThickness)) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "Bleed edge and guides thickness must be less than or equal to 3",
+        message: `Bleed edge and guides thickness must be less than or equal to ${MAX_BLEED} (guides count at half thickness)`,
         path: ["guidesThickness"],
       });
       ctx.addIssue({
         code: "custom",
-        message:
-          "Bleed edge and guides thickness must be less than or equal to 3",
+        message: `Bleed edge and guides thickness must be less than or equal to ${MAX_BLEED} (guides count at half thickness)`,
         path: ["bleedEdge"],
       });
     }
 
     if (
       data.useBackBleedEdge &&
-      Number(guidesThickness) + Number(data.backBleedEdge) > 3
+      Number(data.backBleedEdge) > getMaxBleedEdge(guidesThickness)
     ) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "Back bleed edge and guides thickness must be less than or equal to 3",
+        message: `Back bleed edge and guides thickness must be less than or equal to ${MAX_BLEED} (guides count at half thickness)`,
         path: ["backBleedEdge"],
       });
     }
