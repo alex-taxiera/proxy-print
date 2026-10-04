@@ -14,6 +14,9 @@ export const guide = defineSlotRecipe({
       zIndex: "1",
       // Arms run --length either side of the cut corner, matching pdf-spec.
       "--length": "var(--guide-length, var(--bleed-edge-width))",
+      // The root sits half a guide width outside the cut corner (so the
+      // perpendicular line centers on the cut); undo that along each arm.
+      "--arm-offset": "calc(var(--guide-border-width) / 2 - var(--length))",
       // pdf-spec draws guide-colored dashes of length/5 with length/4 gaps
       // over a solid inverted-color line, starting at the arm's start.
       "--dash": "calc(var(--length) / 5)",
@@ -43,11 +46,11 @@ export const guide = defineSlotRecipe({
         },
         horizontal: {
           top: "0",
-          left: "calc(-1 * var(--length))",
+          left: "var(--arm-offset)",
           width: "calc(2 * var(--length))",
         },
         vertical: {
-          top: "calc(-1 * var(--length))",
+          top: "var(--arm-offset)",
           left: "0",
           height: "calc(2 * var(--length))",
         },
@@ -59,11 +62,11 @@ export const guide = defineSlotRecipe({
         },
         horizontal: {
           top: "0",
-          right: "calc(-1 * var(--length))",
+          right: "var(--arm-offset)",
           width: "calc(2 * var(--length))",
         },
         vertical: {
-          top: "calc(-1 * var(--length))",
+          top: "var(--arm-offset)",
           right: "0",
           height: "calc(2 * var(--length))",
         },
@@ -75,11 +78,11 @@ export const guide = defineSlotRecipe({
         },
         horizontal: {
           bottom: "0",
-          left: "calc(-1 * var(--length))",
+          left: "var(--arm-offset)",
           width: "calc(2 * var(--length))",
         },
         vertical: {
-          bottom: "calc(-1 * var(--length))",
+          bottom: "var(--arm-offset)",
           left: "0",
           height: "calc(2 * var(--length))",
         },
@@ -91,11 +94,11 @@ export const guide = defineSlotRecipe({
         },
         horizontal: {
           bottom: "0",
-          right: "calc(-1 * var(--length))",
+          right: "var(--arm-offset)",
           width: "calc(2 * var(--length))",
         },
         vertical: {
-          bottom: "calc(-1 * var(--length))",
+          bottom: "var(--arm-offset)",
           right: "0",
           height: "calc(2 * var(--length))",
         },
