@@ -77,8 +77,8 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { ImagesContext } from "@/context/ImagesContext";
 import {
   CARD_DIMENSIONS,
-  MAX_BLEED,
-  MAX_GUIDES_THICKNESS,
+  getMaxBleedEdge,
+  getMaxGuidesThickness,
 } from "@/context/SettingsContext";
 import { useSettingsFormState } from "@/hooks/useSettingsFormState";
 import { ImportPreview, useTransfer } from "@/hooks/useTransfer";
@@ -573,11 +573,8 @@ export const SettingsForm = () => {
   const activePresetName = useSettingsStore((s) => s.activePresetName);
   const isPresetDirty = useSettingsStore(selectIsPresetDirty);
 
-  const maxGuidesThickness = Math.min(
-    MAX_GUIDES_THICKNESS,
-    Math.round((MAX_BLEED - Number(formState.bleedEdge)) * 10000) / 10000,
-  );
-  const maxBleedEdge = MAX_BLEED - Number(formState.guidesThickness);
+  const maxGuidesThickness = getMaxGuidesThickness(formState.bleedEdge);
+  const maxBleedEdge = getMaxBleedEdge(formState.guidesThickness);
 
   const maxGuideLength = Number(formState.cardWidth) / 2;
 
@@ -1078,7 +1075,7 @@ export const SettingsForm = () => {
                         >
                           <NumberInputRoot
                             min={0}
-                            max={MAX_BLEED}
+                            max={maxBleedEdge}
                             step={0.1}
                             value={formState.backBleedEdge}
                             onValueChange={buildNumberInputChangeHandler(
