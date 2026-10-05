@@ -1,6 +1,10 @@
 import * as zod from "zod";
 
 import { SCRYFALL_LANGUAGE_CODES } from "@/utils/scryfall-languages";
+import {
+  UPSCALE_SETTING_VALUES,
+  migrateLegacyUpscaleSetting,
+} from "@/utils/upscale-methods";
 
 export const CARD_DIMENSIONS = {
   standard: {
@@ -126,7 +130,7 @@ export const getMaxSize = (
   return (Math.floor(maxSize * 1000) / 1000).toFixed(3);
 };
 
-export const SettingsSchema = zod
+const SettingsObjectSchema = zod
   .object({
     filename: zod.string().min(1).max(50),
     bleedEdge: zod
@@ -199,7 +203,7 @@ export const SettingsSchema = zod
         const num = parseFloat(val);
         return num >= 0.1 && num <= 1;
       }, "Must be between 0.1 and 1"),
-    upscaleScryfallImages: zod.boolean(),
+    upscaleMethod: zod.enum(UPSCALE_SETTING_VALUES).default("none"),
     defaultImportLanguage: zod.enum(SCRYFALL_LANGUAGE_CODES).default("en"),
     printMode: zod.enum([
       "duplex",
@@ -308,6 +312,12 @@ export const SettingsSchema = zod
     }
   });
 
+/** Settings, accepting the pre-v12 `upscaleScryfallImages` boolean as input. */
+export const SettingsSchema = zod.preprocess(
+  migrateLegacyUpscaleSetting,
+  SettingsObjectSchema,
+);
+
 export type Settings = zod.infer<typeof SettingsSchema>;
 
 export const DEFAULT_SETTINGS = {
@@ -329,7 +339,7 @@ export const DEFAULT_SETTINGS = {
   maxDpi: "1200",
   convertToJpg: false,
   jpgQuality: "0.95",
-  upscaleScryfallImages: false,
+  upscaleMethod: "none",
   defaultImportLanguage: "en",
   printMode: "inline-faces",
   offsetX: "0",

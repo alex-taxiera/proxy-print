@@ -4,7 +4,7 @@ import {
   Heading,
   Textarea,
   Button,
-  HStack,
+  SimpleGrid,
 } from "@chakra-ui/react";
 import { useIsMutating } from "@tanstack/react-query";
 import { useContext } from "react";
@@ -37,9 +37,9 @@ export const Empty = () => {
       const result = await getCardsForDecklist(decklist);
 
       if (result.slotItems.length > 0) {
-        onAddSlots(result.slotItems);
+        onAddSlots(result.slotItems, undefined, { upscaleCached: true });
       } else {
-        onAdd(result.items);
+        onAdd(result.items, undefined, { upscaleCached: true });
       }
       result.errors.forEach(onError);
     }
@@ -97,27 +97,31 @@ export const Empty = () => {
               placeholder={`1 Black Lotus\n1 Llanowar Elves (FDN) 429\n1 Lava Spike (UMA)\n1 Lightning Bolt (SLP)`}
             />
           </Field>
-          <VStack alignItems="stretch">
-            <HStack
-              justifyContent="space-between"
-              width="80"
-              maxWidth="full"
-              alignItems="end"
-            >
-              <DefaultImportLanguageSetting maxWidth="60%" size="sm" />
-              <Button
-                type="submit"
-                disabled={isLoadingProject}
-                loading={isSubmittingDecklist || isLoadingProject}
-                loadingText={
-                  isLoadingProject ? "Loading project..." : "Submitting..."
-                }
-              >
-                Submit
-              </Button>
-            </HStack>
-            <UpscaleSetting>Upscale Images</UpscaleSetting>
-          </VStack>
+          <SimpleGrid
+            columns={2}
+            gap="3"
+            width="80"
+            maxWidth="full"
+            marginTop="1"
+          >
+            <DefaultImportLanguageSetting size="sm">
+              Language
+            </DefaultImportLanguageSetting>
+            <UpscaleSetting size="sm">Upscaling</UpscaleSetting>
+          </SimpleGrid>
+          <Button
+            type="submit"
+            width="80"
+            maxWidth="full"
+            marginTop="1"
+            disabled={isLoadingProject}
+            loading={isSubmittingDecklist || isLoadingProject}
+            loadingText={
+              isLoadingProject ? "Loading project..." : "Submitting..."
+            }
+          >
+            Submit
+          </Button>
         </form>
       </VStack>
     </VStack>

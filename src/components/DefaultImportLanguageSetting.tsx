@@ -23,6 +23,7 @@ export type DefaultImportLanguageSettingProps = Omit<
 >;
 
 export const DefaultImportLanguageSetting = ({
+  children,
   ...props
 }: DefaultImportLanguageSettingProps) => {
   const { formState, buildSelectChangeHandler } = useSettingsFormState();
@@ -34,7 +35,7 @@ export const DefaultImportLanguageSetting = ({
       onValueChange={buildSelectChangeHandler("defaultImportLanguage")}
       {...props}
     >
-      <SelectLabel>Default Import Language</SelectLabel>
+      <SelectLabel>{children ?? "Default Import Language"}</SelectLabel>
       <SelectControl>
         <SelectTrigger>
           <SelectValueText />

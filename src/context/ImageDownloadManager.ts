@@ -1,27 +1,37 @@
-import { FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
+import {
+  FetchQueryOptions,
+  QueryKey,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useRef } from "react";
 
 import { useUpscaleImage } from "@/hooks/useUpscaleImage";
 import { ImageQueryData } from "@/queries/images";
 import { useDownloadProgressStore } from "@/store/downloadProgressStore";
 import { addBleedEdge } from "@/utils/add-bleed";
+import { UpscaleMethod } from "@/utils/upscale-methods";
 
 type Item = {
   uuid: string;
   queryData: FetchQueryOptions<ImageQueryData>;
+  /**
+   * Also bring an already-cached image in line with `upscaleMethod`. Cached
+   * images never refetch, so without this a re-import ignores the setting.
+   */
+  upscaleCached?: boolean;
   resolve: () => void;
   reject: (reason?: unknown) => void;
 };
 
 export function useImageDownloadManager({
   maxInflight = 20,
-  upscale,
+  upscaleMethod,
   cardWidth,
   cardHeight,
   trackProgress = true,
 }: {
   maxInflight?: number;
-  upscale?: boolean;
+  upscaleMethod?: UpscaleMethod;
   cardWidth?: number;
   cardHeight?: number;
   trackProgress?: boolean;
@@ -29,7 +39,71 @@ export function useImageDownloadManager({
   const queryClient = useQueryClient();
   const queueRef = useRef<Item[]>([]);
   const inflightRef = useRef<Item[]>([]);
+  const pendingUpscalesRef = useRef(new Map<string, Promise<void>>());
   const { upscaleImage } = useUpscaleImage();
+
+  const upscaleQueryData = async <
+    T extends Extract<ImageQueryData, { original: Blob }>,
+  >(
+    result: T,
+    method: UpscaleMethod,
+  ): Promise<T> => {
+    const upscaledOriginal = await upscaleImage(result.original, method);
+    let data: Blob;
+    if (result.hasBleed && cardWidth && cardHeight) {
+      data = await addBleedEdge(
+        upscaledOriginal,
+        result.mimeType,
+        cardWidth,
+        cardHeight,
+      );
+    } else {
+      data = upscaledOriginal;
+    }
+    return {
+      ...result,
+      data,
+      upscaledOriginal,
+      isUpscaled: true,
+      upscaleMethod: method,
+    };
+  };
+
+  const upscaleCachedImage = (queryKey: QueryKey, method: UpscaleMethod) => {
+    const pendingKey = JSON.stringify([queryKey, method]);
+    const pending = pendingUpscalesRef.current.get(pendingKey);
+    if (pending) {
+      return pending;
+    }
+
+    const cached = queryClient.getQueryData<ImageQueryData>(queryKey);
+    if (
+      !cached ||
+      !("original" in cached) ||
+      (cached.isUpscaled && (cached.upscaleMethod ?? "anime-fast") === method)
+    ) {
+      return Promise.resolve();
+    }
+
+    queryClient.setQueryData<ImageQueryData>(queryKey, () => ({
+      ...cached,
+      isProcessing: true,
+    }));
+    const promise = upscaleQueryData(cached, method)
+      .then((next) => {
+        queryClient.setQueryData<ImageQueryData>(queryKey, next);
+      })
+      .catch((error: unknown) => {
+        // The image itself loaded fine; keep it and just drop the spinner.
+        queryClient.setQueryData<ImageQueryData>(queryKey, cached);
+        console.error("Upscale failed for cached image", queryKey, error);
+      })
+      .finally(() => {
+        pendingUpscalesRef.current.delete(pendingKey);
+      });
+    pendingUpscalesRef.current.set(pendingKey, promise);
+    return promise;
+  };
 
   const processQueue = () => {
     while (
@@ -39,7 +113,7 @@ export function useImageDownloadManager({
       const item = queueRef.current.shift()!;
       inflightRef.current.push(item);
 
-      const queryData = upscale
+      const queryData = upscaleMethod
         ? {
             ...item.queryData,
             queryFn: async (...args: unknown[]) => {
@@ -50,24 +124,7 @@ export function useImageDownloadManager({
                 if (!("original" in result)) {
                   return result;
                 }
-                const upscaledOriginal = await upscaleImage(result.original);
-                let data: Blob;
-                if (result.hasBleed && cardWidth && cardHeight) {
-                  data = await addBleedEdge(
-                    upscaledOriginal,
-                    result.mimeType,
-                    cardWidth,
-                    cardHeight,
-                  );
-                } else {
-                  data = upscaledOriginal;
-                }
-                return {
-                  ...result,
-                  data,
-                  upscaledOriginal,
-                  isUpscaled: true,
-                };
+                return upscaleQueryData(result, upscaleMethod);
               }
 
               throw new Error("Query function is not a function");
@@ -77,6 +134,11 @@ export function useImageDownloadManager({
 
       queryClient
         .fetchQuery(queryData)
+        .then(() =>
+          upscaleMethod && item.upscaleCached
+            ? upscaleCachedImage(item.queryData.queryKey, upscaleMethod)
+            : undefined,
+        )
         .then(item.resolve)
         .catch(item.reject)
         .finally(() => {
@@ -95,10 +157,17 @@ export function useImageDownloadManager({
   const add = ({
     uuid,
     queryData,
-  }: Pick<Item, "uuid" | "queryData">): Promise<void> => {
+    upscaleCached,
+  }: Pick<Item, "uuid" | "queryData" | "upscaleCached">): Promise<void> => {
     return new Promise((resolve, reject) => {
       if (trackProgress) useDownloadProgressStore.getState().start();
-      queueRef.current.push({ uuid, queryData, resolve, reject });
+      queueRef.current.push({
+        uuid,
+        queryData,
+        upscaleCached,
+        resolve,
+        reject,
+      });
       if (inflightRef.current.length < maxInflight) {
         processQueue();
       }

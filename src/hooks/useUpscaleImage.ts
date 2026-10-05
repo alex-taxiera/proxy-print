@@ -1,15 +1,78 @@
+import * as Sentry from "@sentry/react";
 import { useEffect } from "react";
 
 import Module from "@/asm/imghelper.js";
 import { useUpscaleQueueManager } from "@/context/UpscaleQueueManager";
 import { CustomImage } from "@/image";
+import { UpscaleMethod } from "@/utils/upscale-methods";
 import { detectBestUpscaleBackend } from "@/utils/upscale-support";
+import type { ResampleWorkerResponse } from "@/workers/resample-worker";
+import ResampleWorker from "@/workers/resample-worker?worker";
 import UpscaleWorker from "@/workers/upscale-worker?worker";
 
 const wasmModule = Module();
 
+/** Matches the anime-fast model's scale so every method yields the same size. */
+const RESAMPLE_SCALE_FACTOR = 4;
+
+const resampleUpscale = (
+  src: Blob,
+  kernel: Exclude<UpscaleMethod, "anime-fast">,
+): Promise<Blob> =>
+  Sentry.startSpan(
+    { name: "Resample upscale", op: "image.upscale", attributes: { kernel } },
+    () => {
+      const start = Date.now();
+      return new Promise<Blob>((resolve, reject) => {
+        const workerInstance = new ResampleWorker({ name: "Resample Worker" });
+
+        workerInstance.addEventListener(
+          "message",
+          (e: MessageEvent<ResampleWorkerResponse>) => {
+            workerInstance.terminate();
+            if ("alertmsg" in e.data) {
+              reject(new Error(e.data.alertmsg));
+              return;
+            }
+            console.debug(
+              `${kernel} upscaling completed in ${(Date.now() - start) / 1000}s`,
+            );
+            resolve(e.data.output);
+          },
+        );
+
+        workerInstance.addEventListener("error", (error) => {
+          workerInstance.terminate();
+          reject(
+            new Error(`Worker error: ${error.message || "Unknown error"}`),
+          );
+        });
+
+        workerInstance.postMessage({
+          input: src,
+          factor: RESAMPLE_SCALE_FACTOR,
+          kernel,
+        });
+      });
+    },
+  );
+
 export function useUpscaleImage() {
   const queueManager = useUpscaleQueueManager();
+  const bicubicQueueManager = useUpscaleQueueManager();
+  const lanczosQueueManager = useUpscaleQueueManager();
+
+  useEffect(() => {
+    bicubicQueueManager.setUpscaleWorker((src) =>
+      resampleUpscale(src, "bicubic"),
+    );
+  }, [bicubicQueueManager]);
+
+  useEffect(() => {
+    lanczosQueueManager.setUpscaleWorker((src) =>
+      resampleUpscale(src, "lanczos"),
+    );
+  }, [lanczosQueueManager]);
 
   // Set up the queue manager with our processing function
   useEffect(() => {
@@ -185,10 +248,19 @@ export function useUpscaleImage() {
   }, [queueManager]);
 
   // Public upscale function that uses the queue
-  const upscaleImage = async (src: Blob, id?: string): Promise<Blob> => {
+  const upscaleImage = async (
+    src: Blob,
+    method: UpscaleMethod,
+    id?: string,
+  ): Promise<Blob> => {
     const itemId =
       id || `upscale-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    return queueManager.addToQueue(itemId, src);
+    const manager = {
+      bicubic: bicubicQueueManager,
+      lanczos: lanczosQueueManager,
+      "anime-fast": queueManager,
+    }[method];
+    return manager.addToQueue(itemId, src);
   };
 
   return {

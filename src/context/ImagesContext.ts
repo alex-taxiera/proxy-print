@@ -97,6 +97,15 @@ export const getBacks = (slots: CardSlotsMap): Image[] => {
     .filter((image): image is Image => image !== null);
 };
 
+export type AddImagesOptions = {
+  /**
+   * Apply the upscale setting to cards that are already cached too. Set for
+   * explicit decklist imports, so changing the setting and re-importing takes
+   * effect; project loads and other adds keep cached images as they are.
+   */
+  upscaleCached?: boolean;
+};
+
 export type ImagesContextValue = {
   slots: CardSlotsMap;
   sortedSlots: CardSlot[];
@@ -115,8 +124,13 @@ export type ImagesContextValue = {
   onAdd: (
     files: (LocalImageData | GoogleImageData | ScryfallImageData)[],
     index?: number,
+    options?: AddImagesOptions,
   ) => void;
-  onAddSlots: (slots: SlotInputData[], index?: number) => void;
+  onAddSlots: (
+    slots: SlotInputData[],
+    index?: number,
+    options?: AddImagesOptions,
+  ) => void;
   onAddBack: (
     slotId: string,
     data: LocalImageData | GoogleImageData | ScryfallImageData,

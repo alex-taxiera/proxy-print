@@ -10,7 +10,6 @@ import {
   LuGalleryVerticalEnd,
   LuImage,
   LuImageDown,
-  LuImageUpscale,
   LuPlus,
   LuShrink,
   LuTrash,
@@ -44,9 +43,11 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { addBleedEdge } from "@/utils/add-bleed";
 import { createFileHash } from "@/utils/create-file-hash";
 import { getKeybindLabels } from "@/utils/keybind-labels";
+import { UpscaleMethod } from "@/utils/upscale-methods";
 
 import { AddMoreDialog } from "./AddMoreDialog";
 import { ChangePrintDialog } from "./ChangePrintDialog";
+import { UpscaleMenuItems } from "./UpscaleMenuItems";
 
 export type CardContextMenuProps = React.PropsWithChildren<{
   image: Image;
@@ -157,10 +158,10 @@ export const CardContextMenu = ({
     }
   };
 
-  const onUpscaleClick = async () => {
+  const onUpscaleClick = async (method: UpscaleMethod) => {
     if (queryData && "original" in queryData && !queryData.isUpscaled) {
       setProcessing(true);
-      const upscaledOriginal = await upscaleImage(queryData.original);
+      const upscaledOriginal = await upscaleImage(queryData.original, method);
       let data: Blob;
       if (queryData.hasBleed) {
         data = await addBleedEdge(
@@ -174,7 +175,13 @@ export const CardContextMenu = ({
       }
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
-        () => ({ ...queryData, data, upscaledOriginal, isUpscaled: true }),
+        () => ({
+          ...queryData,
+          data,
+          upscaledOriginal,
+          isUpscaled: true,
+          upscaleMethod: method,
+        }),
       );
     }
   };
@@ -200,6 +207,7 @@ export const CardContextMenu = ({
           data,
           upscaledOriginal: undefined,
           isUpscaled: false,
+          upscaleMethod: undefined,
         }),
       );
     }
@@ -214,6 +222,7 @@ export const CardContextMenu = ({
           data: queryData.original,
           upscaledOriginal: undefined,
           isUpscaled: false,
+          upscaleMethod: undefined,
           hasBleed: false,
         }),
       );
@@ -326,14 +335,10 @@ export const CardContextMenu = ({
             </MenuItem>
           )}
           {canUpscale && !isBackFace ? (
-            <MenuItem
-              value="upscale"
-              onSelect={() => void onUpscaleClick()}
+            <UpscaleMenuItems
+              onUpscale={(method) => void onUpscaleClick(method)}
               disabled={isLoadingProject}
-            >
-              <LuImageUpscale />
-              <MenuItemText>Upscale</MenuItemText>
-            </MenuItem>
+            />
           ) : null}
           {canRemoveUpscale && !isBackFace ? (
             <MenuItem

@@ -1,70 +1,91 @@
-import { Box } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { Box, createListCollection, Span } from "@chakra-ui/react";
+import { useEffect } from "react";
 import { LuTriangleAlert } from "react-icons/lu";
 
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  SelectContent,
+  SelectControl,
+  SelectIndicatorGroup,
+  SelectItem,
+  SelectItemText,
+  SelectLabel,
+  SelectRoot,
+  SelectTrigger,
+  SelectValueText,
+} from "@/components/ui/select";
 import { Tooltip } from "@/components/ui/tooltip";
 
 import { useSettingsFormState } from "@/hooks/useSettingsFormState";
-import { detectUpscaleSupport } from "@/utils/upscale-support";
+import { useIsAiUpscaleSupported } from "@/hooks/useUpscaleSupport";
+import {
+  isAiUpscaleMethod,
+  UPSCALE_METHOD_LABELS,
+  UPSCALE_SETTING_VALUES,
+} from "@/utils/upscale-methods";
 
-export type UpscaleSettingProps = React.ComponentProps<typeof Checkbox>;
+export type UpscaleSettingProps = Omit<
+  React.ComponentProps<typeof SelectRoot>,
+  "collection" | "value" | "onValueChange"
+>;
 
 export const UpscaleSetting = ({ children, ...props }: UpscaleSettingProps) => {
-  const { formState, handle, buildCheckboxChangeHandler } =
+  const { formState, handle, buildSelectChangeHandler } =
     useSettingsFormState();
-  const [isUpscaleSupported, setIsUpscaleSupported] = useState(true);
+  const isAiSupported = useIsAiUpscaleSupported();
 
   useEffect(() => {
-    let isMounted = true;
+    if (!isAiSupported && isAiUpscaleMethod(formState.upscaleMethod)) {
+      void handle({ upscaleMethod: "bicubic" });
+    }
+  }, [isAiSupported, formState.upscaleMethod, handle]);
 
-    void detectUpscaleSupport().then((support) => {
-      if (!isMounted) {
-        return;
-      }
-
-      setIsUpscaleSupported(support.hasSupportedBackend);
-      if (!support.hasSupportedBackend && formState.upscaleScryfallImages) {
-        void handle({ upscaleScryfallImages: false });
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [formState.upscaleScryfallImages, handle]);
-
-  const isUpscaleUnavailable = !isUpscaleSupported;
+  const collection = createListCollection({
+    items: UPSCALE_SETTING_VALUES.map((value) => ({
+      value,
+      label: UPSCALE_METHOD_LABELS[value],
+      disabled: !isAiSupported && isAiUpscaleMethod(value),
+    })),
+  });
 
   return (
-    <Tooltip
-      openDelay={100}
-      closeDelay={200}
-      disabled={!isUpscaleUnavailable}
-      content="Upscaling is unavailable because your browser does not support WebGL or WebGPU."
+    <SelectRoot
+      collection={collection}
+      value={[formState.upscaleMethod]}
+      onValueChange={buildSelectChangeHandler("upscaleMethod")}
+      {...props}
     >
-      <Box as="span" display="inline-block">
-        <Checkbox
-          size="md"
-          checked={
-            isUpscaleUnavailable ? false : formState.upscaleScryfallImages
-          }
-          onCheckedChange={buildCheckboxChangeHandler("upscaleScryfallImages")}
-          disabled={isUpscaleUnavailable}
-          {...props}
-        >
-          {children ?? "Upscale Decklist Images"}
-          <Tooltip
-            openDelay={100}
-            closeDelay={200}
-            content="This can add a lot of time to the download process."
-          >
-            <Box as="span" display="inline-flex" alignItems="center">
-              <LuTriangleAlert />
-            </Box>
-          </Tooltip>
-        </Checkbox>
-      </Box>
-    </Tooltip>
+      <SelectLabel>{children ?? "Upscale Decklist Images"}</SelectLabel>
+      <SelectControl>
+        <SelectTrigger>
+          <SelectValueText />
+        </SelectTrigger>
+        <SelectIndicatorGroup />
+      </SelectControl>
+      <SelectContent>
+        {collection.items.map((item) => (
+          <SelectItem key={item.value} item={item}>
+            <SelectItemText>
+              {item.label}
+              {isAiUpscaleMethod(item.value) && !isAiSupported ? (
+                <Span display="block" color="fg.muted" textStyle="xs">
+                  Requires WebGL or WebGPU
+                </Span>
+              ) : null}
+            </SelectItemText>
+            {isAiUpscaleMethod(item.value) && isAiSupported ? (
+              <Tooltip
+                openDelay={100}
+                closeDelay={200}
+                content="This can add a lot of time to the download process."
+              >
+                <Box as="span" display="inline-flex" alignItems="center">
+                  <LuTriangleAlert />
+                </Box>
+              </Tooltip>
+            ) : null}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </SelectRoot>
   );
 };

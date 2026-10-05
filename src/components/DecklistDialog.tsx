@@ -52,9 +52,9 @@ export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
       const result = await getCardsForDecklist(decklist);
 
       if (result.slotItems.length > 0) {
-        onAddSlots(result.slotItems);
+        onAddSlots(result.slotItems, undefined, { upscaleCached: true });
       } else {
-        onAdd(result.items);
+        onAdd(result.items, undefined, { upscaleCached: true });
       }
       result.errors.forEach(onError);
       dialog.setOpen(false);
@@ -100,7 +100,7 @@ export const DecklistDialog = ({ children, ...props }: DecklistDialogProps) => {
               <DialogFooter justifyContent="space-between">
                 <VStack alignItems="stretch">
                   <DefaultImportLanguageSetting size="sm" />
-                  <UpscaleSetting>Upscale Images</UpscaleSetting>
+                  <UpscaleSetting size="sm">Upscale Images</UpscaleSetting>
                 </VStack>
                 <ButtonGroup>
                   <DialogActionTrigger asChild>

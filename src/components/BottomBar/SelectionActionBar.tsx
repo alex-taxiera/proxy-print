@@ -10,7 +10,6 @@ import {
   LuExpand,
   LuImage,
   LuImageDown,
-  LuImageUpscale,
   LuMove,
   LuPlus,
   LuShrink,
@@ -37,6 +36,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 
 import { AddMoreDialog } from "@/components/Preview/Card/AddMoreDialog";
 import { DownloadDialog } from "@/components/Preview/Card/DownloadDialog";
+import { UpscaleMenuItems } from "@/components/Preview/Card/UpscaleMenuItems";
 import { useCardActions } from "@/components/Preview/Card/useCardActions";
 import { useDownloadPrompt } from "@/components/Preview/Card/useDownloadPrompt";
 
@@ -245,14 +245,10 @@ export const SelectionActionBar = () => {
                 </MenuItem>
               ) : null}
               {canUpscale ? (
-                <MenuItem
-                  value="upscale"
-                  onSelect={() => upscale()}
+                <UpscaleMenuItems
+                  onUpscale={upscale}
                   disabled={isLoadingProject}
-                >
-                  <LuImageUpscale />
-                  <MenuItemText>Upscale</MenuItemText>
-                </MenuItem>
+                />
               ) : null}
               {canRemoveUpscale ? (
                 <MenuItem

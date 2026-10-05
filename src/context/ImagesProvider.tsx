@@ -17,6 +17,7 @@ import {
 
 import { useImageDownloadManager } from "./ImageDownloadManager";
 import {
+  AddImagesOptions,
   CardSlot,
   DownloadableImage,
   getFronts,
@@ -50,7 +51,8 @@ export const ImagesProvider = (
   const googleDownloadManager = useImageDownloadManager();
   const scryfallDownloadManager = useImageDownloadManager({
     maxInflight: Infinity,
-    upscale: settings.upscaleScryfallImages,
+    upscaleMethod:
+      settings.upscaleMethod === "none" ? undefined : settings.upscaleMethod,
     cardWidth: Number(settings.cardWidth),
     cardHeight: Number(settings.cardHeight),
   });
@@ -138,14 +140,21 @@ export const ImagesProvider = (
     }
   };
 
-  const downloadImage = async (image: DownloadableImage) => {
+  const downloadImage = async (
+    image: DownloadableImage,
+    options?: AddImagesOptions,
+  ) => {
     const isGoogleImage = getIsGoogleImage(image);
     const queryData = getQueryDataForImage(image, settings);
     try {
       if (isGoogleImage) {
         await googleDownloadManager.add({ uuid: image.uuid, queryData });
       } else {
-        await scryfallDownloadManager.add({ uuid: image.uuid, queryData });
+        await scryfallDownloadManager.add({
+          uuid: image.uuid,
+          queryData,
+          upscaleCached: options?.upscaleCached,
+        });
       }
     } catch {
       onError(image);
@@ -178,7 +187,11 @@ export const ImagesProvider = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultCardBack]);
 
-  const onAddSlots = (data: SlotInputData[], index?: number) => {
+  const onAddSlots = (
+    data: SlotInputData[],
+    index?: number,
+    options?: AddImagesOptions,
+  ) => {
     // Pre-generate all slot objects (pure, no side effects).
     const newSlots: CardSlot[] = data.map((item) => {
       const slotId = nanoid();
@@ -202,11 +215,11 @@ export const ImagesProvider = (
     for (const slot of newSlots) {
       if (slot.front) {
         if ("file" in slot.front) void loadLocalImage(slot.front);
-        else void downloadImage(slot.front);
+        else void downloadImage(slot.front, options);
       }
       if (slot.back) {
         if ("file" in slot.back) void loadLocalImage(slot.back);
-        else void downloadImage(slot.back);
+        else void downloadImage(slot.back, options);
       }
     }
 
@@ -225,6 +238,7 @@ export const ImagesProvider = (
   const onAdd = (
     data: (LocalImageData | GoogleImageData | ScryfallImageData)[],
     index?: number,
+    options?: AddImagesOptions,
   ) => {
     onAddSlots(
       data.map((item) => ({
@@ -232,6 +246,7 @@ export const ImagesProvider = (
         back: null,
       })),
       index,
+      options,
     );
   };
 
