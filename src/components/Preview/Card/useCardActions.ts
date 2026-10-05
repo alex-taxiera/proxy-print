@@ -29,6 +29,7 @@ import {
 import { useSettingsStore } from "@/store/settingsStore";
 import { addBleedEdge } from "@/utils/add-bleed";
 import { downloadBlob } from "@/utils/download-blob";
+import { UpscaleMethod } from "@/utils/upscale-methods";
 import ZipWorker from "@/workers/zip-worker?worker";
 
 const getExtensionFromMimeType = (mimeType: string) => {
@@ -350,7 +351,7 @@ export const useCardActions = ({
     });
   };
 
-  const upscale = () => {
+  const upscale = (method: UpscaleMethod) => {
     const total = images.length;
     let completed = 0;
 
@@ -380,7 +381,10 @@ export const useCardActions = ({
             () => ({ ...queryData, isProcessing: true }),
           );
           try {
-            const upscaledOriginal = await upscaleImage(queryData.original);
+            const upscaledOriginal = await upscaleImage(
+              queryData.original,
+              method,
+            );
             let data: Blob;
             if (queryData.hasBleed) {
               data = await addBleedEdge(
@@ -399,6 +403,7 @@ export const useCardActions = ({
                 data,
                 upscaledOriginal,
                 isUpscaled: true,
+                upscaleMethod: method,
               }),
             );
           } catch (error) {
@@ -456,6 +461,7 @@ export const useCardActions = ({
               data,
               upscaledOriginal: undefined,
               isUpscaled: false,
+              upscaleMethod: undefined,
             }),
           );
         }
@@ -474,6 +480,7 @@ export const useCardActions = ({
             data: old.original,
             upscaledOriginal: undefined,
             isUpscaled: false,
+            upscaleMethod: undefined,
             hasBleed: false,
           };
         },

@@ -13,6 +13,7 @@ import {
 } from "@/context/ImagesContext";
 import { Settings } from "@/context/SettingsContext";
 import { addBleedEdge, needsBleedFromFile } from "@/utils/add-bleed";
+import { UpscaleMethod } from "@/utils/upscale-methods";
 
 const MPC_BASE_URL = import.meta.env.DEV
   ? "/cdn-images"
@@ -69,6 +70,8 @@ export type ScryfallImageQueryData = BaseImageQueryData & {
   original: Blob;
   upscaledOriginal?: Blob;
   isUpscaled: boolean;
+  /** Absent on data cached before methods existed, which was anime-fast. */
+  upscaleMethod?: UpscaleMethod;
   hasBleed: boolean;
   isProcessing?: boolean;
 };
@@ -77,6 +80,8 @@ export type LocalImageQueryData = BaseImageQueryData & {
   original: File;
   upscaledOriginal?: Blob;
   isUpscaled: boolean;
+  /** Absent on data cached before methods existed, which was anime-fast. */
+  upscaleMethod?: UpscaleMethod;
   hasBleed: boolean;
   isProcessing?: boolean;
 };

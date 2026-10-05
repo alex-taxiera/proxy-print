@@ -75,8 +75,10 @@ importer reads the manifest, not the filename — so those did get renamed.
 ## Gotchas
 
 - **Settings store migrations.** `src/store/settingsStore.ts` is at persist
-  version 11 with a migration chain from earlier versions. Any change to the
-  persisted shape needs a version bump _and_ a migration step. The store uses a
+  version 12 with a migration chain from earlier versions. Any change to the
+  persisted shape needs a version bump _and_ a migration step. Steps up to v11
+  return early (a state only passes through one), so later steps are applied
+  to the result of `migrateToV11` rather than appended to that chain. The store uses a
   custom `PersistStorage` over `idb-keyval` rather than JSON so that
   `Uint8Array` base-PDF bytes survive via structured clone.
 - **PDF generation measures the live DOM.** `useGeneratePdf.ts` reads the

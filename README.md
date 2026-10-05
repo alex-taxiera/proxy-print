@@ -51,8 +51,9 @@ IndexedDB, and PDFs are rendered locally in web workers.
 - Auto-cutter support: generate a base PDF carrying Silhouette registration
   marks (including a borderless mode that moves marks to 3.5mm from the edge to
   fit 3×3 layouts), and export a matching DXF of rounded-rect cut lines.
-- Optional AI upscaling of low-resolution art via TensorFlow.js, running on
-  WebGPU where available and falling back to WebGL.
+- Optional 4× upscaling of low-resolution art: plain bicubic or Lanczos, or the
+  `anime-fast` AI model via TensorFlow.js, running on WebGPU where available and
+  falling back to WebGL.
 
 **Saving and sharing**
 

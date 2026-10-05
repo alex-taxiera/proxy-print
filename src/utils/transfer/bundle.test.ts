@@ -130,6 +130,40 @@ describe("buildBundle / parseBundle round trip", () => {
     expect(parsed.images["local:hash1"].kind).toBe("local");
   });
 
+  it("maps the legacy upscale checkbox in older bundles to anime-fast", async () => {
+    const legacySettings: Record<string, unknown> = {
+      ...DEFAULT_SETTINGS,
+      upscaleScryfallImages: true,
+    };
+    delete legacySettings.upscaleMethod;
+    const zip = new JSZip();
+    zip.file(
+      "manifest.json",
+      JSON.stringify({
+        format: "proxy-print/bundle",
+        formatVersion: FORMAT_VERSION,
+        presets: [
+          {
+            name: "Legacy",
+            settings: legacySettings,
+            basePdf: null,
+            defaultCardBack: null,
+          },
+        ],
+        settings: legacySettings,
+        images: {},
+      }),
+    );
+
+    const parsed = await parseBundle(await zipToBlob(zip));
+    expect(parsed.settings).toEqual({
+      ...DEFAULT_SETTINGS,
+      upscaleMethod: "anime-fast",
+    });
+    expect(parsed.presets[0].settings.upscaleMethod).toBe("anime-fast");
+    expect(parsed.settings).not.toHaveProperty("upscaleScryfallImages");
+  });
+
   it("rejects a malformed manifest", async () => {
     const zip = new JSZip();
     zip.file("manifest.json", JSON.stringify({ not: "a bundle" }));

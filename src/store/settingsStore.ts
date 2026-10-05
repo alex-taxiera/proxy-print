@@ -16,6 +16,7 @@ import {
   SettingsSchema,
 } from "@/context/SettingsContext";
 import { invertHexColor } from "@/utils/invert-hex-color";
+import { migrateLegacyUpscaleSetting } from "@/utils/upscale-methods";
 
 // ---------------------------------------------------------------------------
 // IDB adapter — uses PersistStorage<T> (not StateStorage) so that Zustand
@@ -198,6 +199,174 @@ function loadInitialSettings(): Settings {
 }
 
 // ---------------------------------------------------------------------------
+// Persist migrations
+// ---------------------------------------------------------------------------
+
+// Each step returns early, so a state only ever passes through one of them.
+// Later migrations are applied to its result rather than added to this chain.
+function migrateToV11(persistedState: unknown, version: number): SettingsStore {
+  if (!persistedState) {
+    return persistedState as SettingsStore;
+  }
+
+  const state = persistedState as Partial<SettingsStore>;
+
+  if (version < 5) {
+    return {
+      ...state,
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...state.settings,
+      },
+      presets: {},
+      activePresetName: null,
+      projects: {},
+    } as SettingsStore;
+  }
+
+  if (version < 6) {
+    return {
+      ...state,
+      presets: {},
+      activePresetName: null,
+      projects: {},
+    } as SettingsStore;
+  }
+
+  if (version < 7) {
+    return {
+      ...state,
+      projects: {},
+    } as SettingsStore;
+  }
+
+  if (version < 8) {
+    return {
+      ...state,
+      activeProjectName: null,
+    } as SettingsStore;
+  }
+
+  if (version < 9) {
+    return {
+      ...state,
+      activeProjectName: null,
+    } as SettingsStore;
+  }
+
+  if (version < 10) {
+    return {
+      ...state,
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...state.settings,
+      },
+      presets: Object.fromEntries(
+        Object.entries(state.presets ?? {}).map(([name, preset]) => [
+          name,
+          {
+            ...preset,
+            settings: {
+              ...DEFAULT_SETTINGS,
+              ...preset.settings,
+            },
+          },
+        ]),
+      ),
+    } as SettingsStore;
+  }
+
+  if (version < 11) {
+    const legacy = persistedState as {
+      basePdfBytes?: Uint8Array | null;
+      basePdfName?: string | null;
+      basePdfPageCount?: number | null;
+      presets?: Record<
+        string,
+        {
+          settings?: Settings;
+          basePdfBytes?: Uint8Array | null;
+          basePdfName?: string | null;
+          basePdfPageCount?: number | null;
+          defaultCardBack?: PresetData["defaultCardBack"];
+        }
+      >;
+    };
+
+    const basePdfs: BasePdfsMap = {};
+    const idForBasePdf = new Map<string, string>();
+
+    const registerBasePdf = (
+      bytes: Uint8Array | null | undefined,
+      name: string | null | undefined,
+      pageCount: number | null | undefined,
+    ): string | null => {
+      if (!bytes || !name) return null;
+      const key = `${name}:${bytes.length}`;
+      const existing = idForBasePdf.get(key);
+      if (existing) return existing;
+      const id = nanoid();
+      idForBasePdf.set(key, id);
+      basePdfs[id] = { name, bytes, pageCount: pageCount ?? 0 };
+      return id;
+    };
+
+    const activeBasePdfId = registerBasePdf(
+      legacy.basePdfBytes,
+      legacy.basePdfName,
+      legacy.basePdfPageCount,
+    );
+
+    const presets = Object.fromEntries(
+      Object.entries(legacy.presets ?? {}).map(([name, preset]) => [
+        name,
+        {
+          settings: preset.settings,
+          defaultCardBack: preset.defaultCardBack ?? null,
+          basePdfId: registerBasePdf(
+            preset.basePdfBytes,
+            preset.basePdfName,
+            preset.basePdfPageCount,
+          ),
+        },
+      ]),
+    );
+
+    return {
+      ...state,
+      basePdfs,
+      activeBasePdfId,
+      presets,
+    } as SettingsStore;
+  }
+
+  return persistedState as SettingsStore;
+}
+
+/** v12: the `upscaleScryfallImages` boolean became the `upscaleMethod` enum. */
+export function migrateUpscaleSettingV12<
+  T extends Pick<Partial<SettingsStore>, "settings" | "presets">,
+>(state: T): T {
+  return {
+    ...state,
+    ...(state.settings && {
+      settings: migrateLegacyUpscaleSetting(state.settings) as Settings,
+    }),
+    ...(state.presets && {
+      presets: Object.fromEntries(
+        Object.entries(state.presets).map(([name, preset]) => [
+          name,
+          {
+            ...preset,
+            settings: migrateLegacyUpscaleSetting(preset.settings) as Settings,
+          },
+        ]),
+      ),
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Zustand store
 // ---------------------------------------------------------------------------
 
@@ -374,145 +543,13 @@ export const useSettingsStore = create<SettingsStore>()(
     },
     {
       name: "proxy-print-settings",
-      version: 11,
+      version: 12,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
-        if (!persistedState) {
-          return persistedState as SettingsStore;
-        }
-
-        const state = persistedState as Partial<SettingsStore>;
-
-        if (version < 5) {
-          return {
-            ...state,
-            settings: {
-              ...DEFAULT_SETTINGS,
-              ...state.settings,
-            },
-            presets: {},
-            activePresetName: null,
-            projects: {},
-          } as SettingsStore;
-        }
-
-        if (version < 6) {
-          return {
-            ...state,
-            presets: {},
-            activePresetName: null,
-            projects: {},
-          } as SettingsStore;
-        }
-
-        if (version < 7) {
-          return {
-            ...state,
-            projects: {},
-          } as SettingsStore;
-        }
-
-        if (version < 8) {
-          return {
-            ...state,
-            activeProjectName: null,
-          } as SettingsStore;
-        }
-
-        if (version < 9) {
-          return {
-            ...state,
-            activeProjectName: null,
-          } as SettingsStore;
-        }
-
-        if (version < 10) {
-          return {
-            ...state,
-            settings: {
-              ...DEFAULT_SETTINGS,
-              ...state.settings,
-            },
-            presets: Object.fromEntries(
-              Object.entries(state.presets ?? {}).map(([name, preset]) => [
-                name,
-                {
-                  ...preset,
-                  settings: {
-                    ...DEFAULT_SETTINGS,
-                    ...preset.settings,
-                  },
-                },
-              ]),
-            ),
-          } as SettingsStore;
-        }
-
-        if (version < 11) {
-          const legacy = persistedState as {
-            basePdfBytes?: Uint8Array | null;
-            basePdfName?: string | null;
-            basePdfPageCount?: number | null;
-            presets?: Record<
-              string,
-              {
-                settings?: Settings;
-                basePdfBytes?: Uint8Array | null;
-                basePdfName?: string | null;
-                basePdfPageCount?: number | null;
-                defaultCardBack?: PresetData["defaultCardBack"];
-              }
-            >;
-          };
-
-          const basePdfs: BasePdfsMap = {};
-          const idForBasePdf = new Map<string, string>();
-
-          const registerBasePdf = (
-            bytes: Uint8Array | null | undefined,
-            name: string | null | undefined,
-            pageCount: number | null | undefined,
-          ): string | null => {
-            if (!bytes || !name) return null;
-            const key = `${name}:${bytes.length}`;
-            const existing = idForBasePdf.get(key);
-            if (existing) return existing;
-            const id = nanoid();
-            idForBasePdf.set(key, id);
-            basePdfs[id] = { name, bytes, pageCount: pageCount ?? 0 };
-            return id;
-          };
-
-          const activeBasePdfId = registerBasePdf(
-            legacy.basePdfBytes,
-            legacy.basePdfName,
-            legacy.basePdfPageCount,
-          );
-
-          const presets = Object.fromEntries(
-            Object.entries(legacy.presets ?? {}).map(([name, preset]) => [
-              name,
-              {
-                settings: preset.settings,
-                defaultCardBack: preset.defaultCardBack ?? null,
-                basePdfId: registerBasePdf(
-                  preset.basePdfBytes,
-                  preset.basePdfName,
-                  preset.basePdfPageCount,
-                ),
-              },
-            ]),
-          );
-
-          return {
-            ...state,
-            basePdfs,
-            activeBasePdfId,
-            presets,
-          } as SettingsStore;
-        }
-
-        return persistedState as SettingsStore;
+        const migrated = migrateToV11(persistedState, version);
+        return version < 12 && migrated
+          ? migrateUpscaleSettingV12(migrated)
+          : migrated;
       },
       partialize: (state) => ({
         settings: state.settings,
