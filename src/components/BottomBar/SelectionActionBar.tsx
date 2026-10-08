@@ -5,6 +5,7 @@ import {
 } from "@chakra-ui/react";
 import { useContext, useId, useRef } from "react";
 import {
+  LuContrast,
   LuDownload,
   LuEllipsis,
   LuExpand,
@@ -13,6 +14,7 @@ import {
   LuMove,
   LuPlus,
   LuShrink,
+  LuSunDim,
   LuTrash,
   LuUndo,
 } from "react-icons/lu";
@@ -74,9 +76,13 @@ export const SelectionActionBar = () => {
     canRemoveBleed,
     canRemoveUpscale,
     canUpscale,
+    canDarkenEdges,
+    canRemoveEdgeDarkening,
     canRevertToOriginal,
     addBleed,
     removeBleed,
+    darkenEdges,
+    removeEdgeDarkening,
     upscale,
     removeUpscale,
     revertToOriginal,
@@ -278,6 +284,26 @@ export const SelectionActionBar = () => {
                 >
                   <LuShrink />
                   <MenuItemText>Remove bleed</MenuItemText>
+                </MenuItem>
+              ) : null}
+              {canDarkenEdges ? (
+                <MenuItem
+                  value="darken-edges"
+                  onSelect={() => darkenEdges()}
+                  disabled={isLoadingProject}
+                >
+                  <LuContrast />
+                  <MenuItemText>Darken edges</MenuItemText>
+                </MenuItem>
+              ) : null}
+              {canRemoveEdgeDarkening ? (
+                <MenuItem
+                  value="remove-edge-darkening"
+                  onSelect={() => removeEdgeDarkening()}
+                  disabled={isLoadingProject}
+                >
+                  <LuSunDim />
+                  <MenuItemText>Remove edge darkening</MenuItemText>
                 </MenuItem>
               ) : null}
               {canRevertToOriginal ? (

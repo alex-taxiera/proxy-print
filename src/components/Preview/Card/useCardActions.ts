@@ -27,7 +27,7 @@ import {
   getQueryKeyForImage,
 } from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
-import { addBleedEdge } from "@/utils/add-bleed";
+import { renderCardImage } from "@/utils/card-image";
 import { downloadBlob } from "@/utils/download-blob";
 import { UpscaleMethod } from "@/utils/upscale-methods";
 import ZipWorker from "@/workers/zip-worker?worker";
@@ -108,6 +108,7 @@ const hasOriginal = (
   original: Blob | File;
   isUpscaled: boolean;
   hasBleed: boolean;
+  hasDarkenedEdges?: boolean;
   upscaledOriginal?: Blob;
 } => "original" in queryData;
 
@@ -116,6 +117,8 @@ type CardActionStates = {
   canRemoveBleed: boolean;
   canUpscale: boolean;
   canRemoveUpscale: boolean;
+  canDarkenEdges: boolean;
+  canRemoveEdgeDarkening: boolean;
   canRevertToOriginal: boolean;
 };
 
@@ -124,6 +127,8 @@ const defaultCardActionStates: CardActionStates = {
   canRemoveBleed: false,
   canUpscale: false,
   canRemoveUpscale: false,
+  canDarkenEdges: false,
+  canRemoveEdgeDarkening: false,
   canRevertToOriginal: false,
 };
 
@@ -144,8 +149,17 @@ const getCardActionStates = (
     canRemoveBleed: allData.some((d) => d && hasOriginal(d) && d.hasBleed),
     canUpscale: allData.some((d) => d && hasOriginal(d) && !d.isUpscaled),
     canRemoveUpscale: allData.some((d) => d && hasOriginal(d) && d.isUpscaled),
+    canDarkenEdges: allData.some(
+      (d) => d && hasOriginal(d) && !d.hasDarkenedEdges,
+    ),
+    canRemoveEdgeDarkening: allData.some(
+      (d) => d && hasOriginal(d) && d.hasDarkenedEdges,
+    ),
     canRevertToOriginal: allData.some(
-      (d) => d && hasOriginal(d) && (d.isUpscaled || d.hasBleed),
+      (d) =>
+        d &&
+        hasOriginal(d) &&
+        (d.isUpscaled || d.hasBleed || d.hasDarkenedEdges),
     ),
   };
 };
@@ -320,11 +334,12 @@ export const useCardActions = ({
             () => ({ ...queryData, isProcessing: true }),
           );
           const base = queryData.upscaledOriginal ?? queryData.original;
-          const data = await addBleedEdge(
+          const data = await renderCardImage(
             base,
             queryData.mimeType,
             Number(settings.cardWidth),
             Number(settings.cardHeight),
+            { hasBleed: true, hasDarkenedEdges: queryData.hasDarkenedEdges },
           );
           queryClient.setQueryData<ImageQueryData>(
             getQueryKeyForImage(image),
@@ -336,20 +351,77 @@ export const useCardActions = ({
   };
 
   const removeBleed = () => {
-    images.forEach((image) => {
-      queryClient.setQueryData<ImageQueryData>(
-        getQueryKeyForImage(image),
-        (old) => {
-          if (!old || !hasOriginal(old) || !old.hasBleed) return old;
-          return {
-            ...old,
-            data: old.upscaledOriginal ?? old.original,
-            hasBleed: false,
-          };
-        },
-      );
-    });
+    void Promise.all(
+      images.map(async (image) => {
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+        );
+        if (queryData && hasOriginal(queryData) && queryData.hasBleed) {
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, isProcessing: true }),
+          );
+          const base = queryData.upscaledOriginal ?? queryData.original;
+          const data = await renderCardImage(
+            base,
+            queryData.mimeType,
+            Number(settings.cardWidth),
+            Number(settings.cardHeight),
+            { hasBleed: false, hasDarkenedEdges: queryData.hasDarkenedEdges },
+          );
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, data, hasBleed: false }),
+          );
+        }
+      }),
+    );
   };
+
+  const setEdgeDarkening = (hasDarkenedEdges: boolean) => {
+    void Promise.all(
+      images.map(async (image) => {
+        const queryData = queryClient.getQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+        );
+        if (
+          queryData &&
+          hasOriginal(queryData) &&
+          Boolean(queryData.hasDarkenedEdges) !== hasDarkenedEdges
+        ) {
+          queryClient.setQueryData<ImageQueryData>(
+            getQueryKeyForImage(image),
+            () => ({ ...queryData, isProcessing: true }),
+          );
+          try {
+            const base = queryData.upscaledOriginal ?? queryData.original;
+            const data = await renderCardImage(
+              base,
+              queryData.mimeType,
+              Number(settings.cardWidth),
+              Number(settings.cardHeight),
+              { hasBleed: queryData.hasBleed, hasDarkenedEdges },
+            );
+            queryClient.setQueryData<ImageQueryData>(
+              getQueryKeyForImage(image),
+              () => ({ ...queryData, data, hasDarkenedEdges }),
+            );
+          } catch (error) {
+            // On error, clear isProcessing so UI doesn't stay stuck; keep original data
+            queryClient.setQueryData<ImageQueryData>(
+              getQueryKeyForImage(image),
+              () => ({ ...queryData }),
+            );
+            console.error("Edge darkening failed for image", image.uuid, error);
+          }
+        }
+      }),
+    );
+  };
+
+  const darkenEdges = () => setEdgeDarkening(true);
+
+  const removeEdgeDarkening = () => setEdgeDarkening(false);
 
   const upscale = (method: UpscaleMethod) => {
     const total = images.length;
@@ -385,17 +457,13 @@ export const useCardActions = ({
               queryData.original,
               method,
             );
-            let data: Blob;
-            if (queryData.hasBleed) {
-              data = await addBleedEdge(
-                upscaledOriginal,
-                queryData.mimeType,
-                Number(settings.cardWidth),
-                Number(settings.cardHeight),
-              );
-            } else {
-              data = upscaledOriginal;
-            }
+            const data = await renderCardImage(
+              upscaledOriginal,
+              queryData.mimeType,
+              Number(settings.cardWidth),
+              Number(settings.cardHeight),
+              queryData,
+            );
             queryClient.setQueryData<ImageQueryData>(
               getQueryKeyForImage(image),
               () => ({
@@ -443,17 +511,13 @@ export const useCardActions = ({
             getQueryKeyForImage(image),
             () => ({ ...queryData, isProcessing: true }),
           );
-          let data: Blob;
-          if (queryData.hasBleed) {
-            data = await addBleedEdge(
-              queryData.original,
-              queryData.mimeType,
-              Number(settings.cardWidth),
-              Number(settings.cardHeight),
-            );
-          } else {
-            data = queryData.original;
-          }
+          const data = await renderCardImage(
+            queryData.original,
+            queryData.mimeType,
+            Number(settings.cardWidth),
+            Number(settings.cardHeight),
+            queryData,
+          );
           queryClient.setQueryData<ImageQueryData>(
             getQueryKeyForImage(image),
             () => ({
@@ -482,6 +546,7 @@ export const useCardActions = ({
             isUpscaled: false,
             upscaleMethod: undefined,
             hasBleed: false,
+            hasDarkenedEdges: false,
           };
         },
       );
@@ -518,6 +583,10 @@ export const useCardActions = ({
     upscale,
     canRemoveUpscale: states.canRemoveUpscale,
     removeUpscale,
+    canDarkenEdges: states.canDarkenEdges,
+    darkenEdges,
+    canRemoveEdgeDarkening: states.canRemoveEdgeDarkening,
+    removeEdgeDarkening,
     canRevertToOriginal: states.canRevertToOriginal,
     revertToOriginal,
     canMoveToNextPage,

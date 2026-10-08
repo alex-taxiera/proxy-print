@@ -5,6 +5,7 @@ import {
   LuArrowLeft,
   LuArrowRight,
   LuCheck,
+  LuContrast,
   LuEllipsis,
   LuExpand,
   LuGalleryVerticalEnd,
@@ -12,6 +13,7 @@ import {
   LuImageDown,
   LuPlus,
   LuShrink,
+  LuSunDim,
   LuTrash,
   LuUndo,
 } from "react-icons/lu";
@@ -40,7 +42,7 @@ import { usePreviewData } from "@/hooks/usePreviewData";
 import { useUpscaleImage } from "@/hooks/useUpscaleImage";
 import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
-import { addBleedEdge } from "@/utils/add-bleed";
+import { renderCardImage } from "@/utils/card-image";
 import { createFileHash } from "@/utils/create-file-hash";
 import { getKeybindLabels } from "@/utils/keybind-labels";
 import { UpscaleMethod } from "@/utils/upscale-methods";
@@ -115,8 +117,14 @@ export const CardContextMenu = ({
   const canRemoveBleed = hasOriginalData ? queryData.hasBleed : false;
   const canUpscale = hasOriginalData ? !queryData.isUpscaled : false;
   const canRemoveUpscale = hasOriginalData ? queryData.isUpscaled : false;
+  const canDarkenEdges = hasOriginalData ? !queryData.hasDarkenedEdges : false;
+  const canRemoveEdgeDarkening = hasOriginalData
+    ? Boolean(queryData.hasDarkenedEdges)
+    : false;
   const canRevertToOriginal = hasOriginalData
-    ? queryData.isUpscaled || queryData.hasBleed
+    ? queryData.isUpscaled ||
+      queryData.hasBleed ||
+      Boolean(queryData.hasDarkenedEdges)
     : false;
 
   const setProcessing = (processing: boolean) => {
@@ -132,11 +140,12 @@ export const CardContextMenu = ({
     if (queryData && "original" in queryData && !queryData.hasBleed) {
       setProcessing(true);
       const base = queryData.upscaledOriginal ?? queryData.original;
-      const data = await addBleedEdge(
+      const data = await renderCardImage(
         base,
         queryData.mimeType,
         Number(settings.cardWidth),
         Number(settings.cardHeight),
+        { hasBleed: true, hasDarkenedEdges: queryData.hasDarkenedEdges },
       );
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
@@ -145,16 +154,48 @@ export const CardContextMenu = ({
     }
   };
 
-  const onRemoveBleedClick = () => {
+  const onRemoveBleedClick = async () => {
     if (queryData && "original" in queryData && queryData.hasBleed) {
+      setProcessing(true);
+      const base = queryData.upscaledOriginal ?? queryData.original;
+      const data = await renderCardImage(
+        base,
+        queryData.mimeType,
+        Number(settings.cardWidth),
+        Number(settings.cardHeight),
+        { hasBleed: false, hasDarkenedEdges: queryData.hasDarkenedEdges },
+      );
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
-        () => ({
-          ...queryData,
-          data: queryData.upscaledOriginal ?? queryData.original,
-          hasBleed: false,
-        }),
+        () => ({ ...queryData, data, hasBleed: false }),
       );
+    }
+  };
+
+  const onSetEdgeDarkeningClick = async (hasDarkenedEdges: boolean) => {
+    if (
+      queryData &&
+      "original" in queryData &&
+      Boolean(queryData.hasDarkenedEdges) !== hasDarkenedEdges
+    ) {
+      setProcessing(true);
+      try {
+        const base = queryData.upscaledOriginal ?? queryData.original;
+        const data = await renderCardImage(
+          base,
+          queryData.mimeType,
+          Number(settings.cardWidth),
+          Number(settings.cardHeight),
+          { hasBleed: queryData.hasBleed, hasDarkenedEdges },
+        );
+        queryClient.setQueryData<ImageQueryData>(
+          getQueryKeyForImage(image),
+          () => ({ ...queryData, data, hasDarkenedEdges }),
+        );
+      } catch (error) {
+        setProcessing(false);
+        console.error("Edge darkening failed for image", image.uuid, error);
+      }
     }
   };
 
@@ -162,17 +203,13 @@ export const CardContextMenu = ({
     if (queryData && "original" in queryData && !queryData.isUpscaled) {
       setProcessing(true);
       const upscaledOriginal = await upscaleImage(queryData.original, method);
-      let data: Blob;
-      if (queryData.hasBleed) {
-        data = await addBleedEdge(
-          upscaledOriginal,
-          queryData.mimeType,
-          Number(settings.cardWidth),
-          Number(settings.cardHeight),
-        );
-      } else {
-        data = upscaledOriginal;
-      }
+      const data = await renderCardImage(
+        upscaledOriginal,
+        queryData.mimeType,
+        Number(settings.cardWidth),
+        Number(settings.cardHeight),
+        queryData,
+      );
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
         () => ({
@@ -189,17 +226,13 @@ export const CardContextMenu = ({
   const onRemoveUpscaleClick = async () => {
     if (queryData && "original" in queryData && queryData.isUpscaled) {
       setProcessing(true);
-      let data: Blob;
-      if (queryData.hasBleed) {
-        data = await addBleedEdge(
-          queryData.original,
-          queryData.mimeType,
-          Number(settings.cardWidth),
-          Number(settings.cardHeight),
-        );
-      } else {
-        data = queryData.original;
-      }
+      const data = await renderCardImage(
+        queryData.original,
+        queryData.mimeType,
+        Number(settings.cardWidth),
+        Number(settings.cardHeight),
+        queryData,
+      );
       queryClient.setQueryData<ImageQueryData>(
         getQueryKeyForImage(image),
         () => ({
@@ -224,6 +257,7 @@ export const CardContextMenu = ({
           isUpscaled: false,
           upscaleMethod: undefined,
           hasBleed: false,
+          hasDarkenedEdges: false,
         }),
       );
     }
@@ -363,11 +397,31 @@ export const CardContextMenu = ({
           {canRemoveBleed && !isBackFace ? (
             <MenuItem
               value="remove-bleed"
-              onSelect={onRemoveBleedClick}
+              onSelect={() => void onRemoveBleedClick()}
               disabled={isLoadingProject}
             >
               <LuShrink />
               <MenuItemText>Remove bleed</MenuItemText>
+            </MenuItem>
+          ) : null}
+          {canDarkenEdges && !isBackFace ? (
+            <MenuItem
+              value="darken-edges"
+              onSelect={() => void onSetEdgeDarkeningClick(true)}
+              disabled={isLoadingProject}
+            >
+              <LuContrast />
+              <MenuItemText>Darken edges</MenuItemText>
+            </MenuItem>
+          ) : null}
+          {canRemoveEdgeDarkening && !isBackFace ? (
+            <MenuItem
+              value="remove-edge-darkening"
+              onSelect={() => void onSetEdgeDarkeningClick(false)}
+              disabled={isLoadingProject}
+            >
+              <LuSunDim />
+              <MenuItemText>Remove edge darkening</MenuItemText>
             </MenuItem>
           ) : null}
           {canRevertToOriginal && !isBackFace ? (

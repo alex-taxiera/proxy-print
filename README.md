@@ -41,7 +41,8 @@ IndexedDB, and PDFs are rendered locally in web workers.
 
 - Paginated preview with zoom, drag-and-drop reordering, and multi-select.
 - Per-card and bulk actions: duplicate, remove, download, move between pages,
-  add or remove bleed, add or remove upscaling, revert to original.
+  add or remove bleed, add or remove upscaling, darken edges, revert to
+  original.
 
 **Output**
 

@@ -1,3 +1,12 @@
+import {
+  darkenEdgePixels,
+  getEdgeBandPx,
+  NEAR_BLACK_THRESHOLD,
+} from "./darken-edges";
+
+/** Bleed generated on every edge, and assumed on images that include their own. */
+export const BLEED_MM = 3;
+
 /**
  * Calculates DPI from image dimensions and target physical size
  * @param imageWidth - Width of the image in pixels
@@ -6,7 +15,7 @@
  * @param targetHeightMm - Target height in mm
  * @returns DPI value
  */
-function calculateDpi(
+export function calculateDpi(
   imageWidth: number,
   imageHeight: number,
   targetWidthMm: number,
@@ -21,47 +30,6 @@ function calculateDpi(
   const dpiHeight = imageHeight / targetHeightInches;
 
   return Math.round((dpiWidth + dpiHeight) / 2);
-}
-
-function blackenAllNearBlackPixels(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  threshold: number,
-  borderThickness = {
-    top: 96,
-    bottom: 400,
-    left: 48,
-    right: 48,
-  },
-) {
-  const imageData = ctx.getImageData(0, 0, width, height);
-  const data = imageData.data;
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const inBorder =
-        y < borderThickness.top ||
-        y >= height - borderThickness.bottom ||
-        x < borderThickness.left ||
-        x >= width - borderThickness.right;
-
-      if (!inBorder) continue;
-
-      const index = (y * width + x) * 4;
-      const r = data[index];
-      const g = data[index + 1];
-      const b = data[index + 2];
-
-      if (r < threshold && g < threshold && b < threshold) {
-        data[index] = 0;
-        data[index + 1] = 0;
-        data[index + 2] = 0;
-      }
-    }
-  }
-
-  ctx.putImageData(imageData, 0, 0);
 }
 
 /**
@@ -93,8 +61,7 @@ export function needsBleed(
   const targetHeightPx = targetHeightMm * mmToPixels;
 
   // Calculate bleed dimensions (3mm on all edges)
-  const bleedMm = 3;
-  const bleedPx = bleedMm * mmToPixels;
+  const bleedPx = BLEED_MM * mmToPixels;
   const bleedWidthPx = targetWidthPx + bleedPx * 2;
   const bleedHeightPx = targetHeightPx + bleedPx * 2;
 
@@ -150,11 +117,20 @@ export function needsBleedFromFile(
   });
 }
 
+export type AddBleedEdgeOptions = {
+  /**
+   * Flatten the near-black border to pure black before extending it, so the
+   * generated bleed is built from the darkened pixels.
+   */
+  darkenEdges?: boolean;
+};
+
 export function addBleedEdge(
   src: Blob,
   mimeType: string,
   targetWidthMm: number,
   targetHeightMm: number,
+  { darkenEdges = false }: AddBleedEdgeOptions = {},
 ): Promise<Blob> {
   const url = URL.createObjectURL(src);
   return new Promise((resolve) => {
@@ -173,11 +149,10 @@ export function addBleedEdge(
       const mmToPixels = dpi / 25.4;
       const targetCardWidth = Math.round(targetWidthMm * mmToPixels);
       const targetCardHeight = Math.round(targetHeightMm * mmToPixels);
-      const bleedMm = 3; // 3mm bleed on all edges
-      const bleed = Math.round(bleedMm * mmToPixels);
+      const bleed = Math.round(BLEED_MM * mmToPixels);
       const finalWidth = targetCardWidth + bleed * 2;
       const finalHeight = targetCardHeight + bleed * 2;
-      const blackThreshold = 30; // max RGB value to still consider "black"
+      const blackThreshold = NEAR_BLACK_THRESHOLD;
       const blackToleranceRatio = 0.7; // how much of the edge must be black to switch modes
 
       const canvas = document.createElement("canvas");
@@ -349,12 +324,22 @@ export function addBleedEdge(
         }
       });
 
-      blackenAllNearBlackPixels(
-        tempCtx,
-        targetCardWidth,
-        targetCardHeight,
-        blackThreshold,
-      );
+      if (darkenEdges) {
+        const cardData = tempCtx.getImageData(
+          0,
+          0,
+          targetCardWidth,
+          targetCardHeight,
+        );
+        darkenEdgePixels(
+          cardData.data,
+          targetCardWidth,
+          targetCardHeight,
+          getEdgeBandPx(mmToPixels),
+          blackThreshold,
+        );
+        tempCtx.putImageData(cardData, 0, 0);
+      }
 
       const edgeData = tempCtx.getImageData(0, 0, 1, targetCardHeight).data;
       let blackCount = 0;
