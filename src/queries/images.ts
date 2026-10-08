@@ -73,6 +73,8 @@ export type ScryfallImageQueryData = BaseImageQueryData & {
   /** Absent on data cached before methods existed, which was anime-fast. */
   upscaleMethod?: UpscaleMethod;
   hasBleed: boolean;
+  /** Absent on data cached before edge darkening became its own action. */
+  hasDarkenedEdges?: boolean;
   isProcessing?: boolean;
 };
 
@@ -83,6 +85,8 @@ export type LocalImageQueryData = BaseImageQueryData & {
   /** Absent on data cached before methods existed, which was anime-fast. */
   upscaleMethod?: UpscaleMethod;
   hasBleed: boolean;
+  /** Absent on data cached before edge darkening became its own action. */
+  hasDarkenedEdges?: boolean;
   isProcessing?: boolean;
 };
 

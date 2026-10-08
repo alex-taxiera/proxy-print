@@ -25,7 +25,8 @@ import {
   LocalImageQueryKey,
 } from "@/queries/images";
 import { useSettingsStore } from "@/store/settingsStore";
-import { addBleedEdge, needsBleedFromFile } from "@/utils/add-bleed";
+import { needsBleedFromFile } from "@/utils/add-bleed";
+import { renderCardImage } from "@/utils/card-image";
 
 const useHandleBleedEdgeForCardSizeChange = () => {
   const queryClient = useQueryClient();
@@ -46,11 +47,12 @@ const useHandleBleedEdgeForCardSizeChange = () => {
       scryfallQueries
         .filter(([, old]) => old && "original" in old)
         .map(async ([key, old]) => {
-          const data = await addBleedEdge(
+          const data = await renderCardImage(
             old!.original,
             old!.mimeType,
             cardWidth,
             cardHeight,
+            { hasBleed: true, hasDarkenedEdges: old!.hasDarkenedEdges },
           );
           return [key, data] as [ScryfallImageQueryKey, Blob];
         }),
@@ -85,17 +87,17 @@ const useHandleBleedEdgeForCardSizeChange = () => {
             cardWidth,
             cardHeight,
           );
-          if (needsBleedEdge) {
-            const data = await addBleedEdge(
-              old!.original,
-              old!.mimeType,
-              cardWidth,
-              cardHeight,
-            );
-            return [key, data] as [LocalImageQueryKey, Blob];
-          } else {
-            return [key, old!.original] as [LocalImageQueryKey, File];
-          }
+          const data = await renderCardImage(
+            old!.original,
+            old!.mimeType,
+            cardWidth,
+            cardHeight,
+            {
+              hasBleed: needsBleedEdge,
+              hasDarkenedEdges: old!.hasDarkenedEdges,
+            },
+          );
+          return [key, data] as [LocalImageQueryKey, Blob];
         }),
     );
 

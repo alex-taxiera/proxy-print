@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { LuExpand, LuWandSparkles } from "react-icons/lu";
+import { LuContrast, LuExpand, LuWandSparkles } from "react-icons/lu";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -384,7 +384,9 @@ export const Card = ({
       !isRendering &&
       queryData &&
       hasTransformFlags(queryData) &&
-      (queryData.isUpscaled || queryData.hasBleed) ? (
+      (queryData.isUpscaled ||
+        queryData.hasBleed ||
+        queryData.hasDarkenedEdges) ? (
         <Flex position="absolute" top="1" right="2" gap="1" zIndex="1">
           {queryData.isUpscaled && (
             <Tooltip
@@ -405,6 +407,17 @@ export const Card = ({
             >
               <Badge boxSize="6" colorPalette="accent">
                 <LuExpand />
+              </Badge>
+            </Tooltip>
+          )}
+          {queryData.hasDarkenedEdges && (
+            <Tooltip
+              content="Has darkened edges"
+              positioning={{ placement: "top" }}
+              openDelay={200}
+            >
+              <Badge boxSize="6" colorPalette="accent">
+                <LuContrast />
               </Badge>
             </Tooltip>
           )}

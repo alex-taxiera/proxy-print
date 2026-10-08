@@ -8,7 +8,7 @@ import { useRef } from "react";
 import { useUpscaleImage } from "@/hooks/useUpscaleImage";
 import { ImageQueryData } from "@/queries/images";
 import { useDownloadProgressStore } from "@/store/downloadProgressStore";
-import { addBleedEdge } from "@/utils/add-bleed";
+import { renderCardImage } from "@/utils/card-image";
 import { UpscaleMethod } from "@/utils/upscale-methods";
 
 type Item = {
@@ -49,17 +49,19 @@ export function useImageDownloadManager({
     method: UpscaleMethod,
   ): Promise<T> => {
     const upscaledOriginal = await upscaleImage(result.original, method);
-    let data: Blob;
-    if (result.hasBleed && cardWidth && cardHeight) {
-      data = await addBleedEdge(
-        upscaledOriginal,
-        result.mimeType,
-        cardWidth,
-        cardHeight,
-      );
-    } else {
-      data = upscaledOriginal;
-    }
+    const data =
+      cardWidth && cardHeight
+        ? await renderCardImage(
+            upscaledOriginal,
+            result.mimeType,
+            cardWidth,
+            cardHeight,
+            {
+              hasBleed: result.hasBleed,
+              hasDarkenedEdges: result.hasDarkenedEdges,
+            },
+          )
+        : upscaledOriginal;
     return {
       ...result,
       data,
