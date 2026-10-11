@@ -3,10 +3,10 @@
 // match the print-preview grid. Runs on the main thread — this is a one-shot
 // text-generation step, not worth a worker.
 //
-// Silhouette Studio centers an imported DXF on the page rather than honoring
-// absolute coordinates, and the printed grid is centered on the page too, so
-// the outlines are shifted to start at the origin (matching DXFs known to
-// import correctly) instead of carrying page positions.
+// The DXF carries only the grid, shifted to start at the origin like DXFs
+// known to import correctly, rather than page positions. With Silhouette
+// Studio's DXF import set to "As-is" it keeps its size, and the user centers
+// it on the page — matching the printed grid, which is centered too.
 import { Settings } from "@/context/SettingsContext";
 
 import { buildRoundedRectOutline } from "./cutlineRect";
