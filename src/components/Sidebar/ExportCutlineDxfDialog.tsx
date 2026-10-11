@@ -94,6 +94,12 @@ export const ExportCutlineDxfDialog = ({ open, onOpenChange }: Props) => {
               Card stock corner radii commonly range from 0 (square) to about
               3.5mm — adjust to match your cards.
             </Text>
+
+            <Text fontSize="sm" color="fg.muted">
+              Using Silhouette Studio? Set Preferences → Import → DXF → Open to
+              &quot;As-is&quot;, then center the cut lines on the page after
+              opening.
+            </Text>
           </VStack>
         </DialogBody>
         <DialogFooter>

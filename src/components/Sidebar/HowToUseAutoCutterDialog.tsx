@@ -49,9 +49,14 @@ export function HowToUseAutoCutterDialog({
               <Text>
                 In the software for your cutter (eg. Silhouette Studio), use the
                 DXF file and configure your settings for the registration marks.
-                The cut lines should sit centered on the page; if they
-                don&apos;t after opening, center them on the page.
               </Text>
+              <Alert variant="surface" title='Set DXF import to "As-is"'>
+                Before opening the DXF in Silhouette Studio, open Preferences,
+                go to the Import tab, and in the DXF section set
+                &quot;Open&quot; to &quot;As-is&quot; so the cut lines keep
+                their size. After opening, the cut lines may sit off the page;
+                select them all and center them on the page.
+              </Alert>
               <Alert variant="surface" title="Use the minimum value for inset">
                 Print My Proxy requires using 10mm (the minimum value) for inset
                 in Silhouette Studio

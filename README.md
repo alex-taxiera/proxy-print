@@ -51,7 +51,9 @@ IndexedDB, and PDFs are rendered locally in web workers.
   is split automatically before hitting Chrome's 2GB blob limit.
 - Auto-cutter support: generate a base PDF carrying Silhouette registration
   marks (including a borderless mode that moves marks to 3.5mm from the edge to
-  fit 3×3 layouts), and export a matching DXF of rounded-rect cut lines.
+  fit 3×3 layouts), and export a matching DXF of rounded-rect cut lines. In
+  Silhouette Studio, set Preferences → Import → DXF → Open to "As-is", then
+  center the imported cut lines on the page.
 - Optional 4× upscaling of low-resolution art: plain bicubic or Lanczos, or the
   `anime-fast` AI model via TensorFlow.js, running on WebGPU where available and
   falling back to WebGL.
