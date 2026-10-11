@@ -3,59 +3,56 @@ import { describe, expect, it } from "vitest";
 import { buildDxfDocument } from "./dxf";
 import type { DxfEntity } from "./dxf";
 
+const lines = (doc: string) => doc.split("\r\n");
+
 describe("buildDxfDocument", () => {
-  it("wraps entities in a valid minimal DXF R12 structure", () => {
+  it("declares metric units without a version header", () => {
     const doc = buildDxfDocument([]);
-    expect(doc).toContain("SECTION");
-    expect(doc).toContain("HEADER");
-    expect(doc).toContain("$INSUNITS");
+    expect(doc).toContain("$MEASUREMENT\r\n  70\r\n1");
+    expect(doc).toContain("$INSUNITS\r\n  70\r\n4");
+    expect(doc).not.toContain("$ACADVER");
     expect(doc).toContain("ENTITIES");
-    expect(doc).toContain("ENDSEC");
-    expect(doc.trim().endsWith("0\nEOF")).toBe(true);
+    expect(doc.endsWith("  0\r\nEOF")).toBe(true);
   });
 
-  it("emits one LINE block per line entity with correct coordinates", () => {
-    const entities: DxfEntity[] = [
-      { type: "LINE", x1: 1, y1: 2, x2: 3, y2: 4, color: 1 },
-    ];
-    const doc = buildDxfDocument(entities);
-    const lineBlocks = doc.split("0\nLINE").length - 1;
-    expect(lineBlocks).toBe(1);
-    expect(doc).toContain("10\n1");
-    expect(doc).toContain("20\n2");
-    expect(doc).toContain("11\n3");
-    expect(doc).toContain("21\n4");
-    expect(doc).toContain("62\n1");
+  it("uses CRLF line endings and space-padded group codes", () => {
+    const doc = buildDxfDocument([]);
+    expect(doc).not.toMatch(/[^\r]\n/);
+    const codes = lines(doc).filter((_, i) => i % 2 === 0);
+    expect(codes.every((code) => /^ {2}\d+$/.test(code))).toBe(true);
   });
 
-  it("emits one ARC block per arc entity with correct radius/angles", () => {
+  it("emits a closed POLYLINE with one VERTEX per point and a SEQEND", () => {
     const entities: DxfEntity[] = [
       {
-        type: "ARC",
-        cx: 5,
-        cy: 6,
-        radius: 2.5,
-        startAngle: 0,
-        endAngle: 90,
-        color: 1,
+        type: "POLYLINE",
+        closed: true,
+        vertices: [
+          { x: 0, y: 0 },
+          { x: 1.5, y: 0 },
+          { x: 1.5, y: 2.25 },
+        ],
       },
     ];
     const doc = buildDxfDocument(entities);
-    const arcBlocks = doc.split("0\nARC").length - 1;
-    expect(arcBlocks).toBe(1);
-    expect(doc).toContain("40\n2.5");
-    expect(doc).toContain("50\n0");
-    expect(doc).toContain("51\n90");
+    expect(doc.split("  0\r\nPOLYLINE").length - 1).toBe(1);
+    expect(doc).toContain("POLYLINE\r\n  8\r\n0\r\n  66\r\n1\r\n  70\r\n1");
+    expect(doc.split("  0\r\nVERTEX").length - 1).toBe(3);
+    expect(doc.split("  0\r\nSEQEND").length - 1).toBe(1);
+    expect(doc).toContain("  10\r\n1.5\r\n  20\r\n2.25");
   });
 
-  it("counts the correct number of entity blocks for a mix of lines and arcs", () => {
-    const entities: DxfEntity[] = [
-      { type: "LINE", x1: 0, y1: 0, x2: 1, y2: 1 },
-      { type: "LINE", x1: 1, y1: 1, x2: 2, y2: 2 },
-      { type: "ARC", cx: 0, cy: 0, radius: 1, startAngle: 0, endAngle: 90 },
-    ];
-    const doc = buildDxfDocument(entities);
-    expect(doc.split("0\nLINE").length - 1).toBe(2);
-    expect(doc.split("0\nARC").length - 1).toBe(1);
+  it("flags open polylines with 70 = 0", () => {
+    const doc = buildDxfDocument([
+      {
+        type: "POLYLINE",
+        closed: false,
+        vertices: [
+          { x: 0, y: 0 },
+          { x: 1, y: 1 },
+        ],
+      },
+    ]);
+    expect(doc).toContain("  66\r\n1\r\n  70\r\n0");
   });
 });

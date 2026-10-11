@@ -8,7 +8,7 @@ import {
   PossiblyEmptyImage,
 } from "@/context/ImagesContext";
 import { useSettingsStore } from "@/store/settingsStore";
-import { computeGridLimits } from "@/utils/gridLayout";
+import { computeGridLimits, gridColumnsForPrintMode } from "@/utils/gridLayout";
 
 export const usePageLimits = () => {
   const settings = useSettingsStore((s) => s.settings);
@@ -140,8 +140,8 @@ export const usePreviewData = () => {
     if (printMode === "side-by-side") {
       // Pairs are always adjacent; use floor(cols/2) pairs per row so each pair
       // fits in one row without wrapping onto the next.
-      const pairsPerRow = Math.max(1, Math.floor(columnsPerPage / 2));
-      const gridColumns = pairsPerRow * 2;
+      const gridColumns = gridColumnsForPrintMode(printMode, columnsPerPage);
+      const pairsPerRow = gridColumns / 2;
       const slotsPerPage = pairsPerRow * rowsPerPage;
       const result: PreviewPage[] = [];
 
@@ -312,12 +312,7 @@ export const usePreviewData = () => {
   const imageMatrix = pages.map((p) => p.items.map((item) => item.image));
 
   // The grid columns to use for CSS/position calculations
-  const currentGridColumns = (() => {
-    if (printMode === "side-by-side") {
-      return Math.max(1, Math.floor(columnsPerPage / 2)) * 2;
-    }
-    return columnsPerPage;
-  })();
+  const currentGridColumns = gridColumnsForPrintMode(printMode, columnsPerPage);
 
   return {
     rowsPerPage,

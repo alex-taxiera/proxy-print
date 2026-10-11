@@ -73,6 +73,20 @@ export function computeGridLimits(settings: GridLimitSettings): GridLimits {
   };
 }
 
+/**
+ * Number of grid columns actually rendered for a print mode. Side-by-side
+ * keeps each front/back pair on one row, so it drops to an even count.
+ */
+export function gridColumnsForPrintMode(
+  printMode: Settings["printMode"],
+  columnsPerPage: number,
+): number {
+  if (printMode === "side-by-side") {
+    return Math.max(1, Math.floor(columnsPerPage / 2)) * 2;
+  }
+  return columnsPerPage;
+}
+
 export type SlotCenter = { cx: number; cy: number };
 
 /**

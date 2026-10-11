@@ -1,53 +1,81 @@
 import { describe, expect, it } from "vitest";
 
-import { buildRoundedRectEntities } from "./cutlineRect";
-import type { DxfArcEntity, DxfLineEntity } from "./dxf";
+import { buildRoundedRectOutline } from "./cutlineRect";
+import type { DxfPoint } from "./dxf";
 
-describe("buildRoundedRectEntities", () => {
-  it("radius 0 produces 4 lines forming an exact rectangle, no arcs", () => {
-    const entities = buildRoundedRectEntities({ cx: 10, cy: 20 }, 40, 60, 0);
-    expect(entities).toHaveLength(4);
-    expect(entities.every((e) => e.type === "LINE")).toBe(true);
+function bounds(vertices: DxfPoint[]) {
+  const xs = vertices.map((v) => v.x);
+  const ys = vertices.map((v) => v.y);
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+}
 
-    const lines = entities as DxfLineEntity[];
-    const xs = lines.flatMap((l) => [l.x1, l.x2]);
-    const ys = lines.flatMap((l) => [l.y1, l.y2]);
-    expect(Math.min(...xs)).toBe(10 - 20);
-    expect(Math.max(...xs)).toBe(10 + 20);
-    expect(Math.min(...ys)).toBe(20 - 30);
-    expect(Math.max(...ys)).toBe(20 + 30);
+describe("buildRoundedRectOutline", () => {
+  it("radius 0 produces a closed 4-vertex rectangle", () => {
+    const outline = buildRoundedRectOutline({ cx: 10, cy: 20 }, 40, 60, 0);
+    expect(outline.closed).toBe(true);
+    expect(outline.vertices).toHaveLength(4);
+    expect(bounds(outline.vertices)).toEqual({
+      minX: -10,
+      maxX: 30,
+      minY: -10,
+      maxY: 50,
+    });
   });
 
-  it("radius > 0 produces 4 lines + 4 arcs, all red", () => {
-    const entities = buildRoundedRectEntities({ cx: 0, cy: 0 }, 40, 60, 5);
-    expect(entities).toHaveLength(8);
-    expect(entities.filter((e) => e.type === "LINE")).toHaveLength(4);
-    expect(entities.filter((e) => e.type === "ARC")).toHaveLength(4);
-    expect(entities.every((e) => e.color === 1)).toBe(true);
+  it("radius > 0 flattens each corner into 33 vertices", () => {
+    const outline = buildRoundedRectOutline({ cx: 0, cy: 0 }, 40, 60, 5);
+    expect(outline.closed).toBe(true);
+    expect(outline.vertices).toHaveLength(4 * 33);
+    const b = bounds(outline.vertices);
+    expect(b.minX).toBeCloseTo(-20);
+    expect(b.maxX).toBeCloseTo(20);
+    expect(b.minY).toBeCloseTo(-30);
+    expect(b.maxY).toBeCloseTo(30);
   });
 
-  it("arcs have the requested radius and 90-degree sweeps covering 0-360", () => {
-    const entities = buildRoundedRectEntities({ cx: 0, cy: 0 }, 40, 60, 5);
-    const arcs = entities.filter((e): e is DxfArcEntity => e.type === "ARC");
-    for (const arc of arcs) {
-      expect(arc.radius).toBe(5);
-      expect(arc.endAngle - arc.startAngle).toBe(90);
+  it("honors a custom segment count", () => {
+    const outline = buildRoundedRectOutline({ cx: 0, cy: 0 }, 40, 60, 5, 8);
+    expect(outline.vertices).toHaveLength(4 * 9);
+  });
+
+  it("places every vertex on the rounded-rect outline", () => {
+    const hw = 20;
+    const hh = 30;
+    const r = 5;
+    const outline = buildRoundedRectOutline({ cx: 0, cy: 0 }, 40, 60, r);
+    for (const { x, y } of outline.vertices) {
+      // Distance from the inner rect (shrunk by r) must equal r.
+      const dx = Math.max(Math.abs(x) - (hw - r), 0);
+      const dy = Math.max(Math.abs(y) - (hh - r), 0);
+      expect(Math.hypot(dx, dy)).toBeCloseTo(r);
     }
-    const angles = arcs.map((a) => a.startAngle).sort((a, b) => a - b);
-    expect(angles).toEqual([0, 90, 180, 270]);
+  });
+
+  it("winds clockwise", () => {
+    const { vertices } = buildRoundedRectOutline({ cx: 0, cy: 0 }, 40, 60, 5);
+    const signedArea = vertices.reduce((sum, v, i) => {
+      const next = vertices[(i + 1) % vertices.length];
+      return sum + (v.x * next.y - next.x * v.y);
+    }, 0);
+    expect(signedArea).toBeLessThan(0);
   });
 
   it("clamps radius to half the smaller dimension", () => {
-    const entities = buildRoundedRectEntities({ cx: 0, cy: 0 }, 40, 60, 1000);
-    const arc = entities.find((e) => e.type === "ARC");
-    expect(arc?.type).toBe("ARC");
-    if (arc?.type === "ARC") {
-      expect(arc.radius).toBe(20); // half of the smaller dimension (40)
-    }
+    const outline = buildRoundedRectOutline({ cx: 0, cy: 0 }, 40, 60, 1000);
+    // r = 20: the left/right sides collapse to points at y = ±10
+    const b = bounds(outline.vertices);
+    expect(b.minX).toBeCloseTo(-20);
+    expect(b.maxX).toBeCloseTo(20);
+    expect(b.maxY).toBeCloseTo(30);
   });
 
   it("negative radius is treated as 0", () => {
-    const entities = buildRoundedRectEntities({ cx: 0, cy: 0 }, 40, 60, -5);
-    expect(entities.every((e) => e.type === "LINE")).toBe(true);
+    const outline = buildRoundedRectOutline({ cx: 0, cy: 0 }, 40, 60, -5);
+    expect(outline.vertices).toHaveLength(4);
   });
 });

@@ -1,112 +1,68 @@
-// Minimal, dependency-free ASCII DXF (R12) writer. Only supports the entity
-// types this app needs (LINE, ARC) — not a general-purpose DXF library.
+// Minimal, dependency-free ASCII DXF writer. Only supports the entity type
+// this app needs (closed POLYLINE) — not a general-purpose DXF library.
 // Coordinates are in whatever unit the caller uses (this app always feeds mm,
-// declared via $INSUNITS in the header).
+// declared via $MEASUREMENT and $INSUNITS in the header).
+//
+// The output deliberately mirrors a DXF known to import correctly into
+// Silhouette Studio: no $ACADVER, one heavy POLYLINE per closed shape (curves
+// pre-flattened into vertices), CRLF line endings and space-padded group codes.
 
-export type DxfLineEntity = {
-  type: "LINE";
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  /** AutoCAD Color Index; 1 = red */
-  color?: number;
+export type DxfPoint = { x: number; y: number };
+
+export type DxfPolylineEntity = {
+  type: "POLYLINE";
+  vertices: DxfPoint[];
+  closed: boolean;
 };
 
-export type DxfArcEntity = {
-  type: "ARC";
-  cx: number;
-  cy: number;
-  radius: number;
-  /** Degrees, standard DXF convention: CCW from +X axis */
-  startAngle: number;
-  endAngle: number;
-  /** AutoCAD Color Index; 1 = red */
-  color?: number;
-};
-
-export type DxfEntity = DxfLineEntity | DxfArcEntity;
+export type DxfEntity = DxfPolylineEntity;
 
 const DEFAULT_LAYER = "0";
+
+/** $MEASUREMENT code for metric */
+const MEASUREMENT_METRIC = 1;
+/** $INSUNITS code for millimeters */
+const INSUNITS_MILLIMETERS = 4;
+
+type GroupPair = [code: number, value: string];
 
 function formatNum(n: number): string {
   // Round to avoid floating point noise while keeping mm-scale precision.
   return (Math.round(n * 1e6) / 1e6).toString();
 }
 
-function entityHeader(type: string, color: number | undefined): string[] {
-  const lines = ["0", type, "8", DEFAULT_LAYER];
-  if (color !== undefined) {
-    lines.push("62", color.toString());
-  }
-  return lines;
-}
-
-function serializeEntity(entity: DxfEntity): string[] {
-  if (entity.type === "LINE") {
-    return [
-      ...entityHeader("LINE", entity.color),
-      "10",
-      formatNum(entity.x1),
-      "20",
-      formatNum(entity.y1),
-      "30",
-      "0.0",
-      "11",
-      formatNum(entity.x2),
-      "21",
-      formatNum(entity.y2),
-      "31",
-      "0.0",
-    ];
-  }
-
+function serializeEntity(entity: DxfEntity): GroupPair[] {
   return [
-    ...entityHeader("ARC", entity.color),
-    "10",
-    formatNum(entity.cx),
-    "20",
-    formatNum(entity.cy),
-    "30",
-    "0.0",
-    "40",
-    formatNum(entity.radius),
-    "50",
-    formatNum(entity.startAngle),
-    "51",
-    formatNum(entity.endAngle),
+    [0, "POLYLINE"],
+    [8, DEFAULT_LAYER],
+    // Vertices-follow flag: required for R12 heavy polylines.
+    [66, "1"],
+    [70, entity.closed ? "1" : "0"],
+    ...entity.vertices.flatMap((v): GroupPair[] => [
+      [0, "VERTEX"],
+      [8, DEFAULT_LAYER],
+      [10, formatNum(v.x)],
+      [20, formatNum(v.y)],
+    ]),
+    [0, "SEQEND"],
   ];
 }
-
-/** $INSUNITS code for millimeters */
-const INSUNITS_MILLIMETERS = 4;
 
 export function buildDxfDocument(entities: DxfEntity[]): string {
-  const lines: string[] = [
-    "0",
-    "SECTION",
-    "2",
-    "HEADER",
-    "9",
-    "$ACADVER",
-    "1",
-    "AC1009",
-    "9",
-    "$INSUNITS",
-    "70",
-    INSUNITS_MILLIMETERS.toString(),
-    "0",
-    "ENDSEC",
-    "0",
-    "SECTION",
-    "2",
-    "ENTITIES",
+  const pairs: GroupPair[] = [
+    [0, "SECTION"],
+    [2, "HEADER"],
+    [9, "$MEASUREMENT"],
+    [70, MEASUREMENT_METRIC.toString()],
+    [9, "$INSUNITS"],
+    [70, INSUNITS_MILLIMETERS.toString()],
+    [0, "ENDSEC"],
+    [0, "SECTION"],
+    [2, "ENTITIES"],
     ...entities.flatMap(serializeEntity),
-    "0",
-    "ENDSEC",
-    "0",
-    "EOF",
+    [0, "ENDSEC"],
+    [0, "EOF"],
   ];
 
-  return lines.join("\n");
+  return pairs.flatMap(([code, value]) => [`  ${code}`, value]).join("\r\n");
 }
