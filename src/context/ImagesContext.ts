@@ -3,6 +3,8 @@ import { createContext } from "react";
 export type GoogleImageData = {
   id: string;
   name: string;
+  /** MPCFill search query, kept so the card can be exported back to XML. */
+  query?: string;
 };
 
 export type LocalImageData = {
@@ -126,11 +128,12 @@ export type ImagesContextValue = {
     index?: number,
     options?: AddImagesOptions,
   ) => void;
+  /** Adds slots and returns their ids (e.g. to undo the add). */
   onAddSlots: (
     slots: SlotInputData[],
     index?: number,
     options?: AddImagesOptions,
-  ) => void;
+  ) => string[];
   onAddBack: (
     slotId: string,
     data: LocalImageData | GoogleImageData | ScryfallImageData,
@@ -169,7 +172,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onReorderSlots: () => {},
   onReorder: () => {},
   onAdd: () => {},
-  onAddSlots: () => {},
+  onAddSlots: () => [],
   onAddBack: () => {},
   onAddBackToSlots: () => {},
   onReplaceScryfallPrinting: async () => {},

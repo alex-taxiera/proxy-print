@@ -9,6 +9,7 @@ export const BundleImageRefSchema = zod.union([
     kind: zod.literal("google"),
     id: zod.string(),
     name: zod.string(),
+    query: zod.string().optional(),
     mimeType: zod.string(),
     path: zod.string().optional(),
   }),
@@ -40,6 +41,7 @@ export const BundleCardBackSchema = zod.union([
     kind: zod.literal("google"),
     id: zod.string(),
     name: zod.string(),
+    query: zod.string().optional(),
   }),
   zod.object({
     kind: zod.literal("scryfall"),

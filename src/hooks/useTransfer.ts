@@ -79,6 +79,7 @@ export function useTransfer() {
             kind: "google",
             id: preset.defaultCardBack.id,
             name: preset.defaultCardBack.name,
+            ...withQuery(preset.defaultCardBack.query),
           };
         } else {
           defaultCardBack = {
@@ -229,6 +230,7 @@ export function useTransfer() {
           defaultCardBack = {
             id: preset.defaultCardBack.id,
             name: preset.defaultCardBack.name,
+            ...withQuery(preset.defaultCardBack.query),
           };
         } else {
           defaultCardBack = {
@@ -276,7 +278,11 @@ export function useTransfer() {
         });
         resolvedImages.set(id, image);
       } else if (ref.kind === "google") {
-        const image: GoogleImageData = { id: ref.id, name: ref.name };
+        const image: GoogleImageData = {
+          id: ref.id,
+          name: ref.name,
+          ...withQuery(ref.query),
+        };
         if (ref.blob) {
           await persistImageQueryData(getQueryKeyForImageData(image), {
             data: ref.blob,
@@ -318,12 +324,23 @@ export function useTransfer() {
   return { exportPresets, exportProjects, prepareImport, applyImport };
 }
 
+/** Spread helper that leaves `query` out entirely when there isn't one. */
+function withQuery(query: string | undefined): { query?: string } {
+  return query ? { query } : {};
+}
+
 function toImageRef(
   image: ImageData,
   mimeType: string,
 ): BundleImageInput["ref"] {
   if ("id" in image) {
-    return { kind: "google", id: image.id, name: image.name, mimeType };
+    return {
+      kind: "google",
+      id: image.id,
+      name: image.name,
+      ...withQuery(image.query),
+      mimeType,
+    };
   }
   if ("uri" in image) {
     return { kind: "scryfall", uri: image.uri, name: image.name, mimeType };
