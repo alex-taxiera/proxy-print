@@ -23,7 +23,7 @@ export type BundlePresetInput = {
   settings: Settings;
   basePdf: { name: string; pageCount: number; bytes: Uint8Array } | null;
   defaultCardBack:
-    | { kind: "google"; id: string; name: string }
+    | { kind: "google"; id: string; name: string; query?: string }
     | { kind: "scryfall"; uri: string; name: string }
     | {
         kind: "local";

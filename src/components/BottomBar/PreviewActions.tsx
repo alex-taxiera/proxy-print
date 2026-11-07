@@ -7,8 +7,14 @@ import {
   VisuallyHidden,
   createListCollection,
 } from "@chakra-ui/react";
-import { useContext } from "react";
-import { LuCheck, LuDownload, LuEllipsis, LuTrash } from "react-icons/lu";
+import { useContext, useState } from "react";
+import {
+  LuCheck,
+  LuDownload,
+  LuEllipsis,
+  LuFileCode,
+  LuTrash,
+} from "react-icons/lu";
 
 import {
   MenuContent,
@@ -33,6 +39,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { DownloadDialog } from "@/components/Preview/Card/DownloadDialog";
 import { useCardActions } from "@/components/Preview/Card/useCardActions";
 import { useDownloadPrompt } from "@/components/Preview/Card/useDownloadPrompt";
+import { MpcXmlExportDialog } from "@/components/Preview/MpcXmlExportDialog";
 
 import { ImageSelectionContext } from "@/context/ImageSelectionContext";
 import { ImagesContext } from "@/context/ImagesContext";
@@ -123,6 +130,7 @@ export const PreviewActions = () => {
     pairedBackCount,
     downloadImages,
   );
+  const [isXmlExportOpen, setIsXmlExportOpen] = useState(false);
 
   return (
     <HStack gap={{ base: "1", md: "2" }} minWidth="0">
@@ -207,6 +215,14 @@ export const PreviewActions = () => {
               {isDownloading ? <Spinner size="sm" mr="1px" /> : <LuDownload />}
               <MenuItemText>Download all (ZIP)</MenuItemText>
             </MenuItem>
+            <MenuItem
+              value="export-mpcfill-xml"
+              onSelect={() => setIsXmlExportOpen(true)}
+              disabled={isLoadingProject}
+            >
+              <LuFileCode />
+              <MenuItemText>Export MPCFill XML</MenuItemText>
+            </MenuItem>
           </>
         </MenuContent>
       </MenuRoot>
@@ -215,6 +231,10 @@ export const PreviewActions = () => {
         onOpenChange={setIsDialogOpen}
         pairedBackCount={pairedBackCount}
         onConfirm={(includeBacks) => downloadImages({ includeBacks })}
+      />
+      <MpcXmlExportDialog
+        open={isXmlExportOpen}
+        onOpenChange={setIsXmlExportOpen}
       />
     </HStack>
   );

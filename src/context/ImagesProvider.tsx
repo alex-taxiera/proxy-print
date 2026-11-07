@@ -191,7 +191,7 @@ export const ImagesProvider = (
     data: SlotInputData[],
     index?: number,
     options?: AddImagesOptions,
-  ) => {
+  ): string[] => {
     // Pre-generate all slot objects (pure, no side effects).
     const newSlots: CardSlot[] = data.map((item) => {
       const slotId = nanoid();
@@ -233,6 +233,8 @@ export const ImagesProvider = (
       const updated = oldSlots.toSpliced(insertAt, 0, ...newSlots);
       return toSlotMap(normalizeSlots(updated));
     });
+
+    return newSlots.map((slot) => slot.id);
   };
 
   const onAdd = (

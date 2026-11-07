@@ -14,6 +14,11 @@ import { getQueryKeyForImage, ImageQueryData } from "@/queries/images";
 import { selectActiveBasePdf, useSettingsStore } from "@/store/settingsStore";
 import { downloadBlob } from "@/utils/download-blob";
 import { invertHexColor } from "@/utils/invert-hex-color";
+import {
+  buildPdfManifest,
+  PDF_MANIFEST_FILENAME,
+  type PdfManifest,
+} from "@/utils/pdf-manifest/schema";
 import { progressEvents } from "@/utils/progress-events";
 import PdfWorker from "@/workers/pdf-worker?worker";
 
@@ -28,20 +33,48 @@ const doTimeout = (fn: () => void, timeout?: number) => {
   }
 };
 
-async function* mergePDFsBlobs(blobs: Blob[]) {
+/**
+ * Embed the layout manifest for pages [start, end) so re-importing this PDF
+ * restores the project exactly (see utils/pdf-manifest).
+ */
+async function attachManifest(
+  pdf: PDFDocument,
+  manifest: PdfManifest,
+  start: number,
+  end: number,
+) {
+  const chunk: PdfManifest = {
+    ...manifest,
+    pages: manifest.pages.slice(start, end),
+  };
+  await pdf.attach(
+    new TextEncoder().encode(JSON.stringify(chunk)),
+    PDF_MANIFEST_FILENAME,
+    {
+      mimeType: "application/json",
+      description: "proxy-print layout, used to re-import this PDF",
+    },
+  );
+}
+
+async function* mergePDFsBlobs(blobs: Blob[], manifest: PdfManifest) {
   let mergedPdf = await PDFDocument.create();
   // split the blobs into chunks of 2GB -- this is the limit in Chrome
   const maxPdfSize = 2 * 1024 * 1024 * 1024;
   let pdfSize = 0;
+  // Each blob is one generated page; track which pages are in this chunk.
+  let chunkStart = 0;
 
   for (let i = 0; i < blobs.length; i++) {
     const blob = blobs[i];
     if (pdfSize + blob.size > maxPdfSize) {
       console.debug("pdf is too large, saving the current pdf");
+      await attachManifest(mergedPdf, manifest, chunkStart, i);
       const mergedBytes = await mergedPdf.save();
       yield new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
       mergedPdf = await PDFDocument.create();
       pdfSize = 0;
+      chunkStart = i;
     }
 
     pdfSize += blob.size;
@@ -52,6 +85,7 @@ async function* mergePDFsBlobs(blobs: Blob[]) {
   }
 
   console.debug("saving the final pdf");
+  await attachManifest(mergedPdf, manifest, chunkStart, blobs.length);
   const mergedBytes = await mergedPdf.save();
   yield new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
 }
@@ -64,7 +98,8 @@ export const useGeneratePdf = (
   const activeBasePdf = useSettingsStore(selectActiveBasePdf);
   const basePdfBytes = activeBasePdf?.bytes ?? null;
   const basePdfPageCount = activeBasePdf?.pageCount ?? 1;
-  const { images, setIsRendering } = useContext(ImagesContext);
+  const { images, sortedSlots, setIsRendering } = useContext(ImagesContext);
+  const defaultCardBack = useSettingsStore((s) => s.defaultCardBack);
   const { pages, cardsPerPage } = usePreviewData();
   const cardPositionMeta = useCardPositionMeta();
 
@@ -397,10 +432,17 @@ export const useGeneratePdf = (
         });
 
         // combine pdfs
+        const manifest = buildPdfManifest({
+          pages,
+          sortedSlots,
+          defaultCardBack,
+          cardSizeMm: { w: cardWidth, h: cardHeight },
+        });
         const pdfGenerator = mergePDFsBlobs(
           Array.from(pdfPages.entries())
             .sort((a, b) => a[0] - b[0])
             .map(([, blob]) => blob),
+          manifest,
         );
 
         try {

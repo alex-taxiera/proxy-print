@@ -9,158 +9,143 @@ import {
   FileUploadRootProvider,
   FileUploadDropzone,
 } from "@/components/ui/file-upload";
+import { toaster } from "@/components/ui/toaster";
 
-import {
-  GoogleImageData,
-  ImagesContext,
-  LocalImageData,
-  SlotInputData,
-} from "@/context/ImagesContext";
+import { ImagesContext, LocalImageData } from "@/context/ImagesContext";
 import { useSettingsStore } from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
+import { parseMpcFillXml } from "@/utils/parse-mpcfill-xml";
+import { extractPdfImages } from "@/utils/pdf-import/extract-pdf-images";
+import type { PdfExtraction } from "@/utils/pdf-import/types";
+import { formatCount } from "@/utils/pluralize";
 
+import { PdfImportDialog, type PdfImportResult } from "./PdfImportDialog";
 import { XmlImportDialog, XmlImportPending } from "./XmlImportDialog";
 
-type ParsedXmlUpload = {
-  slots: SlotInputData[];
-  defaultCardBack: GoogleImageData | null;
-};
+const extensionOf = (file: File) =>
+  file.name.toLowerCase().split(".").pop() ?? "";
 
-const parseCardSection = (
-  xml: Document,
-  sectionName: "fronts" | "backs",
-  key: "front" | "back",
-  slotMap: Map<number, SlotInputData>,
-) => {
-  const section = xml.querySelector(sectionName);
-  const cards = section?.querySelectorAll("card");
-  if (!cards) {
-    return;
-  }
+const hashImage = async (file: File): Promise<LocalImageData> => ({
+  file,
+  hash: await createFileHash(file),
+});
 
-  Array.from(cards).forEach((card) => {
-    const id = card.querySelector("id")?.textContent?.trim();
-    const name =
-      card.querySelector("name")?.textContent?.trim() ?? `${sectionName}-card`;
-    const slots = card
-      .querySelector("slots")
-      ?.textContent?.split(",")
-      .map((value) => Number(value.trim()))
-      .filter((value) => !Number.isNaN(value));
-
-    if (!id || !slots || slots.length === 0) {
-      return;
-    }
-
-    slots.forEach((slotNumber) => {
-      const existing = slotMap.get(slotNumber) ?? { front: null, back: null };
-      slotMap.set(slotNumber, {
-        ...existing,
-        [key]: { id, name },
-      });
-    });
-  });
-};
-
-const parseXML = (file: File): Promise<ParsedXmlUpload> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(
-        event.target?.result as string,
-        "text/xml",
-      );
-      const slotMap = new Map<number, SlotInputData>();
-
-      parseCardSection(xml, "fronts", "front", slotMap);
-      parseCardSection(xml, "backs", "back", slotMap);
-
-      if (slotMap.size === 0) {
-        reject(new Error("No cards found in XML"));
-        return;
-      }
-
-      const slots = Array.from(slotMap.entries())
-        .sort(([slotA], [slotB]) => slotA - slotB)
-        .map(([, slot]) => slot);
-
-      const cardbackId = xml.querySelector("cardback")?.textContent?.trim();
-      const defaultCardBack = cardbackId
-        ? {
-            id: cardbackId,
-            name: "Default Card Back",
-          }
-        : null;
-
-      resolve({
-        slots,
-        defaultCardBack,
-      });
-    };
-    reader.onerror = reject;
-    reader.readAsText(file);
-  });
-};
-
-const parseNonXmlFile = async (file: File): Promise<LocalImageData> => {
-  const hash = await createFileHash(file);
-  return { file, hash };
-};
-
-type ProcessFilesResult = {
-  directAdds: LocalImageData[];
-  xmlPending: XmlImportPending | null;
-};
-
-const processFiles = async (files: File[]): Promise<ProcessFilesResult> => {
-  const xmlFiles = files.filter((file) => file.type === "text/xml");
-  const nonXmlFiles = files.filter((file) => file.type !== "text/xml");
-  const nonXmlFilesHashed = await Promise.all(nonXmlFiles.map(parseNonXmlFile));
-
-  if (xmlFiles.length === 0) {
-    return { directAdds: nonXmlFilesHashed, xmlPending: null };
-  }
-
-  const xmlFilesParsed = await Promise.all(xmlFiles.map(parseXML));
-  const slotAdds = xmlFilesParsed.flatMap((parsed) => parsed.slots);
-  const xmlDefaultCardBack =
-    xmlFilesParsed.find((parsed) => parsed.defaultCardBack !== null)
-      ?.defaultCardBack ?? null;
+const parseXmlFiles = async (
+  files: File[],
+): Promise<XmlImportPending | null> => {
+  const parsed = (
+    await Promise.all(
+      files.map(async (file) => {
+        try {
+          return parseMpcFillXml(await file.text());
+        } catch (error) {
+          console.error(error);
+          toaster.create({
+            type: "error",
+            title: `Couldn't read ${file.name}`,
+            description: "No cards were found in this XML.",
+          });
+          return null;
+        }
+      }),
+    )
+  ).filter((result) => result !== null);
+  if (parsed.length === 0) return null;
 
   return {
-    directAdds: nonXmlFilesHashed,
-    xmlPending: { slotAdds, xmlDefaultCardBack },
+    slotAdds: parsed.flatMap((result) => result.slots),
+    xmlDefaultCardBack:
+      parsed.find((result) => result.defaultCardBack !== null)
+        ?.defaultCardBack ?? null,
   };
 };
 
+type PdfProgress = { fileName: string; page: number; pageCount: number };
+
 export function ImageUploader(props: BoxProps) {
-  const { onAdd, onAddSlots, isLoadingProject } = useContext(ImagesContext);
+  const { onAdd, onAddSlots, onClear, isLoadingProject } =
+    useContext(ImagesContext);
   const setDefaultCardBack = useSettingsStore((s) => s.setDefaultCardBack);
   const existingCardBack = useSettingsStore((s) => s.defaultCardBack);
+  const cardWidth = useSettingsStore((s) => s.settings.cardWidth);
+  const cardHeight = useSettingsStore((s) => s.settings.cardHeight);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState<PdfProgress | null>(null);
 
   // Pending XML import state
   const [xmlPending, setXmlPending] = useState<XmlImportPending | null>(null);
   const [updateDefaultCardBack, setUpdateDefaultCardBack] = useState(false);
 
+  // PDFs waiting for the import dialog, shown one at a time.
+  const [pdfQueue, setPdfQueue] = useState<PdfExtraction[]>([]);
+  const [pdfImportKey, setPdfImportKey] = useState(0);
+
+  const cardSizeMm = { w: Number(cardWidth), h: Number(cardHeight) };
+
+  const processFiles = async (files: File[]) => {
+    const xmlFiles = files.filter((file) => extensionOf(file) === "xml");
+    const pdfFiles = files.filter((file) => extensionOf(file) === "pdf");
+    const imageFiles = files.filter(
+      (file) => !["xml", "pdf"].includes(extensionOf(file)),
+    );
+
+    const images = await Promise.all(imageFiles.map(hashImage));
+    if (images.length > 0) onAdd(images);
+
+    const pending = await parseXmlFiles(xmlFiles);
+    if (pending) {
+      // Default the toggle: true when no existing card back, false otherwise
+      setUpdateDefaultCardBack(
+        pending.xmlDefaultCardBack !== null && existingCardBack === null,
+      );
+      setXmlPending(pending);
+    }
+
+    for (const file of pdfFiles) {
+      try {
+        const extraction = await extractPdfImages(
+          file,
+          cardSizeMm,
+          ({ page, pageCount }) =>
+            setPdfProgress({ fileName: file.name, page, pageCount }),
+        );
+        // A manifest can restore cards that are all re-downloaded, so only
+        // an extraction without one can come up empty.
+        if (
+          !extraction.manifest &&
+          extraction.pages.every((page) => page.cards.length === 0)
+        ) {
+          const { failed } = extraction.warnings;
+          toaster.create({
+            type: "error",
+            title: `No card images found in ${file.name}`,
+            description:
+              failed > 0
+                ? `${formatCount(failed, "image")} couldn't be read.`
+                : "Scanned or flattened PDFs (one picture per page) aren't supported.",
+          });
+        } else {
+          setPdfQueue((queue) => [...queue, extraction]);
+        }
+      } catch (error) {
+        console.error(error);
+        toaster.create({
+          type: "error",
+          title: `Couldn't read ${file.name}`,
+          description: error instanceof Error ? error.message : undefined,
+        });
+      }
+    }
+  };
+
   const onFileAccept = ({ files }: FileUploadFileAcceptDetails) => {
     setIsProcessing(true);
     processFiles(files)
-      .then(({ directAdds, xmlPending: pending }) => {
-        if (directAdds.length > 0) {
-          onAdd(directAdds);
-        }
-        if (pending) {
-          // Default the toggle: true when no existing card back, false otherwise
-          setUpdateDefaultCardBack(
-            pending.xmlDefaultCardBack !== null && existingCardBack === null,
-          );
-          setXmlPending(pending);
-        }
-      })
       .catch(console.error)
-      .finally(() => setIsProcessing(false));
+      .finally(() => {
+        setIsProcessing(false);
+        setPdfProgress(null);
+      });
   };
 
   const handleXmlConfirm = () => {
@@ -179,11 +164,39 @@ export function ImageUploader(props: BoxProps) {
     setXmlPending(null);
   };
 
+  const nextPdf = () => {
+    setPdfQueue((queue) => queue.slice(1));
+    setPdfImportKey((key) => key + 1);
+  };
+
+  const handlePdfConfirm = (result: PdfImportResult) => {
+    const previousCardBack = useSettingsStore.getState().defaultCardBack;
+    // Same ordering rule as XML: card back first so it downloads with the
+    // slots.
+    if (result.defaultCardBack) setDefaultCardBack(result.defaultCardBack);
+    const ids = onAddSlots(result.slots);
+    nextPdf();
+
+    toaster.create({
+      type: "success",
+      title: `Imported ${formatCount(ids.length, "card")} from ${result.fileName}`,
+      // Long enough to notice a wrong import and undo it.
+      duration: 10_000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          onClear(ids);
+          if (result.defaultCardBack) setDefaultCardBack(previousCardBack);
+        },
+      },
+    });
+  };
+
   const fileUpload = useFileUpload({
     maxFiles: Infinity,
     disabled: isProcessing || isLoadingProject,
     onFileAccept,
-    accept: [".jpg", ".jpeg", ".png", ".bmp", ".webp", ".xml"],
+    accept: [".jpg", ".jpeg", ".png", ".bmp", ".webp", ".xml", ".pdf"],
   });
 
   // hack to clear files after they are accepted
@@ -204,14 +217,27 @@ export function ImageUploader(props: BoxProps) {
         onConfirm={handleXmlConfirm}
         onCancel={handleXmlCancel}
       />
+      <PdfImportDialog
+        // Wait for any XML dialog so only one is open at a time.
+        extraction={xmlPending ? null : (pdfQueue[0] ?? null)}
+        importKey={pdfImportKey}
+        hasExistingCardBack={existingCardBack !== null}
+        cardSizeMm={cardSizeMm}
+        onConfirm={handlePdfConfirm}
+        onCancel={nextPdf}
+      />
       <FileUploadRootProvider value={fileUpload} {...props}>
         <FileUploadDropzone
           gap="2"
           width="full"
           minHeight="0"
           py="4"
-          label={fileUpload.dragging ? "Drop!" : "Drop XML or image files"}
-          description="click to browse"
+          label={fileUpload.dragging ? "Drop!" : "Drop XML, PDF or image files"}
+          description={
+            pdfProgress
+              ? `Reading ${pdfProgress.fileName}: page ${pdfProgress.page} of ${pdfProgress.pageCount}`
+              : "click to browse"
+          }
         />
       </FileUploadRootProvider>
     </>
