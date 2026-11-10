@@ -20,6 +20,12 @@ import {
   pairPdfCards,
   type BackMode,
 } from "@/utils/pdf-import/pair-pdf-cards";
+import {
+  backsideFileName,
+  ppmCardSizeMm,
+  ppmPairing,
+  resolvePpmImport,
+} from "@/utils/pdf-import/ppm-project";
 import { resolveManifestImport } from "@/utils/pdf-import/read-pdf-metadata";
 import type { ImportedImage, PdfExtraction } from "@/utils/pdf-import/types";
 import { formatCount } from "@/utils/pluralize";
@@ -265,8 +271,27 @@ const PdfImportBody = ({
     );
   }
 
-  const pairing = pairPdfCards(extraction.pages, mode);
+  // Proxy PDF Maker's embedded project says exactly which card (and back)
+  // every image is, so no guessing is needed when it lines up.
+  const ppm = extraction.ppm
+    ? resolvePpmImport(
+        extraction.ppm.project,
+        extraction.pages,
+        extraction.ppmBackside?.pages ?? null,
+      )
+    : null;
+  const pairing =
+    ppm && extraction.ppm
+      ? ppmPairing(extraction.ppm.project, ppm)
+      : pairPdfCards(extraction.pages, mode);
   const sharedAsDefault = pairing.sharedBack !== null && useAsDefault;
+  const ppmSize = extraction.ppm ? ppmCardSizeMm(extraction.ppm.project) : null;
+  const ppmSizeNote =
+    ppmSize &&
+    (Math.abs(ppmSize.w - cardSizeMm.w) > 0.5 ||
+      Math.abs(ppmSize.h - cardSizeMm.h) > 0.5)
+      ? `These are ${extraction.ppm?.project.card_size} cards (${ppmSize.w.toFixed(1)} × ${ppmSize.h.toFixed(1)} mm), but your card size is ${cardSizeMm.w} × ${cardSizeMm.h} mm. Change it in the sidebar so they print at the right size.`
+      : null;
   const bleed = bleedSummary(extraction);
   const warnings = warningsOf(extraction, cardSizeMm);
   const pageCount = extraction.pages.length;
@@ -292,23 +317,49 @@ const PdfImportBody = ({
               MPCFill art, which will be downloaded at full quality.
             </Text>
           )}
-          <Stack gap="2">
-            <Text fontWeight="medium">Does this PDF include card backs?</Text>
-            <RadioGroup
-              value={mode}
-              onValueChange={(details) => setMode(details.value as BackMode)}
-            >
-              <Stack gap="2">
-                <Radio value="none">No, every page is fronts</Radio>
-                <Radio value="duplex" disabled={pageCount < 2}>
-                  Yes, every other page is backs (duplex)
-                </Radio>
-                <Radio value="shared-back" disabled={pageCount < 2}>
-                  Yes, the last page is one back for every card
-                </Radio>
-              </Stack>
-            </RadioGroup>
-          </Stack>
+          {ppm ? (
+            <Stack gap="1">
+              <Text>
+                Made with Proxy PDF Maker, so each card and its back are read
+                from the project saved in the PDF.
+              </Text>
+              {extraction.ppmBackside && (
+                <Text fontSize="sm" color="fg.muted">
+                  Backs come from {extraction.ppmBackside.fileName}.
+                </Text>
+              )}
+              {ppmSizeNote && (
+                <Text fontSize="sm" color="fg.warning">
+                  {ppmSizeNote}
+                </Text>
+              )}
+              {ppm.backsMissing && (
+                <Text fontSize="sm" color="fg.warning">
+                  The backs were saved to a separate file (
+                  {backsideFileName(extraction.fileName)}). Import both PDFs
+                  together to pair them.
+                </Text>
+              )}
+            </Stack>
+          ) : (
+            <Stack gap="2">
+              <Text fontWeight="medium">Does this PDF include card backs?</Text>
+              <RadioGroup
+                value={mode}
+                onValueChange={(details) => setMode(details.value as BackMode)}
+              >
+                <Stack gap="2">
+                  <Radio value="none">No, every page is fronts</Radio>
+                  <Radio value="duplex" disabled={pageCount < 2}>
+                    Yes, every other page is backs (duplex)
+                  </Radio>
+                  <Radio value="shared-back" disabled={pageCount < 2}>
+                    Yes, the last page is one back for every card
+                  </Radio>
+                </Stack>
+              </RadioGroup>
+            </Stack>
+          )}
           <Stack gap="1">
             <Text>
               {formatCount(pairing.slots.length, "card")} on{" "}

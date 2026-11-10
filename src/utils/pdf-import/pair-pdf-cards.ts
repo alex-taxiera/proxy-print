@@ -88,7 +88,11 @@ export type PairingResult = {
 
 type Pair = { front: ExtractedCard; back: ExtractedCard | null };
 
-const summarize = (pairs: Pair[], unmatchedBacks: number): PairingResult => {
+/** Turn front/back pairs into slots, previews and the shared-back check. */
+export const summarizePairs = (
+  pairs: Pair[],
+  unmatchedBacks: number,
+): PairingResult => {
   const slots = pairs.map(({ front, back }) => ({
     front: toImage(front),
     back: back ? toImage(back) : null,
@@ -131,7 +135,7 @@ export const pairPdfCards = (
         pairs.push({ front: card, back: matches.get(index) ?? null });
       });
     }
-    return summarize(pairs, unmatchedBacks);
+    return summarizePairs(pairs, unmatchedBacks);
   }
 
   if (mode === "shared-back" && pages.length >= 2) {
@@ -141,14 +145,14 @@ export const pairPdfCards = (
         .slice(0, -1)
         .flatMap((page) => page.cards)
         .map((front) => ({ front, back }));
-      return summarize(pairs, 0);
+      return summarizePairs(pairs, 0);
     }
   }
 
   const pairs = pages
     .flatMap((page) => page.cards)
     .map((front) => ({ front, back: null }));
-  return summarize(pairs, 0);
+  return summarizePairs(pairs, 0);
 };
 
 /** Group cards into rows by centre y. */

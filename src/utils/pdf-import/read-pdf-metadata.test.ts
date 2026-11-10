@@ -43,6 +43,8 @@ const extraction = (pages: ExtractedPage[]): PdfExtraction => ({
   manifest: null,
   producer: null,
   fleemLinked: 0,
+  ppm: null,
+  ppmBackside: null,
 });
 
 const manifest = (partial: Partial<PdfManifest>): PdfManifest => ({

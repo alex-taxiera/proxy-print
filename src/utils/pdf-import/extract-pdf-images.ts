@@ -31,6 +31,7 @@ import {
   type ImageDraw,
   type Matrix,
 } from "./normalize-card-image";
+import { ppmCardSizeMm, readPpmProject } from "./ppm-project";
 import {
   applyFleemMetadata,
   readFleemImageMetadata,
@@ -312,8 +313,17 @@ export const extractPdfImages = async (
     })
     .catch(() => null);
 
-  // A PDF made by this app knows its own card size; trust it over settings.
-  const cardMm = manifest?.cardSizeMm ?? cardSizeMm;
+  // Proxy PDF Maker embeds its project (it writes PDFs with PoDoFo).
+  const ppm =
+    !manifest && producer?.includes("PoDoFo")
+      ? await readPpmProject(new Uint8Array(await file.arrayBuffer()))
+      : null;
+
+  // A PDF that records its card size knows better than the settings.
+  const cardMm =
+    manifest?.cardSizeMm ??
+    (ppm ? ppmCardSizeMm(ppm.project) : null) ??
+    cardSizeMm;
   const cardPt = { w: cardMm.w * PT_PER_MM, h: cardMm.h * PT_PER_MM };
   const bleedPt = 3 * PT_PER_MM;
   const prefix = baseName(file.name);
@@ -467,6 +477,8 @@ export const extractPdfImages = async (
     manifest,
     producer,
     fleemLinked: 0,
+    ppm,
+    ppmBackside: null,
   };
 
   // We skipped the faces the manifest didn't need. If it turns out not to
