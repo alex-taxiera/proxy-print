@@ -14,6 +14,11 @@ const dirname =
     ? __dirname
     : path.dirname(fileURLToPath(import.meta.url));
 
+// Set by the Tauri CLI for the commands it runs (`tauri dev`, `tauri build`).
+// The desktop app loads the same bundle from disk, so it has no use for the
+// Cloudflare Worker and builds to its own directory.
+const isDesktop = Boolean(process.env.TAURI_ENV_PLATFORM);
+
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [
@@ -22,8 +27,11 @@ export default defineConfig({
       org: "proxy-print",
       project: "proxy-print",
     }),
-    cloudflare(),
+    ...(isDesktop ? [] : [cloudflare()]),
   ],
+  envPrefix: ["VITE_", "TAURI_ENV_"],
+  // Keeps Rust compiler output visible when the Tauri CLI runs the dev server.
+  clearScreen: !isDesktop,
   worker: {
     format: "es",
   },
@@ -33,6 +41,11 @@ export default defineConfig({
     },
   },
   server: {
+    // tauri.conf.json points at this port, so don't silently pick another.
+    strictPort: isDesktop,
+    watch: {
+      ignored: ["**/src-tauri/**"],
+    },
     proxy: {
       "/cdn-images": {
         target: "https://cdn.mpcautofill.com/images/google_drive/full",
@@ -43,6 +56,7 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: isDesktop ? "dist-desktop" : "dist",
     rollupOptions: {
       output: {
         manualChunks: (moduleId) =>

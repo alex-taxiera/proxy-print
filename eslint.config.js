@@ -12,7 +12,11 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     ignores: [
+      ".claude/worktrees/**",
       "dist",
+      "dist-desktop",
+      "src-tauri/target/**",
+      "src-tauri/gen/**",
       "src/asm/**",
       "src/types/wasm.d.ts",
       "storybook-static/**",

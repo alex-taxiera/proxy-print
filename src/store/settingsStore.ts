@@ -16,6 +16,10 @@ import {
   SettingsSchema,
 } from "@/context/SettingsContext";
 import { invertHexColor } from "@/utils/invert-hex-color";
+import {
+  DEFAULT_MPCFILL_SERVER_URL,
+  migrateMpcFillServerV13,
+} from "@/utils/mpcfill-server";
 import { migrateLegacyUpscaleSetting } from "@/utils/upscale-methods";
 
 // ---------------------------------------------------------------------------
@@ -67,6 +71,7 @@ type PersistedSettings = {
   presets: PresetsMap;
   activePresetName: string | null;
   projects: ProjectsMap;
+  mpcFillServerUrl: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -121,6 +126,12 @@ export interface SettingsStoreState {
   activePresetName: string | null;
   projects: ProjectsMap;
   activeProjectName: string | null;
+  /**
+   * The MPC Autofill backend the desktop app's art swap searches. Kept beside
+   * `settings` rather than in it: it is not a print setting, so it stays out
+   * of presets and exported bundles.
+   */
+  mpcFillServerUrl: string;
   _hasHydrated: boolean;
 }
 
@@ -151,6 +162,8 @@ export interface SettingsStoreActions {
   /** Merge imported projects into the map, keyed by name, without touching activeProjectName. */
   importProjects: (entries: ProjectsMap) => void;
   setActiveProjectName: (name: string | null) => void;
+  /** Expects an origin from `normalizeMpcFillServerUrl`. */
+  setMpcFillServerUrl: (url: string) => void;
   setHasHydrated: (value: boolean) => void;
 }
 
@@ -414,6 +427,7 @@ export const useSettingsStore = create<SettingsStore>()(
         activePresetName: null,
         projects: {},
         activeProjectName: null,
+        mpcFillServerUrl: DEFAULT_MPCFILL_SERVER_URL,
         _hasHydrated: false,
 
         setSettings: (updater) =>
@@ -538,18 +552,27 @@ export const useSettingsStore = create<SettingsStore>()(
 
         setActiveProjectName: (name) => set({ activeProjectName: name }),
 
+        setMpcFillServerUrl: (url) => set({ mpcFillServerUrl: url }),
+
         setHasHydrated: (value) => set({ _hasHydrated: value }),
       };
     },
     {
       name: "proxy-print-settings",
-      version: 12,
+      version: 13,
       storage: createIdbStorage<PersistedSettings>(),
       migrate: (persistedState, version) => {
-        const migrated = migrateToV11(persistedState, version);
-        return version < 12 && migrated
-          ? migrateUpscaleSettingV12(migrated)
-          : migrated;
+        let migrated = migrateToV11(persistedState, version);
+        if (!migrated) {
+          return migrated;
+        }
+        if (version < 12) {
+          migrated = migrateUpscaleSettingV12(migrated);
+        }
+        if (version < 13) {
+          migrated = migrateMpcFillServerV13(migrated);
+        }
+        return migrated;
       },
       partialize: (state) => ({
         settings: state.settings,
@@ -559,6 +582,7 @@ export const useSettingsStore = create<SettingsStore>()(
         presets: state.presets,
         activePresetName: state.activePresetName,
         projects: state.projects,
+        mpcFillServerUrl: state.mpcFillServerUrl,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

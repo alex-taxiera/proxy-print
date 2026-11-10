@@ -7,6 +7,7 @@ import { checkbox } from "@/components/ui/checkbox.recipe";
 import { collapsible } from "@/components/ui/collapsible.recipe";
 import { colorPicker } from "@/components/ui/color-picker.recipe";
 import { dialog } from "@/components/ui/dialog.recipe";
+import { drawer } from "@/components/ui/drawer.recipe";
 import { fileUpload } from "@/components/ui/file-upload.recipe";
 import { input } from "@/components/ui/input.recipe";
 import { menu } from "@/components/ui/menu.recipe";
@@ -118,9 +119,19 @@ const customConfig = defineConfig({
       guide,
       scrollArea,
       dialog,
+      drawer,
     },
   },
   globalCss: {
+    // The desktop app's header row is the window's title bar, at a fixed
+    // height that dialogs and drawers stay clear of. src/index.tsx sets the
+    // attribute; on the web there is no title bar to clear.
+    ":root": {
+      "--title-bar-height": "0px",
+    },
+    ":root[data-window-frame]": {
+      "--title-bar-height": "2.5rem",
+    },
     "#root": {
       // dvh so the docked bottom bar stays clear of mobile browser chrome
       height: "100dvh",

@@ -1,0 +1,23 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What the main window may do: the app's own MPC Autofill command, its own title bar's work (dragging, minimizing, maximizing and closing the window), saving exports to a path the user picked, opening https links in the default browser, and installing updates.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "dialog:allow-save",
+    "dialog:allow-message",
+    "fs:allow-write-file",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://*" }]
+    },
+    "updater:default",
+    "process:allow-restart"
+  ]
+}
