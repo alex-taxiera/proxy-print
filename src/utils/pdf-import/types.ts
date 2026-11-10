@@ -5,6 +5,8 @@ import type {
 } from "@/context/ImagesContext";
 import type { PdfManifest } from "@/utils/pdf-manifest/schema";
 
+import type { PpmProjectInfo } from "./ppm-project";
+
 export type ExtractedCardKind =
   /** Cropped to card + 3mm; any missing bleed was generated. */
   | "normalized"
@@ -58,6 +60,13 @@ export type PdfExtraction = {
   producer: string | null;
   /** Cards linked to MPCFill art via Fleem metadata. */
   fleemLinked: number;
+  /** The project Proxy PDF Maker embedded, when present and valid. */
+  ppm: PpmProjectInfo | null;
+  /**
+   * The matching "_backside" PDF, when Proxy PDF Maker saved backs
+   * separately and both files were imported together.
+   */
+  ppmBackside: { fileName: string; pages: ExtractedPage[] } | null;
 };
 
 /** Where an imported face comes from: a remote ref or extracted pixels. */

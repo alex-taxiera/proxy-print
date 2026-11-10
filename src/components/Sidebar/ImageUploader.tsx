@@ -16,6 +16,7 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { createFileHash } from "@/utils/create-file-hash";
 import { parseMpcFillXml } from "@/utils/parse-mpcfill-xml";
 import { extractPdfImages } from "@/utils/pdf-import/extract-pdf-images";
+import { isPpmBacksideOf } from "@/utils/pdf-import/ppm-project";
 import type { PdfExtraction } from "@/utils/pdf-import/types";
 import { formatCount } from "@/utils/pluralize";
 
@@ -101,6 +102,7 @@ export function ImageUploader(props: BoxProps) {
       setXmlPending(pending);
     }
 
+    const extractions: PdfExtraction[] = [];
     for (const file of pdfFiles) {
       try {
         const extraction = await extractPdfImages(
@@ -125,7 +127,7 @@ export function ImageUploader(props: BoxProps) {
                 : "Scanned or flattened PDFs (one picture per page) aren't supported.",
           });
         } else {
-          setPdfQueue((queue) => [...queue, extraction]);
+          extractions.push(extraction);
         }
       } catch (error) {
         console.error(error);
@@ -136,6 +138,24 @@ export function ImageUploader(props: BoxProps) {
         });
       }
     }
+
+    // Proxy PDF Maker can save backs to a separate "_backside" PDF; when
+    // both were dropped together, import them as one.
+    const backsides = new Set<PdfExtraction>();
+    for (const front of extractions) {
+      const backside = extractions.find(
+        (other) => other !== front && isPpmBacksideOf(front, other),
+      );
+      if (backside) {
+        front.ppmBackside = {
+          fileName: backside.fileName,
+          pages: backside.pages,
+        };
+        backsides.add(backside);
+      }
+    }
+    const queued = extractions.filter((e) => !backsides.has(e));
+    if (queued.length > 0) setPdfQueue((queue) => [...queue, ...queued]);
   };
 
   const onFileAccept = ({ files }: FileUploadFileAcceptDetails) => {
