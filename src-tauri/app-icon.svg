@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Placeholder app icon. Replace this file (or point at a 1024px PNG) and run
+       `npm run tauri icon src-tauri/app-icon.svg` to regenerate src-tauri/icons. -->
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="#4b4fc4" />
+  <rect x="318" y="208" width="388" height="544" rx="44" fill="#1d1f4d" transform="rotate(-9 512 480)" />
+  <rect x="318" y="240" width="388" height="544" rx="44" fill="#ffffff" />
+  <rect x="356" y="278" width="312" height="468" rx="20" fill="none" stroke="#4b4fc4" stroke-width="20" stroke-dasharray="44 28" />
+  <path d="M452 400h84a72 72 0 0 1 0 144h-36v84h-48zM500 444v56h34a28 28 0 0 0 0-56z" fill="#4b4fc4" />
+</svg>

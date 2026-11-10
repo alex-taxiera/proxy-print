@@ -146,6 +146,15 @@ export type ImagesContextValue = {
     slotId: string,
     data: { front: ScryfallImageData; back: ScryfallImageData | null },
   ) => Promise<void>;
+  /**
+   * Swaps one face of a slot for an MPCFill image, whatever was there before.
+   * Rejects, leaving the slot untouched, if the image can't be downloaded.
+   */
+  onReplaceWithMpcFillImage: (
+    slotId: string,
+    face: "front" | "back",
+    data: GoogleImageData,
+  ) => Promise<void>;
   onRemoveBack: (slotId: string) => void;
   onRemoveBackFromSlots: (slotIds: string[]) => void;
   onInsertEmptySlot: (position: number) => void;
@@ -176,6 +185,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onAddBack: () => {},
   onAddBackToSlots: () => {},
   onReplaceScryfallPrinting: async () => {},
+  onReplaceWithMpcFillImage: async () => {},
   onRemoveBack: () => {},
   onRemoveBackFromSlots: () => {},
   onInsertEmptySlot: () => {},

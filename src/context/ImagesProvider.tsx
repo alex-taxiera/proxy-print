@@ -3,6 +3,11 @@ import { nanoid } from "nanoid";
 import { ComponentProps, useEffect, useMemo, useState } from "react";
 
 import {
+  confirmDiscardChanges,
+  guardWindowClose,
+  IS_DESKTOP,
+} from "@/desktop/window";
+import {
   ImageQueryData,
   getIsDownloadableImageCacheEvent,
   getQueryDataForImage,
@@ -349,6 +354,42 @@ export const ImagesProvider = (
     });
   };
 
+  const onReplaceWithMpcFillImage = async (
+    slotId: string,
+    face: "front" | "back",
+    data: GoogleImageData,
+  ) => {
+    const currentSlot = slots.get(slotId);
+    if (!currentSlot) {
+      throw new Error("That card is no longer in the project.");
+    }
+
+    // Keeping the uuid keeps the card's place, selection and menu state.
+    const current = face === "front" ? currentSlot.front : currentSlot.back;
+    const uuid =
+      current?.uuid ?? (face === "front" ? slotId : `${slotId}:back`);
+    const image: Image = { ...data, uuid };
+
+    await googleDownloadManager.add({
+      uuid,
+      queryData: getQueryDataForImage(image, settings),
+    });
+    // Whatever was queued for the image this replaces is no longer wanted.
+    scryfallDownloadManager.remove(uuid);
+    localDownloadManager.remove(uuid);
+
+    setSlots((old) => {
+      const slot = old.get(slotId);
+      if (!slot) {
+        return old;
+      }
+
+      const next = new Map(old);
+      next.set(slotId, { ...slot, [face]: image });
+      return next;
+    });
+  };
+
   const onRemoveBack = (slotId: string) => {
     setSlots((old) => {
       const currentSlot = old.get(slotId);
@@ -525,6 +566,27 @@ export const ImagesProvider = (
     return () => window.removeEventListener("beforeunload", handler);
   }, [isProjectDirty]);
 
+  // The desktop window doesn't show the browser's "leave site?" prompt, so
+  // ask before it closes instead.
+  useEffect(() => {
+    if (!IS_DESKTOP || !isProjectDirty) return;
+    let current = true;
+    let stop: (() => void) | undefined;
+    guardWindowClose(confirmDiscardChanges).then(
+      (unlisten) => {
+        if (current) stop = unlisten;
+        else unlisten();
+      },
+      (error: unknown) => {
+        console.error("Couldn't guard the window against closing", error);
+      },
+    );
+    return () => {
+      current = false;
+      stop?.();
+    };
+  }, [isProjectDirty]);
+
   const saveProject = async (name: string) => {
     const currentSlots = getSortedSlots(slots);
     const projectSlots: SlotInputData[] = currentSlots.map((slot) => ({
@@ -616,6 +678,7 @@ export const ImagesProvider = (
     onAddBack,
     onAddBackToSlots,
     onReplaceScryfallPrinting,
+    onReplaceWithMpcFillImage,
     onRemoveBack,
     onRemoveBackFromSlots,
     onInsertEmptySlot,
