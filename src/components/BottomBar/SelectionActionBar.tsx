@@ -9,6 +9,7 @@ import {
   LuDownload,
   LuEllipsis,
   LuExpand,
+  LuFlipHorizontal2,
   LuImage,
   LuImageDown,
   LuMove,
@@ -71,6 +72,7 @@ export const SelectionActionBar = () => {
     remove,
     setBack,
     removeBacks,
+    flip,
     addMore,
     canAddBleed,
     canRemoveBleed,
@@ -239,6 +241,16 @@ export const SelectionActionBar = () => {
                 <LuImage />
                 <MenuItemText>Set back…</MenuItemText>
               </MenuItem>
+              {pairedBackCount > 0 ? (
+                <MenuItem
+                  value="flip"
+                  onSelect={() => flip()}
+                  disabled={isLoadingProject}
+                >
+                  <LuFlipHorizontal2 />
+                  <MenuItemText>Flip</MenuItemText>
+                </MenuItem>
+              ) : null}
               {pairedBackCount > 0 ? (
                 <MenuItem
                   value="remove-back"

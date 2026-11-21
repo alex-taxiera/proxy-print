@@ -386,6 +386,24 @@ export const ImagesProvider = (
     });
   };
 
+  const onFlipSlots = (slotIds: string[]) => {
+    setSlots((old) => {
+      const next = new Map(old);
+      for (const slotId of slotIds) {
+        const slot = next.get(slotId);
+        if (!slot?.front || !slot.back) continue;
+        const { uuid: frontUuid, ...frontData } = slot.front;
+        const { uuid: backUuid, ...backData } = slot.back;
+        next.set(slotId, {
+          ...slot,
+          front: { ...backData, uuid: frontUuid },
+          back: { ...frontData, uuid: backUuid },
+        });
+      }
+      return next;
+    });
+  };
+
   const onInsertEmptySlot = (position: number) => {
     setSlots((old) => {
       const oldSlots = getSortedSlots(old);
@@ -618,6 +636,7 @@ export const ImagesProvider = (
     onReplaceScryfallPrinting,
     onRemoveBack,
     onRemoveBackFromSlots,
+    onFlipSlots,
     onInsertEmptySlot,
     onError,
     onClearErrors,

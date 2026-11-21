@@ -148,6 +148,8 @@ export type ImagesContextValue = {
   ) => Promise<void>;
   onRemoveBack: (slotId: string) => void;
   onRemoveBackFromSlots: (slotIds: string[]) => void;
+  /** Swap front and back faces for slots that have their own back. */
+  onFlipSlots: (slotIds: string[]) => void;
   onInsertEmptySlot: (position: number) => void;
   onError: (image: DownloadableImage) => void;
   onRemove: (uuid: string) => void;
@@ -178,6 +180,7 @@ export const ImagesContext = createContext<ImagesContextValue>({
   onReplaceScryfallPrinting: async () => {},
   onRemoveBack: () => {},
   onRemoveBackFromSlots: () => {},
+  onFlipSlots: () => {},
   onInsertEmptySlot: () => {},
   onMoveSlotToAbsoluteIndex: () => {},
   onError: () => {},

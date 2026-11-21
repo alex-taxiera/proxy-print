@@ -179,6 +179,7 @@ export const useCardActions = ({
     onAdd,
     onAddBackToSlots,
     onRemoveBackFromSlots,
+    onFlipSlots,
     images: allImages,
     slots,
   } = useContext(ImagesContext);
@@ -306,6 +307,10 @@ export const useCardActions = ({
 
   const removeBacks = () => {
     onRemoveBackFromSlots(images.map((image) => image.uuid));
+  };
+
+  const flip = () => {
+    onFlipSlots(images.map((image) => image.uuid));
   };
 
   const addMore = (count: number) => {
@@ -574,6 +579,7 @@ export const useCardActions = ({
     remove,
     setBack,
     removeBacks,
+    flip,
     addMore,
     canAddBleed: states.canAddBleed,
     addBleed,
