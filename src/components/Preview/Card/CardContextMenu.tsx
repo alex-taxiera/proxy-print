@@ -8,6 +8,7 @@ import {
   LuContrast,
   LuEllipsis,
   LuExpand,
+  LuFlipHorizontal2,
   LuGalleryVerticalEnd,
   LuImage,
   LuImageDown,
@@ -79,11 +80,13 @@ export const CardContextMenu = ({
   const isSelected = getIsSelected(image.uuid);
   const {
     images,
+    slots,
     onRemove,
     onReorder,
     onAddBack,
     onReplaceScryfallPrinting,
     onRemoveBack,
+    onFlipSlots,
     isLoadingProject,
   } = useContext(ImagesContext);
   const keybindLabels = getKeybindLabels();
@@ -300,7 +303,7 @@ export const CardContextMenu = ({
     if (slotId) onRemoveBack(slotId);
   };
 
-  const hasBack = isBackFace ? image.uuid.endsWith(":back") : false; // only meaningful when shown on back face
+  const hasOwnBack = slotId ? Boolean(slots.get(slotId)?.back) : false;
 
   return (
     <MenuRoot>
@@ -456,7 +459,17 @@ export const CardContextMenu = ({
               <LuImage />
               <MenuItemText>Set back…</MenuItemText>
             </MenuItem>
-            {hasBack || isBackFace ? (
+            {hasOwnBack ? (
+              <MenuItem
+                value="flip"
+                onSelect={() => onFlipSlots([slotId])}
+                disabled={isLoadingProject}
+              >
+                <LuFlipHorizontal2 />
+                <MenuItemText>Flip</MenuItemText>
+              </MenuItem>
+            ) : null}
+            {hasOwnBack ? (
               <MenuItem
                 value="remove-back"
                 color="fg.error"
