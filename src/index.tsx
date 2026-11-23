@@ -2,6 +2,9 @@ import * as Sentry from "@sentry/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { installExternalLinkHandler } from "@/desktop/open-external";
+import { windowFrame } from "@/desktop/window";
+
 import App from "./App.tsx";
 
 const SENTRY_ENV =
@@ -50,6 +53,14 @@ Sentry.init({
 });
 
 console.debug(`Sentry environment: ${SENTRY_ENV}`);
+
+const frame = windowFrame();
+Sentry.setTag("runtime", frame === "browser" ? "web" : "desktop");
+if (frame !== "browser") {
+  // Sizes the title bar and keeps dialogs clear of it (see theme.ts).
+  document.documentElement.dataset.windowFrame = frame;
+  installExternalLinkHandler();
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

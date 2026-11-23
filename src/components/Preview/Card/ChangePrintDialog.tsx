@@ -1,10 +1,7 @@
 import {
-  Box,
   Button,
-  Center,
   createListCollection,
   HStack,
-  Image,
   SimpleGrid,
   Spinner,
   Stack,
@@ -42,6 +39,8 @@ import {
   SCRYFALL_LANGUAGES,
   ScryfallLanguageFilter,
 } from "@/utils/scryfall-languages";
+
+import { FallbackImage } from "./FallbackImage";
 
 type PrintingImages = {
   front: ScryfallImageData & { previewUri: string };
@@ -99,59 +98,6 @@ const getLanguageLabel = (language: string) =>
   language;
 const getLanguageFilterLabel = (language: ScryfallLanguageFilter) =>
   language === "all" ? "any language" : getLanguageLabel(language);
-
-const ScryfallPrintingImage = ({ uri, alt }: { uri: string; alt: string }) => {
-  const [uriIndex, setUriIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasFailed, setHasFailed] = useState(false);
-  const uris = getScryfallUris(uri);
-
-  const handleError = () => {
-    if (uriIndex < uris.length - 1) {
-      setUriIndex((index) => index + 1);
-      return;
-    }
-
-    setIsLoading(false);
-    setHasFailed(true);
-  };
-
-  return (
-    <Box
-      position="relative"
-      borderRadius="lg"
-      width="full"
-      aspectRatio="0.714"
-      overflow="hidden"
-      bg="bg.subtle"
-    >
-      {hasFailed ? (
-        <Center height="full" padding="2">
-          <Text fontSize="xs" color="fg.error">
-            Image unavailable
-          </Text>
-        </Center>
-      ) : (
-        <Image
-          src={uris[uriIndex]}
-          alt={alt}
-          width="full"
-          height="full"
-          objectFit="cover"
-          opacity={isLoading ? 0 : 1}
-          transition="opacity 0.2s ease-in-out"
-          onLoad={() => setIsLoading(false)}
-          onError={handleError}
-        />
-      )}
-      {isLoading && !hasFailed ? (
-        <Center position="absolute" inset="0">
-          <Spinner size="sm" color="accent.solid" />
-        </Center>
-      ) : null}
-    </Box>
-  );
-};
 
 export type ChangePrintDialogProps = {
   cardName: string;
@@ -300,9 +246,9 @@ export const ChangePrintDialog = ({
                       onClick={() => void handleSelect(images)}
                     >
                       <Stack gap="1" width="full">
-                        <ScryfallPrintingImage
+                        <FallbackImage
                           key={images.front.previewUri}
-                          uri={images.front.previewUri}
+                          uris={getScryfallUris(images.front.previewUri)}
                           alt={`${card.name}, ${card.set.toUpperCase()} ${card.collector_number}`}
                         />
                         <Text fontSize="xs" fontWeight="semibold">

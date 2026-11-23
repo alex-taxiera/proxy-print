@@ -23,7 +23,10 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "tauri": "tauri",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build"
   },
   "prettier": {
     "plugins": [
@@ -46,6 +49,12 @@
     "@scryfall/api-types": "^1.0.0-alpha.4",
     "@sentry/react": "^10.56.0",
     "@tanstack/react-query": "^5.101.0",
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
+    "@tauri-apps/plugin-fs": "^2.7.1",
+    "@tauri-apps/plugin-opener": "^2.7.2",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.14.1",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "@tensorflow/tfjs-core": "^4.22.0",
@@ -73,6 +82,7 @@
     "@storybook/addon-vitest": "10.4.2",
     "@storybook/react-vite": "10.4.2",
     "@tanstack/eslint-plugin-query": "^5.101.0",
+    "@tauri-apps/cli": "^2.12.4",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.3",

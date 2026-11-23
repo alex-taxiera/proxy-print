@@ -1,6 +1,6 @@
 import { IconButton, MenuSelectionDetails } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useContext, useRef, useState } from "react";
+import { lazy, Suspense, useContext, useRef, useState } from "react";
 import {
   LuArrowLeft,
   LuArrowRight,
@@ -13,6 +13,7 @@ import {
   LuImage,
   LuImageDown,
   LuPlus,
+  LuReplace,
   LuShrink,
   LuSunDim,
   LuTrash,
@@ -33,11 +34,13 @@ import {
 
 import { ImageSelectionContext } from "@/context/ImageSelectionContext";
 import {
+  getIsGoogleImage,
   getIsLocalImage,
   getIsScryfallImage,
   Image,
   ImagesContext,
 } from "@/context/ImagesContext";
+import { IS_DESKTOP } from "@/desktop/window";
 import { useHasCoarsePointer } from "@/hooks/useHasCoarsePointer";
 import { usePreviewData } from "@/hooks/usePreviewData";
 import { useUpscaleImage } from "@/hooks/useUpscaleImage";
@@ -51,6 +54,13 @@ import { UpscaleMethod } from "@/utils/upscale-methods";
 import { AddMoreDialog } from "./AddMoreDialog";
 import { ChangePrintDialog } from "./ChangePrintDialog";
 import { UpscaleMenuItems } from "./UpscaleMenuItems";
+
+// Desktop only, so the website never downloads it.
+const MpcFillSwapDialog = lazy(() =>
+  import("./MpcFillSwapDialog").then((module) => ({
+    default: module.MpcFillSwapDialog,
+  })),
+);
 
 export type CardContextMenuProps = React.PropsWithChildren<{
   image: Image;
@@ -85,6 +95,7 @@ export const CardContextMenu = ({
     onReorder,
     onAddBack,
     onReplaceScryfallPrinting,
+    onReplaceWithMpcFillImage,
     onRemoveBack,
     onFlipSlots,
     isLoadingProject,
@@ -105,6 +116,12 @@ export const CardContextMenu = ({
 
   const [isAddMoreOpen, setIsAddMoreOpen] = useState(false);
   const [isChangePrintOpen, setIsChangePrintOpen] = useState(false);
+  // Mounted on first use and kept, so it can animate closed.
+  const [mpcFillSwap, setMpcFillSwap] = useState({
+    mounted: false,
+    open: false,
+  });
+  const canSwapMpcFillArt = IS_DESKTOP && Boolean(slotId);
 
   const buildOnAddClick = (count: number) => () => {
     add(count);
@@ -447,6 +464,16 @@ export const CardContextMenu = ({
               <MenuItemText>Change print...</MenuItemText>
             </MenuItem>
           ) : null}
+          {canSwapMpcFillArt ? (
+            <MenuItem
+              value="swap-mpcfill-art"
+              onSelect={() => setMpcFillSwap({ mounted: true, open: true })}
+              disabled={isLoadingProject}
+            >
+              <LuReplace />
+              <MenuItemText>Swap art (MPCFill)...</MenuItemText>
+            </MenuItem>
+          ) : null}
         </MenuItemGroup>
         {/* Back management — available for all faces when slotId is known */}
         {slotId ? (
@@ -572,6 +599,21 @@ export const CardContextMenu = ({
           onOpenChange={({ open }) => setIsChangePrintOpen(open)}
           onSelect={(printing) => onReplaceScryfallPrinting(slotId, printing)}
         />
+      ) : null}
+      {mpcFillSwap.mounted && slotId ? (
+        <Suspense fallback={null}>
+          <MpcFillSwapDialog
+            initialQuery={
+              getIsGoogleImage(image) && image.query
+                ? image.query
+                : (name ?? "")
+            }
+            currentId={getIsGoogleImage(image) ? image.id : null}
+            open={mpcFillSwap.open}
+            onOpenChange={({ open }) => setMpcFillSwap({ mounted: true, open })}
+            onSelect={(data) => onReplaceWithMpcFillImage(slotId, face, data)}
+          />
+        </Suspense>
       ) : null}
     </MenuRoot>
   );

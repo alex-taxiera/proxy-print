@@ -98,6 +98,8 @@ tablet. `npm run dev` also starts the Chakra typegen watcher; if you edit
 | `npm run storybook`            | Storybook on port 6006                                        |
 | `npm run build-storybook`      | Static Storybook build                                        |
 | `npm run deploy`               | Build and deploy to Cloudflare Workers                        |
+| `npm run desktop:dev`          | Run the desktop app against the dev server                    |
+| `npm run desktop:build`        | Build the desktop app and its installers                      |
 
 A Husky pre-commit hook runs `npm run check:pr`, so commits are blocked on lint,
 formatting and a clean build.
@@ -119,8 +121,11 @@ src/
 │   └── ui/            Chakra v3 snippet components and their recipes
 ├── context/           Images, selection, preview, settings schema, cutter,
 │                      download and upscale queue managers
+├── desktop/           Desktop-only glue: window controls, save dialog,
+│                      external links, updater
 ├── hooks/             useGeneratePdf, useTransfer, useUpscaleImage, and friends
-├── queries/           Image fetching and the Scryfall client
+├── queries/           Image fetching, the Scryfall client and the MPC
+│                      Autofill client (desktop only)
 ├── store/             Persisted settings store, download progress store
 ├── utils/             Bleed, DXF, grid layout, base PDFs, decklist parsing,
 │                      and the transfer/ bundle format
@@ -129,6 +134,8 @@ src/
 
 Elsewhere:
 
+- `src-tauri/` — the desktop app's Rust side: window setup, capabilities and
+  the MPC Autofill request command. See [Desktop app](#desktop-app).
 - `.storybook/` — Storybook config; stories run as a Vitest browser project.
 - `.github/workflows/` — CI and deploys, see below.
 - `.agents/skills/` — vendored Chakra UI agent skills, pinned by
@@ -186,7 +193,13 @@ Workflows in `.github/workflows/`:
   a per-branch preview alias and reports the URL in the job summary.
 - **`manual-release.yml`** — manually dispatched from `trunk`; bumps the
   version, tags it, and opens a draft release. Pushing the tag triggers the
-  production deploy.
+  production deploy and the desktop release build.
+- **`desktop-release.yml`** — on a `v*` tag, builds the desktop app for
+  Windows, macOS and Linux and attaches the installers and updater manifest to
+  that draft release. Dispatched by hand it only builds, keeping the installers
+  as workflow artifacts.
+- **`desktop-check.yml`** — formats, lints and tests the Rust crate on PRs
+  that touch `src-tauri/`.
 
 ### Self-hosting
 
@@ -197,6 +210,69 @@ docker compose up --build   # http://localhost:3000
 ```
 
 This path is independent of the Cloudflare deployment and isn't exercised by CI.
+
+## Desktop app
+
+The same app also ships as a desktop app built with [Tauri 2](https://tauri.app).
+It is the web build in a native window, plus the things a browser can't do:
+
+- **MPCFill art swap.** A card's menu gains "Swap art (MPCFill)...", which
+  searches an [MPC Autofill](https://github.com/chilli-axe/mpc-autofill) server
+  for other images of the card. The MPC Autofill API sends no CORS headers for
+  third-party sites, so the website can't offer this. The server defaults to
+  `https://mpcfill.com` and can be changed in the dialog.
+- **Its own title bar.** On Windows and Linux the header is the window's title
+  bar, with its own minimize, maximize and close buttons; macOS keeps its
+  traffic lights over the header.
+- **Native save dialogs** for PDF, ZIP, DXF, XML and bundle exports, and
+  **in-app updates** from GitHub releases.
+
+Building it needs a [Rust toolchain and Tauri's system
+dependencies](https://tauri.app/start/prerequisites/) as well as Node:
+
+```bash
+npm run desktop:dev     # the dev server in a desktop window
+npm run desktop:build   # installers in src-tauri/target/release/bundle/
+```
+
+How it fits together:
+
+- `npm run desktop:*` sets `TAURI_ENV_PLATFORM`, which `vite.config.ts` uses to
+  drop the Cloudflare plugin and build to `dist-desktop/`. The web build is
+  unaffected.
+- Desktop-only frontend code lives in `src/desktop/` and is gated on
+  `IS_DESKTOP`. Tauri packages are imported on demand so the web bundle doesn't
+  carry them.
+- The page can only make the outside requests a browser could, with one
+  exception: the `mpcfill_request` command in `src-tauri/src/mpcfill.rs`,
+  which reaches a fixed list of MPC Autofill API routes on the configured
+  server. What the window may do is listed in
+  `src-tauri/capabilities/default.json`.
+- The app version comes from `package.json`, so `manual-release.yml` remains the
+  only place a version is bumped.
+- `src-tauri/app-icon.svg` is a placeholder. Replace it and run
+  `npm run tauri icon src-tauri/app-icon.svg` to regenerate `src-tauri/icons/`.
+
+### Releases and updates
+
+`desktop-release.yml` attaches installers and `latest.json` to the draft release
+for a tag. Installed apps check
+`releases/latest/download/latest.json`, so an update reaches users once that
+draft is published.
+
+Updates are signed. One-time setup:
+
+1. `npm run tauri signer generate -- -w ~/.tauri/print-my-proxy.key`
+2. Put the contents of the generated `.pub` file in `plugins.updater.pubkey` in
+   `src-tauri/tauri.conf.json`, replacing `REPLACE_WITH_UPDATER_PUBLIC_KEY`. The
+   release workflow refuses to run while the placeholder is there.
+3. Add the private key and its password as the repository secrets
+   `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+
+Keep the private key: installed apps only accept updates signed with it.
+
+The installers are not code-signed (no Apple Developer ID or Windows
+certificate), so Windows SmartScreen and macOS Gatekeeper warn on first run.
 
 ## Contributing
 

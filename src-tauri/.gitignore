@@ -1,0 +1,5 @@
+# Cargo build output
+/target/
+
+# Schemas Tauri regenerates on every build
+/gen/schemas

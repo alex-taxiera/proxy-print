@@ -1,6 +1,8 @@
 import { Dialog as ChakraDialog, Portal } from "@chakra-ui/react";
 import * as React from "react";
 
+import { titleBarPersistentElements } from "@/desktop/window";
+
 import { CloseButton } from "./close-button";
 import { ScrollArea, ScrollAreaContent } from "./scroll-area";
 
@@ -74,7 +76,12 @@ export function DialogBody({
 export const DialogContext = ChakraDialog.Context;
 
 export type DialogRootProps = ChakraDialog.RootProps;
-export const DialogRoot = ChakraDialog.Root;
+export const DialogRoot = (props: DialogRootProps) => (
+  <ChakraDialog.Root
+    persistentElements={titleBarPersistentElements}
+    {...props}
+  />
+);
 export const DialogFooter = ChakraDialog.Footer;
 export const DialogHeader = ChakraDialog.Header;
 // export const DialogBody = ChakraDialog.Body;

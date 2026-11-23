@@ -1,6 +1,8 @@
 import { Drawer as ChakraDrawer, Portal } from "@chakra-ui/react";
 import * as React from "react";
 
+import { titleBarPersistentElements } from "@/desktop/window";
+
 import { CloseButton } from "./close-button";
 
 interface DrawerContentProps extends ChakraDrawer.ContentProps {
@@ -52,7 +54,12 @@ export const DrawerCloseTrigger = React.forwardRef<
 });
 
 export const DrawerTrigger = ChakraDrawer.Trigger;
-export const DrawerRoot = ChakraDrawer.Root;
+export const DrawerRoot = (props: ChakraDrawer.RootProps) => (
+  <ChakraDrawer.Root
+    persistentElements={titleBarPersistentElements}
+    {...props}
+  />
+);
 export const DrawerFooter = ChakraDrawer.Footer;
 export const DrawerHeader = ChakraDrawer.Header;
 export const DrawerBody = ChakraDrawer.Body;
